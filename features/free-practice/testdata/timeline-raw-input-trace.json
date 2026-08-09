@@ -1,0 +1,223 @@
+{
+  "request": {
+    "revision": 7,
+    "axisRevision": 11,
+    "viewportWidth": 900,
+    "contentOriginX": 20,
+    "axisAnchors": [
+      { "time": { "numerator": 0, "denominator": 1 }, "x": 0 },
+      { "time": { "numerator": 1, "denominator": 4 }, "x": 144 },
+      { "time": { "numerator": 1, "denominator": 2 }, "x": 288 },
+      { "time": { "numerator": 3, "denominator": 4 }, "x": 432 }
+    ],
+    "axisContentEndX": 432,
+    "timeline": {
+      "end": { "numerator": 3, "denominator": 4 },
+      "slots": [
+        { "id": "slot-a", "onset": { "numerator": 0, "denominator": 1 }, "duration": { "numerator": 1, "denominator": 4 }, "symbol": "I" },
+        { "id": "slot-b", "onset": { "numerator": 1, "denominator": 4 }, "duration": { "numerator": 1, "denominator": 4 }, "symbol": "V" },
+        { "id": "slot-c", "onset": { "numerator": 1, "denominator": 2 }, "duration": { "numerator": 1, "denominator": 4 }, "symbol": "I" }
+      ],
+      "tonalLayouts": [
+        { "id": "key-c", "fifths": 0, "mode": "MAJOR", "start": { "numerator": 0, "denominator": 1 }, "isBaseline": true },
+        { "id": "key-g", "fifths": 1, "mode": "MAJOR", "start": { "numerator": 1, "denominator": 4 }, "end": { "numerator": 3, "denominator": 4 } }
+      ],
+      "idioms": [
+        { "id": "cadence", "definitionId": "cadence", "variantId": "authentic", "slotIds": ["slot-b", "slot-c"], "title": "终止式" }
+      ]
+    },
+    "selectedSlotId": "slot-a",
+    "gridUnit": { "numerator": 1, "denominator": 16 },
+    "defaultChordDuration": { "numerator": 1, "denominator": 4 }
+  },
+  "cases": [
+    {
+      "name": "translate",
+      "operation": "drag",
+      "targetId": "slot:slot-a",
+      "deltaX": 72,
+      "expected": {
+        "selectSlotId": "slot-a",
+        "previewEdit": { "type": "translateChordRange", "slotId": "slot-a", "delta": { "numerator": 1, "denominator": 8 }, "includeFollowing": false },
+        "commitEdit": { "type": "translateChordRange", "slotId": "slot-a", "delta": { "numerator": 1, "denominator": 8 }, "includeFollowing": false },
+        "effectTypes": ["capturePointer", "cursor", "releasePointer"]
+      }
+    },
+    {
+      "name": "translate-following",
+      "operation": "drag",
+      "targetId": "slot:slot-a",
+      "deltaX": 72,
+      "ctrl": true,
+      "expected": {
+        "previewEdit": { "type": "translateChordRange", "slotId": "slot-a", "delta": { "numerator": 1, "denominator": 8 }, "includeFollowing": true }
+      }
+    },
+    {
+      "name": "resize-start",
+      "operation": "drag",
+      "targetId": "slot:slot-a:start",
+      "deltaX": 72,
+      "expected": {
+        "previewEdit": { "type": "placeChordRange", "slotId": "slot-a", "onset": { "numerator": 1, "denominator": 8 }, "duration": { "numerator": 1, "denominator": 8 } }
+      }
+    },
+    {
+      "name": "resize-end",
+      "operation": "drag",
+      "targetId": "slot:slot-c:end",
+      "deltaX": 72,
+      "expected": {
+        "previewEdit": { "type": "placeChordRange", "slotId": "slot-c", "onset": { "numerator": 1, "denominator": 2 }, "duration": { "numerator": 3, "denominator": 8 } }
+      }
+    },
+    {
+      "name": "shared-boundary",
+      "operation": "drag",
+      "targetId": "boundary:slot-a",
+      "deltaX": 72,
+      "expected": {
+        "previewEdit": { "type": "moveSharedBoundary", "leftSlotId": "slot-a", "boundary": { "numerator": 3, "denominator": 8 } }
+      }
+    },
+    {
+      "name": "cancel",
+      "operation": "cancel",
+      "targetId": "slot:slot-a",
+      "deltaX": 72,
+      "expected": {
+        "previewEdit": { "type": "translateChordRange" },
+        "commitEdit": null,
+        "effectTypes": ["capturePointer", "cursor", "releasePointer"]
+      }
+    },
+    {
+      "name": "delete",
+      "operation": "activate",
+      "targetId": "remove:slot-a",
+      "expected": { "removeSlotId": "slot-a" }
+    },
+    {
+      "name": "tonal-selection",
+      "operation": "down",
+      "targetId": "tonal:key-c",
+      "expected": { "selectTonalLayoutId": "key-c" }
+    },
+    {
+      "name": "tonal-start",
+      "operation": "drag",
+      "targetId": "tonal:key-g:start",
+      "deltaX": 72,
+      "expected": {
+        "selectTonalLayoutId": "key-g",
+        "previewEdit": { "type": "setTonalLayoutBounds", "tonalLayoutId": "key-g", "start": { "numerator": 3, "denominator": 8 }, "end": { "numerator": 3, "denominator": 4 } }
+      }
+    },
+    {
+      "name": "tonal-end",
+      "operation": "drag",
+      "targetId": "tonal:key-c:end",
+      "deltaX": -72,
+      "expected": {
+        "selectTonalLayoutId": "key-c",
+        "previewEdit": { "type": "setTonalLayoutBounds", "tonalLayoutId": "key-c", "start": { "numerator": 0, "denominator": 1 }, "end": { "numerator": 5, "denominator": 8 } }
+      }
+    },
+    {
+      "name": "idiom-selection",
+      "operation": "down",
+      "targetId": "idiom:cadence",
+      "expected": { "selectIdiomId": "cadence" }
+    },
+    {
+      "name": "append",
+      "operation": "activate",
+      "targetId": "append",
+      "expected": {
+        "appendAt": { "numerator": 3, "denominator": 4 },
+        "appendDuration": { "numerator": 1, "denominator": 4 }
+      }
+    },
+    {
+      "name": "append-keyboard",
+      "operation": "key",
+      "targetId": "append",
+      "key": "Enter",
+      "expected": {
+        "appendAt": { "numerator": 3, "denominator": 4 },
+        "appendDuration": { "numerator": 1, "denominator": 4 }
+      }
+    },
+    {
+      "name": "move-keyboard",
+      "operation": "key",
+      "targetId": "slot:slot-a",
+      "key": "ArrowRight",
+      "expected": {
+        "selectSlotId": "slot-a",
+        "commitEdit": { "type": "translateChordRange", "slotId": "slot-a", "delta": { "numerator": 1, "denominator": 16 }, "includeFollowing": false }
+      }
+    },
+    {
+      "name": "delete-keyboard",
+      "operation": "key",
+      "targetId": "slot:slot-a",
+      "key": "Delete",
+      "expected": { "removeSlotId": "slot-a" }
+    },
+    {
+      "name": "hover-slot",
+      "operation": "hover",
+      "targetId": "slot:slot-a",
+      "expected": {
+        "hoverHitId": "slot:slot-a",
+        "hoverCursor": "grab",
+        "hoverOverlayIds": ["slot:slot-a:hover"]
+      }
+    },
+    {
+      "name": "hover-resize-handle",
+      "operation": "hover",
+      "targetId": "slot:slot-c:end",
+      "expected": {
+        "hoverHitId": "slot:slot-c:end",
+        "hoverCursor": "ew-resize",
+        "hoverOverlayIds": ["slot:slot-c:end:hover"]
+      }
+    },
+    {
+      "name": "hover-shared-boundary-wins-over-overlapping-slot",
+      "operation": "hover",
+      "targetId": "boundary:slot-a",
+      "expected": {
+        "hoverHitId": "boundary:slot-a",
+        "hoverCursor": "ew-resize",
+        "hoverOverlayIds": [
+          "boundary:slot-a:hover:left",
+          "boundary:slot-a:hover:center",
+          "boundary:slot-a:hover:right"
+        ]
+      }
+    },
+    {
+      "name": "hover-append",
+      "operation": "hover",
+      "targetId": "append",
+      "expected": {
+        "hoverHitId": "append",
+        "hoverCursor": "pointer",
+        "hoverOverlayIds": ["append:hover"]
+      }
+    },
+    {
+      "name": "hover-tonal-layout-handle",
+      "operation": "hover",
+      "targetId": "tonal:key-g:start",
+      "expected": {
+        "hoverHitId": "tonal:key-g:start",
+        "hoverCursor": "ew-resize",
+        "hoverOverlayIds": ["tonal:key-g:start:hover"]
+      }
+    }
+  ]
+}

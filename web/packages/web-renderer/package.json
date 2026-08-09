@@ -1,0 +1,51 @@
+{
+  "name": "@mecon/web-renderer",
+  "version": "0.1.0",
+  "description": "Complete Mecon browser engraving engine with SVG, Canvas, and React rendering",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./react": {
+      "types": "./react.d.ts",
+      "import": "./react.js"
+    },
+    "./editor": {
+      "types": "./editor/index.d.ts",
+      "import": "./editor/index.js"
+    },
+    "./editor/react": {
+      "types": "./editor/react.d.ts",
+      "import": "./editor/react.jsx"
+    }
+  },
+  "files": [
+    "index.js",
+    "engine-core.js",
+    "index.d.ts",
+    "CircleOfFifthsPicker.jsx",
+    "react.js",
+    "react.d.ts",
+    "editor",
+    "kotlin",
+    "README.md"
+  ],
+  "dependencies": {
+    "@mecon/frozen-score": "^0.1.0",
+    "lucide-react": "^0.468.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

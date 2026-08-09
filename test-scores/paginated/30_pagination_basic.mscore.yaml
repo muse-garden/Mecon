@@ -1,0 +1,1417 @@
+# Auto-generated pagination test score
+id: "test-pagination-basic"
+metadata:
+  title: "Pagination Basic"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+defaultTempo: 90.0
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+  - number: 8
+  - number: 9
+  - number: 10
+  - number: 11
+  - number: 12
+  - number: 13
+  - number: 14
+  - number: 15
+  - number: 16
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Main"
+    events:
+      - id: "pe-1-0"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-1-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-1-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-2-0"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-3-0"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-3-3"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-4-0"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-4-3"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-5-0"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-5-2"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-5-3"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-6-0"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-6-1"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-6-2"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-6-3"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-7-0"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-7-1"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-7-2"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-7-3"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-8-0"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-8-1"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-8-2"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-8-3"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-9-0"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-9-1"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-9-2"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-9-3"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-10-0"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-10-1"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-10-2"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-10-3"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-11-0"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-11-1"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-11-2"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-11-3"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-12-0"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-12-1"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-12-2"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-12-3"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-13-0"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-13-1"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-13-2"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-13-3"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-14-0"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-14-1"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-14-2"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-14-3"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-15-0"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-15-1"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-15-2"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-15-3"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-16-0"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-16-1"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-16-2"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-16-3"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      - id: "ve-1-0"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-1-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-1-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-1-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-1-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-1-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-1-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-2-0"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-2-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-2-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-2-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-2-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-3-0"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-3-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-3-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-3-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-3-3"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-3-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-4-0"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-4-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-4-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-4-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-4-3"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-4-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-5-0"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-5-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-5-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-5-2"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-5-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-5-3"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-5-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-6-0"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-6-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-6-1"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-6-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-6-2"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-6-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-6-3"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-6-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-7-0"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-7-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-7-1"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-7-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-7-2"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-7-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-7-3"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-7-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-8-0"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-8-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-8-1"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-8-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-8-2"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-8-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-8-3"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-8-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-9-0"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-9-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-9-1"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-9-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-9-2"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-9-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-9-3"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-9-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-10-0"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-10-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-10-1"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-10-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-10-2"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-10-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-10-3"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-10-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-11-0"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-11-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-11-1"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-11-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-11-2"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-11-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-11-3"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-11-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-12-0"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-12-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-12-1"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-12-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-12-2"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-12-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-12-3"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-12-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-13-0"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-13-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-13-1"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-13-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-13-2"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-13-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-13-3"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-13-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-14-0"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-14-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-14-1"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-14-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-14-2"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-14-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-14-3"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-14-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-15-0"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-15-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-15-1"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-15-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-15-2"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-15-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-15-3"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-15-3"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-16-0"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 0
+              denominator: 4
+        pitchEventId: "pe-16-0"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-16-1"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-16-1"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-16-2"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-16-2"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-16-3"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-16-3"
+        duration:
+          base: QUARTER
+          dots: 0
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  events: []
+pageLayout:
+  paperWidthMm: 120.0
+  paperHeightMm: 80.0
+  marginTopMm: 10.0
+  marginBottomMm: 10.0
+  marginLeftMm: 10.0
+  marginRightMm: 10.0
+  staffSpaceMm: 2.0
+  paginated: true

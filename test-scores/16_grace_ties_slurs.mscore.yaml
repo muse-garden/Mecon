@@ -1,0 +1,291 @@
+# Test: Grace Notes — Ties and Slurs
+# Tests:
+#   M1: grace→grace tie  — g1 C4 (tied) → g2 C4 → principal D4
+#   M2: grace→principal tie  — g1 E4 (tied) → principal E4 → F4, G4
+#   M3: chord grace with multi-pitch tie  — g1 (C4+E4) pitchIndex 0 and 1 both tied → principal (C4+E4)
+#   M4: slur from grace to principal only  — g1 C4 (slurStarts:1) → D4 (slurEnds:1) → E4, F4 half
+#   M5: slur from grace spanning multiple notes  — g1 C4 (slurStarts:1) → D4 E4 F4 → G4 (slurEnds:1)
+#
+# Tie resolution uses TieTargetComputer.resolveGraceTieTarget:
+#   omitting targetEventId lets the engine auto-resolve within the same (measure, beat).
+
+id: "test-grace-ties-slurs-001"
+
+metadata:
+  title: "Grace Notes — Ties & Slurs"
+  subtitle: "grace→grace tie / grace→principal tie / chord tie / slur to principal / slur spanning notes"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Melody"
+    events:
+      # --- M1: grace→grace tie — g1 C4, g2 C4, principal D4, E4, F4 ---
+      - id: "pe-m1-g1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe-m1-g2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 2 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe-m1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe-m1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe-m1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+
+      # --- M2: grace→principal tie — g1 E4, principal E4, F4, G4 ---
+      - id: "pe-m2-g1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe-m2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe-m2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe-m2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+
+      # --- M3: chord grace multi-tie — g1 (C4+E4), principal (C4+E4), G4 ---
+      - id: "pe-m3-g1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitches:
+          - { diatonicSteps: 0, chromaticOffset: 0 }
+          - { diatonicSteps: 2, chromaticOffset: 0 }
+      - id: "pe-m3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches:
+          - { diatonicSteps: 0, chromaticOffset: 0 }
+          - { diatonicSteps: 2, chromaticOffset: 0 }
+      - id: "pe-m3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+
+      # --- M4: slur from grace to principal — g1 C4, D4, E4, F4 ---
+      - id: "pe-m4-g1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe-m4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe-m4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe-m4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+
+      # --- M5: slur from grace spanning multiple notes — g1 C4, D4, E4, F4, G4 ---
+      - id: "pe-m5-g1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe-m5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe-m5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe-m5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe-m5-4"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # --- M1: grace→grace tie ---
+      # g1 (C4) ties to g2 (C4) — same pitch within same (measure, beat), resolver finds g2
+      - id: "ve-m1-g1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitchEventId: "pe-m1-g1"
+        duration: { base: EIGHTH, dots: 0 }
+        graceInfo:
+          totalDuration: { base: EIGHTH, dots: 0 }
+          stealFrom: PREVIOUS
+        ties:
+          - pitchIndex: 0
+      - id: "ve-m1-g2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 2 }] }
+        pitchEventId: "pe-m1-g2"
+        duration: { base: EIGHTH, dots: 0 }
+      - id: "ve-m1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m1-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m1-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m1-3"
+        duration: { base: HALF, dots: 0 }
+        rendering: { stemDirection: UP }
+
+      # --- M2: grace→principal tie ---
+      # g1 (E4) ties to principal (E4) — same pitch, resolver hits principal and returns it
+      - id: "ve-m2-g1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitchEventId: "pe-m2-g1"
+        duration: { base: EIGHTH, dots: 0 }
+        graceInfo:
+          totalDuration: { base: EIGHTH, dots: 0 }
+          stealFrom: PREVIOUS
+        ties:
+          - pitchIndex: 0
+      - id: "ve-m2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m2-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m2-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m2-3"
+        duration: { base: HALF, dots: 0 }
+        rendering: { stemDirection: UP }
+
+      # --- M3: chord grace with two pitch ties ---
+      # g1 (C4+E4) pitchIndex 0 and 1 each resolve to matching pitch in principal chord
+      - id: "ve-m3-g1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitchEventId: "pe-m3-g1"
+        duration: { base: EIGHTH, dots: 0 }
+        graceInfo:
+          totalDuration: { base: EIGHTH, dots: 0 }
+          stealFrom: PREVIOUS
+        ties:
+          - pitchIndex: 0
+          - pitchIndex: 1
+      - id: "ve-m3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m3-1"
+        duration: { base: HALF, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m3-2"
+        duration: { base: HALF, dots: 0 }
+        rendering: { stemDirection: UP }
+
+      # --- M4: slur starts on grace, ends on principal ---
+      - id: "ve-m4-g1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitchEventId: "pe-m4-g1"
+        duration: { base: EIGHTH, dots: 0 }
+        graceInfo:
+          totalDuration: { base: EIGHTH, dots: 0 }
+          stealFrom: PREVIOUS
+        slurStarts: 1
+      - id: "ve-m4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m4-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+        slurEnds: 1
+      - id: "ve-m4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m4-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m4-3"
+        duration: { base: HALF, dots: 0 }
+        rendering: { stemDirection: UP }
+
+      # --- M5: slur starts on grace, spans D4 E4 F4, ends on G4 ---
+      - id: "ve-m5-g1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: -1, denominator: 1 }] }
+        pitchEventId: "pe-m5-g1"
+        duration: { base: EIGHTH, dots: 0 }
+        graceInfo:
+          totalDuration: { base: EIGHTH, dots: 0 }
+          stealFrom: PREVIOUS
+        slurStarts: 1
+      - id: "ve-m5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m5-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m5-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m5-3"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-4"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-m5-4"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+        slurEnds: 1
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []
+
+pluginTracks: {}

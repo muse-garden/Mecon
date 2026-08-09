@@ -1,0 +1,540 @@
+# Test: Dotted Notes and Tuplets
+# Tests rendering of dotted values and tuplet rhythms
+
+id: "test-dotted-tuplets-001"
+
+metadata:
+  title: "Dotted Notes and Tuplets Test"
+  subtitle: "Special rhythm patterns"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # Measure 1: Dotted notes
+      # Dotted half + quarter
+      - id: "pe-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+
+      # Measure 2: Dotted quarter + eighth patterns
+      - id: "pe-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-004"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+
+      # Measure 3: Triplets (3 quarter note triplets = 2 beats)
+      - id: "pe-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-008"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      # Half note to fill the rest
+      - id: "pe-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+
+      # Measure 4: Eighth note triplets
+      - id: "pe-011"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-012"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 12
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 12
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 12
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 12
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-016"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 12
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      # Half note
+      - id: "pe-017"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # Measure 1: Dotted half + quarter
+      - id: "ve-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-001"
+        duration:
+          base: HALF
+          dots: 1
+      - id: "ve-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-002"
+        duration:
+          base: QUARTER
+          dots: 0
+
+      # Measure 2: Dotted quarter + eighth (2x)
+      - id: "ve-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-003"
+        duration:
+          base: QUARTER
+          dots: 1
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-004"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-004"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-005"
+        duration:
+          base: QUARTER
+          dots: 1
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitchEventId: "pe-006"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 3: Quarter note triplet (BRACKET_AND_NUMBER) + half note
+      - id: "ve-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-007"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 3
+                denominator: 1
+              - numerator: 2
+                denominator: 4
+          count: 3
+          beatUnit: QUARTER
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-008"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitchEventId: "pe-008"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitchEventId: "pe-009"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-010"
+        duration:
+          base: HALF
+          dots: 0
+
+      # Measure 4: Two eighth note triplets + half note
+      # First triplet shows NUMBER_ONLY style (typical when beam already groups them)
+      - id: "ve-011"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-011"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 4
+                denominator: 1
+              - numerator: 3
+                denominator: 12
+          count: 3
+          beatUnit: EIGHTH
+          displayStyle: NUMBER_ONLY
+      - id: "ve-012"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 12
+        pitchEventId: "pe-012"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 12
+        pitchEventId: "pe-013"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Second triplet shows SLUR_AND_NUMBER style
+      - id: "ve-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 12
+        pitchEventId: "pe-014"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 4
+                denominator: 1
+              - numerator: 6
+                denominator: 12
+          count: 3
+          beatUnit: EIGHTH
+          displayStyle: SLUR_AND_NUMBER
+      - id: "ve-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 12
+        pitchEventId: "pe-015"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-016"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 12
+        pitchEventId: "pe-016"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-017"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-017"
+        duration:
+          base: HALF
+          dots: 0
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

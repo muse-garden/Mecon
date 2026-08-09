@@ -1,0 +1,3776 @@
+{
+  "elements": [
+    {
+      "id": "elem_0",
+      "type": "STAFF",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 64.0,
+            "y": 52.0
+          },
+          "end": {
+            "x": 777.49603,
+            "y": 52.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 63.48,
+              "y": 51.48
+            },
+            "width": 714.5361,
+            "height": 1.0400009
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 64.0,
+            "y": 60.0
+          },
+          "end": {
+            "x": 777.49603,
+            "y": 60.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 63.48,
+              "y": 59.48
+            },
+            "width": 714.5361,
+            "height": 1.0400009
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 64.0,
+            "y": 68.0
+          },
+          "end": {
+            "x": 777.49603,
+            "y": 68.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 63.48,
+              "y": 67.48
+            },
+            "width": 714.5361,
+            "height": 1.0399933
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 64.0,
+            "y": 76.0
+          },
+          "end": {
+            "x": 777.49603,
+            "y": 76.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 63.48,
+              "y": 75.48
+            },
+            "width": 714.5361,
+            "height": 1.0399933
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 64.0,
+            "y": 84.0
+          },
+          "end": {
+            "x": 777.49603,
+            "y": 84.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 63.48,
+              "y": 83.48
+            },
+            "width": 714.5361,
+            "height": 1.0399933
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 64.0,
+          "y": 52.0
+        },
+        "width": 713.49603,
+        "height": 32.0
+      },
+      "trackId": "st-treble"
+    },
+    {
+      "id": "elem_1",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 63.999992,
+            "y": 52.0
+          },
+          "end": {
+            "x": 63.999992,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 63.359993,
+              "y": 51.36
+            },
+            "width": 1.2799988,
+            "height": 33.28
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 63.359993,
+          "y": 51.36
+        },
+        "width": 1.2799988,
+        "height": 33.28
+      },
+      "measureNumber": 0
+    },
+    {
+      "id": "elem_2",
+      "type": "CLEF",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 76.63999,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "gClef",
+            "codepoint": "",
+            "description": "G clef (treble clef)"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 76.63999,
+              "y": 40.864
+            },
+            "width": 21.472,
+            "height": 56.192
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 76.63999,
+          "y": 40.864
+        },
+        "width": 21.472,
+        "height": 56.192
+      }
+    },
+    {
+      "id": "elem_3",
+      "type": "TIME_SIGNATURE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 118.11199,
+            "y": 60.0
+          },
+          "glyph": {
+            "name": "timeSig4",
+            "codepoint": "",
+            "description": "Time signature 4"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 118.75199,
+              "y": 51.968002
+            },
+            "width": 13.759999,
+            "height": 16.032
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 118.11199,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "timeSig4",
+            "codepoint": "",
+            "description": "Time signature 4"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 118.75199,
+              "y": 67.968
+            },
+            "width": 13.759999,
+            "height": 16.032
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 118.75199,
+          "y": 51.968002
+        },
+        "width": 13.760002,
+        "height": 32.031998
+      }
+    },
+    {
+      "id": "elem_4",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 144.512,
+            "y": 92.0
+          },
+          "glyph": {
+            "name": "noteheadWhole",
+            "codepoint": "",
+            "description": "Whole note (semibreve)"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 144.512,
+              "y": 88.0
+            },
+            "width": 13.504,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 144.512,
+          "y": 88.0
+        },
+        "width": 13.503998,
+        "height": 8.0
+      },
+      "eventId": "ve-001",
+      "trackId": "st-treble",
+      "measureNumber": 1,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_5",
+      "type": "LEDGER_LINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 141.312,
+            "y": 92.0
+          },
+          "end": {
+            "x": 161.21599,
+            "y": 92.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 140.79199,
+              "y": 91.48
+            },
+            "width": 20.944,
+            "height": 1.0399933
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 140.79199,
+          "y": 91.48
+        },
+        "width": 20.944,
+        "height": 1.0399933
+      },
+      "eventId": "ve-001",
+      "trackId": "st-treble",
+      "measureNumber": 1,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_6",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 170.01599,
+            "y": 52.0
+          },
+          "end": {
+            "x": 170.01599,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 169.37599,
+              "y": 51.36
+            },
+            "width": 1.2799988,
+            "height": 33.28
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 169.37599,
+          "y": 51.36
+        },
+        "width": 1.2799988,
+        "height": 33.28
+      },
+      "measureNumber": 1
+    },
+    {
+      "id": "elem_7",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 182.65599,
+            "y": 88.0
+          },
+          "glyph": {
+            "name": "noteheadHalf",
+            "codepoint": "",
+            "description": "Half note (minim)"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 182.65599,
+              "y": 84.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 182.65599,
+          "y": 84.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-002",
+      "trackId": "st-treble",
+      "measureNumber": 2,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_8",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 212.57599,
+            "y": 84.0
+          },
+          "glyph": {
+            "name": "noteheadHalf",
+            "codepoint": "",
+            "description": "Half note (minim)"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 212.57599,
+              "y": 80.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 212.57599,
+          "y": 80.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-003",
+      "trackId": "st-treble",
+      "measureNumber": 2,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_9",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 234.01599,
+            "y": 52.0
+          },
+          "end": {
+            "x": 234.01599,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 233.37599,
+              "y": 51.36
+            },
+            "width": 1.2799988,
+            "height": 33.28
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 233.37599,
+          "y": 51.36
+        },
+        "width": 1.2799988,
+        "height": 33.28
+      },
+      "measureNumber": 2
+    },
+    {
+      "id": "elem_10",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 246.65598,
+            "y": 80.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 246.65598,
+              "y": 76.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 246.65598,
+          "y": 76.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-004",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_11",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 268.89597,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 268.89597,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 268.89597,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-005",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_12",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 291.13596,
+            "y": 72.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 291.13596,
+              "y": 68.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 291.13596,
+          "y": 68.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-006",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_13",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 313.37595,
+            "y": 68.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 313.37595,
+              "y": 64.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 313.37595,
+          "y": 64.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-007",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_14",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 334.81595,
+            "y": 52.0
+          },
+          "end": {
+            "x": 334.81595,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 334.17593,
+              "y": 51.36
+            },
+            "width": 1.2800293,
+            "height": 33.28
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 334.17593,
+          "y": 51.36
+        },
+        "width": 1.2800293,
+        "height": 33.28
+      },
+      "measureNumber": 3
+    },
+    {
+      "id": "elem_15",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 347.45596,
+            "y": 64.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 347.45596,
+              "y": 60.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 347.45596,
+          "y": 60.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-008",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_16",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 364.89597,
+            "y": 68.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 364.89597,
+              "y": 64.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 364.89597,
+          "y": 64.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-009",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_17",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 382.33597,
+            "y": 72.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 382.33597,
+              "y": 68.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 382.33597,
+          "y": 68.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-010",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_18",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 399.77597,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 399.77597,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 399.77597,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-011",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_19",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 417.21597,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 417.21597,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 417.21597,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-012",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_20",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 434.65598,
+            "y": 80.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 434.65598,
+              "y": 76.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 434.65598,
+          "y": 76.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-013",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_21",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 452.09598,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 452.09598,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 452.09598,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-014",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_22",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 469.53598,
+            "y": 80.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 469.53598,
+              "y": 76.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 469.53598,
+          "y": 76.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-015",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_23",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 490.97598,
+            "y": 52.0
+          },
+          "end": {
+            "x": 490.97598,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 490.33597,
+              "y": 51.36
+            },
+            "width": 1.2800293,
+            "height": 33.28
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 490.33597,
+          "y": 51.36
+        },
+        "width": 1.2800293,
+        "height": 33.28
+      },
+      "measureNumber": 4
+    },
+    {
+      "id": "elem_24",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 503.61597,
+            "y": 92.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 503.61597,
+              "y": 88.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 503.61597,
+          "y": 88.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-016",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_25",
+      "type": "LEDGER_LINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 500.41595,
+            "y": 92.0
+          },
+          "end": {
+            "x": 516.256,
+            "y": 92.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 499.89597,
+              "y": 91.48
+            },
+            "width": 16.880035,
+            "height": 1.0399933
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 499.89597,
+          "y": 91.48
+        },
+        "width": 16.880035,
+        "height": 1.0399933
+      },
+      "eventId": "ve-016",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_26",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 518.05597,
+            "y": 88.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 518.05597,
+              "y": 84.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 518.05597,
+          "y": 84.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-017",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_27",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 532.496,
+            "y": 84.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 532.496,
+              "y": 80.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 532.496,
+          "y": 80.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-018",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_28",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 546.936,
+            "y": 80.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 546.936,
+              "y": 76.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 546.936,
+          "y": 76.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-019",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_29",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 561.376,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 561.376,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 561.376,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-020",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_30",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 575.816,
+            "y": 72.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 575.816,
+              "y": 68.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 575.816,
+          "y": 68.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-021",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_31",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 590.256,
+            "y": 68.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 590.256,
+              "y": 64.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 590.256,
+          "y": 64.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-022",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_32",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 604.696,
+            "y": 64.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 604.696,
+              "y": 60.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 604.696,
+          "y": 60.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-023",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_33",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 619.136,
+            "y": 64.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 619.136,
+              "y": 60.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 619.136,
+          "y": 60.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-024",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_34",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 633.576,
+            "y": 68.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 633.576,
+              "y": 64.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 633.576,
+          "y": 64.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-025",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_35",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 648.016,
+            "y": 72.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 648.016,
+              "y": 68.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 648.016,
+          "y": 68.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-026",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_36",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 662.456,
+            "y": 76.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 662.456,
+              "y": 72.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 662.456,
+          "y": 72.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-027",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_37",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 676.896,
+            "y": 80.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 676.896,
+              "y": 76.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 676.896,
+          "y": 76.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-028",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_38",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 691.336,
+            "y": 84.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 691.336,
+              "y": 80.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 691.336,
+          "y": 80.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-029",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_39",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 705.776,
+            "y": 88.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 705.776,
+              "y": 84.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 705.776,
+          "y": 84.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-030",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_40",
+      "type": "NOTEHEAD",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 720.216,
+            "y": 92.0
+          },
+          "glyph": {
+            "name": "noteheadBlack",
+            "codepoint": "",
+            "description": "Filled (black) note"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 720.216,
+              "y": 88.0
+            },
+            "width": 9.44,
+            "height": 8.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 720.216,
+          "y": 88.0
+        },
+        "width": 9.440002,
+        "height": 8.0
+      },
+      "eventId": "ve-031",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0,
+      "metadata": {
+        "pitchIndex": "0"
+      }
+    },
+    {
+      "id": "elem_41",
+      "type": "LEDGER_LINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 717.016,
+            "y": 92.0
+          },
+          "end": {
+            "x": 732.856,
+            "y": 92.0
+          },
+          "thickness": 1.04,
+          "bounds": {
+            "origin": {
+              "x": 716.496,
+              "y": 91.48
+            },
+            "width": 16.880066,
+            "height": 1.0399933
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 716.496,
+          "y": 91.48
+        },
+        "width": 16.880066,
+        "height": 1.0399933
+      },
+      "eventId": "ve-031",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_42",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 741.656,
+            "y": 52.0
+          },
+          "end": {
+            "x": 741.656,
+            "y": 84.0
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 741.016,
+              "y": 51.36
+            },
+            "width": 1.2800293,
+            "height": 33.28
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 747.49603,
+            "y": 52.0
+          },
+          "end": {
+            "x": 747.49603,
+            "y": 84.0
+          },
+          "thickness": 4.0,
+          "bounds": {
+            "origin": {
+              "x": 745.49603,
+              "y": 50.0
+            },
+            "width": 4.0,
+            "height": 36.0
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 741.016,
+          "y": 50.0
+        },
+        "width": 8.4800415,
+        "height": 36.0
+      },
+      "measureNumber": 5
+    },
+    {
+      "id": "elem_43",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 191.616,
+            "y": 60.0
+          },
+          "end": {
+            "x": 191.616,
+            "y": 88.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 191.136,
+              "y": 59.52
+            },
+            "width": 0.95999146,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 191.136,
+          "y": 59.52
+        },
+        "width": 0.95999146,
+        "height": 28.960003
+      },
+      "eventId": "ve-002",
+      "trackId": "st-treble",
+      "measureNumber": 2,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_44",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 221.536,
+            "y": 56.0
+          },
+          "end": {
+            "x": 221.536,
+            "y": 84.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 221.056,
+              "y": 55.52
+            },
+            "width": 0.95999146,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 221.056,
+          "y": 55.52
+        },
+        "width": 0.95999146,
+        "height": 28.960003
+      },
+      "eventId": "ve-003",
+      "trackId": "st-treble",
+      "measureNumber": 2,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_45",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 255.61598,
+            "y": 52.0
+          },
+          "end": {
+            "x": 255.61598,
+            "y": 80.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 255.13599,
+              "y": 51.52
+            },
+            "width": 0.95999146,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 255.13599,
+          "y": 51.52
+        },
+        "width": 0.95999146,
+        "height": 28.960003
+      },
+      "eventId": "ve-004",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_46",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 277.85596,
+            "y": 48.0
+          },
+          "end": {
+            "x": 277.85596,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 277.37595,
+              "y": 47.52
+            },
+            "width": 0.960022,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 277.37595,
+          "y": 47.52
+        },
+        "width": 0.960022,
+        "height": 28.960003
+      },
+      "eventId": "ve-005",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_47",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 300.09595,
+            "y": 44.0
+          },
+          "end": {
+            "x": 300.09595,
+            "y": 72.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 299.61594,
+              "y": 43.52
+            },
+            "width": 0.960022,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 299.61594,
+          "y": 43.52
+        },
+        "width": 0.960022,
+        "height": 28.960003
+      },
+      "eventId": "ve-006",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_48",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 322.33594,
+            "y": 40.0
+          },
+          "end": {
+            "x": 322.33594,
+            "y": 68.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 321.85593,
+              "y": 39.52
+            },
+            "width": 0.960022,
+            "height": 28.960003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 321.85593,
+          "y": 39.52
+        },
+        "width": 0.960022,
+        "height": 28.960003
+      },
+      "eventId": "ve-007",
+      "trackId": "st-treble",
+      "measureNumber": 3,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_49",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 347.93597,
+            "y": 64.0
+          },
+          "end": {
+            "x": 347.93597,
+            "y": 96.8
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 347.45596,
+              "y": 63.52
+            },
+            "width": 0.960022,
+            "height": 33.760006
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 347.45596,
+          "y": 63.52
+        },
+        "width": 0.960022,
+        "height": 33.760006
+      },
+      "eventId": "ve-008",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_50",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 365.37598,
+            "y": 68.0
+          },
+          "end": {
+            "x": 365.37598,
+            "y": 99.200005
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 364.89597,
+              "y": 67.52
+            },
+            "width": 0.960022,
+            "height": 32.16001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 364.89597,
+          "y": 67.52
+        },
+        "width": 0.960022,
+        "height": 32.16001
+      },
+      "eventId": "ve-009",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_51",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 391.29596,
+            "y": 40.8
+          },
+          "end": {
+            "x": 391.29596,
+            "y": 72.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 390.81595,
+              "y": 40.32
+            },
+            "width": 0.960022,
+            "height": 32.160004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 390.81595,
+          "y": 40.32
+        },
+        "width": 0.960022,
+        "height": 32.160004
+      },
+      "eventId": "ve-010",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_52",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 408.73596,
+            "y": 43.2
+          },
+          "end": {
+            "x": 408.73596,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 408.25595,
+              "y": 42.72
+            },
+            "width": 0.960022,
+            "height": 33.760002
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 408.25595,
+          "y": 42.72
+        },
+        "width": 0.960022,
+        "height": 33.760002
+      },
+      "eventId": "ve-011",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_53",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 426.17596,
+            "y": 44.8
+          },
+          "end": {
+            "x": 426.17596,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 425.69595,
+              "y": 44.32
+            },
+            "width": 0.960022,
+            "height": 32.160004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 425.69595,
+          "y": 44.32
+        },
+        "width": 0.960022,
+        "height": 32.160004
+      },
+      "eventId": "ve-012",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_54",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 443.61597,
+            "y": 47.2
+          },
+          "end": {
+            "x": 443.61597,
+            "y": 80.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 443.13596,
+              "y": 46.72
+            },
+            "width": 0.960022,
+            "height": 33.760002
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 443.13596,
+          "y": 46.72
+        },
+        "width": 0.960022,
+        "height": 33.760002
+      },
+      "eventId": "ve-013",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_55",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 461.05597,
+            "y": 44.8
+          },
+          "end": {
+            "x": 461.05597,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 460.57596,
+              "y": 44.32
+            },
+            "width": 0.960022,
+            "height": 32.160004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 460.57596,
+          "y": 44.32
+        },
+        "width": 0.960022,
+        "height": 32.160004
+      },
+      "eventId": "ve-014",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_56",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 478.49597,
+            "y": 47.2
+          },
+          "end": {
+            "x": 478.49597,
+            "y": 80.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 478.01596,
+              "y": 46.72
+            },
+            "width": 0.960022,
+            "height": 33.760002
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 478.01596,
+          "y": 46.72
+        },
+        "width": 0.960022,
+        "height": 33.760002
+      },
+      "eventId": "ve-015",
+      "trackId": "st-treble",
+      "measureNumber": 4,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_57",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 512.576,
+            "y": 57.6
+          },
+          "end": {
+            "x": 512.576,
+            "y": 92.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 512.096,
+              "y": 57.12
+            },
+            "width": 0.95996094,
+            "height": 35.360004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 512.096,
+          "y": 57.12
+        },
+        "width": 0.95996094,
+        "height": 35.360004
+      },
+      "eventId": "ve-016",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_58",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 527.016,
+            "y": 55.199997
+          },
+          "end": {
+            "x": 527.016,
+            "y": 88.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 526.536,
+              "y": 54.719997
+            },
+            "width": 0.95996094,
+            "height": 33.760006
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 526.536,
+          "y": 54.719997
+        },
+        "width": 0.95996094,
+        "height": 33.760006
+      },
+      "eventId": "ve-017",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_59",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 541.456,
+            "y": 52.8
+          },
+          "end": {
+            "x": 541.456,
+            "y": 84.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 540.976,
+              "y": 52.32
+            },
+            "width": 0.95996094,
+            "height": 32.160004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 540.976,
+          "y": 52.32
+        },
+        "width": 0.95996094,
+        "height": 32.160004
+      },
+      "eventId": "ve-018",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_60",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 555.896,
+            "y": 50.399998
+          },
+          "end": {
+            "x": 555.896,
+            "y": 80.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 555.416,
+              "y": 49.92
+            },
+            "width": 0.95996094,
+            "height": 30.560005
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 555.416,
+          "y": 49.92
+        },
+        "width": 0.95996094,
+        "height": 30.560005
+      },
+      "eventId": "ve-019",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_61",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 570.336,
+            "y": 41.6
+          },
+          "end": {
+            "x": 570.336,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 569.856,
+              "y": 41.12
+            },
+            "width": 0.95996094,
+            "height": 35.360004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 569.856,
+          "y": 41.12
+        },
+        "width": 0.95996094,
+        "height": 35.360004
+      },
+      "eventId": "ve-020",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_62",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 584.776,
+            "y": 39.199997
+          },
+          "end": {
+            "x": 584.776,
+            "y": 72.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 584.296,
+              "y": 38.719997
+            },
+            "width": 0.95996094,
+            "height": 33.760006
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 584.296,
+          "y": 38.719997
+        },
+        "width": 0.95996094,
+        "height": 33.760006
+      },
+      "eventId": "ve-021",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_63",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 599.216,
+            "y": 36.8
+          },
+          "end": {
+            "x": 599.216,
+            "y": 68.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 598.736,
+              "y": 36.32
+            },
+            "width": 0.95996094,
+            "height": 32.160004
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 598.736,
+          "y": 36.32
+        },
+        "width": 0.95996094,
+        "height": 32.160004
+      },
+      "eventId": "ve-022",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_64",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 613.656,
+            "y": 34.399998
+          },
+          "end": {
+            "x": 613.656,
+            "y": 64.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 613.176,
+              "y": 33.92
+            },
+            "width": 0.95996094,
+            "height": 30.560005
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 613.176,
+          "y": 33.92
+        },
+        "width": 0.95996094,
+        "height": 30.560005
+      },
+      "eventId": "ve-023",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_65",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 628.096,
+            "y": 34.4
+          },
+          "end": {
+            "x": 628.096,
+            "y": 64.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 627.616,
+              "y": 33.920002
+            },
+            "width": 0.95996094,
+            "height": 30.560001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 627.616,
+          "y": 33.920002
+        },
+        "width": 0.95996094,
+        "height": 30.560001
+      },
+      "eventId": "ve-024",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_66",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 642.536,
+            "y": 36.800003
+          },
+          "end": {
+            "x": 642.536,
+            "y": 68.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 642.056,
+              "y": 36.320004
+            },
+            "width": 0.95996094,
+            "height": 32.16
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 642.056,
+          "y": 36.320004
+        },
+        "width": 0.95996094,
+        "height": 32.16
+      },
+      "eventId": "ve-025",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_67",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 656.976,
+            "y": 39.2
+          },
+          "end": {
+            "x": 656.976,
+            "y": 72.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 656.49603,
+              "y": 38.72
+            },
+            "width": 0.95996094,
+            "height": 33.760002
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 656.49603,
+          "y": 38.72
+        },
+        "width": 0.95996094,
+        "height": 33.760002
+      },
+      "eventId": "ve-026",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_68",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 671.416,
+            "y": 41.600002
+          },
+          "end": {
+            "x": 671.416,
+            "y": 76.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 670.93604,
+              "y": 41.120003
+            },
+            "width": 0.95996094,
+            "height": 35.36
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 670.93604,
+          "y": 41.120003
+        },
+        "width": 0.95996094,
+        "height": 35.36
+      },
+      "eventId": "ve-027",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_69",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 685.856,
+            "y": 50.4
+          },
+          "end": {
+            "x": 685.856,
+            "y": 80.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 685.37604,
+              "y": 49.920002
+            },
+            "width": 0.95996094,
+            "height": 30.560001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 685.37604,
+          "y": 49.920002
+        },
+        "width": 0.95996094,
+        "height": 30.560001
+      },
+      "eventId": "ve-028",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_70",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 700.296,
+            "y": 52.800003
+          },
+          "end": {
+            "x": 700.296,
+            "y": 84.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 699.81604,
+              "y": 52.320004
+            },
+            "width": 0.95996094,
+            "height": 32.16
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 699.81604,
+          "y": 52.320004
+        },
+        "width": 0.95996094,
+        "height": 32.16
+      },
+      "eventId": "ve-029",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_71",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 714.736,
+            "y": 55.2
+          },
+          "end": {
+            "x": 714.736,
+            "y": 88.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 714.25604,
+              "y": 54.72
+            },
+            "width": 0.95996094,
+            "height": 33.760002
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 714.25604,
+          "y": 54.72
+        },
+        "width": 0.95996094,
+        "height": 33.760002
+      },
+      "eventId": "ve-030",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_72",
+      "type": "STEM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 729.176,
+            "y": 57.600002
+          },
+          "end": {
+            "x": 729.176,
+            "y": 92.0
+          },
+          "thickness": 0.96,
+          "bounds": {
+            "origin": {
+              "x": 728.69604,
+              "y": 57.120003
+            },
+            "width": 0.95996094,
+            "height": 35.36
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 728.69604,
+          "y": 57.120003
+        },
+        "width": 0.95996094,
+        "height": 35.36
+      },
+      "eventId": "ve-031",
+      "trackId": "st-treble",
+      "measureNumber": 5,
+      "staffIndex": 0
+    },
+    {
+      "id": "elem_73",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 347.45596,
+                  "y": 94.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 365.856,
+                  "y": 97.200005
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 365.856,
+                  "y": 101.200005
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 347.45596,
+                  "y": 98.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 347.45596,
+              "y": 94.8
+            },
+            "width": 18.400024,
+            "height": 6.4000015
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 347.45596,
+          "y": 94.8
+        },
+        "width": 18.400024,
+        "height": 6.4000015
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_4_0_ve-008"
+      }
+    },
+    {
+      "id": "elem_74",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 390.81595,
+                  "y": 38.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 409.21597,
+                  "y": 41.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 409.21597,
+                  "y": 45.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 390.81595,
+                  "y": 42.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 390.81595,
+              "y": 38.8
+            },
+            "width": 18.400024,
+            "height": 6.4000015
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 390.81595,
+          "y": 38.8
+        },
+        "width": 18.400024,
+        "height": 6.4000015
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_4_1_ve-010"
+      }
+    },
+    {
+      "id": "elem_75",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 425.69595,
+                  "y": 42.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 444.09598,
+                  "y": 45.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 444.09598,
+                  "y": 49.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 425.69595,
+                  "y": 46.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 425.69595,
+              "y": 42.8
+            },
+            "width": 18.400024,
+            "height": 6.4000015
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 425.69595,
+          "y": 42.8
+        },
+        "width": 18.400024,
+        "height": 6.4000015
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_4_2_ve-012"
+      }
+    },
+    {
+      "id": "elem_76",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 460.57596,
+                  "y": 42.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 478.97598,
+                  "y": 45.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 478.97598,
+                  "y": 49.2
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 460.57596,
+                  "y": 46.8
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 460.57596,
+              "y": 42.8
+            },
+            "width": 18.400024,
+            "height": 6.4000015
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 460.57596,
+          "y": 42.8
+        },
+        "width": 18.400024,
+        "height": 6.4000015
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_4_3_ve-014"
+      }
+    },
+    {
+      "id": "elem_77",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 512.096,
+                  "y": 55.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 556.376,
+                  "y": 48.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 556.376,
+                  "y": 52.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 512.096,
+                  "y": 59.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 512.096,
+              "y": 48.399998
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 512.096,
+          "y": 48.399998
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_5_0_ve-016"
+      }
+    },
+    {
+      "id": "elem_78",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 512.096,
+                  "y": 61.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 556.376,
+                  "y": 54.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 556.376,
+                  "y": 58.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 512.096,
+                  "y": 65.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 512.096,
+              "y": 54.399998
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 512.096,
+          "y": 54.399998
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "1",
+        "groupId": "beam_5_0_ve-016"
+      }
+    },
+    {
+      "id": "elem_79",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 569.856,
+                  "y": 39.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 614.136,
+                  "y": 32.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 614.136,
+                  "y": 36.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 569.856,
+                  "y": 43.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 569.856,
+              "y": 32.399998
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 569.856,
+          "y": 32.399998
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_5_1_ve-020"
+      }
+    },
+    {
+      "id": "elem_80",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 569.856,
+                  "y": 45.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 614.136,
+                  "y": 38.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 614.136,
+                  "y": 42.399998
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 569.856,
+                  "y": 49.6
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 569.856,
+              "y": 38.399998
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 569.856,
+          "y": 38.399998
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "1",
+        "groupId": "beam_5_1_ve-020"
+      }
+    },
+    {
+      "id": "elem_81",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 627.616,
+                  "y": 32.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 671.896,
+                  "y": 39.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 671.896,
+                  "y": 43.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 627.616,
+                  "y": 36.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 627.616,
+              "y": 32.4
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 627.616,
+          "y": 32.4
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_5_2_ve-024"
+      }
+    },
+    {
+      "id": "elem_82",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 627.616,
+                  "y": 38.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 671.896,
+                  "y": 45.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 671.896,
+                  "y": 49.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 627.616,
+                  "y": 42.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 627.616,
+              "y": 38.4
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 627.616,
+          "y": 38.4
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "1",
+        "groupId": "beam_5_2_ve-024"
+      }
+    },
+    {
+      "id": "elem_83",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 685.37604,
+                  "y": 48.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 729.656,
+                  "y": 55.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 729.656,
+                  "y": 59.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 685.37604,
+                  "y": 52.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 685.37604,
+              "y": 48.4
+            },
+            "width": 44.27997,
+            "height": 11.200001
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 685.37604,
+          "y": 48.4
+        },
+        "width": 44.27997,
+        "height": 11.200001
+      },
+      "metadata": {
+        "beamLevel": "0",
+        "groupId": "beam_5_3_ve-028"
+      }
+    },
+    {
+      "id": "elem_84",
+      "type": "BEAM",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawPath",
+          "path": {
+            "segments": [
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.MoveTo",
+                "point": {
+                  "x": 685.37604,
+                  "y": 54.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 729.656,
+                  "y": 61.600002
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 729.656,
+                  "y": 65.600006
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.LineTo",
+                "point": {
+                  "x": 685.37604,
+                  "y": 58.4
+                }
+              },
+              {
+                "type": "com.mecon.renderer.geometry.AbsolutePathSegment.Close"
+              }
+            ]
+          },
+          "bounds": {
+            "origin": {
+              "x": 685.37604,
+              "y": 54.4
+            },
+            "width": 44.27997,
+            "height": 11.200005
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 685.37604,
+          "y": 54.4
+        },
+        "width": 44.27997,
+        "height": 11.200005
+      },
+      "metadata": {
+        "beamLevel": "1",
+        "groupId": "beam_5_3_ve-028"
+      }
+    }
+  ],
+  "bounds": {
+    "origin": {
+      "x": 63.359993,
+      "y": 32.399998
+    },
+    "width": 714.13605,
+    "height": 68.8
+  },
+  "firstSystem": 0,
+  "lastSystem": 0,
+  "firstMeasure": 1,
+  "lastMeasure": 6
+}

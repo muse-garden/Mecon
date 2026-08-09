@@ -1,0 +1,1746 @@
+# Test: Complex Key Signatures
+# Tests mid-score key signature changes covering:
+#   - Dramatic sharp↔flat jumps; double sharps (##), double flats (bb), naturals (♮)
+#   - Gradual sharp additions   (多升号): C→G→D→A   (0→1→2→3♯)
+#   - Gradual sharp removals    (少升号): A→D→G→C   (3→2→1→0♯)
+#   - Gradual flat additions    (多降号): C→F→Bb→Eb (0→1→2→3♭)
+#   - Gradual flat removals     (少降号): Eb→Bb→F→C (3→2→1→0♭)
+#
+# ── Section 1 (M1-12): sharp↔flat jumps + chromatic accidentals ────────────
+#   M1-2:  E major   (4♯)  ─┐
+#   M3-4:  Ab major  (4♭)  ←┘ sharp→flat
+#   M5-6:  B major   (5♯)  ←  flat→sharp
+#   M7-8:  Bb major  (2♭)  ←  sharp→flat
+#   M9-10: A major   (3♯)  ←  flat→sharp
+#   M11-12:Eb major  (3♭)  ←  sharp→flat
+#
+# ── Section 2 (M13-28): stepwise modulations along the circle of fifths ─────
+#   M13:   C major   (0)   reset                   (多升号 anchor)
+#   M14:   G major   (1♯)  +1♯ (F#)
+#   M15:   D major   (2♯)  +1♯ (C#)
+#   M16:   A major   (3♯)  +1♯ (G#)
+#   M17:   A major   (3♯)  continues               (少升号 anchor)
+#   M18:   D major   (2♯)  -1♯
+#   M19:   G major   (1♯)  -1♯
+#   M20:   C major   (0)   -1♯  back to C
+#   M21:   C major   (0)   continues               (多降号 anchor)
+#   M22:   F major   (1♭)  +1♭ (Bb)
+#   M23:   Bb major  (2♭)  +1♭ (Eb)
+#   M24:   Eb major  (3♭)  +1♭ (Ab)
+#   M25:   Eb major  (3♭)  continues               (少降号 anchor)
+#   M26:   Bb major  (2♭)  -1♭
+#   M27:   F major   (1♭)  -1♭
+#   M28:   C major   (0)   -1♭  back to C
+
+id: "test-key-signatures-001"
+
+metadata:
+  title: "Complex Key Signatures"
+  subtitle: "Double sharps, double flats, naturals, and sharp/flat modulations"
+  composer: "Test"
+  createdAt: 1748100000000
+  modifiedAt: 1748100000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 4
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+  - number: 8
+  - number: 9
+  - number: 10
+  - number: 11
+  - number: 12
+  - number: 13
+  - number: 14
+  - number: 15
+  - number: 16
+  - number: 17
+  - number: 18
+  - number: 19
+  - number: 20
+  - number: 21
+  - number: 22
+  - number: 23
+  - number: 24
+  - number: 25
+  - number: 26
+  - number: 27
+  - number: 28
+
+pitchTracks:
+  "pt-main":
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # ── Measure 1: E major — scale fragment (E4 F#4 G#4 A4) ─────────────────
+      - id: "pe-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0   # E4
+      - id: "pe-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 1   # F#4  (in key — no accidental shown)
+      - id: "pe-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 1   # G#4  (in key — no accidental shown)
+      - id: "pe-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0   # A4
+
+      # ── Measure 2: E major — double sharp & natural ──────────────────────────
+      # F##4 (×): key has F#, raising by one more semitone needs ×
+      # C♮4:      key has C#, lowering back to white key needs ♮
+      - id: "pe-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 2   # F##4 — DOUBLE SHARP
+      - id: "pe-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 1   # G#4  (in key)
+      - id: "pe-007"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 1   # D#4  (in key)
+      - id: "pe-008"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0   # C♮4 — NATURAL (key has C#)
+
+      # ── Measure 3: Ab major — scale fragment (Ab4 Bb4 C5 Db5) ───────────────
+      - id: "pe-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: -1  # Ab4  (in key)
+      - id: "pe-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -1  # Bb4  (in key)
+      - id: "pe-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+      - id: "pe-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: -1  # Db5  (in key)
+
+      # ── Measure 4: Ab major — double flat ×2 ────────────────────────────────
+      # Ebb4: key has Eb, lowering by one more semitone needs bb
+      # Bbb4: key has Bb, lowering by one more semitone needs bb
+      - id: "pe-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: -2  # Ebb4 — DOUBLE FLAT
+      - id: "pe-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4   (natural in Ab major)
+      - id: "pe-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -2  # Bbb4 — DOUBLE FLAT
+      - id: "pe-016"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4   (natural in Ab major)
+
+      # ── Measure 5: B major — scale fragment (B4 C#5 D#5 E5) ─────────────────
+      - id: "pe-017"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0   # B4
+      - id: "pe-018"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 1   # C#5  (in key)
+      - id: "pe-019"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 1   # D#5  (in key)
+      - id: "pe-020"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0   # E5
+
+      # ── Measure 6: B major — natural & double sharp ──────────────────────────
+      # F♮4:  key has F#, white-key F needs ♮
+      # C##5: key has C#, raising by one more semitone needs ×
+      - id: "pe-021"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F♮4 — NATURAL (key has F#)
+      - id: "pe-022"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 1   # A#4  (in key)
+      - id: "pe-023"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 2   # C##5 — DOUBLE SHARP
+      - id: "pe-024"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 1   # G#4  (in key)
+
+      # ── Measure 7: Bb major — scale fragment (Bb4 C5 D5 Eb5) ────────────────
+      - id: "pe-025"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -1  # Bb4  (in key)
+      - id: "pe-026"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+      - id: "pe-027"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0   # D5
+      - id: "pe-028"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: -1  # Eb5  (in key)
+
+      # ── Measure 8: Bb major — two naturals ──────────────────────────────────
+      # B♮4: key has Bb, white-key B needs ♮
+      # E♮5: key has Eb, white-key E needs ♮
+      - id: "pe-029"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0   # B♮4 — NATURAL (key has Bb)
+      - id: "pe-030"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: -1  # Eb5  (in key)
+      - id: "pe-031"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0   # E♮5 — NATURAL (key has Eb)
+      - id: "pe-032"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 10
+            chromaticOffset: 0   # F5   (natural in Bb major)
+
+      # ── Measure 9: A major — scale fragment (A4 B4 C#5 D5) ──────────────────
+      - id: "pe-033"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0   # A4
+      - id: "pe-034"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0   # B4
+      - id: "pe-035"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 1   # C#5  (in key)
+      - id: "pe-036"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0   # D5
+
+      # ── Measure 10: A major — double sharp & natural ─────────────────────────
+      # G##4: key has G#, raising by one more semitone needs ×
+      # C♮5:  key has C#, white-key C needs ♮
+      - id: "pe-037"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 2   # G##4 — DOUBLE SHARP
+      - id: "pe-038"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 1   # F#4  (in key)
+      - id: "pe-039"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C♮5 — NATURAL (key has C#)
+      - id: "pe-040"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0   # E5
+
+      # ── Measure 11: Eb major — scale fragment (Eb4 F4 G4 Ab4) ───────────────
+      - id: "pe-041"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: -1  # Eb4  (in key)
+      - id: "pe-042"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4
+      - id: "pe-043"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4
+      - id: "pe-044"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: -1  # Ab4  (in key)
+
+      # ── Measure 12: Eb major — double flat & natural ─────────────────────────
+      # Bbb4: key has Bb, lowering by one more semitone needs bb
+      # A♮4:  key has Ab, white-key A needs ♮
+      - id: "pe-045"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -2  # Bbb4 — DOUBLE FLAT
+      - id: "pe-046"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+      - id: "pe-047"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0   # A♮4 — NATURAL (key has Ab)
+      - id: "pe-048"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0   # D4
+
+      # ── Section 2: Gradual stepwise modulations (M13-28, whole notes) ───────
+
+      # ── M13: C major (0♯/♭) — reset; 多升号 anchor ──────────────────────────
+      - id: "pe-049"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0   # C4
+
+      # ── M14: G major (1♯: F#) — 多升号 +1♯ ──────────────────────────────────
+      - id: "pe-050"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4
+
+      # ── M15: D major (2♯: F# C#) — 多升号 +1♯ ───────────────────────────────
+      - id: "pe-051"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0   # D4
+
+      # ── M16: A major (3♯: F# C# G#) — 多升号 +1♯ ────────────────────────────
+      - id: "pe-052"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0   # A4
+
+      # ── M17: A major (3♯) continues — 少升号 anchor ──────────────────────────
+      - id: "pe-053"
+        onset:
+          components:
+            - numerator: 17
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 1   # C#5 (shows key sig note in use)
+
+      # ── M18: D major (2♯) — 少升号 -1♯ ──────────────────────────────────────
+      - id: "pe-054"
+        onset:
+          components:
+            - numerator: 18
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0   # D4
+
+      # ── M19: G major (1♯) — 少升号 -1♯ ──────────────────────────────────────
+      - id: "pe-055"
+        onset:
+          components:
+            - numerator: 19
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4
+
+      # ── M20: C major (0) — 少升号 -1♯, back to C ─────────────────────────────
+      - id: "pe-056"
+        onset:
+          components:
+            - numerator: 20
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+
+      # ── M21: C major (0) continues — 多降号 anchor ───────────────────────────
+      - id: "pe-057"
+        onset:
+          components:
+            - numerator: 21
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0   # C4
+
+      # ── M22: F major (1♭: Bb) — 多降号 +1♭ ──────────────────────────────────
+      - id: "pe-058"
+        onset:
+          components:
+            - numerator: 22
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4
+
+      # ── M23: Bb major (2♭: Bb Eb) — 多降号 +1♭ ──────────────────────────────
+      - id: "pe-059"
+        onset:
+          components:
+            - numerator: 23
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -1  # Bb4
+
+      # ── M24: Eb major (3♭: Bb Eb Ab) — 多降号 +1♭ ───────────────────────────
+      - id: "pe-060"
+        onset:
+          components:
+            - numerator: 24
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: -1  # Eb4
+
+      # ── M25: Eb major (3♭) continues — 少降号 anchor ─────────────────────────
+      - id: "pe-061"
+        onset:
+          components:
+            - numerator: 25
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: -1  # Ab4 (shows key sig note in use)
+
+      # ── M26: Bb major (2♭) — 少降号 -1♭ ─────────────────────────────────────
+      - id: "pe-062"
+        onset:
+          components:
+            - numerator: 26
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: -1  # Bb4
+
+      # ── M27: F major (1♭) — 少降号 -1♭ ──────────────────────────────────────
+      - id: "pe-063"
+        onset:
+          components:
+            - numerator: 27
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4
+
+      # ── M28: C major (0) — 少降号 -1♭, back to C ─────────────────────────────
+      - id: "pe-064"
+        onset:
+          components:
+            - numerator: 28
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+
+voiceTracks:
+  "vt-main":
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # ── Measure 1 ────────────────────────────────────────────────────────────
+      - id: "ve-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-001"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-002"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-003"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-004"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 2 ────────────────────────────────────────────────────────────
+      - id: "ve-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-005"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-006"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-007"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-007"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-008"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-008"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 3 ────────────────────────────────────────────────────────────
+      - id: "ve-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-009"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-010"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-011"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-012"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 4 ────────────────────────────────────────────────────────────
+      - id: "ve-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-013"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-014"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-015"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-016"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-016"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 5 ────────────────────────────────────────────────────────────
+      - id: "ve-017"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-017"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-018"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-018"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-019"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-019"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-020"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-020"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 6 ────────────────────────────────────────────────────────────
+      - id: "ve-021"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-021"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-022"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-022"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-023"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-023"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-024"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-024"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 7 ────────────────────────────────────────────────────────────
+      - id: "ve-025"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-025"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-026"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-026"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-027"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-027"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-028"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-028"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 8 ────────────────────────────────────────────────────────────
+      - id: "ve-029"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-029"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-030"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-030"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-031"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-031"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-032"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-032"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 9 ────────────────────────────────────────────────────────────
+      - id: "ve-033"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-033"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-034"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-034"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-035"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-035"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-036"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-036"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 10 ───────────────────────────────────────────────────────────
+      - id: "ve-037"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-037"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-038"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-038"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-039"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-039"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-040"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-040"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 11 ───────────────────────────────────────────────────────────
+      - id: "ve-041"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-041"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-042"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-042"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-043"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-043"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-044"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-044"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Measure 12 ───────────────────────────────────────────────────────────
+      - id: "ve-045"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-045"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-046"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-046"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-047"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-047"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-048"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-048"
+        duration:
+          base: QUARTER
+          dots: 0
+      # ── Section 2: M13-28 whole notes ────────────────────────────────────────
+      - id: "ve-049"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-049"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-050"
+        onset:
+          components:
+            - numerator: 14
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-050"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-051"
+        onset:
+          components:
+            - numerator: 15
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-051"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-052"
+        onset:
+          components:
+            - numerator: 16
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-052"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-053"
+        onset:
+          components:
+            - numerator: 17
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-053"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-054"
+        onset:
+          components:
+            - numerator: 18
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-054"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-055"
+        onset:
+          components:
+            - numerator: 19
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-055"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-056"
+        onset:
+          components:
+            - numerator: 20
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-056"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-057"
+        onset:
+          components:
+            - numerator: 21
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-057"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-058"
+        onset:
+          components:
+            - numerator: 22
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-058"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-059"
+        onset:
+          components:
+            - numerator: 23
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-059"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-060"
+        onset:
+          components:
+            - numerator: 24
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-060"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-061"
+        onset:
+          components:
+            - numerator: 25
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-061"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-062"
+        onset:
+          components:
+            - numerator: 26
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-062"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-063"
+        onset:
+          components:
+            - numerator: 27
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-063"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-064"
+        onset:
+          components:
+            - numerator: 28
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-064"
+        duration:
+          base: WHOLE
+          dots: 0
+
+staffTracks:
+  "st-treble":
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 4
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  events:
+    # M3: E major (4♯) → Ab major (4♭)  [sharp to flat]
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 3
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 8
+        mode: MAJOR
+    # M5: Ab major (4♭) → B major (5♯)  [flat to sharp]
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 5
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 11
+        mode: MAJOR
+    # M7: B major (5♯) → Bb major (2♭)  [sharp to flat]
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 7
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 10
+        mode: MAJOR
+    # M9: Bb major (2♭) → A major (3♯)  [flat to sharp]
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 9
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 9
+        mode: MAJOR
+    # M11: A major (3♯) → Eb major (3♭)  [sharp to flat]
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 11
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 3
+        mode: MAJOR
+    # ── Section 2: gradual stepwise modulations ──────────────────────────────
+    # M13: reset to C major (0♯/♭)
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 13
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 0
+        mode: MAJOR
+    # M14: C → G major (0 → 1♯)  多升号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 14
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 7
+        mode: MAJOR
+    # M15: G → D major (1♯ → 2♯)  多升号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 15
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 2
+        mode: MAJOR
+    # M16: D → A major (2♯ → 3♯)  多升号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 16
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 9
+        mode: MAJOR
+    # M18: A → D major (3♯ → 2♯)  少升号 -1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 18
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 2
+        mode: MAJOR
+    # M19: D → G major (2♯ → 1♯)  少升号 -1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 19
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 7
+        mode: MAJOR
+    # M20: G → C major (1♯ → 0)  少升号 -1, back to C
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 20
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 0
+        mode: MAJOR
+    # M22: C → F major (0 → 1♭)  多降号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 22
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 5
+        mode: MAJOR
+    # M23: F → Bb major (1♭ → 2♭)  多降号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 23
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 10
+        mode: MAJOR
+    # M24: Bb → Eb major (2♭ → 3♭)  多降号 +1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 24
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 3
+        mode: MAJOR
+    # M26: Eb → Bb major (3♭ → 2♭)  少降号 -1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 26
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 10
+        mode: MAJOR
+    # M27: Bb → F major (2♭ → 1♭)  少降号 -1
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 27
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 5
+        mode: MAJOR
+    # M28: F → C major (1♭ → 0)  少降号 -1, back to C
+    - type: keySignatureChange
+      onset:
+        components:
+          - numerator: 28
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      keySignature:
+        root: 0
+        mode: MAJOR

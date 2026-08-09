@@ -1,0 +1,837 @@
+# Test: Multi-Staff (Grand Staff/Piano) Rendering
+# Tests rendering of multiple staves in one part (piano-style)
+
+id: "test-grand-staff-001"
+
+metadata:
+  title: "Grand Staff Test"
+  subtitle: "Piano/multi-staff rendering"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+
+pitchTracks:
+  # Right hand (treble clef)
+  pt-rh:
+    id: "pt-rh"
+    name: "Right Hand"
+    events:
+      # Measure 1: Simple melody
+      - id: "pe-rh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-rh-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-rh-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-rh-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 14
+            chromaticOffset: 0
+
+      # Measure 2: Chords
+      - id: "pe-rh-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-rh-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 10
+            chromaticOffset: 0
+          - diatonicSteps: 12
+            chromaticOffset: 0
+          - diatonicSteps: 14
+            chromaticOffset: 0
+
+      # Measure 3: Running eighths
+      - id: "pe-rh-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-rh-008"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0
+      - id: "pe-rh-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-rh-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 10
+            chromaticOffset: 0
+      - id: "pe-rh-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-rh-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitches:
+          - diatonicSteps: 12
+            chromaticOffset: 0
+      - id: "pe-rh-013"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitches:
+          - diatonicSteps: 13
+            chromaticOffset: 0
+      - id: "pe-rh-014"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitches:
+          - diatonicSteps: 14
+            chromaticOffset: 0
+
+      # Measure 4: Final chord
+      - id: "pe-rh-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+          - diatonicSteps: 14
+            chromaticOffset: 0
+
+  # Left hand (bass clef)
+  pt-lh:
+    id: "pt-lh"
+    name: "Left Hand"
+    events:
+      # Measure 1: Bass notes
+      - id: "pe-lh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-lh-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # Measure 2: Alberti bass pattern
+      - id: "pe-lh-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-lh-004"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-lh-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-007"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-lh-008"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-009"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-lh-010"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # Measure 3: Walking bass
+      - id: "pe-lh-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-lh-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+      - id: "pe-lh-013"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-014"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: -1
+            chromaticOffset: 0
+
+      # Measure 4: Final chord
+      - id: "pe-lh-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+          - diatonicSteps: 0
+            chromaticOffset: 0
+
+voiceTracks:
+  # Right hand voice
+  vt-rh:
+    id: "vt-rh"
+    name: "Right Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-rh"
+    events:
+      # Measure 1
+      - id: "ve-rh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-001"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-rh-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-rh-002"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-rh-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-rh-003"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-rh-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-rh-004"
+        duration:
+          base: QUARTER
+          dots: 0
+
+      # Measure 2
+      - id: "ve-rh-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-005"
+        duration:
+          base: HALF
+          dots: 0
+      - id: "ve-rh-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-rh-006"
+        duration:
+          base: HALF
+          dots: 0
+
+      # Measure 3 (beamed eighths)
+      - id: "ve-rh-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-007"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-rh-008"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-rh-008"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-009"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-rh-009"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-010"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-rh-010"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-rh-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-rh-011"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-rh-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitchEventId: "pe-rh-012"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-013"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitchEventId: "pe-rh-013"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-014"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitchEventId: "pe-rh-014"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 4
+      - id: "ve-rh-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-015"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  # Left hand voice
+  vt-lh:
+    id: "vt-lh"
+    name: "Left Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-lh"
+    events:
+      # Measure 1
+      - id: "ve-lh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-001"
+        duration:
+          base: HALF
+          dots: 0
+      - id: "ve-lh-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-lh-002"
+        duration:
+          base: HALF
+          dots: 0
+
+      # Measure 2 (beamed eighths - Alberti bass)
+      - id: "ve-lh-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-003"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-lh-004"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-lh-004"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-005"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-lh-005"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-006"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-lh-006"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-lh-007"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-lh-007"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-lh-008"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitchEventId: "pe-lh-008"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-009"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitchEventId: "pe-lh-009"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-010"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitchEventId: "pe-lh-010"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 3
+      - id: "ve-lh-011"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-011"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-lh-012"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-lh-012"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-lh-013"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-lh-013"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-lh-014"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-lh-014"
+        duration:
+          base: QUARTER
+          dots: 0
+
+      # Measure 4
+      - id: "ve-lh-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-015"
+        duration:
+          base: WHOLE
+          dots: 0
+
+staffTracks:
+  # Treble staff (right hand)
+  st-treble:
+    id: "st-treble"
+    name: "Right Hand"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-rh"
+
+  # Bass staff (left hand)
+  st-bass:
+    id: "st-bass"
+    name: "Left Hand"
+    clef: BASS
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-lh"
+
+staffGroups:
+  - id: "sg-piano"
+    bracket: BRACE
+    label: "Piano"
+    abbreviation: "Pno."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-treble"
+      - type: staff
+        staffId: "st-bass"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

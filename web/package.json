@@ -1,0 +1,24 @@
+{
+  "name": "mecon-web-packages",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "prepare:engine": "node ./scripts/prepare-engine.mjs",
+    "prepare:engine:full": "node ./scripts/prepare-engine.mjs --with-npm-install",
+    "build:pages": "node ./scripts/build-pages.mjs",
+    "dev:free-practice": "npm run dev --workspace @mecon/free-practice-web",
+    "build:free-practice": "npm run build --workspace @mecon/free-practice-web",
+    "build:e2e": "npm run build --workspace @mecon/free-practice-web -- --mode e2e",
+    "test": "node --import ./scripts/workspace-register.mjs --test packages/frozen-score/test packages/web-renderer/test apps/free-practice/test",
+    "test:engine": "npm run prepare:engine && npm test",
+    "test:e2e": "node --import ./scripts/workspace-register.mjs apps/free-practice/scripts/create-e2e-fixture.mjs && npm run build:e2e && node ./scripts/run-playwright.mjs --reporter=line",
+    "test:e2e:soak": "node --import ./scripts/workspace-register.mjs apps/free-practice/scripts/create-e2e-fixture.mjs && npm run build:e2e && node ./scripts/run-playwright.mjs --soak"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

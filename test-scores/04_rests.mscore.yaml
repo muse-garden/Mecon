@@ -1,0 +1,380 @@
+# Test: Rest Rendering
+# Tests rendering of various rest durations and patterns
+
+id: "test-rests-001"
+
+metadata:
+  title: "Rest Test"
+  subtitle: "Various rest durations"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # Measure 1: Whole rest
+      - id: "pe-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches: []
+
+      # Measure 2: Half rests
+      - id: "pe-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches: []
+      - id: "pe-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches: []
+
+      # Measure 3: Quarter note + quarter rest + quarter note + quarter rest
+      - id: "pe-004"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-005"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches: []
+      - id: "pe-006"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches: []
+
+      # Measure 4: Mixed rhythms with eighth and sixteenth rests
+      - id: "pe-008"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-009"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches: []
+      - id: "pe-010"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-011"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-012"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches: []
+      - id: "pe-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitches: []
+      - id: "pe-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # Measure 1: Whole rest
+      - id: "ve-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-001"
+        duration:
+          base: WHOLE
+          dots: 0
+
+      # Measure 2: Two half rests
+      - id: "ve-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-002"
+        duration:
+          base: HALF
+          dots: 0
+      - id: "ve-003"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-003"
+        duration:
+          base: HALF
+          dots: 0
+
+      # Measure 3: Note-rest-note-rest pattern
+      - id: "ve-004"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-004"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-005"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-005"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-006"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-006"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-007"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-007"
+        duration:
+          base: QUARTER
+          dots: 0
+
+      # Measure 4: Mixed eighth note/rest patterns
+      - id: "ve-008"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-008"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-009"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-009"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-010"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-010"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-011"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-011"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-012"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-012"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-013"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitchEventId: "pe-013"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-014"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitchEventId: "pe-014"
+        duration:
+          base: EIGHTH
+          dots: 0
+      - id: "ve-015"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitchEventId: "pe-015"
+        duration:
+          base: EIGHTH
+          dots: 0
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

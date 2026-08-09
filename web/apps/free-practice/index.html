@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171a21" />
+    <title>Mecon 自由练习</title>
+    <link rel="icon" type="image/png" href="%BASE_URL%logo.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%logo.png" />
+    <style>
+      .boot-loading { min-height: 100vh; display: grid; place-items: center; background: #171a21; color: #dbe4f3; font: 14px/1.5 system-ui, sans-serif; }
+      .boot-loading__content { display: grid; justify-items: center; gap: 14px; }
+      .boot-loading__spinner { width: 34px; height: 34px; border: 3px solid #394357; border-top-color: #8db8ff; border-radius: 50%; animation: boot-spin .8s linear infinite; }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .boot-loading__spinner { animation-duration: 1.8s; } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot-loading" role="status" aria-live="polite">
+        <div class="boot-loading__content">
+          <span class="boot-loading__spinner" aria-hidden="true"></span>
+          <span>正在加载自由练习…</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.jsx"></script>
+  </body>
+</html>

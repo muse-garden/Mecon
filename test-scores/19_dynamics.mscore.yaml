@@ -1,0 +1,610 @@
+# Test: Dynamics & Hairpins
+# Tests:
+#   M1) p (below) · mf (above) — basic placement with two voices.
+#   M2) pp (below, beat 0) · crescendo WEDGE (beat 0–3):
+#       START of hairpin coincides with pp → nudge test (same row expected).
+#   M3) mp (below, beat 0) · ff (below, beat 2) + diminuendo WEDGE (beat 2–3):
+#       START of dim hairpin coincides with ff → nudge test.
+#   M4) fp (below, beat 0) · crescendo WEDGE (beat 0–2) · sfz (below, beat 2):
+#       START of cresc coincides with fp AND END coincides with sfz → both-ends nudge.
+#   M5) cresc. TEXT_DASHED — text + dashed line co-baseline check.
+#   M6) dim.  TEXT_DASHED — mirrors M5 for diminuendo.
+#
+# Two voices per staff so vertical clearance between note content and
+# dynamics bands can be verified.
+
+id: "test-dynamics-001"
+
+metadata:
+  title: "Dynamics Test"
+  subtitle: "p · mf · pp · mp · ff · fp · sfz · cresc./dim. wedge & text-dashed"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 72.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+
+pitchTracks:
+  pt-v1:
+    id: "pt-v1"
+    name: "Voice 1 Pitches"
+    events:
+      # M1: B4 C5 D5 E5
+      - id: "pe-1-0"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]
+      - id: "pe-1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]
+      - id: "pe-1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      - id: "pe-1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      # M2: C5 D5 E5 F5
+      - id: "pe-2-0"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]
+      - id: "pe-2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      - id: "pe-2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      - id: "pe-2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]
+      # M3: G5 F5 E5 D5
+      - id: "pe-3-0"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]
+      - id: "pe-3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]
+      - id: "pe-3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      - id: "pe-3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      # M4: B4 C5 D5 E5
+      - id: "pe-4-0"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]
+      - id: "pe-4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]
+      - id: "pe-4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      - id: "pe-4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      # M5: E5 D5 C5 B4
+      - id: "pe-5-0"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      - id: "pe-5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      - id: "pe-5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]
+      - id: "pe-5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]
+      # M6: C5 D5 E5 F5
+      - id: "pe-6-0"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]
+      - id: "pe-6-1"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]
+      - id: "pe-6-2"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      - id: "pe-6-3"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]
+
+  pt-v2:
+    id: "pt-v2"
+    name: "Voice 2 Pitches"
+    events:
+      # M1: C4 D4 E4 F4
+      - id: "pe2-1-0"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe2-1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe2-1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      # M2: D4 E4 F4 G4
+      - id: "pe2-2-0"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe2-2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe2-2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+      # M3: G4 F4 E4 D4
+      - id: "pe2-3-0"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+      - id: "pe2-3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe2-3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      # M4: C4 D4 E4 F4
+      - id: "pe2-4-0"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      - id: "pe2-4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe2-4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      # M5: F4 E4 D4 C4
+      - id: "pe2-5-0"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe2-5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe2-5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }]
+      # M6: D4 E4 F4 G4
+      - id: "pe2-6-0"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 1, chromaticOffset: 0 }]
+      - id: "pe2-6-1"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]
+      - id: "pe2-6-2"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]
+      - id: "pe2-6-3"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]
+
+voiceTracks:
+  vt-v1:
+    id: "vt-v1"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-v1"
+    events:
+      - id: "ve-1-0"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-1-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-1-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-1-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-1-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-2-0"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-2-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-2-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-2-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-2-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-3-0"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-3-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-3-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-3-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-3-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-4-0"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-4-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-4-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-4-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-4-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-5-0"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-5-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-5-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-5-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-5-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-6-0"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-6-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-6-1"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-6-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-6-2"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-6-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve-6-3"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-6-3"
+        duration: { base: QUARTER, dots: 0 }
+
+  vt-v2:
+    id: "vt-v2"
+    name: "Voice 2"
+    voiceNumber: 2
+    pitchTrackId: "pt-v2"
+    events:
+      - id: "ve2-1-0"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-1-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-1-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-1-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-1-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-2-0"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-2-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-2-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-2-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-2-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-3-0"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-3-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-3-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-3-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-3-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-4-0"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-4-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-4-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-4-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-4-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-5-0"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-5-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-5-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-5-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-5-3"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-6-0"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe2-6-0"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-6-1"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe2-6-1"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-6-2"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe2-6-2"
+        duration: { base: QUARTER, dots: 0 }
+      - id: "ve2-6-3"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe2-6-3"
+        duration: { base: QUARTER, dots: 0 }
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-v1"
+      - "vt-v2"
+    attachments:
+      # M1: p below (beat 0), mf above (beat 0)
+      - type: dynamicMark
+        id: "dyn-p"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: P
+        placement: BELOW
+        controllerEventId: "ctl-1"
+      - type: dynamicMark
+        id: "dyn-mf"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: MF
+        placement: ABOVE
+        controllerEventId: "ctl-2"
+      # M2: pp below (beat 0) + crescendo WEDGE (beats 0–3)
+      - type: dynamicMark
+        id: "dyn-pp"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: PP
+        placement: BELOW
+        controllerEventId: "ctl-3"
+      - type: hairpin
+        id: "hp-cresc"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        direction: CRESCENDO
+        style: WEDGE
+        placement: BELOW
+        controllerStartId: "ctl-4"
+        controllerEndId: "ctl-5"
+      # M3: mp below (beat 0) · ff below (beat 2) + diminuendo WEDGE (beats 2–3)
+      - type: dynamicMark
+        id: "dyn-mp"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: MP
+        placement: BELOW
+        controllerEventId: "ctl-6"
+      - type: dynamicMark
+        id: "dyn-ff"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        level: FF
+        placement: BELOW
+        controllerEventId: "ctl-7"
+      - type: hairpin
+        id: "hp-dim"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        direction: DIMINUENDO
+        style: WEDGE
+        placement: BELOW
+        controllerStartId: "ctl-8"
+        controllerEndId: "ctl-9"
+      # M4: fp (beat 0) · cresc WEDGE (beat 0→2) · sfz (beat 2)
+      #   START of hairpin == fp onset  → start-nudge
+      #   END   of hairpin == sfz onset → end-nudge
+      - type: dynamicMark
+        id: "dyn-fp"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: FP
+        placement: BELOW
+        controllerEventId: "ctl-10"
+      - type: hairpin
+        id: "hp-cresc-m4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        direction: CRESCENDO
+        style: WEDGE
+        placement: BELOW
+        controllerStartId: "ctl-11"
+        controllerEndId: "ctl-12"
+      - type: dynamicMark
+        id: "dyn-sfz"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        level: SFZ
+        placement: BELOW
+        controllerEventId: "ctl-13"
+      # M5: cresc. text + dashed line (TEXT_DASHED), below
+      - type: hairpin
+        id: "hp-cresc-text"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        direction: CRESCENDO
+        style: TEXT_DASHED
+        placement: BELOW
+        controllerStartId: "ctl-14"
+        controllerEndId: "ctl-15"
+      # M6: dim. text + dashed line (TEXT_DASHED), below
+      - type: hairpin
+        id: "hp-dim-text"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        direction: DIMINUENDO
+        style: TEXT_DASHED
+        placement: BELOW
+        controllerStartId: "ctl-16"
+        controllerEndId: "ctl-17"
+
+controllerTracks:
+  ct-dynamics:
+    id: "ct-dynamics"
+    name: "Dynamics Controller"
+    scope:
+      staffIds: ["st-treble"]
+      voiceNumbers: []
+    events:
+      - id: "ctl-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: P
+      - id: "ctl-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: MF
+      - id: "ctl-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: PP
+      - id: "ctl-4"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: CRESCENDO
+      - id: "ctl-5"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        type: RAMP_END
+      - id: "ctl-6"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: MP
+      - id: "ctl-7"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: FF
+      - id: "ctl-8"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: DIMINUENDO
+      - id: "ctl-9"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        type: RAMP_END
+      - id: "ctl-10"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: FP
+      - id: "ctl-11"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: CRESCENDO
+      - id: "ctl-12"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        type: RAMP_END
+      - id: "ctl-13"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: SFZ
+      - id: "ctl-14"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: CRESCENDO
+      - id: "ctl-15"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        type: RAMP_END
+      - id: "ctl-16"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: DIMINUENDO
+      - id: "ctl-17"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        type: RAMP_END
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

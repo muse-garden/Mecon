@@ -1,0 +1,784 @@
+# Test: Tie Rendering (Extended Coverage)
+# Tests:
+#   1) Chord ties (full and partial)
+#   2) Cross-bar ties
+#   3) Multi-voice ties (each voice has independent ties)
+#   4) Let-ring (laissez vibrer) — ties with no target
+
+id: "test-ties-001"
+
+metadata:
+  title: "Tie Test"
+  subtitle: "Chord / cross-bar / multi-voice / let-ring"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+
+pitchTracks:
+  # ============================================================
+  # Voice 1 (upper) — chord ties, cross-bar ties, partial chord
+  # tie, full chord let-ring
+  # ============================================================
+  pt-v1:
+    id: "pt-v1"
+    name: "Upper Voice Pitches"
+    events:
+      # M1: C5 half / D5 quarter / E5 quarter (tied into M2)
+      - id: "pe-v1-m1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-v1-m1-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0
+      - id: "pe-v1-m1-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+
+      # M2: E5 quarter (tie target) / D5 quarter / C5 half
+      - id: "pe-v1-m2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-v1-m2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0
+      - id: "pe-v1-m2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+      # M3: C5 half / C5-E5-G5 chord half (full chord tie across bar)
+      - id: "pe-v1-m3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-v1-m3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+
+      # M4: C5-E5-G5 chord half (full chord tie target) /
+      #     C5-E5-G5 chord half (partial chord tie: only E5 → M5)
+      - id: "pe-v1-m4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-v1-m4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+
+      # M5: E5 half (target of partial chord tie) /
+      #     C5-E5-G5 chord half (LET-RING — all 3 pitches)
+      - id: "pe-v1-m5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-v1-m5-2"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+          - diatonicSteps: 11
+            chromaticOffset: 0
+
+  # ============================================================
+  # Voice 2 (lower) — independent cross-bar tie + syncopated tie
+  # chain, demonstrating multi-voice tie support
+  # ============================================================
+  pt-v2:
+    id: "pt-v2"
+    name: "Lower Voice Pitches"
+    events:
+      # M1: F3 whole
+      - id: "pe-v2-m1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+
+      # M2: F3 half / D3 quarter / E3 quarter (tied into M3)
+      - id: "pe-v2-m2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+      - id: "pe-v2-m2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: -6
+            chromaticOffset: 0
+      - id: "pe-v2-m2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+
+      # M3: E3 quarter (tie target) / F3 quarter / G3 half
+      - id: "pe-v2-m3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+      - id: "pe-v2-m3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+      - id: "pe-v2-m3-3"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # M4: Syncopated G3 tie chain — eighth+eighth+quarter, twice
+      - id: "pe-v2-m4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-v2-m4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-v2-m4-3"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-v2-m4-4"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches:
+          - diatonicSteps: -2
+            chromaticOffset: 0
+      - id: "pe-v2-m4-5"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitches:
+          - diatonicSteps: -2
+            chromaticOffset: 0
+      - id: "pe-v2-m4-6"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitches:
+          - diatonicSteps: -2
+            chromaticOffset: 0
+
+      # M5: G3 half (let-ring single pitch) / half rest
+      - id: "pe-v2-m5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+voiceTracks:
+  # ============================================================
+  # Voice 1
+  # ============================================================
+  vt-v1:
+    id: "vt-v1"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-v1"
+    events:
+      # M1: half / quarter / quarter (last tied into M2)
+      - id: "ve-v1-m1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v1-m1-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m1-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v1-m1-2"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m1-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-v1-m1-3"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: UP
+        # Cross-bar tie (single pitch, E5 quarter is last in M1)
+        ties:
+          - pitchIndex: 0
+
+      # M2
+      - id: "ve-v1-m2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v1-m2-1"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-v1-m2-2"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v1-m2-3"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+
+      # M3: C5 half / full chord (C5-E5-G5) half, tied across bar into M4
+      - id: "ve-v1-m3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v1-m3-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v1-m3-2"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+        # FULL CHORD CROSS-BAR TIE — all three pitches (chord is last in M3)
+        ties:
+          - pitchIndex: 0
+          - pitchIndex: 1
+          - pitchIndex: 2
+
+      # M4: full chord half (target) / chord half with partial tie (E5 only)
+      - id: "ve-v1-m4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v1-m4-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v1-m4-2"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+        # PARTIAL CHORD TIE across bar — only middle pitch (E5) ties (chord is last in M4)
+        ties:
+          - pitchIndex: 1
+
+      # M5: E5 half (partial tie target) / C5-E5-G5 chord half [LET-RING all 3]
+      - id: "ve-v1-m5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v1-m5-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+      - id: "ve-v1-m5-2"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v1-m5-2"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: UP
+        # FULL CHORD LET-RING
+        ties:
+          - pitchIndex: 0
+            isLetRing: true
+          - pitchIndex: 1
+            isLetRing: true
+          - pitchIndex: 2
+            isLetRing: true
+
+  # ============================================================
+  # Voice 2
+  # ============================================================
+  vt-v2:
+    id: "vt-v2"
+    name: "Voice 2"
+    voiceNumber: 2
+    pitchTrackId: "pt-v2"
+    events:
+      # M1: F3 whole
+      - id: "ve-v2-m1-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v2-m1-1"
+        duration:
+          base: WHOLE
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+
+      # M2: F3 half / D3 quarter / E3 quarter (tied across bar, last in M2)
+      - id: "ve-v2-m2-1"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v2-m2-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+      - id: "ve-v2-m2-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v2-m2-2"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+      - id: "ve-v2-m2-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-v2-m2-3"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        # Cross-bar tie in Voice 2 — E3 is last in M2, M3 starts with E3
+        ties:
+          - pitchIndex: 0
+
+      # M3
+      - id: "ve-v2-m3-1"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v2-m3-1"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+      - id: "ve-v2-m3-2"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-v2-m3-2"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+      - id: "ve-v2-m3-3"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-v2-m3-3"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+
+      # M4: Syncopated tie chain in Voice 2 (independent of Voice 1's chord tie)
+      - id: "ve-v2-m4-1"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v2-m4-1"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        ties:
+          - pitchIndex: 0
+      - id: "ve-v2-m4-2"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-v2-m4-2"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        ties:
+          - pitchIndex: 0
+      - id: "ve-v2-m4-3"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-v2-m4-3"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+      - id: "ve-v2-m4-4"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-v2-m4-4"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        ties:
+          - pitchIndex: 0
+      - id: "ve-v2-m4-5"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitchEventId: "pe-v2-m4-5"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        ties:
+          - pitchIndex: 0
+      - id: "ve-v2-m4-6"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitchEventId: "pe-v2-m4-6"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+
+      # M5: G3 half with LET-RING (single pitch)
+      - id: "ve-v2-m5-1"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-v2-m5-1"
+        duration:
+          base: HALF
+          dots: 0
+        rendering:
+          stemDirection: DOWN
+        ties:
+          - pitchIndex: 0
+            isLetRing: true
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-v1"
+      - "vt-v2"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

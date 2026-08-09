@@ -1,0 +1,869 @@
+# Test: Cross-Staff Note Rendering
+# Exercises rendering.crossStaffOffset on a piano grand staff:
+#  - M1: left hand beams UP onto the treble staff (bass -> treble), interleaved stems,
+#        overlapping the right hand's whole note (multi-voice on treble).
+#  - M2: right hand beams DOWN onto the bass staff (treble -> bass), interleaved stems,
+#        overlapping the left hand's whole note (multi-voice on bass).
+#  - M3: a same-staff tie (treble E5-E5, renders) and a cross-staff tie
+#        (LH B3 borrowed to treble -> B3 on bass: different staves => let-ring).
+#  - M4: a phrasing slur within the LH voice spanning the bass->treble boundary.
+
+id: "test-cross-staff-001"
+
+metadata:
+  title: "Cross-Staff Test"
+  subtitle: "crossStaffOffset rendering"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+
+pitchTracks:
+  pt-rh:
+    id: "pt-rh"
+    name: "Right Hand"
+    events:
+      # M1: whole note G5
+      - id: "pe-rh-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      # M2: descending 8ths C5 G4 E4 C4 (E4,C4 cross to bass)
+      - id: "pe-rh-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-rh-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-rh-4"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-rh-5"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-rh-6"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      # M3: E5 quarter (tied) -> E5 quarter, then half rest
+      - id: "pe-rh-7"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-rh-8"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-rh-9"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches: []
+      # M4: whole rest
+      - id: "pe-rh-10"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches: []
+      # M5: whole rest (treble shows only the borrowed 16ths)
+      - id: "pe-rh-11"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches: []
+
+  pt-lh:
+    id: "pt-lh"
+    name: "Left Hand"
+    events:
+      # M1: ascending 8ths C4 E4 G4 C5 (E4,G4,C5 cross to treble), then C3 half
+      - id: "pe-lh-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-lh-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-lh-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-lh-4"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-lh-5"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      # M2: whole note C2 (under borrowed treble->bass notes)
+      - id: "pe-lh-6"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -14
+            chromaticOffset: 0
+      # M3: B3 borrowed to treble (tied, let-ring) -> B3 bass, then C3 half
+      - id: "pe-lh-7"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -1
+            chromaticOffset: 0
+      - id: "pe-lh-8"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: -1
+            chromaticOffset: 0
+      - id: "pe-lh-9"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      # M4: G3 (slur start) -> C5 borrowed to treble (slur end), then C3 half
+      - id: "pe-lh-10"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-11"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-lh-12"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      # M5: 8 sixteenths alternating bass/treble (G3 G4 A3 A4 B3 B4 C4 C5), then C3 half
+      - id: "pe-lh-13"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-lh-14"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-lh-15"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitches:
+          - diatonicSteps: -2
+            chromaticOffset: 0
+      - id: "pe-lh-16"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-lh-17"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitches:
+          - diatonicSteps: -1
+            chromaticOffset: 0
+      - id: "pe-lh-18"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 5
+              denominator: 16
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-lh-19"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-lh-20"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-lh-21"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+
+voiceTracks:
+  vt-rh:
+    id: "vt-rh"
+    name: "Right Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-rh"
+    events:
+      - id: "ve-rh-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-1"
+        duration:
+          base: WHOLE
+          dots: 0
+      # M2 cross-staff beam (treble -> bass)
+      - id: "ve-rh-2"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-2"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-rh-3"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-rh-3"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-4"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-rh-4"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          crossStaffOffset: 1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-rh-5"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-rh-5"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          crossStaffOffset: 1
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-rh-6"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-rh-6"
+        duration:
+          base: HALF
+          dots: 0
+      # M3 same-staff tie E5 -> E5
+      - id: "ve-rh-7"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-7"
+        duration:
+          base: QUARTER
+          dots: 0
+        ties:
+          - pitchIndex: 0
+      - id: "ve-rh-8"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-rh-8"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-rh-9"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-rh-9"
+        duration:
+          base: HALF
+          dots: 0
+      # M4 whole rest
+      - id: "ve-rh-10"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-10"
+        duration:
+          base: WHOLE
+          dots: 0
+      # M5 whole rest
+      - id: "ve-rh-11"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-rh-11"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-lh:
+    id: "vt-lh"
+    name: "Left Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-lh"
+    events:
+      # M1 cross-staff beam (bass -> treble)
+      - id: "ve-lh-1"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-1"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-lh-2"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-lh-2"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-3"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-lh-3"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-4"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-lh-4"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-lh-5"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-lh-5"
+        duration:
+          base: HALF
+          dots: 0
+      # M2 whole note C2
+      - id: "ve-lh-6"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-6"
+        duration:
+          base: WHOLE
+          dots: 0
+      # M3 cross-staff tie -> let-ring
+      - id: "ve-lh-7"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-7"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+        ties:
+          - pitchIndex: 0
+      - id: "ve-lh-8"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-lh-8"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-lh-9"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-lh-9"
+        duration:
+          base: HALF
+          dots: 0
+      # M4 slur spanning bass -> treble
+      - id: "ve-lh-10"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-10"
+        duration:
+          base: QUARTER
+          dots: 0
+        slurStarts: 1
+      - id: "ve-lh-11"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-lh-11"
+        duration:
+          base: QUARTER
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+        slurEnds: 1
+      - id: "ve-lh-12"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-lh-12"
+        duration:
+          base: HALF
+          dots: 0
+      # M5: cross-staff 16th run, alternating staves every note (interleaved, 2-level beam)
+      - id: "ve-lh-13"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-lh-13"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-lh-14"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 16
+        pitchEventId: "pe-lh-14"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-15"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitchEventId: "pe-lh-15"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-16"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitchEventId: "pe-lh-16"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-17"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitchEventId: "pe-lh-17"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-18"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 5
+              denominator: 16
+        pitchEventId: "pe-lh-18"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-19"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitchEventId: "pe-lh-19"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-lh-20"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitchEventId: "pe-lh-20"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          crossStaffOffset: -1
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-lh-21"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-lh-21"
+        duration:
+          base: HALF
+          dots: 0
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Right Hand"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-rh"
+
+  st-bass:
+    id: "st-bass"
+    name: "Left Hand"
+    clef: BASS
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-lh"
+
+staffGroups:
+  - id: "sg-piano"
+    bracket: BRACE
+    label: "Piano"
+    abbreviation: "Pno."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-treble"
+      - type: staff
+        staffId: "st-bass"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

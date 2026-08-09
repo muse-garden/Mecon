@@ -1,0 +1,790 @@
+# Test: Pagination — Complex Multi-Staff Layout & Cross-Page Spanners
+#
+# Tests:
+#   1) Multi-line staff pagination with a complex staff header — nested brackets
+#      (outer SQUARE "Ensemble" spanning Violin + Piano, inner BRACE "Piano"
+#      spanning the grand staff) that must repeat correctly at the top of every
+#      system, on every page.
+#   2) Spanning elements that cross a PAGE boundary (not just a system boundary):
+#        - Violin:      tie   M8 → M9   (page 1 → page 2, "test-tie")
+#        - Violin:      slur  M16 → M17 (page 2 → page 3, "test-slur")
+#        - Piano RH:    crescendo hairpin + 8va bracket  M8 → M9
+#        - Piano RH:    diminuendo hairpin               M16 → M17
+#        - Piano LH:    8vb bracket                      M16 → M17
+#
+# ── Layout plan (forced breaks) ──────────────────────────────────────────────
+#   System breaks (line breaks):           before M5, M9, M13, M17
+#   Page breaks (also force a line break):       before M9, M17
+#   → Lines:  [M1-4] [M5-8] [M9-12] [M13-16] [M17-20]
+#   → Pages:  page 1 = [M1-4, M5-8] · page 2 = [M9-12, M13-16] · page 3 = [M17-20]
+#
+# Every cross-page spanner above starts in the LAST measure of one page (M8 or
+# M16) and resolves in the FIRST measure of the next page (M9 or M17).
+
+id: "test-pagination-complex-001"
+
+metadata:
+  title: "Pagination — Complex Layout & Cross-Page Spanners"
+  subtitle: "Nested staff groups · cross-page ties / slurs / hairpins / octave shifts"
+  composer: "Test"
+  createdAt: 1748300000000
+  modifiedAt: 1748300000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 72.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+  - number: 8
+  - number: 9
+  - number: 10
+  - number: 11
+  - number: 12
+  - number: 13
+  - number: 14
+  - number: 15
+  - number: 16
+  - number: 17
+  - number: 18
+  - number: 19
+  - number: 20
+
+# ── Pitch Tracks ──────────────────────────────────────────────────────────────
+
+pitchTracks:
+  pt-violin:
+    id: "pt-violin"
+    name: "Violin Pitches"
+    events:
+      # M1-4: ascending scale (one whole note per measure)
+      - id: "pe-vln-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+      - id: "pe-vln-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+      - id: "pe-vln-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+      - id: "pe-vln-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+
+      # M5-7
+      - id: "pe-vln-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-vln-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+      - id: "pe-vln-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+
+      # M8: G5 half (tie source) + G5 half — CROSS-PAGE TIE resolves at M9 beat 1
+      - id: "pe-vln-08a"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-vln-08b"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+
+      # M9 — first measure of page 2: tie target, then continues
+      - id: "pe-vln-09a"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-vln-09b"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+
+      # M10-15
+      - id: "pe-vln-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+      - id: "pe-vln-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }]  # C6
+      - id: "pe-vln-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+      - id: "pe-vln-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+      - id: "pe-vln-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-vln-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+
+      # M16: E5 half (slur opens) + F5 half — CROSS-PAGE SLUR phrase E5-F5-G5
+      - id: "pe-vln-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+      - id: "pe-vln-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+
+      # M17 — first measure of page 3: slur closes on the first note (G5)
+      - id: "pe-vln-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-vln-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+
+      # M18-20
+      - id: "pe-vln-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+      - id: "pe-vln-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }]  # C6
+      - id: "pe-vln-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+
+  pt-piano-rh:
+    id: "pt-piano-rh"
+    name: "Piano RH Pitches"
+    events:
+      - id: "pe-rh-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }]   # E4
+      - id: "pe-rh-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 3, chromaticOffset: 0 }]   # F4
+      - id: "pe-rh-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]   # G4
+      - id: "pe-rh-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 5, chromaticOffset: 0 }]   # A4
+      - id: "pe-rh-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]   # B4
+      - id: "pe-rh-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+      - id: "pe-rh-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+
+      # M8: E5 half + F5 half — CROSS-PAGE crescendo + 8va bracket open here
+      - id: "pe-rh-08a"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+      - id: "pe-rh-08b"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+
+      # M9: G5 half + A5 half — crescendo / 8va resolve here, on page 2
+      - id: "pe-rh-09a"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-rh-09b"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+
+      - id: "pe-rh-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+      - id: "pe-rh-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }]  # C6
+      - id: "pe-rh-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 13, chromaticOffset: 0 }]  # B5
+      - id: "pe-rh-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 12, chromaticOffset: 0 }]  # A5
+      - id: "pe-rh-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+      - id: "pe-rh-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+
+      # M16: E5 half + D5 half — CROSS-PAGE diminuendo opens here
+      - id: "pe-rh-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+      - id: "pe-rh-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+
+      # M17: C5 half + B4 half — diminuendo resolves here, on page 3
+      - id: "pe-rh-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+      - id: "pe-rh-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]   # B4
+
+      - id: "pe-rh-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 5, chromaticOffset: 0 }]   # A4
+      - id: "pe-rh-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]   # G4
+      - id: "pe-rh-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+
+  pt-piano-lh:
+    id: "pt-piano-lh"
+    name: "Piano LH Pitches"
+    events:
+      - id: "pe-lh-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+      - id: "pe-lh-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -6, chromaticOffset: 0 }]  # D3
+      - id: "pe-lh-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -5, chromaticOffset: 0 }]  # E3
+      - id: "pe-lh-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -4, chromaticOffset: 0 }]  # F3
+      - id: "pe-lh-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -3, chromaticOffset: 0 }]  # G3
+      - id: "pe-lh-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -2, chromaticOffset: 0 }]  # A3
+      - id: "pe-lh-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -1, chromaticOffset: 0 }]  # B3
+      - id: "pe-lh-08"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+      - id: "pe-lh-09"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -6, chromaticOffset: 0 }]  # D3
+      - id: "pe-lh-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -5, chromaticOffset: 0 }]  # E3
+      - id: "pe-lh-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -4, chromaticOffset: 0 }]  # F3
+      - id: "pe-lh-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -3, chromaticOffset: 0 }]  # G3
+      - id: "pe-lh-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -2, chromaticOffset: 0 }]  # A3
+      - id: "pe-lh-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -1, chromaticOffset: 0 }]  # B3
+      - id: "pe-lh-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+
+      # M16: G2 half + C3 half — CROSS-PAGE 8vb bracket opens here
+      - id: "pe-lh-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -10, chromaticOffset: 0 }] # G2
+      - id: "pe-lh-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+
+      # M17: D3 half + G2 half — 8vb bracket resolves here, on page 3
+      - id: "pe-lh-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -6, chromaticOffset: 0 }]  # D3
+      - id: "pe-lh-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -10, chromaticOffset: 0 }] # G2
+
+      - id: "pe-lh-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+      - id: "pe-lh-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -10, chromaticOffset: 0 }] # G2
+      - id: "pe-lh-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]  # C3
+
+# ── Voice Tracks ──────────────────────────────────────────────────────────────
+
+voiceTracks:
+  vt-violin:
+    id: "vt-violin"
+    name: "Violin"
+    voiceNumber: 1
+    pitchTrackId: "pt-violin"
+    events:
+      - id: "ve-vln-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-01"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-02"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-03"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-04"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-05"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-06"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-07"
+        duration: { base: WHOLE, dots: 0 }
+      # M8: G5 half — last measure of page 1; ties into the first note of M9
+      - id: "ve-vln-08a"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-vln-08a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-vln-08b"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-vln-08b"
+        duration: { base: HALF, dots: 0 }
+        # CROSS-PAGE TIE — target resolved by pitch match on the first note of M9 (page 2)
+        ties:
+          - pitchIndex: 0
+      # M9 — first measure of page 2: tie target, then continues
+      - id: "ve-vln-09a"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-vln-09a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-vln-09b"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-vln-09b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-vln-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-10"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-11"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-12"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-13"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-14"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-15"
+        duration: { base: WHOLE, dots: 0 }
+      # M16: E5 half — last measure of page 2; opens a 3-note phrase slur (E5-F5-G5)
+      - id: "ve-vln-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-vln-16a"
+        duration: { base: HALF, dots: 0 }
+        slurStarts: 1
+      - id: "ve-vln-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-vln-16b"
+        duration: { base: HALF, dots: 0 }
+      # M17 — first measure of page 3: CROSS-PAGE SLUR closes on the first note (G5)
+      - id: "ve-vln-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-vln-17a"
+        duration: { base: HALF, dots: 0 }
+        slurEnds: 1
+      - id: "ve-vln-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-vln-17b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-vln-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-18"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-19"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-vln-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-vln-20"
+        duration: { base: WHOLE, dots: 0 }
+
+  vt-piano-rh:
+    id: "vt-piano-rh"
+    name: "Piano RH"
+    voiceNumber: 1
+    pitchTrackId: "pt-piano-rh"
+    events:
+      - id: "ve-rh-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-01"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-02"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-03"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-04"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-05"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-06"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-07"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-08a"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-rh-08a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-08b"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-rh-08b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-09a"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-rh-09a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-09b"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-rh-09b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-10"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-11"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-12"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-13"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-14"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-15"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-rh-16a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-rh-16b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-rh-17a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-rh-17b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-rh-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-18"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-19"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-rh-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-rh-20"
+        duration: { base: WHOLE, dots: 0 }
+
+  vt-piano-lh:
+    id: "vt-piano-lh"
+    name: "Piano LH"
+    voiceNumber: 1
+    pitchTrackId: "pt-piano-lh"
+    events:
+      - id: "ve-lh-01"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-01"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-02"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-02"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-03"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-03"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-04"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-04"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-05"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-05"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-06"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-06"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-07"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-07"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-08"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-08"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-09"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-09"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-10"
+        onset: { components: [{ numerator: 10, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-10"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-11"
+        onset: { components: [{ numerator: 11, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-11"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-12"
+        onset: { components: [{ numerator: 12, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-12"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-13"
+        onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-13"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-14"
+        onset: { components: [{ numerator: 14, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-14"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-15"
+        onset: { components: [{ numerator: 15, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-15"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-16a"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-lh-16a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-lh-16b"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-lh-16b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-lh-17a"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-lh-17a"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-lh-17b"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-lh-17b"
+        duration: { base: HALF, dots: 0 }
+      - id: "ve-lh-18"
+        onset: { components: [{ numerator: 18, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-18"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-19"
+        onset: { components: [{ numerator: 19, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-19"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-lh-20"
+        onset: { components: [{ numerator: 20, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-lh-20"
+        duration: { base: WHOLE, dots: 0 }
+
+# ── Staff Tracks ──────────────────────────────────────────────────────────────
+
+staffTracks:
+  st-violin:
+    id: "st-violin"
+    name: "Violin"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-violin"
+    staffLabel: "Violin"
+    staffLabelAbbreviation: "Vln."
+
+  st-piano-treble:
+    id: "st-piano-treble"
+    name: "Piano Treble"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-piano-rh"
+    attachments:
+      # ── CROSS-PAGE crescendo: M8 beat 1 (page 1) → M9 beat 3 (page 2) ──────
+      - type: dynamicMark
+        id: "dyn-mp"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: MP
+        placement: BELOW
+      - type: hairpin
+        id: "hp-cresc"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        direction: CRESCENDO
+        style: WEDGE
+        placement: BELOW
+      - type: dynamicMark
+        id: "dyn-mf"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        level: MF
+        placement: BELOW
+      # ── CROSS-PAGE 8va bracket: M8 beat 1 (page 1) → M9 beat 3 (page 2) ────
+      - type: octaveShiftStart
+        id: "osa-8va"
+        onset: { components: [{ numerator: 8, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        shiftType: OTTAVA
+        endEventId: "ose-8va"
+        placement: ABOVE
+      - type: octaveShiftEnd
+        id: "ose-8va"
+        onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        placement: ABOVE
+      # ── CROSS-PAGE diminuendo: M16 beat 1 (page 2) → M17 beat 3 (page 3) ───
+      - type: dynamicMark
+        id: "dyn-f"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: F
+        placement: BELOW
+      - type: hairpin
+        id: "hp-dim"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        direction: DIMINUENDO
+        style: WEDGE
+        placement: BELOW
+      - type: dynamicMark
+        id: "dyn-p"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        level: P
+        placement: BELOW
+
+  st-piano-bass:
+    id: "st-piano-bass"
+    name: "Piano Bass"
+    clef: BASS
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-piano-lh"
+    attachments:
+      # ── CROSS-PAGE 8vb bracket: M16 beat 1 (page 2) → M17 beat 3 (page 3) ──
+      - type: octaveShiftStart
+        id: "osa-8vb"
+        onset: { components: [{ numerator: 16, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        shiftType: OTTAVA_BASSA
+        endEventId: "ose-8vb"
+        placement: BELOW
+      - type: octaveShiftEnd
+        id: "ose-8vb"
+        onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        placement: BELOW
+
+# ── Staff Groups ──────────────────────────────────────────────────────────────
+#
+# Complex / nested staff header: outer SQUARE "Ensemble" spans Violin + Piano;
+# inner BRACE "Piano" spans the grand staff. Both brackets + labels (and their
+# abbreviations on restated systems) must repeat correctly on every system —
+# including across page boundaries.
+
+staffGroups:
+  - id: "sg-ensemble"
+    bracket: SQUARE
+    label: "Ensemble"
+    abbreviation: "Ens."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-violin"
+      - type: group
+        group:
+          id: "sg-piano"
+          bracket: BRACE
+          label: "Piano"
+          abbreviation: "Pno."
+          barlineConnect: true
+          members:
+            - type: staff
+              staffId: "st-piano-treble"
+            - type: staff
+              staffId: "st-piano-bass"
+
+# ── Global Track — forced system / page breaks ───────────────────────────────
+#
+#   Lines:  [M1-4] [M5-8] [M9-12] [M13-16] [M17-20]
+#   Pages:  page 1 = lines 1-2 (M1-8) · page 2 = lines 3-4 (M9-16) · page 3 = line 5 (M17-20)
+#
+# A page break also forces a system break at the same measure (see RuntimeScore),
+# so M9 and M17 don't need separate systemBreak entries.
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  events:
+    - type: systemBreak
+      onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+    - type: systemBreak
+      onset: { components: [{ numerator: 13, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+    - type: pageBreak
+      onset: { components: [{ numerator: 9, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+    - type: pageBreak
+      onset: { components: [{ numerator: 17, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+
+pageLayout:
+  paperWidthMm: 250.0
+  paperHeightMm: 190.0
+  marginTopMm: 12.0
+  marginBottomMm: 12.0
+  marginLeftMm: 12.0
+  marginRightMm: 10.0
+  staffSpaceMm: 1.4
+  paginated: true

@@ -1,0 +1,337 @@
+# Test: Chord Analysis Plugin
+# Exercises the chord-analysis plugin pipeline end-to-end:
+#   - pluginTracks with StorageChordEvent entries
+#   - Annotation staff should render C / Am / F / G7 / Dm7 / G7 / Cmaj7 below the notation staff
+#
+# Musical content: two four-bar phrases in C major
+#   Phrase 1 — I – vi – IV – V7  (C / Am / F / G7)
+#   Phrase 2 — ii7 – V7 – Imaj7 – (rest)  (Dm7 / G7 / Cmaj7)
+
+id: "test-chord-analysis-001"
+
+metadata:
+  title: "Chord Analysis Test"
+  subtitle: "I – vi – IV – V7 / ii7 – V7 – Imaj7 in C major"
+  composer: "Test"
+  createdAt: 1748000000000
+  modifiedAt: 1748000000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 72.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+
+pitchTracks:
+  "pt-main":
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # ── Measure 1: C major triad (C4 E4 G4) ─────────────────────────────────
+      - id: "pe-m1"
+        onset:
+          measure: 1
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+          - diatonicSteps: 2
+            chromaticOffset: 0
+          - diatonicSteps: 4
+            chromaticOffset: 0
+
+      # ── Measure 2: A minor triad (A4 C5 E5) ─────────────────────────────────
+      - id: "pe-m2"
+        onset:
+          measure: 2
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+          - diatonicSteps: 7
+            chromaticOffset: 0
+          - diatonicSteps: 9
+            chromaticOffset: 0
+
+      # ── Measure 3: F major triad (F4 A4 C5) ─────────────────────────────────
+      - id: "pe-m3"
+        onset:
+          measure: 3
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+          - diatonicSteps: 5
+            chromaticOffset: 0
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+      # ── Measure 4: G dominant 7 (G4 B4 D5 F5) ───────────────────────────────
+      - id: "pe-m4"
+        onset:
+          measure: 4
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+          - diatonicSteps: 6
+            chromaticOffset: 0
+          - diatonicSteps: 8
+            chromaticOffset: 0
+          - diatonicSteps: 10
+            chromaticOffset: 0
+
+      # ── Measure 5: D minor 7 (D4 F4 A4 C5) ─────────────────────────────────
+      - id: "pe-m5"
+        onset:
+          measure: 5
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+          - diatonicSteps: 3
+            chromaticOffset: 0
+          - diatonicSteps: 5
+            chromaticOffset: 0
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+      # ── Measure 6: G dominant 7 (G4 B4 D5 F5) ───────────────────────────────
+      - id: "pe-m6"
+        onset:
+          measure: 6
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+          - diatonicSteps: 6
+            chromaticOffset: 0
+          - diatonicSteps: 8
+            chromaticOffset: 0
+          - diatonicSteps: 10
+            chromaticOffset: 0
+
+      # ── Measure 7: C major 7 (C4 E4 G4 B4) ─────────────────────────────────
+      - id: "pe-m7"
+        onset:
+          measure: 7
+          beat:
+            numerator: 0
+            denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+          - diatonicSteps: 2
+            chromaticOffset: 0
+          - diatonicSteps: 4
+            chromaticOffset: 0
+          - diatonicSteps: 6
+            chromaticOffset: 0
+
+voiceTracks:
+  "vt-main":
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      - id: "ve-m1"
+        onset:
+          measure: 1
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m1"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m2"
+        onset:
+          measure: 2
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m2"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m3"
+        onset:
+          measure: 3
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m3"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m4"
+        onset:
+          measure: 4
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m4"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m5"
+        onset:
+          measure: 5
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m5"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m6"
+        onset:
+          measure: 6
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m6"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-m7"
+        onset:
+          measure: 7
+          beat:
+            numerator: 0
+            denominator: 1
+        pitchEventId: "pe-m7"
+        duration:
+          base: WHOLE
+          dots: 0
+
+staffTracks:
+  "st-treble":
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []
+
+# ── Plugin track: chord annotations ──────────────────────────────────────────
+# root values: C=0 D=2 E=4 F=5 G=7 A=9 B=11 (pitch-class 0..11)
+# quality: MAJOR MINOR DOMINANT7 MAJOR7 MINOR7 DIMINISHED AUGMENTED ...
+pluginTracks:
+  "chord-analysis-track":
+    id: "chord-analysis-track"
+    name: "Chord Analysis"
+    type: "mecon.chord_analysis"
+    events:
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-001"
+        onset:
+          measure: 1
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 0
+        quality: MAJOR
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-002"
+        onset:
+          measure: 2
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 9
+        quality: MINOR
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-003"
+        onset:
+          measure: 3
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 5
+        quality: MAJOR
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-004"
+        onset:
+          measure: 4
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 7
+        quality: DOMINANT7
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-005"
+        onset:
+          measure: 5
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 2
+        quality: MINOR7
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-006"
+        onset:
+          measure: 6
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 7
+        quality: DOMINANT7
+
+      - type: "mecon.chord_analysis.chord"
+        id: "chord-evt-007"
+        onset:
+          measure: 7
+          beat:
+            numerator: 0
+            denominator: 1
+        root: 0
+        quality: MAJOR7

@@ -1,0 +1,319 @@
+# Test: Articulation Rendering
+# Tests:
+#   M1) All 5 marks, stem UP  → drawn on the notehead side = BELOW
+#       (Staccato / Tenuto / Accent / Marcato)
+#   M2) Stem DOWN → notehead side = ABOVE; incl. Spiccato and stacked
+#       combinations (Accent+Staccato, Marcato+Staccato)
+#   M3) Placement override = STEM → marks drawn at the stem-tip end
+#   M4) Slur avoidance: eight staccato eighths under one slur (stem up →
+#       slur bows BELOW, must clear the staccato dots)
+#   M5) Chord articulations (Accent+Staccato on a chord, Marcato on a chord)
+#
+# Articulations live on the PitchEvent (musical info); the notehead-vs-stem
+# placement choice lives on the VoiceEvent's rendering.articulationPlacement.
+
+id: "test-articulations-001"
+
+metadata:
+  title: "Articulation Test"
+  subtitle: "staccato / spiccato / tenuto / accent / marcato · stacking · stem-side · slur avoidance"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+
+pitchTracks:
+  pt-v1:
+    id: "pt-v1"
+    name: "Voice Pitches"
+    events:
+      # ---- M1: stem up → marks below. Staccato / Tenuto / Accent / Marcato ----
+      - id: "pe-m1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]   # B4
+        articulations: [STACCATO]
+      - id: "pe-m1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+        articulations: [TENUTO]
+      - id: "pe-m1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+        articulations: [ACCENT]
+      - id: "pe-m1-4"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+        articulations: [MARCATO]
+
+      # ---- M2: stem down → marks above. Spiccato + stacked combos ----
+      - id: "pe-m2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+        articulations: [SPICCATO]
+      - id: "pe-m2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+        articulations: [ACCENT, STACCATO]
+      - id: "pe-m2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+        articulations: [MARCATO, STACCATO]
+      - id: "pe-m2-4"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+        articulations: [TENUTO]
+
+      # ---- M3: placement = STEM (marks at the stem tip). Stem up (low notes) ----
+      - id: "pe-m3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }]   # G4
+        articulations: [STACCATO]
+      - id: "pe-m3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 5, chromaticOffset: 0 }]   # A4
+        articulations: [ACCENT]
+      - id: "pe-m3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 6, chromaticOffset: 0 }]   # B4
+        articulations: [ACCENT, STACCATO]
+      - id: "pe-m3-4"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+        articulations: [MARCATO]
+
+      # ---- M4: slur over 8 staccato eighths (slur must avoid the dots) ----
+      - id: "pe-m4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }]   # C5
+        articulations: [STACCATO]
+      - id: "pe-m4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+        articulations: [STACCATO]
+      - id: "pe-m4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+        articulations: [STACCATO]
+      - id: "pe-m4-4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+        articulations: [STACCATO]
+      - id: "pe-m4-5"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 4, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]  # G5
+        articulations: [STACCATO]
+      - id: "pe-m4-6"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 5, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]  # F5
+        articulations: [STACCATO]
+      - id: "pe-m4-7"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 6, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+        articulations: [STACCATO]
+      - id: "pe-m4-8"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 7, denominator: 8 }] }
+        pitches: [{ diatonicSteps: 8, chromaticOffset: 0 }]   # D5
+        articulations: [STACCATO]
+
+      # ---- M5: chord articulations ----
+      - id: "pe-m5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitches:
+          - { diatonicSteps: 7, chromaticOffset: 0 }          # C5
+          - { diatonicSteps: 9, chromaticOffset: 0 }          # E5
+          - { diatonicSteps: 11, chromaticOffset: 0 }         # G5
+        articulations: [ACCENT, STACCATO]
+      - id: "pe-m5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitches:
+          - { diatonicSteps: 8, chromaticOffset: 0 }          # D5
+          - { diatonicSteps: 10, chromaticOffset: 0 }         # F5
+          - { diatonicSteps: 12, chromaticOffset: 0 }         # A5
+        articulations: [MARCATO]
+      - id: "pe-m5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]   # E5
+        articulations: [TENUTO]
+      - id: "pe-m5-4"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitches: []                                            # quarter rest
+
+voiceTracks:
+  vt-v1:
+    id: "vt-v1"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-v1"
+    events:
+      # M1 — stem up
+      - id: "ve-m1-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m1-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m1-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m1-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m1-3"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m1-3"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m1-4"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-m1-4"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+
+      # M2 — stem down
+      - id: "ve-m2-1"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m2-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: DOWN }
+      - id: "ve-m2-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m2-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: DOWN }
+      - id: "ve-m2-3"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m2-3"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: DOWN }
+      - id: "ve-m2-4"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-m2-4"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: DOWN }
+
+      # M3 — placement = STEM, stem up
+      - id: "ve-m3-1"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m3-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP, articulationPlacement: STEM }
+      - id: "ve-m3-2"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m3-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP, articulationPlacement: STEM }
+      - id: "ve-m3-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m3-3"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP, articulationPlacement: STEM }
+      - id: "ve-m3-4"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-m3-4"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP, articulationPlacement: STEM }
+
+      # M4 — staccato eighths under one slur (stem up → slur below)
+      - id: "ve-m4-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 8 }] }
+        pitchEventId: "pe-m4-1"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+        slurStarts: 1
+      - id: "ve-m4-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 1, denominator: 8 }] }
+        pitchEventId: "pe-m4-2"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-3"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 2, denominator: 8 }] }
+        pitchEventId: "pe-m4-3"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 8 }] }
+        pitchEventId: "pe-m4-4"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-5"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 4, denominator: 8 }] }
+        pitchEventId: "pe-m4-5"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-6"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 5, denominator: 8 }] }
+        pitchEventId: "pe-m4-6"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-7"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 6, denominator: 8 }] }
+        pitchEventId: "pe-m4-7"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m4-8"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 7, denominator: 8 }] }
+        pitchEventId: "pe-m4-8"
+        duration: { base: EIGHTH, dots: 0 }
+        rendering: { stemDirection: UP }
+        slurEnds: 1
+
+      # M5 — chords + single note + rest
+      - id: "ve-m5-1"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 1 }] }
+        pitchEventId: "pe-m5-1"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-2"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 1, denominator: 4 }] }
+        pitchEventId: "pe-m5-2"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-3"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 2, denominator: 4 }] }
+        pitchEventId: "pe-m5-3"
+        duration: { base: QUARTER, dots: 0 }
+        rendering: { stemDirection: UP }
+      - id: "ve-m5-4"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 3, denominator: 4 }] }
+        pitchEventId: "pe-m5-4"
+        duration: { base: QUARTER, dots: 0 }
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-v1"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

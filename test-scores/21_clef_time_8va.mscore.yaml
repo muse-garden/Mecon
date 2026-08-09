@@ -1,0 +1,513 @@
+# Test: Clef Changes, Time Signature Changes, 8va/8vb
+# Tests mid-score clef changes on staffTrack, time signature changes on globalTrack,
+# and 8va/8vb octave-shift brackets stored as staff attachments.
+#
+# ── Section 1 (M1-4): Time signature changes ────────────────────────────────
+#   M1: 4/4  (default)          — whole note C4
+#   M2: 3/4  (→ from globalTrack events)  — dotted half D4
+#   M3: 6/8  (→ from globalTrack events)  — dotted half E4 (fills 6/8)
+#   M4: 4/4  (→ back)           — whole note F4
+#
+# ── Section 2 (M5-8): Clef changes on staffTrack ────────────────────────────
+#   M5: treble (initial)        — whole note G4
+#   M6: bass clef change        — whole note G2 (C4 diatonic step 0 in bass = G2?)
+#                                 actually B2 in bass = diatonic 6 below C4 middle
+#   M7: bass continues          — whole note A2
+#   M8: back to treble          — whole note C5
+#
+# ── Section 3 (M9-12): 8va and 8vb brackets ────────────────────────────────
+#   M9-10:  8va bracket (play octave higher)
+#   M11-12: 8vb bracket (play octave lower)
+
+id: "test-clef-time-8va-001"
+
+metadata:
+  title: "Clef Changes, Time Signatures & Octave Shifts"
+  subtitle: "Mid-score clef changes, time sig changes, 8va/8vb"
+  composer: "Test"
+  createdAt: 1748200000000
+  modifiedAt: 1748200000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+  - number: 8
+  - number: 9
+  - number: 10
+  - number: 11
+  - number: 12
+
+pitchTracks:
+  "pt-main":
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # ── M1: 4/4 — C4 (whole) ─────────────────────────────────────────────
+      - id: "pe-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0   # C4
+
+      # ── M2: 3/4 — D4 (dotted half) ───────────────────────────────────────
+      - id: "pe-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0   # D4
+
+      # ── M3: 6/8 — E4 quarter + E4 quarter + E4 quarter (3 quarter notes) ─
+      - id: "pe-003"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0   # E4
+
+      - id: "pe-004"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4
+
+      - id: "pe-005"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4
+
+      # ── M4: 4/4 — F4 (whole) ─────────────────────────────────────────────
+      - id: "pe-006"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0   # F4
+
+      # ── M5: treble — G4 (whole) ───────────────────────────────────────────
+      - id: "pe-007"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0   # G4
+
+      # ── M6: bass clef — G2 (whole); diatonicSteps=-5 from C4 = G2 ─────────
+      - id: "pe-008"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0   # G2
+
+      # ── M7: bass continues — A2 ───────────────────────────────────────────
+      - id: "pe-009"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0   # A2
+
+      # ── M8: treble returns — C5 ───────────────────────────────────────────
+      - id: "pe-010"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0   # C5
+
+      # ── M9: 8va start — E5 (whole) ────────────────────────────────────────
+      - id: "pe-011"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0   # E5
+
+      # ── M10: 8va end — G5 (whole) ─────────────────────────────────────────
+      - id: "pe-012"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0   # G5
+
+      # ── M11: 8vb start — C3 (whole) ───────────────────────────────────────
+      - id: "pe-013"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0   # C3
+
+      # ── M12: 8vb end — A2 (whole) ─────────────────────────────────────────
+      - id: "pe-014"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0   # A2
+
+voiceTracks:
+  "vt-main":
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # M1: whole note
+      - id: "ve-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      # M2: dotted half (fills 3/4)
+      - id: "ve-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-002"
+        duration:
+          base: HALF
+          dots: 1
+      # M3: three quarters (fills 6/8 = 3/4)
+      - id: "ve-003"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-003"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-004"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-004"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-005"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-005"
+        duration:
+          base: QUARTER
+          dots: 0
+      # M4: whole note
+      - id: "ve-006"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-006"
+        duration:
+          base: WHOLE
+          dots: 0
+      # M5-12: whole notes
+      - id: "ve-007"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-007"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-008"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-008"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-009"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-009"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-010"
+        onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-010"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-011"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-011"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-012"
+        onset:
+          components:
+            - numerator: 10
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-012"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-013"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-013"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-014"
+        onset:
+          components:
+            - numerator: 12
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-014"
+        duration:
+          base: WHOLE
+          dots: 0
+
+staffTracks:
+  "st-treble":
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+    # ── Clef changes ────────────────────────────────────────────────────────
+    clefChanges:
+      # M6: switch to bass clef
+      - onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        clef: BASS
+      # M8: return to treble clef
+      - onset:
+          components:
+            - numerator: 8
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        clef: TREBLE
+    # ── 8va/8vb brackets (staff attachments) ────────────────────────────────
+    attachments:
+      # 8va start: M9 beat 1
+      - type: octaveShiftStart
+        id: "osa-001"
+        onset:
+          components:
+            - numerator: 9
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        shiftType: OTTAVA
+        endEventId: "ose-001"
+        placement: ABOVE
+      # 8va end: M11 beat 1
+      - type: octaveShiftEnd
+        id: "ose-001"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        placement: ABOVE
+      # 8vb start: M11 beat 1
+      - type: octaveShiftStart
+        id: "osa-002"
+        onset:
+          components:
+            - numerator: 11
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        shiftType: OTTAVA_BASSA
+        endEventId: "ose-002"
+        placement: BELOW
+      # 8vb end: M13 beat 1 (after last note)
+      - type: octaveShiftEnd
+        id: "ose-002"
+        onset:
+          components:
+            - numerator: 13
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        placement: BELOW
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  events:
+    # M2: 4/4 → 3/4
+    - type: timeSignatureChange
+      onset:
+        components:
+          - numerator: 2
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      timeSignature:
+        numerator: 3
+        denominator: 4
+    # M3: 3/4 → 6/8
+    - type: timeSignatureChange
+      onset:
+        components:
+          - numerator: 3
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      timeSignature:
+        numerator: 6
+        denominator: 8
+    # M4: 6/8 → 4/4
+    - type: timeSignatureChange
+      onset:
+        components:
+          - numerator: 4
+            denominator: 1
+          - numerator: 0
+            denominator: 1
+      timeSignature:
+        numerator: 4
+        denominator: 4

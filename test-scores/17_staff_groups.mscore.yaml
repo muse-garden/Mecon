@@ -1,0 +1,512 @@
+# Test: Staff Header — Brackets, Labels, Barline Connectivity (including nested brackets)
+#
+# Layout:
+#   [Choir]  [S.] ——————  soprano staff  —————— (barlines connect)
+#   [sqbr.]  [A.] ——————   alto staff    ——————
+#
+#            [Pno.] ———— treble staff ————  (brace from partBracket auto-resolution)
+#            [brace] ——— bass staff  ————
+#
+#   [Strings]  [Vln. I]  ——  violin I staff  ——  (nested: SQUARE outer + BRACE inner)
+#   [ sqbr. ]  {brace}
+#              [Vln. II] ——  violin II staff  ——
+#
+# Expected:
+#   - "Choir" group label left of SQUARE bracket
+#   - SQUARE bracket spanning soprano+alto staves
+#   - per-staff labels "S." and "A." inside the bracket
+#   - barlines connect soprano↔alto but break between alto↔piano
+#   - Piano shows "Piano" instrument name and BRACE across treble+bass
+#   - barlines connect treble↔bass within piano
+#   - "Strings" label left of outer SQUARE bracket spanning Vln I + Vln II
+#   - inner BRACE bracket spanning Vln I + Vln II (nested inside SQUARE)
+#   - per-staff labels "Vln. I" and "Vln. II"
+#   - barlines connect Vln I↔Vln II within strings
+
+id: "test-staff-groups-001"
+
+metadata:
+  title: "Staff Groups Test"
+  subtitle: "Brackets, labels, barline connectivity"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+
+# ── Pitch Tracks ──────────────────────────────────────────────────────────────
+
+pitchTracks:
+  pt-soprano:
+    id: "pt-soprano"
+    name: "Soprano Pitch"
+    events:
+      - id: "pp-s-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4      # E4
+            chromaticOffset: 0
+      - id: "pp-s-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7      # C5
+            chromaticOffset: 0
+
+  pt-alto:
+    id: "pt-alto"
+    name: "Alto Pitch"
+    events:
+      - id: "pp-a-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0      # C4
+            chromaticOffset: 0
+      - id: "pp-a-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2      # E4
+            chromaticOffset: 0
+
+  pt-piano-rh:
+    id: "pt-piano-rh"
+    name: "Piano RH Pitch"
+    events:
+      - id: "pp-rh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7      # C5
+            chromaticOffset: 0
+          - diatonicSteps: 9      # E5
+            chromaticOffset: 0
+      - id: "pp-rh-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4      # E4
+            chromaticOffset: 0
+          - diatonicSteps: 7      # C5
+            chromaticOffset: 0
+
+  pt-piano-lh:
+    id: "pt-piano-lh"
+    name: "Piano LH Pitch"
+    events:
+      - id: "pp-lh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7     # C3
+            chromaticOffset: 0
+      - id: "pp-lh-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7     # C3
+            chromaticOffset: 0
+
+  pt-vln1:
+    id: "pt-vln1"
+    name: "Violin I Pitch"
+    events:
+      - id: "pp-vln1-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9      # E5
+            chromaticOffset: 0
+      - id: "pp-vln1-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7      # C5
+            chromaticOffset: 0
+
+  pt-vln2:
+    id: "pt-vln2"
+    name: "Violin II Pitch"
+    events:
+      - id: "pp-vln2-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4      # E4
+            chromaticOffset: 0
+      - id: "pp-vln2-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 2      # D4
+            chromaticOffset: 0
+
+# ── Voice Tracks ───────────────────────────────────────────────────────────────
+
+voiceTracks:
+  vt-soprano:
+    id: "vt-soprano"
+    name: "Soprano"
+    voiceNumber: 1
+    pitchTrackId: "pt-soprano"
+    events:
+      - id: "ve-s-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-s-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-s-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-s-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-alto:
+    id: "vt-alto"
+    name: "Alto"
+    voiceNumber: 1
+    pitchTrackId: "pt-alto"
+    events:
+      - id: "ve-a-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-a-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-a-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-a-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-piano-rh:
+    id: "vt-piano-rh"
+    name: "Piano RH"
+    voiceNumber: 1
+    pitchTrackId: "pt-piano-rh"
+    events:
+      - id: "ve-rh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-rh-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-rh-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-rh-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-piano-lh:
+    id: "vt-piano-lh"
+    name: "Piano LH"
+    voiceNumber: 1
+    pitchTrackId: "pt-piano-lh"
+    events:
+      - id: "ve-lh-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-lh-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-lh-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-lh-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-vln1:
+    id: "vt-vln1"
+    name: "Violin I"
+    voiceNumber: 1
+    pitchTrackId: "pt-vln1"
+    events:
+      - id: "ve-vln1-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-vln1-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-vln1-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-vln1-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+  vt-vln2:
+    id: "vt-vln2"
+    name: "Violin II"
+    voiceNumber: 1
+    pitchTrackId: "pt-vln2"
+    events:
+      - id: "ve-vln2-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-vln2-001"
+        duration:
+          base: WHOLE
+          dots: 0
+      - id: "ve-vln2-002"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pp-vln2-002"
+        duration:
+          base: WHOLE
+          dots: 0
+
+# ── Staff Tracks ───────────────────────────────────────────────────────────────
+#
+# staffLabel / staffLabelAbbreviation: per-staff labels drawn inside the group bracket.
+
+staffTracks:
+  st-soprano:
+    id: "st-soprano"
+    name: "Soprano"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-soprano"
+    staffLabel: "S."
+    staffLabelAbbreviation: "S."
+
+  st-alto:
+    id: "st-alto"
+    name: "Alto"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-alto"
+    staffLabel: "A."
+    staffLabelAbbreviation: "A."
+
+  st-piano-treble:
+    id: "st-piano-treble"
+    name: "Piano Treble"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-piano-rh"
+
+  st-piano-bass:
+    id: "st-piano-bass"
+    name: "Piano Bass"
+    clef: BASS
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-piano-lh"
+
+  st-vln1:
+    id: "st-vln1"
+    name: "Violin I"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-vln1"
+    staffLabel: "Vln. I"
+    staffLabelAbbreviation: "Vln. I"
+
+  st-vln2:
+    id: "st-vln2"
+    name: "Violin II"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-vln2"
+    staffLabel: "Vln. II"
+    staffLabelAbbreviation: "Vln. II"
+
+# ── Staff Groups ───────────────────────────────────────────────────────────────
+#
+# sg-choir: SQUARE bracket spans soprano+alto, with group label "Choir".
+#   barlineConnect:true means the vertical barline spans both staves.
+#
+# sg-piano: BRACE bracket spans piano treble+bass, with label "Piano".
+#   barlineConnect:true means the vertical barline spans both staves.
+
+staffGroups:
+  - id: "sg-choir"
+    bracket: SQUARE
+    label: "Choir"
+    abbreviation: "Chr."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-soprano"
+      - type: staff
+        staffId: "st-alto"
+
+  - id: "sg-piano"
+    bracket: BRACE
+    label: "Piano"
+    abbreviation: "Pno."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-piano-treble"
+      - type: staff
+        staffId: "st-piano-bass"
+
+  # Nested bracket test: outer SQUARE spans all strings; inner BRACE spans Vln I + Vln II only.
+  - id: "sg-strings"
+    bracket: SQUARE
+    label: "Strings"
+    abbreviation: "Str."
+    barlineConnect: true
+    members:
+      - type: group
+        group:
+          id: "sg-violins"
+          bracket: BRACE
+          label: ""
+          abbreviation: ""
+          barlineConnect: true
+          members:
+            - type: staff
+              staffId: "st-vln1"
+            - type: staff
+              staffId: "st-vln2"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

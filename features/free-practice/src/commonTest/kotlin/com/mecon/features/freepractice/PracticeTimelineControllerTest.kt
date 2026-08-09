@@ -1,0 +1,424 @@
+package com.mecon.features.freepractice
+
+import com.mecon.api.primitive.Fraction
+import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
+import com.mecon.theory.freepractice.WorkspaceKeyMode
+import com.mecon.theory.freepractice.WorkspaceSlotId
+import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+
+class PracticeTimelineControllerTest {
+    private val first = WorkspaceSlotId("slot-a")
+    private val second = WorkspaceSlotId("slot-b")
+
+    private fun request(
+        viewport: Float = 900f,
+        scrollLeft: Float = 0f,
+        gesture: PracticeTimelineGestureState? = null,
+    ) = PracticeTimelineSceneRequest(
+        revision = 7,
+        axisRevision = 11,
+        viewportWidth = viewport,
+        scrollLeft = scrollLeft,
+        contentOriginX = 20f,
+        axisAnchors = listOf(
+            PracticeTimelineAxisAnchor(Fraction.ZERO, 0f),
+            PracticeTimelineAxisAnchor(Fraction.QUARTER, 144f),
+            PracticeTimelineAxisAnchor(Fraction.HALF, 288f),
+        ),
+        axisContentEndX = 288f,
+        timeline = PracticeTimelineView(
+            end = Fraction.HALF,
+            slots = listOf(
+                PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                PracticeTimelineSlotView(second, Fraction.QUARTER, Fraction.QUARTER, "V"),
+            ),
+        ),
+        selectedSlotId = first.value,
+        gesture = gesture,
+    )
+
+    @Test
+    fun sceneUsesOneRawOriginAndFillsViewport() {
+        val scene = PracticeTimelineSceneProjector.project(request())
+        assertEquals(20f, scene.contentAnchors.timeZeroX)
+        assertEquals(scene.contentAnchors.timeZeroX, scene.contentAnchors.scoreOriginX)
+        assertEquals(900f, scene.contentWidth)
+        assertEquals(0f, scene.scrollExtent)
+        assertTrue(scene.hitObjects.any { it.kind == PracticeTimelineHitKind.APPEND })
+        assertTrue(scene.accessibility.any { it.id == "append" && "activate" in it.actions })
+    }
+
+    @Test
+    fun appendAffordancePinsToVisibleRightEdgeWhenContentOverflows() {
+        val long = request(viewport = 220f, scrollLeft = 70f)
+        val scene = PracticeTimelineSceneProjector.project(long)
+        assertEquals(248f, scene.contentAnchors.appendX)
+        assertTrue(scene.scrollExtent > 0f)
+    }
+
+    @Test
+    fun sceneRetainsTheDesktopTimelineVisualContract() {
+        val base = request()
+        val rich = base.copy(
+            timeline = base.timeline.copy(
+                slots = listOf(
+                    base.timeline.slots.first().copy(
+                        readings = listOf(
+                            PracticeTimelineChordReadingView(
+                                0, WorkspaceKeyMode.MAJOR, "C", "I",
+                                absoluteTones = listOf("C", "E", "G"),
+                                relativeTones = listOf("1", "3", "5"),
+                            ),
+                            PracticeTimelineChordReadingView(
+                                1, WorkspaceKeyMode.MAJOR, "G", "IV",
+                                absoluteTones = listOf("C", "E", "G"),
+                                relativeTones = listOf("4", "6", "1"),
+                            ),
+                        ),
+                    ),
+                    base.timeline.slots.last(),
+                ),
+                tonalLayouts = listOf(
+                    PracticeTonalLayoutView(
+                        WorkspaceTonalLayoutId("key-c"),
+                        0,
+                        WorkspaceKeyMode.MAJOR,
+                        Fraction.ZERO,
+                        isBaseline = true,
+                    )
+                ),
+                derivedTonalSpans = listOf(
+                    PracticeDerivedTonalSpanView(
+                        4,
+                        WorkspaceKeyMode.MINOR,
+                        "C♯m",
+                        Fraction.QUARTER,
+                        Fraction.HALF,
+                    )
+                ),
+                idioms = listOf(
+                    PracticeIdiomView(
+                        id = WorkspaceIdiomInstanceId("cadence"),
+                        definitionId = "cadence",
+                        variantId = "authentic",
+                        slotIds = listOf(first, second),
+                        title = "终止式",
+                        start = Fraction.ZERO,
+                        end = Fraction(1, 32),
+                    )
+                ),
+            ),
+        )
+        val scene = PracticeTimelineSceneProjector.project(rich)
+
+        assertTrue(scene.drawObjects.any { it.id == "grid:dot:0" && it.kind == PracticeTimelineDrawKind.CIRCLE })
+        assertTrue(scene.drawObjects.any { it.id == "measure:1" && it.text == "1" })
+        assertTrue(scene.drawObjects.any { it.id == "tonal:key-c:label:text" && it.text?.startsWith("C · 1") == true })
+        assertTrue(scene.drawObjects.any { it.id == "derived-tonal:0:line" && it.dashPattern.isNotEmpty() })
+        assertTrue(scene.drawObjects.any { it.id == "slot:slot-a:reading:0" && it.text == "C: I · 1–3–5" })
+        assertTrue(scene.drawObjects.any { it.id == "slot:slot-a:start:paint" })
+        val idiomBracket = scene.drawObjects.first { it.id == "idiom:cadence" }
+        val idiomMask = scene.drawObjects.first { it.id == "idiom:cadence:text:mask" }
+        val idiomText = scene.drawObjects.first { it.id == "idiom:cadence:text" }
+        val idiomHit = scene.hitObjects.first { it.id == "idiom:cadence" }
+        assertEquals(16f, idiomBracket.bounds.height)
+        assertEquals(22f, idiomHit.bounds.height)
+        assertEquals(PracticeTimelineDrawKind.ROUND_RECT, idiomMask.kind)
+        assertEquals(base.palette.surfaceDark, idiomMask.fill)
+        assertEquals(11f, idiomText.fontSize)
+        assertTrue(idiomMask.bounds.width > idiomBracket.bounds.width)
+        assertTrue(idiomMask.z < idiomText.z)
+        val longerTitleScene = PracticeTimelineSceneProjector.project(
+            rich.copy(
+                timeline = rich.timeline.copy(
+                    idioms = rich.timeline.idioms.map { it.copy(title = "完整正格终止式") },
+                ),
+            ),
+        )
+        val longerMask = longerTitleScene.drawObjects.first { it.id == "idiom:cadence:text:mask" }
+        assertTrue(longerMask.bounds.width > idiomMask.bounds.width)
+        assertTrue(scene.contentHeight >= 148f)
+    }
+
+    @Test
+    fun dragProducesOneSharedPreviewAndCommitEdit() {
+        val initial = request()
+        val scene = PracticeTimelineSceneProjector.project(initial)
+        val slot = scene.hitObjects.first { it.id == "slot:${first.value}" }
+        val down = FreePracticeTimelineController.handle(
+            scene,
+            initial,
+            PracticeTimelineInput(
+                PracticeTimelineInputType.DOWN,
+                scene.generation,
+                pointerId = 3,
+                x = slot.bounds.x + 30f,
+                y = slot.bounds.y + 20f,
+                ctrl = true,
+            ),
+        )
+        val gesture = assertNotNull(down.gesture)
+        assertEquals(first.value, down.selectSlotId)
+        assertTrue(down.effects.any { it.type == "capturePointer" })
+
+        val draggingRequest = initial.copy(gesture = gesture)
+        val moved = FreePracticeTimelineController.handle(
+            scene,
+            draggingRequest,
+            PracticeTimelineInput(
+                PracticeTimelineInputType.MOVE,
+                scene.generation,
+                pointerId = 3,
+                x = gesture.startX + 72f,
+                y = slot.bounds.y + 20f,
+            ),
+        )
+        val edit = moved.previewEdit as PracticeTimelineEdit.TranslateChordRange
+        assertEquals(Fraction.EIGHTH, edit.delta)
+        assertTrue(edit.includeFollowing)
+
+        // A Worker preview, scroll or resize can reproject the scene before the browser's queued UP
+        // arrives. The active gesture is already bound to stable IDs and must still commit once.
+        val reprojectedRequest = initial.copy(
+            axisRevision = initial.axisRevision + 1,
+            gesture = assertNotNull(moved.gesture),
+        )
+        val reprojectedScene = PracticeTimelineSceneProjector.project(reprojectedRequest)
+        assertTrue(reprojectedScene.generation != scene.generation)
+        val up = FreePracticeTimelineController.handle(
+            reprojectedScene,
+            reprojectedRequest,
+            PracticeTimelineInput(PracticeTimelineInputType.UP, scene.generation, pointerId = 3),
+        )
+        assertEquals(edit, up.commitEdit)
+        assertTrue(up.effects.any { it.type == "releasePointer" })
+    }
+
+    /**
+     * The resolved axis ends with a barline anchor collapsed onto the following measure boundary:
+     * a whole beat of musical time inside a few pixels. Extrapolating from that last anchor pair
+     * moved the dragged chord several measures per pointer pixel and squeezed everything a Ctrl
+     * drag pushed past the score.
+     */
+    private val beyondAxis = WorkspaceSlotId("slot-c")
+
+    /** Adds a chord that a drag has already pushed past the last anchor of the settled axis. */
+    private fun collapsedTailRequest() = request().let { base ->
+        base.copy(
+            axisAnchors = base.axisAnchors + PracticeTimelineAxisAnchor(Fraction(3, 4), 300f),
+            axisContentEndX = 300f,
+            timeline = base.timeline.copy(
+                end = Fraction.ONE,
+                slots = base.timeline.slots + PracticeTimelineSlotView(
+                    beyondAxis,
+                    Fraction(3, 4),
+                    Fraction.QUARTER,
+                    "I",
+                ),
+            ),
+        )
+    }
+
+    /**
+     * A chord that sits *inside* a collapsed tail segment — which is where a freshly appended chord
+     * lands once the score is shorter than the timeline, e.g. right after an undo — used to move a
+     * couple of pixels for a whole grid step, so its drag preview could not be seen at all.
+     */
+    @Test
+    fun chordsInsideACollapsedTailSegmentStillMoveVisibly() {
+        val slot = WorkspaceSlotId("slot-tail")
+        fun requestAt(onset: Fraction) = request().copy(
+            axisAnchors = listOf(
+                PracticeTimelineAxisAnchor(Fraction.ZERO, 0f),
+                PracticeTimelineAxisAnchor(Fraction.QUARTER, 144f),
+                PracticeTimelineAxisAnchor(Fraction.HALF, 288f),
+                // The trailing barline anchor collapsed onto the next measure boundary.
+                PracticeTimelineAxisAnchor(Fraction(3, 4), 292f),
+            ),
+            axisContentEndX = 292f,
+            timeline = PracticeTimelineView(
+                end = Fraction(3, 4),
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                    PracticeTimelineSlotView(slot, onset, Fraction.QUARTER, "V"),
+                ),
+            ),
+            selectedSlotId = slot.value,
+        )
+
+        fun x(onset: Fraction) = PracticeTimelineSceneProjector.project(requestAt(onset))
+            .hitObjects.first { it.id == "slot:${slot.value}" }.bounds.x
+
+        val settled = x(Fraction.HALF)
+        val previewed = x(Fraction(5, 8))
+        // One eighth at the requested 576 px per whole note.
+        assertEquals(72f, previewed - settled, 1f)
+        // Anchors before the collapsed segment still align the timeline with the notation surface.
+        assertEquals(144f + 20f, x(Fraction.QUARTER), 0.5f)
+    }
+
+    @Test
+    fun dragPastTheAxisEndFollowsThePointerAtTheRequestedSpacing() {
+        val initial = collapsedTailRequest()
+        val scene = PracticeTimelineSceneProjector.project(initial)
+        val slot = scene.hitObjects.first { it.id == "slot:${beyondAxis.value}" }
+        val down = FreePracticeTimelineController.handle(
+            scene,
+            initial,
+            PracticeTimelineInput(
+                PracticeTimelineInputType.DOWN,
+                scene.generation,
+                pointerId = 3,
+                x = slot.bounds.x + 30f,
+                y = slot.bounds.y + 20f,
+            ),
+        )
+        val gesture = assertNotNull(down.gesture)
+        val moved = FreePracticeTimelineController.handle(
+            scene,
+            initial.copy(gesture = gesture),
+            PracticeTimelineInput(
+                PracticeTimelineInputType.MOVE,
+                scene.generation,
+                pointerId = 3,
+                x = gesture.startX + 400f,
+                y = slot.bounds.y + 20f,
+            ),
+        )
+        val edit = moved.previewEdit as PracticeTimelineEdit.TranslateChordRange
+        // 400 px at the requested 576 px per whole note, to the nearest 1/16 grid step.
+        assertEquals(400.0 / 576.0, edit.delta.toDouble(), Fraction.SIXTEENTH.toDouble())
+    }
+
+    @Test
+    fun chordsPastTheAxisEndKeepTheSpacingOfChordsInsideIt() {
+        // A resolved notation surface, as the browser shell supplies during a drag preview.
+        val previewing = collapsedTailRequest().copy(axisSurfaceWidth = 320f)
+        val scene = PracticeTimelineSceneProjector.project(previewing)
+        fun bounds(id: String) = scene.hitObjects.first { it.id == "slot:$id" }.bounds
+        assertEquals(bounds(first.value).width, bounds(beyondAxis.value).width, 0.5f)
+        // The surface width is a floor, not a cap: the dragged chord must stay reachable.
+        assertTrue(scene.contentWidth >= bounds(beyondAxis.value).let { it.x + it.width })
+
+        // A settled timeline still matches the notation surface exactly — the append affordance
+        // pins itself to the visible right edge instead of widening the shared scroll surface.
+        val settled = request().copy(axisSurfaceWidth = 1200f, viewportWidth = 600f)
+        assertEquals(1200f, PracticeTimelineSceneProjector.project(settled).contentWidth)
+    }
+
+    @Test
+    fun appendPressAndReleaseInsertsWithoutReportingAnError() {
+        val request = request()
+        val scene = PracticeTimelineSceneProjector.project(request)
+        val append = assertNotNull(scene.hitObjects.firstOrNull { it.kind == PracticeTimelineHitKind.APPEND })
+        val down = FreePracticeTimelineController.handle(
+            scene,
+            request,
+            PracticeTimelineInput(
+                PracticeTimelineInputType.DOWN,
+                scene.generation,
+                pointerId = 5,
+                x = append.bounds.x + append.bounds.width / 2f,
+                y = append.bounds.y + append.bounds.height / 2f,
+            ),
+        )
+        assertTrue(down.accepted)
+        assertEquals(request.timeline.end, down.appendAt)
+        assertEquals(null, down.gesture)
+
+        // The pointer release that follows the append click has no gesture; it is dropped silently.
+        val up = FreePracticeTimelineController.handle(
+            scene,
+            request,
+            PracticeTimelineInput(PracticeTimelineInputType.UP, scene.generation, pointerId = 5),
+        )
+        assertFalse(up.accepted)
+        assertEquals("no_gesture", up.reasonKey)
+        assertTrue(up.ignored)
+    }
+
+    @Test
+    fun hoverTargetsCarryCursorAndHighlightForEveryInteractiveElement() {
+        val scene = PracticeTimelineSceneProjector.project(request())
+        val kinds = scene.hoverTargets.mapTo(mutableSetOf()) { it.kind }
+        assertTrue(PracticeTimelineHitKind.SLOT in kinds)
+        assertTrue(PracticeTimelineHitKind.SLOT_END in kinds)
+        assertTrue(PracticeTimelineHitKind.SHARED_BOUNDARY in kinds)
+        assertTrue(PracticeTimelineHitKind.APPEND in kinds)
+        // Every hoverable element claims a cursor and paints something; nothing is left to the shell.
+        scene.hoverTargets.forEach { target ->
+            assertTrue(target.cursor.isNotEmpty(), "${target.hitId} has no cursor")
+            assertTrue(target.overlay.isNotEmpty(), "${target.hitId} has no highlight")
+        }
+
+        val slot = assertNotNull(scene.hoverTargets.firstOrNull { it.hitId == "slot:${first.value}" })
+        assertEquals("grab", slot.cursor)
+        val endHandle = assertNotNull(scene.hoverTargets.firstOrNull { it.hitId == "slot:${first.value}:end" })
+        assertEquals("ew-resize", endHandle.cursor)
+    }
+
+    @Test
+    fun hoverResolutionFollowsTheSameHitPriorityAsPressing() {
+        val request = request()
+        val scene = PracticeTimelineSceneProjector.project(request)
+        val boundary = assertNotNull(
+            scene.hitObjects.firstOrNull { it.kind == PracticeTimelineHitKind.SHARED_BOUNDARY },
+        )
+        val x = boundary.bounds.x + boundary.bounds.width / 2f
+        val y = boundary.bounds.y + boundary.bounds.height / 2f
+
+        // The boundary overlaps both slots and their resize handles; hover must resolve exactly the
+        // element a press would start a gesture on, otherwise the highlight lies about the outcome.
+        val hovered = assertNotNull(FreePracticeTimelineController.hoverTarget(scene, x, y))
+        assertEquals(boundary.id, hovered.hitId)
+        val down = FreePracticeTimelineController.handle(
+            scene,
+            request,
+            PracticeTimelineInput(PracticeTimelineInputType.DOWN, scene.generation, pointerId = 9, x = x, y = y),
+        )
+        assertEquals(PracticeTimelineGestureMode.SHARED_BOUNDARY, assertNotNull(down.gesture).mode)
+        assertEquals(null, FreePracticeTimelineController.hoverTarget(scene, -50f, y))
+    }
+
+    @Test
+    fun hoverHighlightPaintsAboveEveryBaseObject() {
+        val scene = PracticeTimelineSceneProjector.project(request())
+        val topBaseZ = scene.drawObjects.maxOf { it.z }
+        scene.hoverTargets.flatMap { it.overlay }.forEach { overlay ->
+            assertTrue(overlay.z > topBaseZ, "${overlay.id} would paint under the scene")
+        }
+    }
+
+    @Test
+    fun staleSceneIsExplicitlyRejectedWithoutCommit() {
+        val request = request()
+        val scene = PracticeTimelineSceneProjector.project(request)
+        val result = FreePracticeTimelineController.handle(
+            scene,
+            request,
+            PracticeTimelineInput(PracticeTimelineInputType.DOWN, scene.generation - 1, pointerId = 1),
+        )
+        assertFalse(result.accepted)
+        assertEquals("stale_scene", result.reasonKey)
+        assertEquals(null, result.commitEdit)
+    }
+
+    @Test
+    fun stalePointerLifecycleWithoutAnActiveGestureIsIgnored() {
+        val request = request()
+        val scene = PracticeTimelineSceneProjector.project(request)
+        val result = FreePracticeTimelineController.handle(
+            scene,
+            request,
+            PracticeTimelineInput(PracticeTimelineInputType.UP, scene.generation - 1, pointerId = 1),
+        )
+        assertFalse(result.accepted)
+        assertEquals("stale_scene", result.reasonKey)
+        assertTrue(result.ignored)
+    }
+}

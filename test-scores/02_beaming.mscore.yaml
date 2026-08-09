@@ -1,0 +1,936 @@
+# Test: Beam Groups
+# Tests various beam groupings and patterns
+
+id: "test-beaming-001"
+
+metadata:
+  title: "Beam Test"
+  subtitle: "Various beam patterns"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 120.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Main Notes"
+    events:
+      # Measure 1: Four groups of two eighth notes (standard beaming)
+      - id: "pe-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-005"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-006"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-007"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-008"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+
+      # Measure 2: Four sixteenth notes beamed + two eighth notes + four more sixteenths
+      - id: "pe-009"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-010"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 16
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-011"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-012"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-013"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-014"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-015"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-016"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 9
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-017"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 10
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-018"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 11
+              denominator: 16
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+
+      # Measure 3: Dotted eighth + sixteenth pattern (2x) + four eighths
+      - id: "pe-019"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-020"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-021"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-022"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-023"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-024"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 10
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-025"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 12
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-026"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 14
+              denominator: 16
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+
+      # Measure 4: Mixed - eighth + two sixteenths (2x) + quarter + quarter
+      - id: "pe-027"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-028"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-029"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-030"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-031"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-032"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-033"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-034"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 12
+              denominator: 16
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      # Measure 1: Four groups of two eighth notes
+      # Group 1
+      - id: "ve-001"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-001"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-002"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 8
+        pitchEventId: "pe-002"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 2
+      - id: "ve-003"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 8
+        pitchEventId: "pe-003"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-004"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 3
+              denominator: 8
+        pitchEventId: "pe-004"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 3
+      - id: "ve-005"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 4
+              denominator: 8
+        pitchEventId: "pe-005"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-006"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 5
+              denominator: 8
+        pitchEventId: "pe-006"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 4
+      - id: "ve-007"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 6
+              denominator: 8
+        pitchEventId: "pe-007"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-008"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 7
+              denominator: 8
+        pitchEventId: "pe-008"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 2: 4 sixteenths + 2 eighths + 4 sixteenths
+      # Group 1: 4 sixteenths
+      - id: "ve-009"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-009"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-010"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 16
+        pitchEventId: "pe-010"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-011"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitchEventId: "pe-011"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-012"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitchEventId: "pe-012"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 2: 2 eighths
+      - id: "ve-013"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitchEventId: "pe-013"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-014"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitchEventId: "pe-014"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 3: 4 sixteenths
+      - id: "ve-015"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitchEventId: "pe-015"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-016"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 9
+              denominator: 16
+        pitchEventId: "pe-016"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-017"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 10
+              denominator: 16
+        pitchEventId: "pe-017"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-018"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 11
+              denominator: 16
+        pitchEventId: "pe-018"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 3: dotted eighth + sixteenth (2x) + 4 eighths
+      # Group 1: dotted eighth + sixteenth
+      - id: "ve-019"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-019"
+        duration:
+          base: EIGHTH
+          dots: 1
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-020"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitchEventId: "pe-020"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 2: dotted eighth + sixteenth
+      - id: "ve-021"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitchEventId: "pe-021"
+        duration:
+          base: EIGHTH
+          dots: 1
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-022"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitchEventId: "pe-022"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 3: 4 eighths
+      - id: "ve-023"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitchEventId: "pe-023"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-024"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 10
+              denominator: 16
+        pitchEventId: "pe-024"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-025"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 12
+              denominator: 16
+        pitchEventId: "pe-025"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-026"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 14
+              denominator: 16
+        pitchEventId: "pe-026"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # Measure 4: eighth + 2 sixteenths (2x) + 2 quarters
+      # Group 1: eighth + 2 sixteenths
+      - id: "ve-027"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-027"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-028"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 16
+        pitchEventId: "pe-028"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-029"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 3
+              denominator: 16
+        pitchEventId: "pe-029"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # Group 2: eighth + 2 sixteenths
+      - id: "ve-030"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 4
+              denominator: 16
+        pitchEventId: "pe-030"
+        duration:
+          base: EIGHTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+      - id: "ve-031"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 6
+              denominator: 16
+        pitchEventId: "pe-031"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-032"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 7
+              denominator: 16
+        pitchEventId: "pe-032"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      # 2 quarters
+      - id: "ve-033"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 8
+              denominator: 16
+        pitchEventId: "pe-033"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-034"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 12
+              denominator: 16
+        pitchEventId: "pe-034"
+        duration:
+          base: QUARTER
+          dots: 0
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

@@ -1,0 +1,205 @@
+# 大范围琶音测试乐谱
+# 测试类似李斯特作品中的快速琶音渲染
+# 包含：上行、下行、高-低-高、低-高-低 四种模式
+
+id: "wide_range_arpeggios_test"
+metadata:
+  title: "Wide Range Arpeggios Test"
+  composer: "Test Suite"
+  description: "测试大范围琶音的符杠、符干方向、加线渲染"
+
+defaultTimeSignature: { numerator: 4, denominator: 4 }
+defaultKeySignature: { root: 0, mode: MAJOR }
+defaultTempo: 120.0
+
+measures:
+  - { number: 1 }  # 上行琶音 (C3 → C8)
+  - { number: 2 }  # 下行琶音 (C8 → C3)
+  - { number: 3 }  # 高-低-高 (C6 → C3 → C6)
+  - { number: 4 }  # 低-高-低 (C3 → C6 → C3)
+
+pitchTracks:
+  pt_main:
+    id: "pt_main"
+    name: "Arpeggio Track"
+    events:
+      # === 小节 1: 上行琶音 (C3 → C8, 16个16分音符, 跨5个八度) ===
+      - { id: "p1_1", onset: { measure: 1, beat: { numerator: 0, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] }   # C3
+      - { id: "p1_2", onset: { measure: 1, beat: { numerator: 1, denominator: 16 } }, pitches: [{ diatonicSteps: -5, chromaticOffset: 0 }] }   # E3
+      - { id: "p1_3", onset: { measure: 1, beat: { numerator: 2, denominator: 16 } }, pitches: [{ diatonicSteps: -3, chromaticOffset: 0 }] }   # G3
+      - { id: "p1_4", onset: { measure: 1, beat: { numerator: 3, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }    # C4
+      - { id: "p1_5", onset: { measure: 1, beat: { numerator: 4, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }    # E4
+      - { id: "p1_6", onset: { measure: 1, beat: { numerator: 5, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }    # G4
+      - { id: "p1_7", onset: { measure: 1, beat: { numerator: 6, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }    # C5
+      - { id: "p1_8", onset: { measure: 1, beat: { numerator: 7, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }    # E5
+      - { id: "p1_9", onset: { measure: 1, beat: { numerator: 8, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] }   # G5
+      - { id: "p1_10", onset: { measure: 1, beat: { numerator: 9, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] }  # C6
+      - { id: "p1_11", onset: { measure: 1, beat: { numerator: 10, denominator: 16 } }, pitches: [{ diatonicSteps: 16, chromaticOffset: 0 }] } # E6
+      - { id: "p1_12", onset: { measure: 1, beat: { numerator: 11, denominator: 16 } }, pitches: [{ diatonicSteps: 18, chromaticOffset: 0 }] } # G6
+      - { id: "p1_13", onset: { measure: 1, beat: { numerator: 12, denominator: 16 } }, pitches: [{ diatonicSteps: 21, chromaticOffset: 0 }] } # C7
+      - { id: "p1_14", onset: { measure: 1, beat: { numerator: 13, denominator: 16 } }, pitches: [{ diatonicSteps: 23, chromaticOffset: 0 }] } # E7
+      - { id: "p1_15", onset: { measure: 1, beat: { numerator: 14, denominator: 16 } }, pitches: [{ diatonicSteps: 25, chromaticOffset: 0 }] } # G7
+      - { id: "p1_16", onset: { measure: 1, beat: { numerator: 15, denominator: 16 } }, pitches: [{ diatonicSteps: 28, chromaticOffset: 0 }] } # C8
+
+      # === 小节 2: 下行琶音 (C8 → C3, 16个16分音符) ===
+      - { id: "p2_1", onset: { measure: 2, beat: { numerator: 0, denominator: 16 } }, pitches: [{ diatonicSteps: 28, chromaticOffset: 0 }] }  # C8
+      - { id: "p2_2", onset: { measure: 2, beat: { numerator: 1, denominator: 16 } }, pitches: [{ diatonicSteps: 25, chromaticOffset: 0 }] }  # G7
+      - { id: "p2_3", onset: { measure: 2, beat: { numerator: 2, denominator: 16 } }, pitches: [{ diatonicSteps: 23, chromaticOffset: 0 }] }  # E7
+      - { id: "p2_4", onset: { measure: 2, beat: { numerator: 3, denominator: 16 } }, pitches: [{ diatonicSteps: 21, chromaticOffset: 0 }] }  # C7
+      - { id: "p2_5", onset: { measure: 2, beat: { numerator: 4, denominator: 16 } }, pitches: [{ diatonicSteps: 18, chromaticOffset: 0 }] }  # G6
+      - { id: "p2_6", onset: { measure: 2, beat: { numerator: 5, denominator: 16 } }, pitches: [{ diatonicSteps: 16, chromaticOffset: 0 }] }  # E6
+      - { id: "p2_7", onset: { measure: 2, beat: { numerator: 6, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] }  # C6
+      - { id: "p2_8", onset: { measure: 2, beat: { numerator: 7, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] }  # G5
+      - { id: "p2_9", onset: { measure: 2, beat: { numerator: 8, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }   # E5
+      - { id: "p2_10", onset: { measure: 2, beat: { numerator: 9, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }   # C5
+      - { id: "p2_11", onset: { measure: 2, beat: { numerator: 10, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }  # G4
+      - { id: "p2_12", onset: { measure: 2, beat: { numerator: 11, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }  # E4
+      - { id: "p2_13", onset: { measure: 2, beat: { numerator: 12, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }  # C4
+      - { id: "p2_14", onset: { measure: 2, beat: { numerator: 13, denominator: 16 } }, pitches: [{ diatonicSteps: -3, chromaticOffset: 0 }] } # G3
+      - { id: "p2_15", onset: { measure: 2, beat: { numerator: 14, denominator: 16 } }, pitches: [{ diatonicSteps: -5, chromaticOffset: 0 }] } # E3
+      - { id: "p2_16", onset: { measure: 2, beat: { numerator: 15, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] } # C3
+
+      # === 小节 3: 高-低-高 (C6 → C3 → C6, 16个16分音符) ===
+      # 前半部分：C6 下行到 C3 (8个音符)
+      - { id: "p3_1", onset: { measure: 3, beat: { numerator: 0, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] }  # C6
+      - { id: "p3_2", onset: { measure: 3, beat: { numerator: 1, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] }  # G5
+      - { id: "p3_3", onset: { measure: 3, beat: { numerator: 2, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }   # E5
+      - { id: "p3_4", onset: { measure: 3, beat: { numerator: 3, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }   # C5
+      - { id: "p3_5", onset: { measure: 3, beat: { numerator: 4, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }   # G4
+      - { id: "p3_6", onset: { measure: 3, beat: { numerator: 5, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }   # E4
+      - { id: "p3_7", onset: { measure: 3, beat: { numerator: 6, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }   # C4
+      - { id: "p3_8", onset: { measure: 3, beat: { numerator: 7, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] }  # C3
+      # 后半部分：C3 上行到 C6 (8个音符)
+      - { id: "p3_9", onset: { measure: 3, beat: { numerator: 8, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] }  # C3
+      - { id: "p3_10", onset: { measure: 3, beat: { numerator: 9, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }   # C4
+      - { id: "p3_11", onset: { measure: 3, beat: { numerator: 10, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }  # E4
+      - { id: "p3_12", onset: { measure: 3, beat: { numerator: 11, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }  # G4
+      - { id: "p3_13", onset: { measure: 3, beat: { numerator: 12, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }  # C5
+      - { id: "p3_14", onset: { measure: 3, beat: { numerator: 13, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }  # E5
+      - { id: "p3_15", onset: { measure: 3, beat: { numerator: 14, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] } # G5
+      - { id: "p3_16", onset: { measure: 3, beat: { numerator: 15, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] } # C6
+
+      # === 小节 4: 低-高-低 (C3 → C6 → C3, 16个16分音符) ===
+      # 前半部分：C3 上行到 C6 (8个音符)
+      - { id: "p4_1", onset: { measure: 4, beat: { numerator: 0, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] }  # C3
+      - { id: "p4_2", onset: { measure: 4, beat: { numerator: 1, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }   # C4
+      - { id: "p4_3", onset: { measure: 4, beat: { numerator: 2, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }   # E4
+      - { id: "p4_4", onset: { measure: 4, beat: { numerator: 3, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }   # G4
+      - { id: "p4_5", onset: { measure: 4, beat: { numerator: 4, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }   # C5
+      - { id: "p4_6", onset: { measure: 4, beat: { numerator: 5, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }   # E5
+      - { id: "p4_7", onset: { measure: 4, beat: { numerator: 6, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] }  # G5
+      - { id: "p4_8", onset: { measure: 4, beat: { numerator: 7, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] }  # C6
+      # 后半部分：C6 下行到 C3 (8个音符)
+      - { id: "p4_9", onset: { measure: 4, beat: { numerator: 8, denominator: 16 } }, pitches: [{ diatonicSteps: 14, chromaticOffset: 0 }] }  # C6
+      - { id: "p4_10", onset: { measure: 4, beat: { numerator: 9, denominator: 16 } }, pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }] }  # G5
+      - { id: "p4_11", onset: { measure: 4, beat: { numerator: 10, denominator: 16 } }, pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }] }  # E5
+      - { id: "p4_12", onset: { measure: 4, beat: { numerator: 11, denominator: 16 } }, pitches: [{ diatonicSteps: 7, chromaticOffset: 0 }] }  # C5
+      - { id: "p4_13", onset: { measure: 4, beat: { numerator: 12, denominator: 16 } }, pitches: [{ diatonicSteps: 4, chromaticOffset: 0 }] }  # G4
+      - { id: "p4_14", onset: { measure: 4, beat: { numerator: 13, denominator: 16 } }, pitches: [{ diatonicSteps: 2, chromaticOffset: 0 }] }  # E4
+      - { id: "p4_15", onset: { measure: 4, beat: { numerator: 14, denominator: 16 } }, pitches: [{ diatonicSteps: 0, chromaticOffset: 0 }] }  # C4
+      - { id: "p4_16", onset: { measure: 4, beat: { numerator: 15, denominator: 16 } }, pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }] } # C3
+
+voiceTracks:
+  vt_main:
+    id: "vt_main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt_main"
+    events:
+      # === 小节 1: 上行琶音 ===
+      - { id: "v1_1", onset: { measure: 1, beat: { numerator: 0, denominator: 16 } }, pitchEventId: "p1_1", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: false, beamRight: true } } }
+      - { id: "v1_2", onset: { measure: 1, beat: { numerator: 1, denominator: 16 } }, pitchEventId: "p1_2", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_3", onset: { measure: 1, beat: { numerator: 2, denominator: 16 } }, pitchEventId: "p1_3", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_4", onset: { measure: 1, beat: { numerator: 3, denominator: 16 } }, pitchEventId: "p1_4", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_5", onset: { measure: 1, beat: { numerator: 4, denominator: 16 } }, pitchEventId: "p1_5", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_6", onset: { measure: 1, beat: { numerator: 5, denominator: 16 } }, pitchEventId: "p1_6", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_7", onset: { measure: 1, beat: { numerator: 6, denominator: 16 } }, pitchEventId: "p1_7", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_8", onset: { measure: 1, beat: { numerator: 7, denominator: 16 } }, pitchEventId: "p1_8", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_9", onset: { measure: 1, beat: { numerator: 8, denominator: 16 } }, pitchEventId: "p1_9", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_10", onset: { measure: 1, beat: { numerator: 9, denominator: 16 } }, pitchEventId: "p1_10", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_11", onset: { measure: 1, beat: { numerator: 10, denominator: 16 } }, pitchEventId: "p1_11", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_12", onset: { measure: 1, beat: { numerator: 11, denominator: 16 } }, pitchEventId: "p1_12", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_13", onset: { measure: 1, beat: { numerator: 12, denominator: 16 } }, pitchEventId: "p1_13", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_14", onset: { measure: 1, beat: { numerator: 13, denominator: 16 } }, pitchEventId: "p1_14", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_15", onset: { measure: 1, beat: { numerator: 14, denominator: 16 } }, pitchEventId: "p1_15", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v1_16", onset: { measure: 1, beat: { numerator: 15, denominator: 16 } }, pitchEventId: "p1_16", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: false } } }
+
+      # === 小节 2: 下行琶音 ===
+      - { id: "v2_1", onset: { measure: 2, beat: { numerator: 0, denominator: 16 } }, pitchEventId: "p2_1", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: false, beamRight: true } } }
+      - { id: "v2_2", onset: { measure: 2, beat: { numerator: 1, denominator: 16 } }, pitchEventId: "p2_2", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_3", onset: { measure: 2, beat: { numerator: 2, denominator: 16 } }, pitchEventId: "p2_3", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_4", onset: { measure: 2, beat: { numerator: 3, denominator: 16 } }, pitchEventId: "p2_4", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_5", onset: { measure: 2, beat: { numerator: 4, denominator: 16 } }, pitchEventId: "p2_5", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_6", onset: { measure: 2, beat: { numerator: 5, denominator: 16 } }, pitchEventId: "p2_6", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_7", onset: { measure: 2, beat: { numerator: 6, denominator: 16 } }, pitchEventId: "p2_7", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_8", onset: { measure: 2, beat: { numerator: 7, denominator: 16 } }, pitchEventId: "p2_8", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_9", onset: { measure: 2, beat: { numerator: 8, denominator: 16 } }, pitchEventId: "p2_9", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_10", onset: { measure: 2, beat: { numerator: 9, denominator: 16 } }, pitchEventId: "p2_10", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_11", onset: { measure: 2, beat: { numerator: 10, denominator: 16 } }, pitchEventId: "p2_11", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_12", onset: { measure: 2, beat: { numerator: 11, denominator: 16 } }, pitchEventId: "p2_12", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_13", onset: { measure: 2, beat: { numerator: 12, denominator: 16 } }, pitchEventId: "p2_13", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_14", onset: { measure: 2, beat: { numerator: 13, denominator: 16 } }, pitchEventId: "p2_14", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_15", onset: { measure: 2, beat: { numerator: 14, denominator: 16 } }, pitchEventId: "p2_15", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v2_16", onset: { measure: 2, beat: { numerator: 15, denominator: 16 } }, pitchEventId: "p2_16", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: false } } }
+
+      # === 小节 3: 高-低-高 ===
+      - { id: "v3_1", onset: { measure: 3, beat: { numerator: 0, denominator: 16 } }, pitchEventId: "p3_1", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: false, beamRight: true } } }
+      - { id: "v3_2", onset: { measure: 3, beat: { numerator: 1, denominator: 16 } }, pitchEventId: "p3_2", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_3", onset: { measure: 3, beat: { numerator: 2, denominator: 16 } }, pitchEventId: "p3_3", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_4", onset: { measure: 3, beat: { numerator: 3, denominator: 16 } }, pitchEventId: "p3_4", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_5", onset: { measure: 3, beat: { numerator: 4, denominator: 16 } }, pitchEventId: "p3_5", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_6", onset: { measure: 3, beat: { numerator: 5, denominator: 16 } }, pitchEventId: "p3_6", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_7", onset: { measure: 3, beat: { numerator: 6, denominator: 16 } }, pitchEventId: "p3_7", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_8", onset: { measure: 3, beat: { numerator: 7, denominator: 16 } }, pitchEventId: "p3_8", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_9", onset: { measure: 3, beat: { numerator: 8, denominator: 16 } }, pitchEventId: "p3_9", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_10", onset: { measure: 3, beat: { numerator: 9, denominator: 16 } }, pitchEventId: "p3_10", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_11", onset: { measure: 3, beat: { numerator: 10, denominator: 16 } }, pitchEventId: "p3_11", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_12", onset: { measure: 3, beat: { numerator: 11, denominator: 16 } }, pitchEventId: "p3_12", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_13", onset: { measure: 3, beat: { numerator: 12, denominator: 16 } }, pitchEventId: "p3_13", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_14", onset: { measure: 3, beat: { numerator: 13, denominator: 16 } }, pitchEventId: "p3_14", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_15", onset: { measure: 3, beat: { numerator: 14, denominator: 16 } }, pitchEventId: "p3_15", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v3_16", onset: { measure: 3, beat: { numerator: 15, denominator: 16 } }, pitchEventId: "p3_16", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: false } } }
+
+      # === 小节 4: 低-高-低 ===
+      - { id: "v4_1", onset: { measure: 4, beat: { numerator: 0, denominator: 16 } }, pitchEventId: "p4_1", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: false, beamRight: true } } }
+      - { id: "v4_2", onset: { measure: 4, beat: { numerator: 1, denominator: 16 } }, pitchEventId: "p4_2", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_3", onset: { measure: 4, beat: { numerator: 2, denominator: 16 } }, pitchEventId: "p4_3", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_4", onset: { measure: 4, beat: { numerator: 3, denominator: 16 } }, pitchEventId: "p4_4", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_5", onset: { measure: 4, beat: { numerator: 4, denominator: 16 } }, pitchEventId: "p4_5", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_6", onset: { measure: 4, beat: { numerator: 5, denominator: 16 } }, pitchEventId: "p4_6", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_7", onset: { measure: 4, beat: { numerator: 6, denominator: 16 } }, pitchEventId: "p4_7", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_8", onset: { measure: 4, beat: { numerator: 7, denominator: 16 } }, pitchEventId: "p4_8", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_9", onset: { measure: 4, beat: { numerator: 8, denominator: 16 } }, pitchEventId: "p4_9", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_10", onset: { measure: 4, beat: { numerator: 9, denominator: 16 } }, pitchEventId: "p4_10", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_11", onset: { measure: 4, beat: { numerator: 10, denominator: 16 } }, pitchEventId: "p4_11", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_12", onset: { measure: 4, beat: { numerator: 11, denominator: 16 } }, pitchEventId: "p4_12", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_13", onset: { measure: 4, beat: { numerator: 12, denominator: 16 } }, pitchEventId: "p4_13", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_14", onset: { measure: 4, beat: { numerator: 13, denominator: 16 } }, pitchEventId: "p4_14", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_15", onset: { measure: 4, beat: { numerator: 14, denominator: 16 } }, pitchEventId: "p4_15", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: true } } }
+      - { id: "v4_16", onset: { measure: 4, beat: { numerator: 15, denominator: 16 } }, pitchEventId: "p4_16", duration: { base: SIXTEENTH }, rendering: { beaming: { beamLeft: true, beamRight: false } } }
+
+staffTracks:
+  st_treble:
+    id: "st_treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature: { root: 0, mode: MAJOR }
+    voiceTrackIds: ["vt_main"]
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st_treble"
+
+globalTrack:
+  id: "global"
+  name: "Global"
+  tempoEvents:
+    - id: "tempo_1"
+      onset: { measure: 1, beat: { numerator: 0, denominator: 1 } }
+      bpm: 120.0
+      beatUnit: QUARTER
+      text: "Presto (Liszt style)"

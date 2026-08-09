@@ -1,0 +1,225 @@
+# Test: Octave Shifts Combined with Dynamics
+#
+# Tests that cresc./dim. and 8va/8vb appear on the same placement side and that
+# the layout keeps 8va/8vb on the OUTSIDE (further from staff) while cresc./dim.
+# stays on the INSIDE (closer to staff).
+#
+# Layout priority rule (StaffAttachmentLayoutComputer):
+#   Priority 0 — inner row:  dynamics marks, cresc./dim. hairpins
+#   Priority 1 — outer row:  octave-shift brackets (8va / 8vb)
+#
+# ── Section 1 (M1–M3): ABOVE side ───────────────────────────────────────────
+#   Sounding pitches E5/F5/G5; written as E4/F4/G4 under the 8va bracket.
+#   8va bracket:   M1 → M4  (ABOVE)              ← outer
+#   mf mark:       M1        (ABOVE)              ← inner
+#   cresc. text:   M1 → M3   (ABOVE, TEXT_DASHED) ← inner
+#
+# ── Section 2 (M4–M6): BELOW side ───────────────────────────────────────────
+#   Sounding pitches C3/B2/A2; written as C4/B3/A3 under the 8vb bracket.
+#   8vb bracket:   M4 → M7  (BELOW)              ← outer
+#   p mark:        M4        (BELOW)              ← inner
+#   dim. text:     M4 → M6   (BELOW, TEXT_DASHED) ← inner
+
+id: "test-octave-dyn-001"
+
+metadata:
+  title: "Octave Shifts + Dynamics Combined"
+  subtitle: "8va/8vb outer, cresc./dim. inner — layout priority test"
+  composer: "Test"
+  createdAt: 1748300000000
+  modifiedAt: 1748300000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 72.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+
+pitchTracks:
+  pt-main:
+    id: "pt-main"
+    name: "Main"
+    events:
+      # M1: E5 (sounding) — displayed as E4 under 8va
+      - id: "pe-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 9, chromaticOffset: 0 }]
+      # M2: F5 — displayed as F4
+      - id: "pe-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 10, chromaticOffset: 0 }]
+      # M3: G5 — displayed as G4
+      - id: "pe-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: 11, chromaticOffset: 0 }]
+      # M4: C3 (sounding) — displayed as C4 under 8vb
+      - id: "pe-4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -7, chromaticOffset: 0 }]
+      # M5: B2 — displayed as B3
+      - id: "pe-5"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -8, chromaticOffset: 0 }]
+      # M6: A2 — displayed as A3
+      - id: "pe-6"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitches: [{ diatonicSteps: -9, chromaticOffset: 0 }]
+
+voiceTracks:
+  vt-main:
+    id: "vt-main"
+    name: "Voice 1"
+    voiceNumber: 1
+    pitchTrackId: "pt-main"
+    events:
+      - id: "ve-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-1"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-2"
+        onset: { components: [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-2"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-3"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-4"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-5"
+        onset: { components: [{ numerator: 5, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-5"
+        duration: { base: WHOLE, dots: 0 }
+      - id: "ve-6"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        pitchEventId: "pe-6"
+        duration: { base: WHOLE, dots: 0 }
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Treble Staff"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-main"
+    attachments:
+      # ── ABOVE side: 8va (outer) + mf mark + cresc. (inner) ─────────────────
+      # 8va bracket: M1–M3 inclusive (end exclusive = M4)
+      - type: octaveShiftStart
+        id: "osa-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        shiftType: OTTAVA
+        endEventId: "ose-1"
+        placement: ABOVE
+      - type: octaveShiftEnd
+        id: "ose-1"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        placement: ABOVE
+      # mf at M1 (inner, priority 0)
+      - type: dynamicMark
+        id: "dyn-mf"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: MF
+        placement: ABOVE
+        controllerEventId: "ctl-1"
+      # cresc. text+dashed from M1 to M3 (inner, priority 0)
+      - type: hairpin
+        id: "hp-cresc"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        direction: CRESCENDO
+        style: TEXT_DASHED
+        placement: ABOVE
+        controllerStartId: "ctl-2"
+        controllerEndId: "ctl-3"
+      # ── BELOW side: 8vb (outer) + p mark + dim. (inner) ────────────────────
+      # 8vb bracket: M4–M6 inclusive (end exclusive = M7)
+      - type: octaveShiftStart
+        id: "osa-2"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        shiftType: OTTAVA_BASSA
+        endEventId: "ose-2"
+        placement: BELOW
+      - type: octaveShiftEnd
+        id: "ose-2"
+        onset: { components: [{ numerator: 7, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        placement: BELOW
+      # p at M4 (inner, priority 0)
+      - type: dynamicMark
+        id: "dyn-p"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        level: P
+        placement: BELOW
+        controllerEventId: "ctl-4"
+      # dim. text+dashed from M4 to M6 (inner, priority 0)
+      - type: hairpin
+        id: "hp-dim"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        endOnset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        direction: DIMINUENDO
+        style: TEXT_DASHED
+        placement: BELOW
+        controllerStartId: "ctl-5"
+        controllerEndId: "ctl-6"
+
+staffGroups:
+  - id: "sg-main"
+    bracket: NONE
+    barlineConnect: false
+    members:
+      - type: staff
+        staffId: "st-treble"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  events: []
+
+controllerTracks:
+  ct-dyn:
+    id: "ct-dyn"
+    name: "Dynamics"
+    scope:
+      staffIds: ["st-treble"]
+      voiceNumbers: []
+    events:
+      - id: "ctl-1"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: MF
+      - id: "ctl-2"
+        onset: { components: [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: CRESCENDO
+      - id: "ctl-3"
+        onset: { components: [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_END
+      - id: "ctl-4"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: SET_DYNAMIC
+        level: P
+      - id: "ctl-5"
+        onset: { components: [{ numerator: 4, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_START
+        hairpin: DIMINUENDO
+      - id: "ctl-6"
+        onset: { components: [{ numerator: 6, denominator: 1 }, { numerator: 0, denominator: 4 }] }
+        type: RAMP_END

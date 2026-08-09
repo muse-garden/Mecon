@@ -1,0 +1,156 @@
+# ============================================
+# Gradle
+# ============================================
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ============================================
+# Kotlin
+# ============================================
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ============================================
+# IDE - IntelliJ IDEA / Android Studio
+# ============================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+**/bin/
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# ============================================
+# Android
+# ============================================
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+*.keystore
+!debug.keystore
+
+# ============================================
+# iOS / Xcode
+# ============================================
+apps/ios/Pods/
+apps/ios/.symlinks/
+apps/ios/Flutter/Flutter.framework/
+apps/ios/Flutter/Flutter.podspec
+apps/ios/Podfile.lock
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+*.xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ============================================
+# Kotlin/JS & Web
+# ============================================
+kotlin-js-store/
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+*.js.map
+js-bridge/types/*.d.ts
+!js-bridge/types/*.manual.d.ts
+apps/web/.next/
+apps/web/out/
+
+# ============================================
+# Desktop (Compose)
+# ============================================
+*.dmg
+*.msi
+*.exe
+*.app/
+jpackage/
+
+# ============================================
+# OS Generated Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Editor Specific
+# ============================================
+*.swp
+*.swo
+*~
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ============================================
+# Secrets & Environment
+# ============================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+credentials.json
+
+# ============================================
+# Testing & Coverage
+# ============================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+reports/
+
+# ============================================
+# Misc
+# ============================================
+*.log
+*.tmp
+*.temp
+*.cache
+.kotlin/
+
+/smufl/

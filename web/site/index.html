@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#11151d" />
+    <meta name="description" content="Mecon：把记谱、乐理学习与创作灵感放在同一张工作台上。" />
+    <title>Mecon · 让音乐想法长出谱面</title>
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <link rel="apple-touch-icon" href="./logo.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="./" aria-label="Mecon 首页">
+          <img class="brand-mark" src="./logo.png" alt="" width="32" height="32" />
+          <span>Mecon</span>
+        </a>
+        <nav class="site-nav" aria-label="主导航">
+          <a href="#features">能做什么</a>
+          <a href="#workflow">怎么工作</a>
+          <a href="#status">项目状态</a>
+          <a class="nav-github" href="https://github.com/muse-garden/Mecon" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero section-wrap">
+          <div class="hero-copy">
+            <p class="eyebrow"><span></span> 开源音乐工作台</p>
+            <h1>让音乐想法<br /><em>长出谱面。</em></h1>
+            <p class="hero-lede">Mecon 把记谱、乐理学习与创作探索放在同一张工作台上。你可以先弹出一个想法，再慢慢理解它、整理它，最后把它写成真正的音乐。</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="./demo/free-practice/">试用自由练习 <span>→</span></a>
+              <a class="button button-quiet" href="https://github.com/muse-garden/Mecon" target="_blank" rel="noreferrer">查看 GitHub <span>↗</span></a>
+            </div>
+            <p class="hero-note"><span class="pulse-dot"></span> 桌面端持续开发中 · Web 自由练习可直接体验</p>
+          </div>
+
+          <div class="hero-art" aria-label="抽象五线谱与音乐工作台示意图" role="img">
+            <div class="art-glow"></div>
+            <div class="score-card">
+              <div class="score-card-top"><span>MEcon / sketch 01</span><span>♩ = 76</span></div>
+              <div class="staff-lines"><i class="note note-one">●</i><i class="note note-two">●</i><i class="note note-three">●</i><i class="note note-four">●</i><i class="note note-five">●</i></div>
+              <div class="score-card-bottom"><span>自由练习</span><span class="card-status">● listening</span></div>
+            </div>
+            <div class="floating-chip chip-analysis"><span>和声分析</span><strong>ii → V → I</strong></div>
+            <div class="floating-chip chip-midi"><span>MIDI input</span><strong>ready</strong></div>
+          </div>
+        </section>
+
+        <section class="section-wrap intro-strip" aria-label="Mecon 简介">
+          <p>有时你缺的不是灵感，<br /><strong>只是一个能接住灵感的地方。</strong></p>
+          <p class="intro-detail">Mecon 面向音乐爱好者、学习者与创作者，努力把专业工具的能力变得可理解、可探索，也可随时回到自己的音乐语境里。</p>
+        </section>
+
+        <section id="features" class="section-wrap feature-section">
+          <div class="section-heading"><p class="eyebrow"><span></span> 一张工作台，三种进入方式</p><h2>从“写下来”开始，<br />走向“听懂它”。</h2></div>
+          <div class="feature-grid">
+            <article class="feature-card feature-card-main"><div class="feature-number">01</div><div class="feature-symbol">♩</div><h3>跟着弹，就能记谱</h3><p>用电脑键盘或 MIDI 键盘捕捉音符、和弦与节奏，也可以直接在五线谱上编辑。播放、撤销与重做，让试错变得轻松。</p><a href="./demo/free-practice/">进入自由练习 <span>→</span></a></article>
+            <article class="feature-card"><div class="feature-number">02</div><div class="feature-symbol">◌</div><h3>像做习题一样学和声</h3><p>从传统四部和声到勋伯格综合练习，把规则、结果与讲解放在同一个上下文里，边写边建立自己的判断。</p><div class="feature-meta">规则引擎 · 对照示例 · 章节练习</div></article>
+            <article class="feature-card"><div class="feature-number">03</div><div class="feature-symbol">✦</div><h3>让一条旋律继续生长</h3><p>先保留主旋律的骨架，再逐层展开和声、配器与总谱。Mecon 也在探索更像乐器一样的即时创作体验。</p><div class="feature-meta">灵感记录 · 分层分析 · 创作探索</div></article>
+          </div>
+        </section>
+
+        <section id="workflow" class="section-wrap workflow-section">
+          <div class="workflow-copy"><p class="eyebrow"><span></span> 一个连续的过程</p><h2>从耳朵出发，<br />在谱面上抵达。</h2><p>音乐创作很少是一次完成的。Mecon 希望让“听见”“写下”“理解”“修改”之间的距离更短，让工具在你需要的时候出现，而不是先要求你学会一整套工具。</p><a class="text-link" href="https://github.com/muse-garden/Mecon" target="_blank" rel="noreferrer">了解项目的实现与进展 <span>↗</span></a></div>
+          <div class="workflow-steps"><div class="workflow-step"><span class="step-index">A</span><div><h3>捕捉</h3><p>把脑中的片段、手上的演奏或现有乐谱带进来。</p></div></div><div class="workflow-line"></div><div class="workflow-step"><span class="step-index">B</span><div><h3>看见</h3><p>在谱面、时间轴与和声视角之间切换，找到音乐的结构。</p></div></div><div class="workflow-line"></div><div class="workflow-step"><span class="step-index">C</span><div><h3>继续</h3><p>保留每一次尝试，再从一个更清楚的起点继续写下去。</p></div></div></div>
+        </section>
+
+        <section id="status" class="section-wrap status-section">
+          <div class="status-panel"><div><p class="eyebrow"><span></span> 现在就能试</p><h2>先打开自由练习，<br />看看它能不能接住你的下一段想法。</h2><p>Web 版自由练习已经可以直接打开体验；完整桌面应用、更多记谱能力与学习内容仍在持续建设。</p></div><a class="button button-primary" href="./demo/free-practice/">打开自由练习 <span>→</span></a></div>
+          <div class="status-foot"><span>开源 · GPLv3-or-later</span><span>持续开发 · 欢迎反馈</span><span><a href="https://github.com/muse-garden/Mecon" target="_blank" rel="noreferrer">github.com/muse-garden/Mecon ↗</a></span></div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><span>© <span id="year"></span> Mecon</span><span>为热爱音乐、但不想被工具挡住的人而做</span></footer>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,2297 @@
+# Test: Complex Tuplets
+# Tests rendering of:
+#  - Short tuplets (triplet, quintuplet) and long tuplets (11-tuplet, 13-tuplet)
+#  - Wide pitch-range tuplet (large interval leaps)
+#  - Cross-staff polyrhythms: 2:3, 3:5, 4:6, 11:13
+
+id: "test-complex-tuplets-001"
+
+metadata:
+  title: "Complex Tuplets Test"
+  subtitle: "Short / long / wide-range / polyrhythmic tuplets"
+  composer: "Test"
+  createdAt: 1706400000000
+  modifiedAt: 1706400000000
+
+defaultTimeSignature:
+  numerator: 4
+  denominator: 4
+
+defaultKeySignature:
+  root: 0
+  mode: MAJOR
+
+defaultTempo: 60.0
+
+measures:
+  - number: 1
+  - number: 2
+  - number: 3
+  - number: 4
+  - number: 5
+  - number: 6
+  - number: 7
+
+pitchTracks:
+  # Right hand (treble clef)
+  pt-rh:
+    id: "pt-rh"
+    name: "Right Hand"
+    events:
+      # === Measure 1: triplet (beats 1-2) + quintuplet (beats 3-4) ===
+      - id: "pe-r-101"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-r-102"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-r-103"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-104"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-r-105"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 6
+              denominator: 10
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-r-106"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 7
+              denominator: 10
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-r-107"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 8
+              denominator: 10
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-108"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 9
+              denominator: 10
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+
+      # === Measure 2: 11-tuplet sixteenths (beats 1-2) + half note (beats 3-4) ===
+      - id: "pe-r-201"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-r-202"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 22
+        pitches:
+          - diatonicSteps: 1
+            chromaticOffset: 0
+      - id: "pe-r-203"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 22
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-r-204"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 22
+        pitches:
+          - diatonicSteps: 3
+            chromaticOffset: 0
+      - id: "pe-r-205"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 22
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-r-206"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 5
+              denominator: 22
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-r-207"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 22
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-r-208"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 22
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-r-209"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 8
+              denominator: 22
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0
+      - id: "pe-r-210"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 9
+              denominator: 22
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-211"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 10
+              denominator: 22
+        pitches:
+          - diatonicSteps: 10
+            chromaticOffset: 0
+      - id: "pe-r-212"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+      # === Measure 3: 7-tuplet, wide-range pitch leaps ===
+      - id: "pe-r-301"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-r-302"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 7
+        pitches:
+          - diatonicSteps: 14
+            chromaticOffset: 0
+      - id: "pe-r-303"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 7
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-r-304"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 7
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-r-305"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 7
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-r-306"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 5
+              denominator: 7
+        pitches:
+          - diatonicSteps: 16
+            chromaticOffset: 0
+      - id: "pe-r-307"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 6
+              denominator: 7
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+
+      # === Measure 4: 2:3 polyrhythm — top has 2 half notes ===
+      - id: "pe-r-401"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-402"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+
+      # === Measure 5: 3:5 polyrhythm — top has 3 half-note triplets ===
+      - id: "pe-r-501"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-r-502"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 3
+        pitches:
+          - diatonicSteps: 6
+            chromaticOffset: 0
+      - id: "pe-r-503"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 3
+        pitches:
+          - diatonicSteps: 8
+            chromaticOffset: 0
+
+      # === Measure 6: 4:6 polyrhythm — top has 4 quarters ===
+      - id: "pe-r-601"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-r-602"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-603"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-r-604"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+
+      # === Measure 7: 11:13 polyrhythm (beats 1-2) + half note (beats 3-4) ===
+      # Top: 11 sixteenths ascending
+      - id: "pe-r-701"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-r-702"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 22
+        pitches:
+          - diatonicSteps: 2
+            chromaticOffset: 0
+      - id: "pe-r-703"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 22
+        pitches:
+          - diatonicSteps: 4
+            chromaticOffset: 0
+      - id: "pe-r-704"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 22
+        pitches:
+          - diatonicSteps: 5
+            chromaticOffset: 0
+      - id: "pe-r-705"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 4
+              denominator: 22
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+      - id: "pe-r-706"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 5
+              denominator: 22
+        pitches:
+          - diatonicSteps: 9
+            chromaticOffset: 0
+      - id: "pe-r-707"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 6
+              denominator: 22
+        pitches:
+          - diatonicSteps: 11
+            chromaticOffset: 0
+      - id: "pe-r-708"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 7
+              denominator: 22
+        pitches:
+          - diatonicSteps: 12
+            chromaticOffset: 0
+      - id: "pe-r-709"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 8
+              denominator: 22
+        pitches:
+          - diatonicSteps: 13
+            chromaticOffset: 0
+      - id: "pe-r-710"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 9
+              denominator: 22
+        pitches:
+          - diatonicSteps: 14
+            chromaticOffset: 0
+      - id: "pe-r-711"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 10
+              denominator: 22
+        pitches:
+          - diatonicSteps: 15
+            chromaticOffset: 0
+      - id: "pe-r-712"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: 7
+            chromaticOffset: 0
+
+  # Left hand (bass clef)
+  pt-lh:
+    id: "pt-lh"
+    name: "Left Hand"
+    events:
+      # === Measure 1: 2 half notes ===
+      - id: "pe-l-101"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-l-102"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # === Measure 2: whole note ===
+      - id: "pe-l-201"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+
+      # === Measure 3: whole note ===
+      - id: "pe-l-301"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -10
+            chromaticOffset: 0
+
+      # === Measure 4: 3 half-note triplets ===
+      - id: "pe-l-401"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-l-402"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 3
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+      - id: "pe-l-403"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 3
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # === Measure 5: 5 quarter quintuplets ===
+      - id: "pe-l-501"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-l-502"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 5
+        pitches:
+          - diatonicSteps: -6
+            chromaticOffset: 0
+      - id: "pe-l-503"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 5
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+      - id: "pe-l-504"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 5
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+      - id: "pe-l-505"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 4
+              denominator: 5
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+
+      # === Measure 6: 6 quarter sextuplets ===
+      - id: "pe-l-601"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-l-602"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+      - id: "pe-l-603"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-l-604"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 6
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-l-605"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 4
+              denominator: 6
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-l-606"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 5
+              denominator: 6
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+
+      # === Measure 7: 13 sixteenths descending (beats 1-2) + half note ===
+      - id: "pe-l-701"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitches:
+          - diatonicSteps: 0
+            chromaticOffset: 0
+      - id: "pe-l-702"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 26
+        pitches:
+          - diatonicSteps: -1
+            chromaticOffset: 0
+      - id: "pe-l-703"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 26
+        pitches:
+          - diatonicSteps: -2
+            chromaticOffset: 0
+      - id: "pe-l-704"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 26
+        pitches:
+          - diatonicSteps: -3
+            chromaticOffset: 0
+      - id: "pe-l-705"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 4
+              denominator: 26
+        pitches:
+          - diatonicSteps: -4
+            chromaticOffset: 0
+      - id: "pe-l-706"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 5
+              denominator: 26
+        pitches:
+          - diatonicSteps: -5
+            chromaticOffset: 0
+      - id: "pe-l-707"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 6
+              denominator: 26
+        pitches:
+          - diatonicSteps: -6
+            chromaticOffset: 0
+      - id: "pe-l-708"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 7
+              denominator: 26
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+      - id: "pe-l-709"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 8
+              denominator: 26
+        pitches:
+          - diatonicSteps: -8
+            chromaticOffset: 0
+      - id: "pe-l-710"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 9
+              denominator: 26
+        pitches:
+          - diatonicSteps: -9
+            chromaticOffset: 0
+      - id: "pe-l-711"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 10
+              denominator: 26
+        pitches:
+          - diatonicSteps: -10
+            chromaticOffset: 0
+      - id: "pe-l-712"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 11
+              denominator: 26
+        pitches:
+          - diatonicSteps: -11
+            chromaticOffset: 0
+      - id: "pe-l-713"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 12
+              denominator: 26
+        pitches:
+          - diatonicSteps: -12
+            chromaticOffset: 0
+      - id: "pe-l-714"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitches:
+          - diatonicSteps: -7
+            chromaticOffset: 0
+
+voiceTracks:
+  # Right hand voice
+  vt-rh:
+    id: "vt-rh"
+    name: "Right Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-rh"
+    events:
+      # === Measure 1: quarter triplet + eighth quintuplet ===
+      - id: "ve-r-101"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-101"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 1
+                denominator: 1
+              - numerator: 1
+                denominator: 2
+          count: 3
+          beatUnit: QUARTER
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-102"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitchEventId: "pe-r-102"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-r-103"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitchEventId: "pe-r-103"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-r-104"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-r-104"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 2
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 5
+          beatUnit: EIGHTH
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-105"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 6
+              denominator: 10
+        pitchEventId: "pe-r-105"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-106"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 7
+              denominator: 10
+        pitchEventId: "pe-r-106"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-107"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 8
+              denominator: 10
+        pitchEventId: "pe-r-107"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-108"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 9
+              denominator: 10
+        pitchEventId: "pe-r-108"
+        duration:
+          base: EIGHTH
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+
+      # === Measure 2: 11-tuplet sixteenths in beats 1-2 + half note ===
+      - id: "ve-r-201"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-201"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 2
+                denominator: 1
+              - numerator: 1
+                denominator: 2
+          count: 11
+          beatUnit: SIXTEENTH
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-202"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 22
+        pitchEventId: "pe-r-202"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-203"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 2
+              denominator: 22
+        pitchEventId: "pe-r-203"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-204"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 3
+              denominator: 22
+        pitchEventId: "pe-r-204"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-205"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 4
+              denominator: 22
+        pitchEventId: "pe-r-205"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-206"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 5
+              denominator: 22
+        pitchEventId: "pe-r-206"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-207"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 6
+              denominator: 22
+        pitchEventId: "pe-r-207"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-208"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 7
+              denominator: 22
+        pitchEventId: "pe-r-208"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-209"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 8
+              denominator: 22
+        pitchEventId: "pe-r-209"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-210"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 9
+              denominator: 22
+        pitchEventId: "pe-r-210"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-211"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 10
+              denominator: 22
+        pitchEventId: "pe-r-211"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-r-212"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-r-212"
+        duration:
+          base: HALF
+          dots: 0
+
+      # === Measure 3: 7-tuplet quarter septuplet, wide pitch leaps ===
+      - id: "ve-r-301"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-301"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 4
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 7
+          beatUnit: QUARTER
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-302"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 1
+              denominator: 7
+        pitchEventId: "pe-r-302"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+      - id: "ve-r-303"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 2
+              denominator: 7
+        pitchEventId: "pe-r-303"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+      - id: "ve-r-304"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 3
+              denominator: 7
+        pitchEventId: "pe-r-304"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+      - id: "ve-r-305"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 4
+              denominator: 7
+        pitchEventId: "pe-r-305"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+      - id: "ve-r-306"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 5
+              denominator: 7
+        pitchEventId: "pe-r-306"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+      - id: "ve-r-307"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 6
+              denominator: 7
+        pitchEventId: "pe-r-307"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 7
+            normal: 4
+
+      # === Measure 4: 2 half notes (2:3 against bottom) ===
+      - id: "ve-r-401"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-401"
+        duration:
+          base: HALF
+          dots: 0
+      - id: "ve-r-402"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-r-402"
+        duration:
+          base: HALF
+          dots: 0
+
+      # === Measure 5: 3 half-note triplets (3:5 against bottom) ===
+      - id: "ve-r-501"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-501"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 6
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 3
+          beatUnit: HALF
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-502"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 3
+        pitchEventId: "pe-r-502"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-r-503"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 3
+        pitchEventId: "pe-r-503"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+
+      # === Measure 6: 4 quarter notes (4:6 against bottom) ===
+      - id: "ve-r-601"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-601"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-r-602"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 4
+        pitchEventId: "pe-r-602"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-r-603"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 4
+        pitchEventId: "pe-r-603"
+        duration:
+          base: QUARTER
+          dots: 0
+      - id: "ve-r-604"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 4
+        pitchEventId: "pe-r-604"
+        duration:
+          base: QUARTER
+          dots: 0
+
+      # === Measure 7: 11 sixteenths (11:8) ascending + half note ===
+      - id: "ve-r-701"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-r-701"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 7
+                denominator: 1
+              - numerator: 1
+                denominator: 2
+          count: 11
+          beatUnit: SIXTEENTH
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-r-702"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 22
+        pitchEventId: "pe-r-702"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-703"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 22
+        pitchEventId: "pe-r-703"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-704"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 22
+        pitchEventId: "pe-r-704"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-705"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 4
+              denominator: 22
+        pitchEventId: "pe-r-705"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-706"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 5
+              denominator: 22
+        pitchEventId: "pe-r-706"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-707"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 6
+              denominator: 22
+        pitchEventId: "pe-r-707"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-708"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 7
+              denominator: 22
+        pitchEventId: "pe-r-708"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-709"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 8
+              denominator: 22
+        pitchEventId: "pe-r-709"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-710"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 9
+              denominator: 22
+        pitchEventId: "pe-r-710"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-r-711"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 10
+              denominator: 22
+        pitchEventId: "pe-r-711"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 11
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-r-712"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-r-712"
+        duration:
+          base: HALF
+          dots: 0
+
+  # Left hand voice
+  vt-lh:
+    id: "vt-lh"
+    name: "Left Hand"
+    voiceNumber: 1
+    pitchTrackId: "pt-lh"
+    events:
+      # === Measure 1: 2 half notes ===
+      - id: "ve-l-101"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-101"
+        duration:
+          base: HALF
+          dots: 0
+      - id: "ve-l-102"
+        onset:
+          components:
+            - numerator: 1
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-l-102"
+        duration:
+          base: HALF
+          dots: 0
+
+      # === Measure 2: whole note ===
+      - id: "ve-l-201"
+        onset:
+          components:
+            - numerator: 2
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-201"
+        duration:
+          base: WHOLE
+          dots: 0
+
+      # === Measure 3: whole note ===
+      - id: "ve-l-301"
+        onset:
+          components:
+            - numerator: 3
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-301"
+        duration:
+          base: WHOLE
+          dots: 0
+
+      # === Measure 4: 3 half-note triplets (against top's 2 halves -> 2:3) ===
+      - id: "ve-l-401"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-401"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 5
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 3
+          beatUnit: HALF
+          displayStyle: SLUR_AND_NUMBER
+      - id: "ve-l-402"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 1
+              denominator: 3
+        pitchEventId: "pe-l-402"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+      - id: "ve-l-403"
+        onset:
+          components:
+            - numerator: 4
+              denominator: 1
+            - numerator: 2
+              denominator: 3
+        pitchEventId: "pe-l-403"
+        duration:
+          base: HALF
+          dots: 0
+          tuplet:
+            actual: 3
+            normal: 2
+
+      # === Measure 5: 5 quarter quintuplets (against top 3 -> 3:5) ===
+      - id: "ve-l-501"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-501"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 6
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 5
+          beatUnit: QUARTER
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-l-502"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 1
+              denominator: 5
+        pitchEventId: "pe-l-502"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+      - id: "ve-l-503"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 2
+              denominator: 5
+        pitchEventId: "pe-l-503"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+      - id: "ve-l-504"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 3
+              denominator: 5
+        pitchEventId: "pe-l-504"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+      - id: "ve-l-505"
+        onset:
+          components:
+            - numerator: 5
+              denominator: 1
+            - numerator: 4
+              denominator: 5
+        pitchEventId: "pe-l-505"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 5
+            normal: 4
+
+      # === Measure 6: 6 quarter sextuplets (against top 4 -> 4:6) ===
+      - id: "ve-l-601"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-601"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 7
+                denominator: 1
+              - numerator: 0
+                denominator: 1
+          count: 6
+          beatUnit: QUARTER
+          displayStyle: BRACKET_AND_NUMBER
+      - id: "ve-l-602"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 1
+              denominator: 6
+        pitchEventId: "pe-l-602"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+      - id: "ve-l-603"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 2
+              denominator: 6
+        pitchEventId: "pe-l-603"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+      - id: "ve-l-604"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 3
+              denominator: 6
+        pitchEventId: "pe-l-604"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+      - id: "ve-l-605"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 4
+              denominator: 6
+        pitchEventId: "pe-l-605"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+      - id: "ve-l-606"
+        onset:
+          components:
+            - numerator: 6
+              denominator: 1
+            - numerator: 5
+              denominator: 6
+        pitchEventId: "pe-l-606"
+        duration:
+          base: QUARTER
+          dots: 0
+          tuplet:
+            actual: 6
+            normal: 4
+
+      # === Measure 7: 13 sixteenths (13:8) descending + half note ===
+      - id: "ve-l-701"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 0
+              denominator: 1
+        pitchEventId: "pe-l-701"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: false
+            beamRight: true
+        tupletSpan:
+          endTimeCode:
+            components:
+              - numerator: 7
+                denominator: 1
+              - numerator: 1
+                denominator: 2
+          count: 13
+          beatUnit: SIXTEENTH
+          displayStyle: SLUR_AND_NUMBER
+      - id: "ve-l-702"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 26
+        pitchEventId: "pe-l-702"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-703"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 2
+              denominator: 26
+        pitchEventId: "pe-l-703"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-704"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 3
+              denominator: 26
+        pitchEventId: "pe-l-704"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-705"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 4
+              denominator: 26
+        pitchEventId: "pe-l-705"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-706"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 5
+              denominator: 26
+        pitchEventId: "pe-l-706"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-707"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 6
+              denominator: 26
+        pitchEventId: "pe-l-707"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-708"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 7
+              denominator: 26
+        pitchEventId: "pe-l-708"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-709"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 8
+              denominator: 26
+        pitchEventId: "pe-l-709"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-710"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 9
+              denominator: 26
+        pitchEventId: "pe-l-710"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-711"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 10
+              denominator: 26
+        pitchEventId: "pe-l-711"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-712"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 11
+              denominator: 26
+        pitchEventId: "pe-l-712"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: true
+      - id: "ve-l-713"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 12
+              denominator: 26
+        pitchEventId: "pe-l-713"
+        duration:
+          base: SIXTEENTH
+          dots: 0
+          tuplet:
+            actual: 13
+            normal: 8
+        rendering:
+          beaming:
+            beamLeft: true
+            beamRight: false
+      - id: "ve-l-714"
+        onset:
+          components:
+            - numerator: 7
+              denominator: 1
+            - numerator: 1
+              denominator: 2
+        pitchEventId: "pe-l-714"
+        duration:
+          base: HALF
+          dots: 0
+
+staffTracks:
+  st-treble:
+    id: "st-treble"
+    name: "Right Hand"
+    clef: TREBLE
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-rh"
+
+  st-bass:
+    id: "st-bass"
+    name: "Left Hand"
+    clef: BASS
+    keySignature:
+      root: 0
+      mode: MAJOR
+    voiceTrackIds:
+      - "vt-lh"
+
+staffGroups:
+  - id: "sg-piano"
+    bracket: BRACE
+    label: "Piano"
+    abbreviation: "Pno."
+    barlineConnect: true
+    members:
+      - type: staff
+        staffId: "st-treble"
+      - type: staff
+        staffId: "st-bass"
+
+globalTrack:
+  id: "gt-global"
+  name: "Global"
+  tempoEvents: []
+  keySignatureChanges: []
+  timeSignatureChanges: []

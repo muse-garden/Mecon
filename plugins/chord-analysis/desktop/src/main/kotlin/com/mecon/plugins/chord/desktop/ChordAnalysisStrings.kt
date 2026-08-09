@@ -1,0 +1,127 @@
+package com.mecon.plugins.chord.desktop
+
+import com.mecon.desktop.uikit.i18n.I18nRegistry
+import com.mecon.desktop.uikit.i18n.Language
+
+/**
+ * Translation bundle for the chord analysis desktop plugin.
+ *
+ * Registered with the shared [I18nRegistry] from [ChordAnalysisDesktopPlugin.install].
+ * Keeping plugin strings here (rather than in the desktop shell) keeps plugin
+ * removal cheap — uninstall the plugin and its strings come out with it.
+ */
+internal object ChordAnalysisStrings {
+
+    private val zh = mapOf(
+        "plugin.chord.panel.title" to "和弦分析",
+        "plugin.chord.panel.selectedLabel" to "已选和弦",
+        "plugin.chord.panel.noSelection" to "点击乐谱中的和弦符号以查看详情",
+        "plugin.chord.panel.tonnetz" to "Tonnetz 图",
+        "plugin.chord.panel.tonnetzDescription" to "新里曼理论音网",
+        "plugin.chord.panel.inputHint" to "输入和弦符号 (例如 C, Dm, G7, F/A)",
+        "plugin.chord.panel.addAtSelection" to "在选中位置添加",
+        "plugin.chord.panel.noSelectionHint" to "请先选中一个音符",
+        "plugin.chord.panel.update" to "更新",
+        "plugin.chord.panel.delete" to "删除",
+        "plugin.chord.panel.invalidChord" to "无法解析该和弦符号",
+        "plugin.chord.panel.parsedPreview" to "解析结果",
+        "plugin.chord.panel.symbolDisplay" to "和弦符号",
+        "plugin.chord.panel.symbolDisplay.letter" to "字母",
+        "plugin.chord.panel.symbolDisplay.degree" to "级数",
+        "plugin.chord.panel.showToneColoring" to "标记和弦内外音",
+        "plugin.chord.panel.showPianoRollChords" to "在钢琴卷轴中展示和弦",
+        "plugin.chord.panel.nct.passing" to "经过 p",
+        "plugin.chord.panel.nct.neighbor" to "邻音 n",
+        "plugin.chord.panel.nct.suspension" to "延留 s",
+        "plugin.chord.panel.nct.retardation" to "上行延留 r",
+        "plugin.chord.panel.nct.appoggiatura" to "倚音 app",
+        "plugin.chord.panel.nct.escape" to "规避 e",
+        "plugin.chord.panel.nct.neighbor_group" to "邻音组 n.gr",
+        "plugin.chord.panel.nct.anticipation" to "先现 ant",
+        "plugin.chord.panel.nct.pedal" to "持续 ped",
+        "plugin.chord.panel.selectedNotesHint" to "多选音符后可从所选音高识别和弦",
+        "plugin.chord.panel.selectedNotesChord" to "所选音符构成",
+        "plugin.chord.panel.unrecognizedSelection" to "暂未识别为常见和弦",
+        "plugin.chord.panel.addSelectedChord" to "在最早选中音符处添加",
+        "plugin.chord.panel.chordComplete" to "和弦音完整",
+        "plugin.chord.panel.missingTones" to "缺少",
+        "plugin.chord.panel.enharmonicSubstitutions" to "替代音高",
+        "plugin.chord.panel.tone.root" to "根音",
+        "plugin.chord.panel.tone.third" to "三音",
+        "plugin.chord.panel.tone.fifth" to "五音",
+        "plugin.chord.panel.tone.seventh" to "七音",
+        "plugin.chord.panel.tone.second" to "二音",
+        "plugin.chord.panel.tone.fourth" to "四音",
+        "plugin.chord.polyphony.enabled" to "复调分析助手",
+        "plugin.chord.polyphony.disabledHint" to "总开关关闭时不向谱面插入复调分析标记",
+        "plugin.chord.polyphony.degreeTrack" to "显示音级轨道",
+        "plugin.chord.polyphony.passingChords" to "自动标记经过和弦",
+        "plugin.chord.polyphony.nonChordTone" to "指定和弦外音",
+        "plugin.chord.polyphony.nonChordToneHint" to "请点选一个符头；和弦音需点到具体音头",
+        "plugin.chord.polyphony.markSlice" to "将滑杆区间标为和弦外音",
+        "plugin.chord.polyphony.tonalRegion" to "离调 / 转调区域",
+        "plugin.chord.polyphony.tonalRegionHint" to "多选一段连续音符作为区域",
+        "plugin.chord.polyphony.resolvedCenter" to "区域结束后的调性中心",
+        "plugin.chord.polyphony.chooseCenter" to "从候选调中选择区域结束后的中心：",
+        "plugin.chord.polyphony.addRegion" to "添加调性区域",
+    )
+
+    private val en = mapOf(
+        "plugin.chord.panel.title" to "Chord Analysis",
+        "plugin.chord.panel.selectedLabel" to "Selected chord",
+        "plugin.chord.panel.noSelection" to "Click a chord symbol in the score to inspect it",
+        "plugin.chord.panel.tonnetz" to "Tonnetz",
+        "plugin.chord.panel.tonnetzDescription" to "Neo-Riemannian Tonnetz",
+        "plugin.chord.panel.inputHint" to "Enter a chord symbol (e.g. C, Dm, G7, F/A)",
+        "plugin.chord.panel.addAtSelection" to "Add at selection",
+        "plugin.chord.panel.noSelectionHint" to "Select a note first",
+        "plugin.chord.panel.update" to "Update",
+        "plugin.chord.panel.delete" to "Delete",
+        "plugin.chord.panel.invalidChord" to "Could not parse that chord symbol",
+        "plugin.chord.panel.parsedPreview" to "Parsed",
+        "plugin.chord.panel.symbolDisplay" to "Chord symbols",
+        "plugin.chord.panel.symbolDisplay.letter" to "Letters",
+        "plugin.chord.panel.symbolDisplay.degree" to "Degrees",
+        "plugin.chord.panel.showToneColoring" to "Show chord/non-chord tones",
+        "plugin.chord.panel.showPianoRollChords" to "Show chords in piano roll",
+        "plugin.chord.panel.nct.passing" to "Passing p",
+        "plugin.chord.panel.nct.neighbor" to "Neighbor n",
+        "plugin.chord.panel.nct.suspension" to "Suspension s",
+        "plugin.chord.panel.nct.retardation" to "Retardation r",
+        "plugin.chord.panel.nct.appoggiatura" to "Appoggiatura app",
+        "plugin.chord.panel.nct.escape" to "Escape e",
+        "plugin.chord.panel.nct.neighbor_group" to "Neighbor group n.gr",
+        "plugin.chord.panel.nct.anticipation" to "Anticipation ant",
+        "plugin.chord.panel.nct.pedal" to "Pedal ped",
+        "plugin.chord.panel.selectedNotesHint" to "Select multiple notes to recognize their chord",
+        "plugin.chord.panel.selectedNotesChord" to "Selected notes form",
+        "plugin.chord.panel.unrecognizedSelection" to "Not recognized as a common chord",
+        "plugin.chord.panel.addSelectedChord" to "Add at earliest selected note",
+        "plugin.chord.panel.chordComplete" to "complete chord tones",
+        "plugin.chord.panel.missingTones" to "missing",
+        "plugin.chord.panel.enharmonicSubstitutions" to "enharmonic substitutions",
+        "plugin.chord.panel.tone.root" to "root",
+        "plugin.chord.panel.tone.third" to "third",
+        "plugin.chord.panel.tone.fifth" to "fifth",
+        "plugin.chord.panel.tone.seventh" to "seventh",
+        "plugin.chord.panel.tone.second" to "second",
+        "plugin.chord.panel.tone.fourth" to "fourth",
+        "plugin.chord.polyphony.enabled" to "Polyphonic analysis assistant",
+        "plugin.chord.polyphony.disabledHint" to "The master switch removes all polyphonic score annotations",
+        "plugin.chord.polyphony.degreeTrack" to "Show scale-degree track",
+        "plugin.chord.polyphony.passingChords" to "Detect passing chords",
+        "plugin.chord.polyphony.nonChordTone" to "Explicit non-chord tone",
+        "plugin.chord.polyphony.nonChordToneHint" to "Select one notehead; choose a specific head in a chord",
+        "plugin.chord.polyphony.markSlice" to "Mark slider range as non-chord tone",
+        "plugin.chord.polyphony.tonalRegion" to "Tonicization / modulation region",
+        "plugin.chord.polyphony.tonalRegionHint" to "Select a continuous group of notes for the region",
+        "plugin.chord.polyphony.resolvedCenter" to "Tonal center after the region",
+        "plugin.chord.polyphony.chooseCenter" to "Choose the post-region center from the candidates:",
+        "plugin.chord.polyphony.addRegion" to "Add tonal region",
+    )
+
+    fun install() {
+        I18nRegistry.register(Language.CHINESE, zh)
+        I18nRegistry.register(Language.ENGLISH, en)
+    }
+}

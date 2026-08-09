@@ -1,0 +1,5 @@
+# 勋伯格大调自由处理：四部写作无法实现的相邻和弦进行（自动生成，请勿手改）
+# 重刷：./gradlew.bat :theory:jvmTest --tests "*SchoenbergFreeForbiddenTransitionGenerator*" -Pschoenberg.forbidden.write=true
+# 判据：自由处理 program 的一般四部规则、完整性及仍保留的 typed 硬旋律规则；不含严格七音/减五度预备解决。
+# 格式：<度数/性质/规模/转位> => <度数/性质/规模/转位>
+#
