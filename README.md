@@ -1,6 +1,10 @@
 # Mecon
 
-![Mecon logo](logo.png)
+<p align="center">
+  <img src="logo-with-text.png" alt="Mecon" width="360">
+</p>
+
+项目主页：[https://mecon-score.link/](https://mecon-score.link/)
 
 **为热爱音乐、但不需要精通乐理或编程的人打造的打谱与创作工具。**
 
