@@ -793,7 +793,7 @@ object HarmonyWorkspaceEditor {
                     chordChoice = command.chordChoice,
                     tonalLayoutId = current.tonalLayoutId,
                     tonality = command.tonality ?: inheritedTonality(
-                        key = state.continuationKey(current),
+                        source = current.tonality,
                         choice = command.chordChoice,
                     ),
                 )
@@ -1155,14 +1155,32 @@ object HarmonyWorkspaceEditor {
                 layout
             }
         }
+        val newLayout = WorkspaceTonalLayout(
+            id = id,
+            fifths = command.key.fifths,
+            mode = WorkspaceKeyMode.fromTheory(command.key.mode),
+            start = command.start,
+            end = command.end,
+        )
+        val slotsFollowingNewLayout = command.terminatePreviousAt?.let { terminateAt ->
+            state.slots.map { slot ->
+                val inheritedManualKey = state.selectedTonalLayout(slot)?.key
+                val redundantManualReading = slot.tonality?.readings?.singleOrNull()?.key == inheritedManualKey
+                if (
+                    !state.isIdiomSlot(slot.id) &&
+                    slot.onset >= terminateAt &&
+                    newLayout.contains(slot.onset) &&
+                    redundantManualReading
+                ) {
+                    slot.copy(tonality = null)
+                } else {
+                    slot
+                }
+            }
+        } ?: state.slots
         return state.copy(
-            tonalLayouts = shortenedLayouts + WorkspaceTonalLayout(
-                id = id,
-                fifths = command.key.fifths,
-                mode = WorkspaceKeyMode.fromTheory(command.key.mode),
-                start = command.start,
-                end = command.end,
-            )
+            slots = slotsFollowingNewLayout,
+            tonalLayouts = shortenedLayouts + newLayout,
         )
     }
 
@@ -1257,13 +1275,19 @@ object HarmonyWorkspaceEditor {
             "The harmony slot to reinterpret no longer exists"
         }
         val slot = state.slots[command.index]
-        require(state.activeTonalLayouts(slot.onset).any { it.id == command.tonalLayoutId }) {
+        val activeLayouts = state.activeTonalLayouts(slot.onset)
+        require(activeLayouts.any { it.id == command.tonalLayoutId }) {
             "Selected tonal layout does not cover this chord"
         }
+        val redundantManualTonality = slot.tonality?.readings?.singleOrNull()?.key
+            ?.takeIf { key -> activeLayouts.any { it.key == key } }
         return state.copy(
             slots = state.slots.updated(
                 command.index,
-                slot.copy(tonalLayoutId = command.tonalLayoutId),
+                slot.copy(
+                    tonalLayoutId = command.tonalLayoutId,
+                    tonality = slot.tonality.takeIf { redundantManualTonality == null },
+                ),
             )
         )
     }
@@ -1722,15 +1746,13 @@ object HarmonyWorkspaceEditor {
         val containing = state.slots.firstOrNull {
             it.onset <= onset && onset < it.onset + it.duration
         }
-        val key = (preceding ?: containing)?.let(state::continuationKey)
-            ?: state.activeTonalLayouts(onset).firstOrNull()?.key
-        return inheritedTonality(key, choice)
+        return inheritedTonality((preceding ?: containing)?.tonality, choice)
     }
 
     private fun inheritedTonality(
-        key: ModulationKey?,
+        source: WorkspaceChordTonality?,
         choice: WorkspaceChordChoice?,
-    ): WorkspaceChordTonality? = key?.let {
+    ): WorkspaceChordTonality? = source?.primary?.key?.let {
         WorkspaceChordTonality(
             primary = WorkspaceChordTonalReading.of(
                 key = it,

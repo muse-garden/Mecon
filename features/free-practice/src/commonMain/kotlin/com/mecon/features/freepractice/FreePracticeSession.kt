@@ -38,6 +38,7 @@ import com.mecon.theory.harmony.ChordSelectionChoice
 private data class FreePracticeSelectionSnapshot(
     val slotId: WorkspaceSlotId?,
     val tonalLayoutId: WorkspaceTonalLayoutId?,
+    val idiomTonalLayoutId: WorkspaceTonalLayoutId?,
     val idiomInstanceId: WorkspaceIdiomInstanceId?,
 )
 
@@ -95,6 +96,7 @@ class FreePracticeSession private constructor(
     private var activeRequest: PracticeBackgroundRequest? = null
     private var teachingCatalog = PracticeIdiomCatalogView()
     private var activeTeachingCatalogRequest: PracticeTeachingCatalogRequest? = null
+    private var selectedIdiomTonalLayoutId: WorkspaceTonalLayoutId? = null
     private var catalogIncludeOffKey: Boolean = false
     private var operationBaseWorkspace = initialDocument.workspace
     private var operationBaseSettings = initialDocument.settings
@@ -116,6 +118,7 @@ class FreePracticeSession private constructor(
             override fun capture(): Any = FreePracticeSelectionSnapshot(
                 selectedSlotId,
                 selectedTonalLayoutId,
+                selectedIdiomTonalLayoutId,
                 selectedIdiomInstanceId,
             )
 
@@ -123,6 +126,7 @@ class FreePracticeSession private constructor(
                 val restored = snapshot as? FreePracticeSelectionSnapshot ?: return
                 selectedSlotId = restored.slotId
                 selectedTonalLayoutId = restored.tonalLayoutId
+                selectedIdiomTonalLayoutId = restored.idiomTonalLayoutId
                 selectedIdiomInstanceId = restored.idiomInstanceId
             }
         })
@@ -156,6 +160,7 @@ class FreePracticeSession private constructor(
             selectedSlotId,
             validTonalLayoutId,
             currentCatalog,
+            selectedIdiomCatalogLayout()?.id,
             teachingCatalog,
         )
         return FreePracticeFrame(
@@ -300,6 +305,7 @@ class FreePracticeSession private constructor(
             is FreePracticeIntent.Score -> dispatchScore(intent, baseRevision)
             is FreePracticeIntent.SelectSlot -> selectSlot(intent, baseRevision)
             is FreePracticeIntent.SelectTonalLayout -> selectTonalLayout(intent, baseRevision)
+            is FreePracticeIntent.SelectIdiomTonalLayout -> selectIdiomTonalLayout(intent, baseRevision)
             is FreePracticeIntent.SelectIdiom -> selectIdiom(intent, baseRevision)
             is FreePracticeIntent.ReplaceChord -> workspaceCommandWithOptionalWriting(
                 baseRevision,
@@ -739,6 +745,22 @@ class FreePracticeSession private constructor(
         return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
     }
 
+    private fun selectIdiomTonalLayout(
+        intent: FreePracticeIntent.SelectIdiomTonalLayout,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        val selected = selectedSlotId?.let { id -> workspace.slots.firstOrNull { it.id == id } }
+            ?: return noOp(baseRevision)
+        if (workspace.activeTonalLayouts(selected.onset).none { it.id == intent.tonalLayoutId }) {
+            return staleTonalLayoutTarget(baseRevision, intent.tonalLayoutId)
+        }
+        if (selectedIdiomTonalLayoutId == intent.tonalLayoutId) return noOp(baseRevision)
+        selectedIdiomTonalLayoutId = intent.tonalLayoutId
+        activeTeachingCatalogRequest = null
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
+    }
+
     private fun selectIdiom(
         intent: FreePracticeIntent.SelectIdiom,
         baseRevision: Long,
@@ -844,7 +866,10 @@ class FreePracticeSession private constructor(
         }
         val onset = anchor.onset - lead
         if (onset.isNegative) return invalidScope(baseRevision)
-        val sourceKey = workspace.idiomSourceKeyAt(onset) ?: PracticeFindingComputer.fallbackKey(document())
+        val sourceLayout = selectedIdiomCatalogLayout()
+        val sourceKey = sourceLayout?.key
+            ?: workspace.idiomSourceKeyAt(onset)
+            ?: PracticeFindingComputer.fallbackKey(document())
         val targetKey = variant.suggestedKey?.toTheoryKey() ?: sourceKey
         val chordChoices = resolveIdiomChoices(variant, targetKey) ?: return staleCatalogTarget(baseRevision)
         val tonalities = workspace.resolveIdiomTonalities(onset, chordChoices, sourceKey, targetKey)
@@ -857,7 +882,8 @@ class FreePracticeSession private constructor(
                 variantId = variant.id,
                 sourceExerciseId = definition.sourceExerciseId,
                 sourceChapterId = definition.sourceChapterId,
-                tonalLayoutId = workspace.activeTonalLayouts(onset).firstOrNull()?.id
+                tonalLayoutId = sourceLayout?.id
+                    ?: workspace.activeTonalLayouts(onset).firstOrNull()?.id
                     ?: workspace.tonalLayouts.firstOrNull()?.id,
                 chordIdentities = emptyList(),
                 durations = variant.durations,
@@ -887,7 +913,10 @@ class FreePracticeSession private constructor(
             ?: return staleCatalogTarget(baseRevision)
         val onset = instance.slotIds.mapNotNull { id -> workspace.slots.firstOrNull { it.id == id }?.onset }
             .minOrNull() ?: return staleIdiomTarget(baseRevision, instance.id)
-        val sourceKey = workspace.idiomSourceKeyAt(onset) ?: PracticeFindingComputer.fallbackKey(document())
+        val sourceLayout = selectedIdiomCatalogLayout()
+        val sourceKey = sourceLayout?.key
+            ?: workspace.idiomSourceKeyAt(onset)
+            ?: PracticeFindingComputer.fallbackKey(document())
         val targetKey = variant.suggestedKey?.toTheoryKey() ?: sourceKey
         val chordChoices = resolveIdiomChoices(variant, targetKey) ?: return staleCatalogTarget(baseRevision)
         val tonalities = workspace.resolveIdiomTonalities(onset, chordChoices, sourceKey, targetKey)
@@ -899,7 +928,8 @@ class FreePracticeSession private constructor(
                 definitionId = definition.id,
                 sourceExerciseId = definition.sourceExerciseId,
                 sourceChapterId = definition.sourceChapterId,
-                tonalLayoutId = workspace.activeTonalLayouts(onset).firstOrNull()?.id
+                tonalLayoutId = sourceLayout?.id
+                    ?: workspace.activeTonalLayouts(onset).firstOrNull()?.id
                     ?: instance.tonalLayoutId,
                 variantId = variant.id,
                 chordIdentities = emptyList(),
@@ -1381,10 +1411,21 @@ class FreePracticeSession private constructor(
     )
     }
 
+    private fun selectedIdiomCatalogLayout(): com.mecon.theory.freepractice.WorkspaceTonalLayout? {
+        val selected = selectedSlotId?.let { id -> visibleWorkspace.slots.firstOrNull { it.id == id } }
+            ?: return null
+        val active = visibleWorkspace.activeTonalLayouts(selected.onset)
+        return selectedIdiomTonalLayoutId
+            ?.let { id -> active.firstOrNull { it.id == id } }
+            ?: active.singleOrNull()
+            ?: visibleWorkspace.selectedTonalLayout(selected)
+            ?: active.lastOrNull()
+    }
+
     /** Everything the teaching catalog depends on; see [applyTeachingCatalogResult]. */
     private fun teachingCatalogFingerprint(): String {
         val selected = selectedSlotId?.let { id -> visibleWorkspace.slots.firstOrNull { it.id == id } }
-        val catalogKey = selected?.let(visibleWorkspace::selectedTonalLayout)?.key
+        val catalogKey = selectedIdiomCatalogLayout()?.key
             ?: PracticeFindingComputer.fallbackKey(document())
         val activeKeys = visibleWorkspace.tonalLayouts.map { it.key }.distinct()
             .ifEmpty { listOf(catalogKey) }
@@ -1402,7 +1443,7 @@ class FreePracticeSession private constructor(
 
     private fun ensureTeachingCatalogRequest(): PracticeTeachingCatalogRequest? {
         val selected = selectedSlotId?.let { id -> visibleWorkspace.slots.firstOrNull { it.id == id } }
-        val catalogKey = selected?.let(visibleWorkspace::selectedTonalLayout)?.key
+        val catalogKey = selectedIdiomCatalogLayout()?.key
             ?: PracticeFindingComputer.fallbackKey(document())
         val activeKeys = visibleWorkspace.tonalLayouts.map { it.key }.distinct()
             .ifEmpty { listOf(catalogKey) }
@@ -1482,35 +1523,7 @@ class FreePracticeSession private constructor(
         val key = selected?.tonality?.primary?.key
             ?: selected?.let(visibleWorkspace::selectedTonalLayout)?.key
             ?: PracticeFindingComputer.fallbackKey(document())
-        fun ChordSelectionChoice.toView(): PracticeChordCatalogItem = PracticeChordCatalogItem(
-            id = id.value,
-            symbol = functionalSymbol,
-            choice = com.mecon.theory.freepractice.WorkspaceChordChoice.of(
-                pitchClasses,
-                origin,
-                confirmedInterpretationRef,
-                rootPitchClass,
-            ),
-            absoluteTones = absoluteTones,
-            relativeTones = relativeTones,
-            rootPitchClass = rootPitchClass,
-            interpretationCount = interpretationRefs.size,
-            relativeLabel = "$functionalSymbol · ${relativeTones.joinToString("–")}",
-            absoluteLabel = "$functionalSymbol · ${absoluteTones.joinToString("–")}",
-        )
-        val groups = ChordSelectionCatalog.groups(key)
-        return PracticeCatalogView(
-            requestKey = "${key.fifths}:${key.mode.name}",
-            chordChoices = groups.flatMap { it.chords }.map { it.toView() },
-            chordGroups = groups.map { group ->
-                PracticeChordCatalogGroupView(
-                    id = group.category.id,
-                    titleLabel = practiceChordCatalogText(group.category.titleKey),
-                    descriptionLabel = practiceChordCatalogText(group.category.descriptionKey),
-                    choices = group.chords.map { it.toView() },
-                )
-            },
-        )
+        return projectPracticeCatalog(key)
     }
 
     private fun messageKeyFor(outcome: PracticeWritingOutcome): String = when (outcome) {
@@ -1540,6 +1553,38 @@ class FreePracticeSession private constructor(
         fun open(document: FreePracticeDocument, manager: ScoreStateManager): FreePracticeSession =
             FreePracticeSession(manager, document)
     }
+}
+
+internal fun projectPracticeCatalog(key: com.mecon.theory.ModulationKey): PracticeCatalogView {
+    fun ChordSelectionChoice.toView(): PracticeChordCatalogItem = PracticeChordCatalogItem(
+        id = id.value,
+        symbol = functionalSymbol,
+        choice = com.mecon.theory.freepractice.WorkspaceChordChoice.of(
+            pitchClasses,
+            origin,
+            confirmedInterpretationRef,
+            rootPitchClass,
+        ),
+        absoluteTones = absoluteTones,
+        relativeTones = relativeTones,
+        rootPitchClass = rootPitchClass,
+        interpretationCount = interpretationRefs.size,
+        relativeLabel = "$functionalSymbol · ${relativeTones.joinToString("–")}",
+        absoluteLabel = "$functionalSymbol · ${absoluteTones.joinToString("–")}",
+    )
+    val groups = ChordSelectionCatalog.groups(key)
+    return PracticeCatalogView(
+        requestKey = "${key.fifths}:${key.mode.name}",
+        chordChoices = groups.flatMap { it.chords }.map { it.toView() },
+        chordGroups = groups.map { group ->
+            PracticeChordCatalogGroupView(
+                id = group.category.id,
+                titleLabel = practiceChordCatalogText(group.category.titleKey),
+                descriptionLabel = practiceChordCatalogText(group.category.descriptionKey),
+                choices = group.chords.map { it.toView() },
+            )
+        },
+    )
 }
 
 private fun practiceChordCatalogText(key: String): String = when (key) {

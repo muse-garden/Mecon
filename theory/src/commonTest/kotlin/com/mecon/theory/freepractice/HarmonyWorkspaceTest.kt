@@ -1131,6 +1131,81 @@ class HarmonyWorkspaceTest {
         assertEquals(c, returned.continuationKey(returned.slots[emptyIndex]))
     }
 
+    @Test
+    fun ordinaryChordInsertionFollowingManualLayoutDoesNotCreateDerivedTonalMarker() {
+        val c = ModulationKey(0, KeySignatureMode.MAJOR)
+        val initial = workspace().withTonalLayoutBaseline(c)
+
+        val inserted = HarmonyWorkspaceEditor.apply(
+            initial,
+            HarmonyWorkspaceCommand.InsertChord(
+                index = initial.slots.size,
+                mode = InsertChordMode.RIPPLE,
+                chordIdentity = "I",
+            ),
+        )
+
+        assertNull(inserted.slots.last().tonality)
+        assertTrue(inserted.derivedTonalSpans().isEmpty())
+        assertEquals(c, inserted.continuationKey(inserted.slots.last()))
+    }
+
+    @Test
+    fun insertingManualLayoutClearsOnlyRedundantMarkersAfterThePivot() {
+        val c = ModulationKey(0, KeySignatureMode.MAJOR)
+        val fs = ModulationKey(6, KeySignatureMode.MAJOR)
+        val initial = workspace().withTonalLayoutBaseline(c).let { state ->
+            state.copy(
+                slots = state.slots.map { slot -> slot.copy(tonality = tonality(c)) } +
+                    WorkspaceHarmonySlot(
+                        id = WorkspaceSlotId("slot-2"),
+                        onset = Fraction.HALF,
+                        duration = Fraction.QUARTER,
+                        chordIdentity = "I",
+                        tonalLayoutId = state.tonalLayouts.single().id,
+                        tonality = tonality(c),
+                    ),
+            )
+        }
+
+        val inserted = HarmonyWorkspaceEditor.apply(
+            initial,
+            HarmonyWorkspaceCommand.InsertTonalLayout(
+                key = fs,
+                start = Fraction.QUARTER,
+                terminatePreviousAt = Fraction.HALF,
+            ),
+        )
+
+        assertEquals(c, inserted.slots[1].tonality?.primary?.key)
+        assertNull(inserted.slots[2].tonality)
+        assertTrue(inserted.derivedTonalSpans().none { it.start >= Fraction.HALF })
+        assertEquals(fs, inserted.selectedTonalLayout(inserted.slots[2])?.key)
+    }
+
+    @Test
+    fun selectingOverlappingManualLayoutDropsTheRedundantOldManualMarker() {
+        val c = ModulationKey(0, KeySignatureMode.MAJOR)
+        val fs = ModulationKey(6, KeySignatureMode.MAJOR)
+        val initial = workspace().withTonalLayoutBaseline(c).let { state ->
+            state.copy(slots = state.slots.map { it.copy(tonality = tonality(c)) })
+        }
+        val overlapping = HarmonyWorkspaceEditor.apply(
+            initial,
+            HarmonyWorkspaceCommand.InsertTonalLayout(key = fs, start = Fraction.ZERO),
+        )
+        val fsLayout = overlapping.tonalLayouts.last()
+
+        val selected = HarmonyWorkspaceEditor.apply(
+            overlapping,
+            HarmonyWorkspaceCommand.SelectChordTonalLayout(index = 0, tonalLayoutId = fsLayout.id),
+        )
+
+        assertNull(selected.slots.first().tonality)
+        assertEquals(fs, selected.selectedTonalLayout(selected.slots.first())?.key)
+        assertTrue(selected.derivedTonalSpans().all { it.start >= Fraction.QUARTER })
+    }
+
     private fun tonality(
         primary: ModulationKey,
         alternate: ModulationKey? = null,

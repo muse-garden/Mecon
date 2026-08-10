@@ -116,6 +116,16 @@ class FreePracticeTraceTest {
                         },
                     )
                 )
+                "selectIdiomTonalLayout" -> session.dispatch(
+                    FreePracticeIntent.SelectIdiomTonalLayout(
+                        expectedRevision!!.toLong(),
+                        if (step.getValue("target").jsonPrimitive.content == "inserted") {
+                            requireNotNull(insertedTonalLayoutId)
+                        } else {
+                            session.frame().document.workspace.tonalLayouts.first().id
+                        },
+                    ),
+                )
                 "setInsertedTonalLayoutKey" -> session.dispatch(
                     FreePracticeIntent.SetTonalLayoutKey(
                         expectedRevision!!.toLong(),
@@ -387,6 +397,12 @@ class FreePracticeTraceTest {
             }
             step["selectionLayout"]?.jsonPrimitive?.content?.let { expected ->
                 assertEquals(expected, update.selection.tonalLayoutId?.value)
+            }
+            step["idiomCatalogLayout"]?.jsonPrimitive?.content?.let { expected ->
+                assertEquals(
+                    expected,
+                    update.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId.value,
+                )
             }
             step["selectionIdiom"]?.jsonPrimitive?.content?.let { expected ->
                 assertEquals(expected, update.selection.idiomInstanceId?.value)

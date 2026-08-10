@@ -50,6 +50,13 @@ sealed interface FreePracticeIntent {
     ) : FreePracticeIntent
 
     @Serializable
+    @SerialName("selectIdiomTonalLayout")
+    data class SelectIdiomTonalLayout(
+        override val expectedRevision: Long,
+        val tonalLayoutId: WorkspaceTonalLayoutId,
+    ) : FreePracticeIntent
+
+    @Serializable
     @SerialName("selectIdiom")
     data class SelectIdiom(
         override val expectedRevision: Long,
@@ -365,6 +372,15 @@ data class PracticeFindingsView(
 )
 
 @Serializable
+data class PracticeChordCatalogAlternateReadingView(
+    val key: PracticeKeyView,
+    val keyLabel: String,
+    val functionalSymbol: String,
+    val relativeLabel: String,
+    val absoluteLabel: String,
+)
+
+@Serializable
 data class PracticeChordCatalogItem(
     val id: String,
     val symbol: String,
@@ -375,6 +391,7 @@ data class PracticeChordCatalogItem(
     val interpretationCount: Int = 0,
     val relativeLabel: String = "",
     val absoluteLabel: String = "",
+    val alternateTonalReadings: List<PracticeChordCatalogAlternateReadingView> = emptyList(),
 )
 
 @Serializable
@@ -389,6 +406,16 @@ data class PracticeChordCatalogGroupView(
 data class PracticeCatalogView(
     val requestKey: String,
     val chordChoices: List<PracticeChordCatalogItem>,
+    val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
+)
+
+@Serializable
+data class PracticeChordCatalogFilterView(
+    val id: String,
+    val key: PracticeKeyView,
+    val keyLabel: String,
+    val tonalLayoutId: WorkspaceTonalLayoutId,
+    val selected: Boolean = false,
     val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
 )
 
@@ -640,6 +667,8 @@ data class PracticePlanStrings(
     val removeChordTonality: String = "删除和弦调性解释",
     val followManualTonality: String = "跟随调性线",
     val chordCatalog: String = "选择和弦",
+    val chordCatalogTonality: String = "按哪个调选和弦",
+    val idiomCatalogTonality: String = "按哪个调选惯用进行",
     val chooseChord: String = "选用和弦",
     val bass: String = "低音",
     val anyBass: String = "任意",
@@ -680,6 +709,7 @@ data class PracticePlanView(
     val selectedChord: PracticeChordCatalogItem? = null,
     val chordDetail: PracticeChordDetailView? = null,
     val chordCatalogGroups: List<PracticeChordCatalogGroupView> = emptyList(),
+    val chordCatalogFilters: List<PracticeChordCatalogFilterView> = emptyList(),
     val selectedChordReadings: List<PracticeTimelineChordReadingView> = emptyList(),
     val bassOptions: List<Int> = emptyList(),
     val bassChoices: List<PracticeBassOptionView> = emptyList(),
@@ -693,7 +723,17 @@ data class PracticePlanView(
     val currentTonalityRows: List<PracticeTonalityReadingRowView> = emptyList(),
     val doubleTonalityChoices: List<PracticeChordTonalityChoiceView> = emptyList(),
     val idiomTargetKeys: List<PracticePlanKeyFilterView> = emptyList(),
+    val idiomCatalogFilters: List<PracticePlanTonalLayoutFilterView> = emptyList(),
     val idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
+)
+
+@Serializable
+data class PracticePlanTonalLayoutFilterView(
+    val id: String,
+    val key: PracticeKeyView,
+    val label: String,
+    val tonalLayoutId: WorkspaceTonalLayoutId,
+    val selected: Boolean,
 )
 
 /** Stable workbench selection projected from both the harmony and score sessions. */

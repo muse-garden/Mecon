@@ -147,6 +147,12 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         expectedRevision: step.expectedRevision,
         tonalLayoutId: step.target === "inserted" ? insertedTonalLayoutId : "tonal-layout-0",
       });
+    } else if (step.kind === "selectIdiomTonalLayout") {
+      update = session.dispatch({
+        type: "selectIdiomTonalLayout",
+        expectedRevision: step.expectedRevision,
+        tonalLayoutId: step.target === "inserted" ? insertedTonalLayoutId : "tonal-layout-0",
+      });
     } else if (step.kind === "setInsertedTonalLayoutKey") {
       update = session.dispatch({
         type: "setTonalLayoutKey",
@@ -389,6 +395,10 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (step.selectionLayout !== undefined) {
       assert.equal(update.selection.tonalLayoutId, step.selectionLayout, step.kind);
+    }
+    if (step.idiomCatalogLayout !== undefined) {
+      assert.equal(update.plan.idiomCatalogFilters.find((filter) => filter.selected)?.tonalLayoutId,
+        step.idiomCatalogLayout, step.kind);
     }
     if (step.selectionIdiom !== undefined) {
       assert.equal(update.selection.idiomInstanceId, step.selectionIdiom, step.kind);

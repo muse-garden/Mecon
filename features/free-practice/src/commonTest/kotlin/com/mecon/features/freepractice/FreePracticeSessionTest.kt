@@ -20,6 +20,8 @@ import com.mecon.theory.freepractice.WorkspaceIdiomInstance
 import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
 import com.mecon.theory.freepractice.VoiceAssignmentSource
+import com.mecon.theory.KeySignatureMode
+import com.mecon.theory.ModulationKey
 
 class FreePracticeSessionTest {
     @Test
@@ -302,6 +304,84 @@ class FreePracticeSessionTest {
 
         val undone = session.dispatch(FreePracticeIntent.Undo(removed.frame.revision))
         assertTrue(undone.frame.document.workspace.tonalLayouts.any { it.id == insertedId })
+    }
+
+    @Test
+    fun idiomCatalogTonalityIsIndependentFromChordAndTimelineSelection() {
+        val session = session()
+        val initial = session.frame()
+        val slotId = requireNotNull(initial.selectedSlotId)
+        val baselineId = initial.document.workspace.tonalLayouts.single().id
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertTonalLayout(
+                expectedRevision = initial.revision,
+                fifths = 6,
+                mode = com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR,
+                start = Fraction.ZERO,
+                end = Fraction.QUARTER,
+            ),
+        )
+        val laterId = inserted.frame.document.workspace.tonalLayouts.single { it.id != baselineId }.id
+        val chordSelected = session.dispatch(
+            FreePracticeIntent.SelectChordTonalLayout(inserted.frame.revision, slotId, laterId),
+        )
+        val idiomBaseline = session.dispatch(
+            FreePracticeIntent.SelectIdiomTonalLayout(chordSelected.frame.revision, baselineId),
+        )
+        assertEquals(laterId, idiomBaseline.frame.selection.tonalLayoutId)
+        assertEquals(laterId, idiomBaseline.frame.plan.chordCatalogFilters.single { it.selected }.tonalLayoutId)
+        assertEquals(baselineId, idiomBaseline.frame.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId)
+        assertEquals(0, idiomBaseline.catalogRequests.single().catalogKey.fifths)
+
+        val idiomLater = session.dispatch(
+            FreePracticeIntent.SelectIdiomTonalLayout(idiomBaseline.frame.revision, laterId),
+        )
+        assertEquals(laterId, idiomLater.frame.selection.tonalLayoutId)
+        assertEquals(laterId, idiomLater.frame.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId)
+        val request = idiomLater.catalogRequests.single()
+        assertEquals(6, request.catalogKey.fifths)
+
+        val choice = projectPracticeCatalog(ModulationKey(6, KeySignatureMode.MAJOR))
+            .chordChoices.first().choice
+        val catalogApplied = session.applyTeachingCatalogResult(
+            PracticeTeachingCatalogResult(
+                requestId = request.requestId,
+                baseRevision = request.baseRevision,
+                fingerprint = request.fingerprint,
+                definitions = listOf(
+                    PracticeIdiomDefinitionView(
+                        id = "fixture.later-key",
+                        title = "Later key",
+                        sourceExerciseId = "fixture-exercise",
+                        sourceChapterId = "fixture-chapter",
+                        availableByDefault = true,
+                        variants = listOf(
+                            PracticeIdiomVariantView(
+                                id = "fixture.later-key.variant",
+                                title = "Later key variant",
+                                durations = listOf(Fraction.QUARTER),
+                                chordIdentities = listOf("I"),
+                                chordChoices = listOf(choice),
+                                availableByDefault = true,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val insertedIdiom = session.dispatch(
+            FreePracticeIntent.InsertIdiom(
+                catalogApplied.frame.revision,
+                slotId,
+                "fixture.later-key",
+                "fixture.later-key.variant",
+            ),
+        )
+        assertEquals(laterId, insertedIdiom.frame.selection.tonalLayoutId)
+        assertEquals(
+            laterId,
+            insertedIdiom.requests.single().document.workspace.idiomInstances.single().tonalLayoutId,
+        )
     }
 
     @Test

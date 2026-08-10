@@ -498,6 +498,9 @@ class HarmonyPracticeScoreHost(
     fun selectTonalLayout(tonalLayoutId: com.mecon.theory.freepractice.WorkspaceTonalLayoutId): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SelectTonalLayout(revision, tonalLayoutId) }
 
+    fun selectIdiomTonalLayout(tonalLayoutId: com.mecon.theory.freepractice.WorkspaceTonalLayoutId): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SelectIdiomTonalLayout(revision, tonalLayoutId) }
+
     fun selectIdiom(idiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SelectIdiom(revision, idiomInstanceId) }
 

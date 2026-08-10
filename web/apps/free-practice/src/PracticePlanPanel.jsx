@@ -97,6 +97,7 @@ export function PracticePlanPanel({
   onInsertTonalLayout,
   onRemoveTonalLayout,
   onSelectTonalLayout,
+  onSelectIdiomTonalLayout,
   onInsertIdiom,
   onReplaceIdiom,
   onRemoveIdiom,
@@ -162,6 +163,10 @@ export function PracticePlanPanel({
     (idiom) => idiom.id === update.selection?.idiomInstanceId,
   );
   const tonalityChoices = plan.tonalityChoices;
+  const chordCatalogFilters = plan.chordCatalogFilters ?? [];
+  const selectedChordCatalog = chordCatalogFilters.find((filter) => filter.selected)
+    ?? chordCatalogFilters[0];
+  const chordCatalogGroups = selectedChordCatalog?.chordGroups ?? plan.chordCatalogGroups;
   const readingTones = (reading) => toneMode === "ABSOLUTE"
     ? reading.absoluteTonesLabel : reading.relativeTonesLabel;
   const writingLocked = update.writing.phase === "RUNNING";
@@ -297,14 +302,25 @@ export function PracticePlanPanel({
         onChange={(event) => onSetPivot(event.target.checked)} />{strings.pivotChord}</label>
         </div>
       <div className="chord-catalog-groups" aria-label={strings.chordCatalog}>
-        {plan.chordCatalogGroups.map((group) => <section key={group.id} className="chord-catalog-group">
+        {chordCatalogFilters.length > 1 && <div className="practice-choice-list"
+          role="group" aria-label={strings.chordCatalogTonality}>
+          {chordCatalogFilters.map((filter) => <button key={filter.id} type="button"
+            aria-pressed={filter.selected}
+            onClick={() => onSelectTonalLayout(filter.tonalLayoutId)}>{filter.keyLabel}</button>)}
+        </div>}
+        {chordCatalogGroups.map((group) => <section key={group.id} className="chord-catalog-group">
           <p><strong>{group.titleLabel}：</strong>{group.descriptionLabel}</p>
           <div className="practice-choice-list">{group.choices.map((choice) => <button
-            key={choice.id} type="button" aria-pressed={choice.id === catalogChoiceId}
+            key={choice.id} type="button" data-choice-id={choice.id}
+            aria-pressed={choice.id === catalogChoiceId}
             disabled={plan.chordLocked} onClick={() => {
               onCatalogChoiceChange(choice.id);
-              onReplaceChord(choice.id);
-            }}>{toneMode === "ABSOLUTE" ? choice.absoluteLabel : choice.relativeLabel}</button>)}</div>
+              onReplaceChord(choice.choice);
+            }}><span>{toneMode === "ABSOLUTE" ? choice.absoluteLabel : choice.relativeLabel}</span>
+            {!!choice.alternateTonalReadings?.length && <small>
+              另 {choice.alternateTonalReadings.length} 调：{choice.alternateTonalReadings
+                .map((reading) => `${reading.keyLabel} · ${reading.functionalSymbol}`).join("；")}
+            </small>}</button>)}</div>
         </section>)}
       </div>
       </div>
@@ -318,6 +334,14 @@ export function PracticePlanPanel({
 
     {visibleSections.has("idioms") && <details className="plan-section workbench-panel idiom-panel" open>
       <summary><ChevronRight className="disclosure-icon" aria-hidden="true" size={17} strokeWidth={1.8} /><h2>{strings.idiomTitle}</h2></summary>
+      {(plan.idiomCatalogFilters ?? []).length > 1 && <>
+        <span>{strings.idiomCatalogTonality}</span>
+        <div className="practice-choice-list" role="group" aria-label={strings.idiomCatalogTonality}>
+          {plan.idiomCatalogFilters.map((filter) => <button key={filter.id} type="button"
+            aria-pressed={filter.selected}
+            onClick={() => onSelectIdiomTonalLayout(filter.tonalLayoutId)}>{filter.label}</button>)}
+        </div>
+      </>}
       <label className="check-row"><input type="checkbox" checked={plan.idiomCatalog.includeOffKey}
         onChange={(event) => onSetCatalogFilter(event.target.checked)} />{strings.showOffKeyIdioms}</label>
       {plan.idiomCatalog.includeOffKey && !!plan.idiomTargetKeys.length && <>

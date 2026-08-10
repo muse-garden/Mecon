@@ -716,18 +716,63 @@ test("harmony timeline replays the shared hover cursor and highlight for real po
 test("tonal layouts stay session-owned and narrow workbench tabs preserve the mounted views", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("打开 .mecon").setInputFiles(fixture);
-  await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+  const expectRevision = (revision) => expect.poll(
+    () => page.evaluate(() => window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision),
+    { timeout: 30_000 },
+  ).toBe(revision);
+  await expectRevision(0);
 
-  await page.getByText("＋ 插入", { exact: true }).click();
-  await page.getByLabel("在当前和弦插入调性线").selectOption("-2:MINOR");
-  await page.getByRole("button", { name: "插入", exact: true }).click();
-  await expect(page.getByRole("status")).toHaveText("revision 1", { timeout: 30_000 });
+  await page.getByRole("button", { name: "+ 插入", exact: true }).click();
+  await page.getByRole("dialog", { name: "在当前和弦插入调性线" })
+    .getByRole("button", { name: "F#", exact: true }).first().click();
+  await expectRevision(1);
 
+  const initialCatalogTonic = await page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.plan.chordCatalogGroups[0].choices[0].choice.pitchClasses);
   const layoutLabels = page.locator(".timeline-key-labels button");
   await layoutLabels.first().click();
-  await expect(page.getByRole("status")).toHaveText("revision 2", { timeout: 30_000 });
+  await expectRevision(2);
   await layoutLabels.last().click();
-  await expect(page.getByRole("status")).toHaveText("revision 3", { timeout: 30_000 });
+  await expectRevision(3);
+  const catalogTonality = page.getByRole("group", { name: "按哪个调选和弦" });
+  await expect(catalogTonality.getByRole("button", { name: "C", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await catalogTonality.getByRole("button", { name: "F#", exact: true }).click();
+  await expectRevision(4);
+  const idiomTonality = page.getByRole("group", { name: "按哪个调选惯用进行" });
+  await idiomTonality.getByRole("button", { name: "C", exact: true }).click();
+  await expectRevision(5);
+  await expect(catalogTonality.getByRole("button", { name: "F#", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await idiomTonality.getByRole("button", { name: "F#", exact: true }).click();
+  await expectRevision(6);
+  await expect(catalogTonality.getByRole("button", { name: "F#", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => page.evaluate(() => ({
+    key: window.__MECON_E2E__.snapshot().practiceUpdate.plan.currentKey,
+    tonic: window.__MECON_E2E__.snapshot()
+      .practiceUpdate.plan.chordCatalogFilters.find((filter) => filter.selected)
+      .chordGroups[0].choices[0].choice.pitchClasses,
+  }))).toEqual({
+    key: { fifths: 6, mode: "MAJOR" },
+    tonic: expect.not.arrayContaining(initialCatalogTonic),
+  });
+  await expect(page.getByText(/另 1 调：/).first()).toBeVisible();
+  const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
+  await autoWriting.click();
+  await expectRevision(7);
+  await expect(autoWriting).toHaveAttribute("aria-pressed", "false");
+  const replacementChoice = await page.evaluate(() => {
+    const plan = window.__MECON_E2E__.snapshot().practiceUpdate.plan;
+    const selectedPitchClasses = [...plan.selectedSlot.pitchClasses].sort((a, b) => a - b).join(",");
+    return plan.chordCatalogFilters.find((filter) => filter.selected).chordGroups
+      .flatMap((group) => group.choices)
+      .find((choice) => [...choice.choice.pitchClasses].sort((a, b) => a - b).join(",") !== selectedPitchClasses);
+  });
+  await page.locator(`[data-choice-id="${replacementChoice.id}"]`).click();
+  await expectRevision(8);
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.plan.selectedSlot.pitchClasses)).toEqual(replacementChoice.choice.pitchClasses);
 
   const layoutEndHandle = page.getByRole("button", { name: "调整调性线终点" }).last();
   const layoutEndBox = await layoutEndHandle.boundingBox();
@@ -735,16 +780,15 @@ test("tonal layouts stay session-owned and narrow workbench tabs preserve the mo
   await page.mouse.down();
   await page.mouse.move(layoutEndBox.x + 96, layoutEndBox.y + layoutEndBox.height / 2, { steps: 6 });
   await page.mouse.up();
-  await expect(page.getByRole("status")).toHaveText("revision 4", { timeout: 30_000 });
+  await expectRevision(9);
 
   const tonalLayouts = page.locator(".tonal-layout-row > button:first-child");
   await expect(tonalLayouts).toHaveCount(2);
-  await tonalLayouts.last().click();
-  await expect(page.getByRole("status")).toHaveText("revision 5", { timeout: 30_000 });
-  await page.getByLabel("上谱声部").fill("1");
-  await expect(page.getByRole("status")).toHaveText("revision 6", { timeout: 30_000 });
+  await expect(tonalLayouts.last()).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("spinbutton", { name: "上谱声部", exact: true }).fill("1");
+  await expectRevision(10);
   await page.getByRole("button", { name: /删除调性线/ }).click();
-  await expect(page.getByRole("status")).toHaveText("revision 7", { timeout: 30_000 });
+  await expectRevision(11);
 
   await page.locator(".harmony-timeline-scroll").evaluate((element) => { element.style.width = "400px"; });
   await page.locator(".harmony-timeline").evaluate((element) => { element.style.minWidth = "1200px"; });
@@ -766,9 +810,62 @@ test("tonal layouts stay session-owned and narrow workbench tabs preserve the mo
   await expect(tabs.getByRole("tab", { name: "时间轴" })).toBeFocused();
   await expect(page.getByLabel("和声时间轴")).toBeVisible();
   await tabs.getByRole("tab", { name: "计划" }).click();
-  await expect(page.getByLabel("自由练习计划")).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "计划" }).getByLabel("自由练习计划")).toBeVisible();
   await tabs.getByRole("tab", { name: "反馈" }).click();
-  await expect(page.getByLabel("自由练习反馈")).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "反馈" }).getByLabel("自由练习反馈")).toBeVisible();
+});
+
+test("idiom tonality selection stays independent and insertion keeps the later tonal layout", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  const revision = () => page.evaluate(() => window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision);
+  await expect.poll(revision, { timeout: 30_000 }).toBe(0);
+
+  await page.getByRole("button", { name: "+ 插入", exact: true }).click();
+  await page.getByRole("dialog", { name: "在当前和弦插入调性线" })
+    .getByRole("button", { name: "F#", exact: true }).first().click();
+  await expect.poll(revision).toBe(1);
+
+  const chordTonality = page.getByRole("group", { name: "按哪个调选和弦" });
+  const idiomTonality = page.getByRole("group", { name: "按哪个调选惯用进行" });
+  await chordTonality.getByRole("button", { name: "F#", exact: true }).click();
+  await expect.poll(revision).toBe(2);
+  await idiomTonality.getByRole("button", { name: "C", exact: true }).click();
+  await expect.poll(revision).toBe(3);
+  await idiomTonality.getByRole("button", { name: "F#", exact: true }).click();
+  await expect.poll(revision).toBe(4);
+  await expect(chordTonality.getByRole("button", { name: "F#", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+
+  const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
+  await autoWriting.click();
+  await expect.poll(revision).toBe(5);
+  await expect(autoWriting).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "全部教材进行", exact: true }).click();
+  const variant = page.getByTestId("idiom-catalog").locator("button:not([disabled])").first();
+  await expect(variant).toBeVisible({ timeout: 60_000 });
+  await variant.click();
+  await expect.poll(revision, { timeout: 30_000 }).toBe(6);
+
+  await expect.poll(() => page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const laterLayout = update.document.workspace.tonalLayouts.find((layout) => layout.fifths === 6);
+    return {
+      selectionLayoutId: update.selection.tonalLayoutId,
+      idiomLayoutId: update.document.workspace.idiomInstances[0]?.tonalLayoutId,
+      laterLayoutId: laterLayout?.id,
+    };
+  })).toEqual({
+    selectionLayoutId: expect.any(String),
+    idiomLayoutId: expect.any(String),
+    laterLayoutId: expect.any(String),
+  });
+  const ids = await page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const laterLayoutId = update.document.workspace.tonalLayouts.find((layout) => layout.fifths === 6).id;
+    return [update.selection.tonalLayoutId, update.document.workspace.idiomInstances[0].tonalLayoutId, laterLayoutId];
+  });
+  expect(ids).toEqual([ids[2], ids[2], ids[2]]);
 });
 
 test("narrow workbench exposes a coherent assistive-technology tree and score summary", async ({ page }) => {

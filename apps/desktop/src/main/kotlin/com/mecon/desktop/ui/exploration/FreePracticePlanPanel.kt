@@ -94,6 +94,7 @@ internal data class PracticePlanActions(
     val changeChordToneMode: (ChordToneLabelMode) -> Unit,
     val changeShowOffKeyIdioms: (Boolean) -> Unit,
     val selectIdiomTargetKey: (ModulationKey?) -> Unit,
+    val selectIdiomTonalLayout: (WorkspaceTonalLayoutId) -> Unit,
     val replaceChord: (WorkspaceChordChoice) -> Unit,
     val setChordBass: (Int?) -> Unit,
     val setChordTonality: (WorkspaceChordTonality?) -> Unit,
@@ -276,6 +277,16 @@ internal fun PracticePlanPanel(
             val effectiveGroupsByKey = selectedChordKey?.let { key ->
                 mapOf(key to chordGroupsByKey[key].orEmpty())
             }.orEmpty()
+            val catalogLayouts = if (chordTonalReadings.isEmpty()) {
+                activeChordLayouts
+            } else {
+                listOf(effectiveChordLayout)
+            }
+            val catalogGroupsByKey = if (chordTonalReadings.isEmpty()) {
+                chordGroupsByKey
+            } else {
+                effectiveGroupsByKey
+            }
             if (showHarmony) WorkbenchPanel(strings.harmonySelectionTitle) {
                 SelectedChordHeader(
                     readings = view.selectedChordReadings,
@@ -314,9 +325,9 @@ internal fun PracticePlanPanel(
                     legacyChordSymbol = selectedSlot.chordIdentity,
                     groups = selectedChordKey?.let(chordGroupsByKey::get).orEmpty(),
                     catalogGroups = view.chordCatalogGroups,
-                    groupsByKey = effectiveGroupsByKey,
-                    activeLayouts = listOf(effectiveChordLayout),
-                    selectedLayoutId = effectiveChordLayout.id,
+                    groupsByKey = catalogGroupsByKey,
+                    activeLayouts = catalogLayouts,
+                    selectedLayoutId = selectedChordLayout.id,
                     isPivotChord = selectedSlot.isPivotChord,
                     pivotRecipes = state.teachingContribution.pivotRecipes,
                     chordLocked = state.workspace.isIdiomSlot(selectedSlot.id),
@@ -345,9 +356,9 @@ internal fun PracticePlanPanel(
                     legacyChordSymbol = selectedSlot.chordIdentity,
                     groups = selectedChordKey?.let(chordGroupsByKey::get).orEmpty(),
                     catalogGroups = view.chordCatalogGroups,
-                    groupsByKey = effectiveGroupsByKey,
-                    activeLayouts = listOf(effectiveChordLayout),
-                    selectedLayoutId = effectiveChordLayout.id,
+                    groupsByKey = catalogGroupsByKey,
+                    activeLayouts = catalogLayouts,
+                    selectedLayoutId = selectedChordLayout.id,
                     isPivotChord = selectedSlot.isPivotChord,
                     pivotRecipes = state.teachingContribution.pivotRecipes,
                     chordLocked = state.workspace.isIdiomSlot(selectedSlot.id),
@@ -381,6 +392,19 @@ internal fun PracticePlanPanel(
                         IdiomCatalogTab.ALL_TEACHING
                     },
                 )
+            }
+            if (view.idiomCatalogFilters.size > 1) {
+                Text(strings.idiomCatalogTonality, color = MeconColors.TextMuted, fontSize = 10.sp)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    view.idiomCatalogFilters.forEach { filter ->
+                        PracticeChip(filter.label, filter.selected) {
+                            actions.selectIdiomTonalLayout(filter.tonalLayoutId)
+                        }
+                    }
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

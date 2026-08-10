@@ -828,13 +828,10 @@ export function App() {
     setAudioSettings(next);
   }
 
-  function replacePracticeChord(choiceId = practiceCatalogChoiceId) {
+  function replacePracticeChord(chordChoice) {
     const slotId = selectedPracticeSlotId;
-    if (!slotId) return;
-    const choices = practiceUpdate.catalog?.chordChoices ?? [];
-    const selected = choices.find((item) => item.id === choiceId) ?? choices[0];
-    if (!selected) return;
-    dispatchPractice({ type: "replaceChord", slotId, chordChoice: selected.choice });
+    if (!slotId || !chordChoice) return;
+    dispatchPractice({ type: "replaceChord", slotId, chordChoice });
   }
 
   const {
@@ -974,6 +971,9 @@ export function App() {
     })}
     onSelectTonalLayout={(tonalLayoutId) => selectedPracticeSlotId && dispatchPractice({
       type: "selectChordTonalLayout", slotId: selectedPracticeSlotId, tonalLayoutId,
+    })}
+    onSelectIdiomTonalLayout={(tonalLayoutId) => dispatchPractice({
+      type: "selectIdiomTonalLayout", tonalLayoutId,
     })}
     onInsertIdiom={(definitionId, variantId) => selectedPracticeSlotId && dispatchPractice({
       type: "insertIdiom", anchorSlotId: selectedPracticeSlotId, definitionId, variantId,
