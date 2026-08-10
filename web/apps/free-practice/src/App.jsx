@@ -148,6 +148,33 @@ export function App() {
   } = inputState;
   const editorCommands = editor.commands;
   const selectedPracticeSlotId = practiceUpdate?.selection?.slotId ?? practiceUpdate?.selectedSlotId;
+  const roleViewByRef = new Map((practiceUpdate?.noteConstraints?.noteheads ?? []).map((item) => [
+    `${item.notehead.eventId}:${item.notehead.pitchIndex}`, item,
+  ]));
+  const practiceElementTints = Object.fromEntries((frame?.bundle?.surfaces ?? [])
+    .flatMap((surface) => surface.elements)
+    .filter((element) => element.type === "NOTEHEAD" && element.eventId != null
+      && element.metadata?.pitchIndex != null)
+    .map((element) => [element.id, roleViewByRef.get(
+      `${element.eventId}:${Number(element.metadata.pitchIndex)}`,
+    )])
+    .filter(([, item]) => item?.inferredRole != null || item?.explicitRole != null)
+    .map(([id, item]) => [id, item.conflict ? "#dc3737"
+      : item.inferredRole === "CHORD_TONE" ? "#41aa5f" : "#e19b2d"]));
+
+  function selectedPracticeNoteheads() {
+    const views = practiceUpdate?.noteConstraints?.noteheads ?? [];
+    const selected = practiceUpdate?.selection?.scoreTargets ?? [];
+    return selected.flatMap((target) => {
+      if (target.type !== "event") return [];
+      const indices = target.pitchIndices?.length
+        ? new Set(target.pitchIndices)
+        : null;
+      return views.filter((item) => item.notehead.eventId === target.eventId
+        && (indices == null || indices.has(item.notehead.pitchIndex)))
+        .map((item) => item.notehead);
+    });
+  }
 
   useEffect(() => {
     const choices = practiceUpdate?.catalog?.chordChoices ?? [];
@@ -1019,6 +1046,7 @@ export function App() {
         onScroll: setSharedScrollLeft,
         onViewportWidth: updatePracticeViewportWidth,
         playbackStore: playbackCursorRef.current,
+        elementTints: practiceElementTints,
       }}
     >
     {({ toolbar, surface, inspectors }) => (
@@ -1093,6 +1121,31 @@ export function App() {
           <div id="workbench-panel-score" role="tabpanel" aria-labelledby="workbench-tab-score"
             className={`workbench-pane score-pane ${mobileTab === "score" ? "active" : ""}`}>
             {practiceUpdate && toolbar}
+            {practiceUpdate && <div className="practice-role-toolbar" role="toolbar" aria-label="和弦内外音标记">
+              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
+                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(), role: "CHORD_TONE",
+              })}>和弦内音</button>
+              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
+                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(), role: "NON_CHORD_TONE",
+              })}>和弦外音</button>
+              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
+                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(),
+              })}>清除标记</button>
+              <label><input type="checkbox"
+                checked={practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false}
+                onChange={(event) => dispatchPractice({
+                  type: "setHarmonicRoleFilters",
+                  chordCatalogEnabled: event.target.checked,
+                  idiomCatalogEnabled: practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false,
+                })} />筛选和弦</label>
+              <label><input type="checkbox"
+                checked={practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false}
+                onChange={(event) => dispatchPractice({
+                  type: "setHarmonicRoleFilters",
+                  chordCatalogEnabled: practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false,
+                  idiomCatalogEnabled: event.target.checked,
+                })} />筛选惯用进行</label>
+            </div>}
             {surface}
           </div>
           {practiceUpdate && DEFAULT_WEB_PRACTICE_LAYOUT === "writing-with-lower-panels" &&

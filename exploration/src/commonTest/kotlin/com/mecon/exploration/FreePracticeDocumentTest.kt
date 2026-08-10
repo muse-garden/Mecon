@@ -1,6 +1,7 @@
 package com.mecon.exploration
 
 import com.mecon.api.primitive.Fraction
+import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TrackId
 import com.mecon.theory.freepractice.HarmonyWorkspaceState
@@ -83,6 +84,16 @@ class FreePracticeDocumentTest {
         val choice = ChordSelectionCatalog.choices(key).first { it.functionalSymbol == "i" }
         val expected = document().let { current ->
             current.copy(
+                noteConstraints = PracticeNoteConstraintState(
+                    harmonicRoles = listOf(
+                        PracticeHarmonicRoleMark(
+                            PracticeNoteheadRef(EventId("marked-note"), 1),
+                            PracticeHarmonicRole.NON_CHORD_TONE,
+                        ),
+                    ),
+                    lockedVoiceTrackIds = setOf(TrackId("voice-0")),
+                    lockedStaffTrackIds = setOf(TrackId("staff-upper")),
+                ),
                 workspace = current.workspace.copy(
                     slots = current.workspace.slots.map {
                         it.copy(

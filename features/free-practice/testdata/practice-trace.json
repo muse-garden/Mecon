@@ -51,6 +51,9 @@
     { "kind": "timelineEdit", "edit": "moveBoundaryWithFollowing", "leftSlotIndex": 0, "boundary": "1/4", "expectedRevision": 41, "revision": 42, "effect": "APPLIED", "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"], "layouts": ["0/1+null", "0/1+3/8"] },
     { "kind": "timelineEdit", "edit": "setTonalLayoutBounds", "layoutIndex": 0, "start": "0/1", "end": "1/2", "expectedRevision": 42, "revision": 43, "effect": "APPLIED", "layouts": ["0/1+1/2", "0/1+3/8"] },
     { "kind": "undo", "expectedRevision": 43, "revision": 44, "effect": "UNDONE", "layouts": ["0/1+null", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] },
-    { "kind": "redo", "expectedRevision": 44, "revision": 45, "effect": "REDONE", "layouts": ["0/1+1/2", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] }
+    { "kind": "redo", "expectedRevision": 44, "revision": 45, "effect": "REDONE", "layouts": ["0/1+1/2", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] },
+    { "kind": "setHarmonicRole", "expectedRevision": 45, "revision": 46, "effect": "APPLIED", "roleCount": 1, "conflictCount": 1 },
+    { "kind": "setHarmonicRoleFilters", "expectedRevision": 46, "revision": 47, "effect": "SELECTION_CHANGED", "roleCount": 1, "chordRoleFilter": true, "idiomRoleFilter": true },
+    { "kind": "undo", "expectedRevision": 47, "revision": 48, "effect": "UNDONE", "roleCount": 0 }
   ]
 }

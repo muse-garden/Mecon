@@ -65,7 +65,7 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
   assert.deepEqual(preset.module, {
     id: "free-practice",
     type: "exploration.free-practice",
-    schemaVersion: 8,
+    schemaVersion: 9,
   });
   const session = await createMeconFreePractice({ ...preset, engineModule });
   const preview = session.previewTimelineEdit({
@@ -328,12 +328,29 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         expectedRevision: step.expectedRevision,
         inner: { type: "undo", expectedRevision: 0 },
       });
+    } else if (step.kind === "setHarmonicRole") {
+      const before = session.initialUpdate();
+      const event = Object.values(before.score.score.voiceTracks)
+        .flatMap((voice) => voice.events).find((candidate) => !candidate.isRest);
+      update = session.dispatch({
+        type: "setHarmonicRole",
+        expectedRevision: step.expectedRevision,
+        noteheads: [{ eventId: event.id, pitchIndex: 0 }],
+        role: "CHORD_TONE",
+      });
+    } else if (step.kind === "setHarmonicRoleFilters") {
+      update = session.dispatch({
+        type: "setHarmonicRoleFilters",
+        expectedRevision: step.expectedRevision,
+        chordCatalogEnabled: true,
+        idiomCatalogEnabled: true,
+      });
     } else {
       update = session.dispatch({ type: step.kind, expectedRevision: step.expectedRevision });
     }
     if (update.catalogRequests.length === 1) catalogRequest = update.catalogRequests[0];
     if (update.findingRequests.length === 1) findingRequest = update.findingRequests[0];
-    assert.equal(update.schemaVersion, 2, `${step.kind} schema`);
+    assert.equal(update.schemaVersion, 3, `${step.kind} schema`);
     assert.equal(update.revision, step.revision, step.kind);
     assert.equal(update.effect.kind, step.effect, step.kind);
     if (step.editPlayback !== undefined) {
@@ -354,6 +371,19 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         step.assignmentSourceCount,
         step.kind,
       );
+    }
+    if (step.roleCount !== undefined) {
+      assert.equal(update.document.noteConstraints.harmonicRoles.length, step.roleCount, step.kind);
+    }
+    if (step.conflictCount !== undefined) {
+      assert.equal(update.noteConstraints.noteheads.filter((item) => item.conflict).length,
+        step.conflictCount, step.kind);
+    }
+    if (step.chordRoleFilter !== undefined) {
+      assert.equal(update.noteConstraints.chordCatalogFilterEnabled, step.chordRoleFilter, step.kind);
+    }
+    if (step.idiomRoleFilter !== undefined) {
+      assert.equal(update.noteConstraints.idiomCatalogFilterEnabled, step.idiomRoleFilter, step.kind);
     }
     if (step.scoreChanged !== undefined) {
       assert.equal(update.score.scoreChanged, step.scoreChanged, step.kind);

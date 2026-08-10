@@ -214,6 +214,10 @@ data class WorkspaceChordTonality(
 )
 ```
 
+Schema v9 adds persistent harmonic-role marks and dynamic writing-lock rules. Their stable identity,
+onset semantics, and staff/voice lock behavior are specified in
+[`free-practice-note-constraints.md`](free-practice-note-constraints.md).
+
 `primary` 是后续普通和弦/进行默认继承的调性；`alternates` 是当前和弦同时成立的其他明确解释。
 同一调性在一和弦内只能出现一次。删除 primary 时，首个 alternate 提升为 primary；删除最后一个
 标记后 `tonality = null`，重新回退实体线。

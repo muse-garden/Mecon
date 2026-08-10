@@ -35,6 +35,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,6 +89,12 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mecon.api.interaction.EventSection
+import com.mecon.api.interaction.VoiceEventSection
+import com.mecon.api.interaction.VoiceNoteSection
+import com.mecon.api.render.RenderColor
+import com.mecon.api.storage.NoteRef
+import com.mecon.exploration.PracticeHarmonicRole
+import com.mecon.exploration.PracticeNoteheadRef
 import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
@@ -526,6 +533,40 @@ internal fun PracticeEditorPanel(
             collapsible = previewLayout == FreePracticeWorkbenchLayout.CLASSIC,
         ) {
             if (host != null) {
+                val selectedNoteheads = selection.flatMapTo(linkedSetOf()) { section ->
+                    when (section) {
+                        is VoiceNoteSection -> listOf(PracticeNoteheadRef(section.event.id, section.pitchIndex))
+                        is VoiceEventSection -> section.event.pitchData.indices.map { index ->
+                            PracticeNoteheadRef(section.event.id, index)
+                        }
+                        else -> emptyList()
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        enabled = selectedNoteheads.isNotEmpty(),
+                        onClick = { host.setHarmonicRole(selectedNoteheads, PracticeHarmonicRole.CHORD_TONE) },
+                    ) { Text("和弦内音") }
+                    Button(
+                        enabled = selectedNoteheads.isNotEmpty(),
+                        onClick = { host.setHarmonicRole(selectedNoteheads, PracticeHarmonicRole.NON_CHORD_TONE) },
+                    ) { Text("和弦外音") }
+                    Button(
+                        enabled = selectedNoteheads.isNotEmpty(),
+                        onClick = { host.setHarmonicRole(selectedNoteheads, null) },
+                    ) { Text("清除标记") }
+                    Button(onClick = {
+                        val view = host.practiceNoteConstraints
+                        host.setHarmonicRoleFilters(!view.chordCatalogFilterEnabled, view.idiomCatalogFilterEnabled)
+                    }) { Text(if (host.practiceNoteConstraints.chordCatalogFilterEnabled) "和弦筛选：开" else "和弦筛选：关") }
+                    Button(onClick = {
+                        val view = host.practiceNoteConstraints
+                        host.setHarmonicRoleFilters(view.chordCatalogFilterEnabled, !view.idiomCatalogFilterEnabled)
+                    }) { Text(if (host.practiceNoteConstraints.idiomCatalogFilterEnabled) "进行筛选：开" else "进行筛选：关") }
+                }
                 HorizontalScoreEditor(
                     state = noteTool,
                     selection = LeftToolbarSelectionState(notes = scoreSelectionInfo),
@@ -546,6 +587,19 @@ internal fun PracticeEditorPanel(
                             selectionConfig = RenderedScoreSelectionConfig(
                                 selection = selection,
                                 onSelectionChange = { selection = it },
+                                noteheadBackgroundGroups = host.practiceNoteConstraints.noteheads
+                                    .filter { it.inferredRole != null || it.explicitRole != null }
+                                    .groupBy { item -> when {
+                                        item.conflict -> RenderColor.rgb(220, 55, 55)
+                                        item.inferredRole == PracticeHarmonicRole.CHORD_TONE -> RenderColor.rgb(65, 170, 95)
+                                        else -> RenderColor.rgb(225, 155, 45)
+                                    } }
+                                    .map { (color, items) -> RenderedScoreNoteheadBackgroundGroup(
+                                        notes = items.mapTo(linkedSetOf()) { item ->
+                                            NoteRef(item.notehead.eventId, item.notehead.pitchIndex)
+                                        },
+                                        color = color,
+                                    ) },
                             ),
                             display = RenderedScoreDisplayConfig(
                                 readOnly = false,

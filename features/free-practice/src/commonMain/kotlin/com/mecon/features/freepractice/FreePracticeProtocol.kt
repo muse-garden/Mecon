@@ -8,6 +8,8 @@ import com.mecon.api.primitive.TrackId
 import com.mecon.api.storage.StorageScore
 import com.mecon.exploration.FreePracticeDocument
 import com.mecon.exploration.FreePracticeWritingSettings
+import com.mecon.exploration.PracticeHarmonicRole
+import com.mecon.exploration.PracticeNoteheadRef
 import com.mecon.features.scoreediting.ScoreEditIntent
 import com.mecon.features.scoreediting.ScoreEditingFrame
 import com.mecon.features.scoreediting.ScoreEditUpdate
@@ -228,6 +230,22 @@ sealed interface FreePracticeIntent {
     ) : FreePracticeIntent
 
     @Serializable
+    @SerialName("setHarmonicRole")
+    data class SetHarmonicRole(
+        override val expectedRevision: Long,
+        val noteheads: Set<PracticeNoteheadRef>,
+        val role: PracticeHarmonicRole? = null,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setHarmonicRoleFilters")
+    data class SetHarmonicRoleFilters(
+        override val expectedRevision: Long,
+        val chordCatalogEnabled: Boolean,
+        val idiomCatalogEnabled: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
     @SerialName("rebuildPractice")
     data class RebuildPractice(
         override val expectedRevision: Long,
@@ -390,6 +408,23 @@ data class PracticeCatalogView(
     val requestKey: String,
     val chordChoices: List<PracticeChordCatalogItem>,
     val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
+    val harmonicRoleFilterEnabled: Boolean = false,
+)
+
+@Serializable
+data class PracticeNoteheadRoleView(
+    val notehead: PracticeNoteheadRef,
+    val inferredRole: PracticeHarmonicRole? = null,
+    val explicitRole: PracticeHarmonicRole? = null,
+    val conflict: Boolean = false,
+    val locked: Boolean = false,
+)
+
+@Serializable
+data class PracticeNoteConstraintView(
+    val noteheads: List<PracticeNoteheadRoleView> = emptyList(),
+    val chordCatalogFilterEnabled: Boolean = false,
+    val idiomCatalogFilterEnabled: Boolean = false,
 )
 
 @Serializable
@@ -757,7 +792,21 @@ data class PracticeTeachingCatalogRequest(
     val catalogKey: PracticeKeyView,
     val focus: WorkspaceChordChoice? = null,
     val includeOffKey: Boolean = false,
+    val focusOnset: Fraction = Fraction.ZERO,
+    val harmonicRoleFilterEnabled: Boolean = false,
+    val harmonicRoleConstraints: List<PracticeHarmonicRoleConstraint> = emptyList(),
 )
+
+@Serializable
+data class PracticeHarmonicRoleConstraint(
+    val onset: Fraction,
+    val pitchClass: Int,
+    val role: PracticeHarmonicRole,
+) {
+    init {
+        require(pitchClass in 0..11) { "A harmonic-role pitch class must be in 0..11" }
+    }
+}
 
 @Serializable
 data class PracticeTeachingCatalogResult(
@@ -856,6 +905,7 @@ data class FreePracticeUpdate(
     val selectedSlotId: WorkspaceSlotId?,
     val findings: PracticeFindingsView,
     val catalog: PracticeCatalogView,
+    val noteConstraints: PracticeNoteConstraintView = PracticeNoteConstraintView(),
     val timeline: PracticeTimelineView = PracticeTimelineView(),
     val plan: PracticePlanView = PracticePlanView(),
     val writing: PracticeWritingStatus,
@@ -875,6 +925,7 @@ data class FreePracticeFrame(
     val selectedSlotId: WorkspaceSlotId?,
     val findings: PracticeFindingsView,
     val catalog: PracticeCatalogView,
+    val noteConstraints: PracticeNoteConstraintView,
     val timeline: PracticeTimelineView,
     val plan: PracticePlanView,
     val writing: PracticeWritingStatus,
@@ -892,7 +943,7 @@ data class FreePracticeDispatchResult(
     val scoreUpdate: ScoreEditUpdate? = null,
 )
 
-const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 2
+const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 3
 
 object FreePracticeCodec {
     private val json = Json {

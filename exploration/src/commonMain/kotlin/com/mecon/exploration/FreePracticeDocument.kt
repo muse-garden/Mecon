@@ -1,5 +1,7 @@
 package com.mecon.exploration
 
+import com.mecon.api.primitive.EventId
+import com.mecon.api.primitive.TrackId
 import com.mecon.theory.freepractice.HarmonyWorkspaceState
 import com.mecon.theory.freepractice.WorkspaceHarmonySlot
 import com.mecon.theory.freepractice.WorkspaceSlotId
@@ -92,6 +94,7 @@ data class FreePracticeSettings(
 data class FreePracticeDocument(
     val settings: FreePracticeSettings,
     val workspace: HarmonyWorkspaceState,
+    val noteConstraints: PracticeNoteConstraintState = PracticeNoteConstraintState(),
     val migrationDiagnostics: List<FreePracticeMigrationDiagnostic> = emptyList(),
 ) {
     init {
@@ -99,6 +102,43 @@ data class FreePracticeDocument(
             "Free-practice polyphony limit must match workspace notation voices"
         }
     }
+}
+
+@Serializable
+data class PracticeNoteheadRef(
+    val eventId: EventId,
+    val pitchIndex: Int,
+) {
+    init {
+        require(pitchIndex >= 0) { "A notehead pitch index cannot be negative" }
+    }
+}
+
+@Serializable
+enum class PracticeHarmonicRole { CHORD_TONE, NON_CHORD_TONE }
+
+@Serializable
+data class PracticeHarmonicRoleMark(
+    val notehead: PracticeNoteheadRef,
+    val role: PracticeHarmonicRole,
+)
+
+/** Persistent source constraints. Staff and voice ids are dynamic predicates, not snapshots. */
+@Serializable
+data class PracticeNoteConstraintState(
+    val harmonicRoles: List<PracticeHarmonicRoleMark> = emptyList(),
+    val lockedNoteheads: Set<PracticeNoteheadRef> = emptySet(),
+    val lockedVoiceTrackIds: Set<TrackId> = emptySet(),
+    val lockedStaffTrackIds: Set<TrackId> = emptySet(),
+) {
+    init {
+        require(harmonicRoles.map { it.notehead }.distinct().size == harmonicRoles.size) {
+            "A notehead cannot have more than one explicit harmonic role"
+        }
+    }
+
+    fun harmonicRole(notehead: PracticeNoteheadRef): PracticeHarmonicRole? =
+        harmonicRoles.firstOrNull { it.notehead == notehead }?.role
 }
 
 @Serializable
@@ -117,7 +157,7 @@ data class FreePracticeMigrationDiagnostic(
 )
 
 const val FREE_PRACTICE_MODULE_TYPE: String = "exploration.free-practice"
-const val FREE_PRACTICE_SCHEMA_VERSION: Int = 8
+const val FREE_PRACTICE_SCHEMA_VERSION: Int = 9
 const val DEFAULT_FREE_PRACTICE_MODULE_ID: String = "free-practice"
 
 @Serializable

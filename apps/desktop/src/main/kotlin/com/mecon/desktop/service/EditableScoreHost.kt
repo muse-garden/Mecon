@@ -284,6 +284,10 @@ class HarmonyPracticeScoreHost(
         private set
     var practiceSelection: FreePracticeSelection by mutableStateOf(freePracticeSession.frame().selection)
         private set
+    var practiceNoteConstraints: com.mecon.features.freepractice.PracticeNoteConstraintView by mutableStateOf(
+        freePracticeSession.frame().noteConstraints
+    )
+        private set
     var practicePlaybackCommand: PracticePlaybackCommand? by mutableStateOf(null)
         private set
     private var practicePlaybackGeneration = 0L
@@ -648,6 +652,16 @@ class HarmonyPracticeScoreHost(
     fun setCatalogFilter(includeOffKey: Boolean): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SetCatalogFilter(revision, includeOffKey) }
 
+    fun setHarmonicRole(
+        noteheads: Set<com.mecon.exploration.PracticeNoteheadRef>,
+        role: com.mecon.exploration.PracticeHarmonicRole?,
+    ): Boolean = dispatchImmediate { revision ->
+        FreePracticeIntent.SetHarmonicRole(revision, noteheads, role)
+    }
+
+    fun setHarmonicRoleFilters(chords: Boolean, idioms: Boolean): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SetHarmonicRoleFilters(revision, chords, idioms) }
+
     fun rebuildPractice(polyphonyLimit: Int, key: ModulationKey): Boolean {
         writingGeneration.incrementAndGet()
         val result = freePracticeSession.dispatch(
@@ -773,6 +787,7 @@ class HarmonyPracticeScoreHost(
         practiceIdiomCatalog = result.frame.plan.idiomCatalog
         practicePlan = result.frame.plan
         practiceSelection = result.frame.selection
+        practiceNoteConstraints = result.frame.noteConstraints
         result.editPlayback?.let { playback ->
             practicePlaybackCommand = PracticePlaybackCommand(++practicePlaybackGeneration, playback)
         }
@@ -1454,6 +1469,8 @@ class HarmonyPracticeScoreHost(
         val frame = freePracticeSession.frame()
         practiceFindings = frame.findings.items
         practicePlan = frame.plan
+        practiceSelection = frame.selection
+        practiceNoteConstraints = frame.noteConstraints
         practiceIdiomCatalog = frame.plan.idiomCatalog
         practiceWorkspace = frame.document.workspace
         canUndo = manager.canUndo()

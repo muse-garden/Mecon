@@ -10,6 +10,7 @@ import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.edit.PolyphonyLimitValidator
 import com.mecon.exploration.FreePracticeDocument
 import com.mecon.exploration.FreePracticeSettings
+import com.mecon.exploration.PracticeNoteConstraintState
 import com.mecon.exploration.VoicePlanScoreAssembler
 import com.mecon.features.scoreediting.ScoreEditEffectKind
 import com.mecon.features.scoreediting.ScoreEditIntent
@@ -77,6 +78,7 @@ class FreePracticeSession private constructor(
     )
     private var revision = 0L
     private var settings = initialDocument.settings
+    private var noteConstraints = initialDocument.noteConstraints
     private var migrationDiagnostics = initialDocument.migrationDiagnostics
     private var selectedSlotId: WorkspaceSlotId? = initialDocument.workspace.slots.firstOrNull()?.id
     private var selectedTonalLayoutId = selectedSlotId
@@ -96,8 +98,11 @@ class FreePracticeSession private constructor(
     private var teachingCatalog = PracticeIdiomCatalogView()
     private var activeTeachingCatalogRequest: PracticeTeachingCatalogRequest? = null
     private var catalogIncludeOffKey: Boolean = false
+    private var chordCatalogRoleFilterEnabled: Boolean = false
+    private var idiomCatalogRoleFilterEnabled: Boolean = false
     private var operationBaseWorkspace = initialDocument.workspace
     private var operationBaseSettings = initialDocument.settings
+    private var operationBaseNoteConstraints = initialDocument.noteConstraints
     private var findingInputWorkspace: HarmonyWorkspaceState? = null
     private var findingInputRuntime: RuntimeScore? = null
     private var findingInputPendingScore: com.mecon.api.storage.StorageScore? = null
@@ -110,6 +115,13 @@ class FreePracticeSession private constructor(
 
             override fun restore(snapshot: Any?) {
                 (snapshot as? FreePracticeSettings)?.let { settings = it }
+            }
+        })
+        manager.registerEditorState("free-practice-note-constraints", object : EditorStateController {
+            override fun capture(): Any = noteConstraints
+
+            override fun restore(snapshot: Any?) {
+                (snapshot as? PracticeNoteConstraintState)?.let { noteConstraints = it }
             }
         })
         manager.registerEditorState("free-practice-selection", object : EditorStateController {
@@ -132,6 +144,13 @@ class FreePracticeSession private constructor(
         val currentDocument = document()
         val currentCatalog = catalog()
         val scoreFrame = scoreSession.frame()
+        val currentNoteConstraints = PracticeNoteConstraintProjector.view(
+            noteConstraints,
+            currentDocument.workspace,
+            manager.currentState.runtimeScore,
+            chordCatalogRoleFilterEnabled,
+            idiomCatalogRoleFilterEnabled,
+        )
         val validSlotId = selectedSlotId?.takeIf { id -> visibleWorkspace.slots.any { it.id == id } }
         val selectedSlot = validSlotId?.let { id -> visibleWorkspace.slots.first { it.id == id } }
         val validTonalLayoutId = selectedTonalLayoutId
@@ -166,6 +185,7 @@ class FreePracticeSession private constructor(
         selectedSlotId = validSlotId,
         findings = findings,
         catalog = currentCatalog,
+        noteConstraints = currentNoteConstraints,
         timeline = currentTimeline,
         plan = currentPlan,
         writing = writing,
@@ -223,6 +243,7 @@ class FreePracticeSession private constructor(
         scoreSession.beginExternalOperation()
         operationBaseWorkspace = workspace
         operationBaseSettings = settings
+        operationBaseNoteConstraints = noteConstraints
     }
 
     /** Desktop adapter entry for a workspace edit whose auto-writing result shares one history item. */
@@ -294,10 +315,21 @@ class FreePracticeSession private constructor(
             is FreePracticeIntent.SelectSlot -> selectSlot(intent, baseRevision)
             is FreePracticeIntent.SelectTonalLayout -> selectTonalLayout(intent, baseRevision)
             is FreePracticeIntent.SelectIdiom -> selectIdiom(intent, baseRevision)
-            is FreePracticeIntent.ReplaceChord -> workspaceCommandWithOptionalWriting(
-                baseRevision,
-                intent.slotId,
-            ) { index -> HarmonyWorkspaceCommand.ReplaceChord(index, chordChoice = intent.chordChoice) }
+            is FreePracticeIntent.ReplaceChord -> {
+                val constraints = roleConstraintsAt(intent.slotId)
+                if (chordCatalogRoleFilterEnabled && intent.chordChoice != null &&
+                    !PracticeNoteConstraintProjector.accepts(intent.chordChoice, constraints)
+                ) {
+                    result(baseRevision, FreePracticeEffect(
+                        FreePracticeEffectKind.INVALID,
+                        "freePractice.harmonicRole.conflict",
+                    ))
+                } else {
+                    workspaceCommandWithOptionalWriting(baseRevision, intent.slotId) { index ->
+                        HarmonyWorkspaceCommand.ReplaceChord(index, chordChoice = intent.chordChoice)
+                    }
+                }
+            }
             is FreePracticeIntent.SetChordBass -> workspaceCommandWithOptionalWriting(
                 baseRevision,
                 intent.slotId,
@@ -393,10 +425,56 @@ class FreePracticeSession private constructor(
                 revision++
                 result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
             }
+            is FreePracticeIntent.SetHarmonicRole -> setHarmonicRole(intent, baseRevision)
+            is FreePracticeIntent.SetHarmonicRoleFilters -> {
+                if (intent.chordCatalogEnabled == chordCatalogRoleFilterEnabled &&
+                    intent.idiomCatalogEnabled == idiomCatalogRoleFilterEnabled
+                ) return noOp(baseRevision)
+                chordCatalogRoleFilterEnabled = intent.chordCatalogEnabled
+                idiomCatalogRoleFilterEnabled = intent.idiomCatalogEnabled
+                activeTeachingCatalogRequest = null
+                revision++
+                result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
+            }
             is FreePracticeIntent.RebuildPractice -> rebuildPractice(intent, baseRevision)
             is FreePracticeIntent.Undo -> undo(baseRevision)
             is FreePracticeIntent.Redo -> redo(baseRevision)
         }
+    }
+
+    private fun setHarmonicRole(
+        intent: FreePracticeIntent.SetHarmonicRole,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        val valid = manager.currentState.runtimeScore.getAllVoiceEvents()
+            .flatMap { event -> event.pitches.indices.map { index ->
+                com.mecon.exploration.PracticeNoteheadRef(event.id, index)
+            } }
+            .toSet()
+        if (intent.noteheads.isEmpty() || !valid.containsAll(intent.noteheads)) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.STALE_TARGET,
+                "freePractice.notehead.staleTarget",
+            ))
+        }
+        val nextRoles = noteConstraints.harmonicRoles.associate { it.notehead to it.role }.toMutableMap().apply {
+            intent.noteheads.forEach { notehead ->
+                if (intent.role == null) remove(notehead) else put(notehead, intent.role)
+            }
+        }
+        val next = noteConstraints.copy(harmonicRoles = nextRoles.map { (notehead, role) ->
+            com.mecon.exploration.PracticeHarmonicRoleMark(notehead, role)
+        })
+        if (next == noteConstraints) return noOp(baseRevision)
+        val current = manager.currentState
+        manager.commitNewState(current.runtimeScore, current.computedScore) {
+            noteConstraints = next
+        }
+        scoreSession.notifyExternalCommit()
+        cancelPending(PracticeWritingOutcome.Cancelled)
+        activeTeachingCatalogRequest = null
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.APPLIED))
     }
 
     private fun rebuildPractice(
@@ -419,6 +497,7 @@ class FreePracticeSession private constructor(
         if (!transaction.commit(runtime, computeScore(runtime), rebuilt.workspace)) return noOp(baseRevision)
         scoreSession.notifyExternalCommit()
         settings = rebuilt.settings.copy(writing = settings.writing)
+        noteConstraints = PracticeNoteConstraintState()
         migrationDiagnostics = emptyList()
         selectedSlotId = rebuilt.workspace.slots.firstOrNull()?.id
         cancelPending(PracticeWritingOutcome.Cancelled)
@@ -840,6 +919,12 @@ class FreePracticeSession private constructor(
         val sourceKey = workspace.idiomSourceKeyAt(onset) ?: PracticeFindingComputer.fallbackKey(document())
         val targetKey = variant.suggestedKey?.toTheoryKey() ?: sourceKey
         val chordChoices = resolveIdiomChoices(variant, targetKey) ?: return staleCatalogTarget(baseRevision)
+        if (idiomCatalogRoleFilterEnabled && !acceptsIdiomRoles(onset, variant.durations, chordChoices)) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.INVALID,
+                "freePractice.harmonicRole.conflict",
+            ))
+        }
         val tonalities = workspace.resolveIdiomTonalities(onset, chordChoices, sourceKey, targetKey)
             ?: return invalidScope(baseRevision)
         val edit = HarmonyWorkspaceEditor.applyResult(
@@ -883,6 +968,12 @@ class FreePracticeSession private constructor(
         val sourceKey = workspace.idiomSourceKeyAt(onset) ?: PracticeFindingComputer.fallbackKey(document())
         val targetKey = variant.suggestedKey?.toTheoryKey() ?: sourceKey
         val chordChoices = resolveIdiomChoices(variant, targetKey) ?: return staleCatalogTarget(baseRevision)
+        if (idiomCatalogRoleFilterEnabled && !acceptsIdiomRoles(onset, variant.durations, chordChoices)) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.INVALID,
+                "freePractice.harmonicRole.conflict",
+            ))
+        }
         val tonalities = workspace.resolveIdiomTonalities(onset, chordChoices, sourceKey, targetKey)
             ?: return invalidScope(baseRevision)
         val edit = HarmonyWorkspaceEditor.applyResult(
@@ -923,6 +1014,30 @@ class FreePracticeSession private constructor(
         )
     } else {
         commitPreparedWorkspace(baseRevision, nextWorkspace)
+    }
+
+    private fun acceptsIdiomRoles(
+        onset: Fraction,
+        durations: List<Fraction>,
+        choices: List<com.mecon.theory.freepractice.WorkspaceChordChoice>,
+    ): Boolean {
+        if (durations.size != choices.size) return false
+        val constraints = PracticeNoteConstraintProjector.catalogConstraints(
+            noteConstraints,
+            manager.currentState.runtimeScore,
+        )
+        return constraints.all { constraint ->
+            var cursor = onset
+            val index = durations.indexOfFirst { duration ->
+                val contains = constraint.onset >= cursor && constraint.onset < cursor + duration
+                cursor += duration
+                contains
+            }
+            if (index < 0) true else PracticeNoteConstraintProjector.accepts(
+                choices[index],
+                mapOf(constraint.pitchClass to constraint.role),
+            )
+        }
     }
 
     private fun resolveIdiomChoices(
@@ -1187,7 +1302,12 @@ class FreePracticeSession private constructor(
             baseRevision = revision,
             scopeFingerprint = scopeFingerprint(requestWorkspace, scope.slotIds),
             kind = kind,
-            document = FreePracticeDocument(settings, requestWorkspace, migrationDiagnostics),
+            document = FreePracticeDocument(
+                settings = settings,
+                workspace = requestWorkspace,
+                noteConstraints = noteConstraints,
+                migrationDiagnostics = migrationDiagnostics,
+            ),
             score = requestScore.toStorage(),
             scopeSlotIds = scope.slotIds,
             triggerSlotId = scope.triggerSlotId,
@@ -1265,7 +1385,12 @@ class FreePracticeSession private constructor(
     }
 
     private fun document() = activeRequest?.document
-        ?: FreePracticeDocument(settings, workspace, migrationDiagnostics)
+        ?: FreePracticeDocument(
+            settings = settings,
+            workspace = workspace,
+            noteConstraints = noteConstraints,
+            migrationDiagnostics = migrationDiagnostics,
+        )
     private val workspace: HarmonyWorkspaceState get() = workspaceController.state
     private val visibleWorkspace: HarmonyWorkspaceState get() = activeRequest?.document?.workspace ?: workspace
 
@@ -1342,7 +1467,8 @@ class FreePracticeSession private constructor(
         // substitutes below: an in-flight solve has not persisted anything yet.
         val documentChanged = current.score.scoreChanged ||
             workspace != operationBaseWorkspace ||
-            settings != operationBaseSettings
+            settings != operationBaseSettings ||
+            noteConstraints != operationBaseNoteConstraints
         return FreePracticeUpdate(
         revision = revision,
         baseRevision = baseRevision,
@@ -1363,6 +1489,7 @@ class FreePracticeSession private constructor(
         selectedSlotId = selectedSlotId,
         findings = current.findings,
         catalog = current.catalog,
+        noteConstraints = current.noteConstraints,
         timeline = current.timeline,
         plan = current.plan,
         writing = writing,
@@ -1390,6 +1517,16 @@ class FreePracticeSession private constructor(
             append('|').append(focus?.pitchClasses?.joinToString(",").orEmpty())
             append('|').append(focus?.pinnedInterpretationRef?.toString().orEmpty())
             append('|').append(catalogIncludeOffKey)
+            append('|').append(idiomCatalogRoleFilterEnabled)
+            if (idiomCatalogRoleFilterEnabled) {
+                PracticeNoteConstraintProjector.catalogConstraints(
+                    noteConstraints,
+                    manager.currentState.runtimeScore,
+                ).forEach { constraint ->
+                    append('|').append(constraint.onset).append(':')
+                    append(constraint.pitchClass).append(':').append(constraint.role.name)
+                }
+            }
         }
     }
 
@@ -1415,6 +1552,12 @@ class FreePracticeSession private constructor(
             catalogKey = catalogKey.toView(),
             focus = focus,
             includeOffKey = catalogIncludeOffKey,
+            focusOnset = selected?.onset ?: com.mecon.api.primitive.Fraction.ZERO,
+            harmonicRoleFilterEnabled = idiomCatalogRoleFilterEnabled,
+            harmonicRoleConstraints = PracticeNoteConstraintProjector.catalogConstraints(
+                noteConstraints,
+                manager.currentState.runtimeScore,
+            ),
         )
         activeTeachingCatalogRequest = request
         teachingCatalog = teachingCatalog.copy(
@@ -1491,7 +1634,22 @@ class FreePracticeSession private constructor(
             relativeLabel = "$functionalSymbol · ${relativeTones.joinToString("–")}",
             absoluteLabel = "$functionalSymbol · ${absoluteTones.joinToString("–")}",
         )
-        val groups = ChordSelectionCatalog.groups(key)
+        val roleConstraints = roleConstraintsAt(selectedSlotId)
+        val groups = ChordSelectionCatalog.groups(key).map { group ->
+            if (!chordCatalogRoleFilterEnabled) group else group.copy(
+                chords = group.chords.filter { choice ->
+                    PracticeNoteConstraintProjector.accepts(
+                        com.mecon.theory.freepractice.WorkspaceChordChoice.of(
+                            choice.pitchClasses,
+                            choice.origin,
+                            choice.confirmedInterpretationRef,
+                            choice.rootPitchClass,
+                        ),
+                        roleConstraints,
+                    )
+                },
+            )
+        }.filter { it.chords.isNotEmpty() }
         return PracticeCatalogView(
             requestKey = "${key.fifths}:${key.mode.name}",
             chordChoices = groups.flatMap { it.chords }.map { it.toView() },
@@ -1503,8 +1661,17 @@ class FreePracticeSession private constructor(
                     choices = group.chords.map { it.toView() },
                 )
             },
+            harmonicRoleFilterEnabled = chordCatalogRoleFilterEnabled,
         )
     }
+
+    private fun roleConstraintsAt(slotId: WorkspaceSlotId?) =
+        PracticeNoteConstraintProjector.constraintsAtSelectedSlot(
+            noteConstraints,
+            visibleWorkspace,
+            manager.currentState.runtimeScore,
+            slotId,
+        )
 
     private fun messageKeyFor(outcome: PracticeWritingOutcome): String = when (outcome) {
         is PracticeWritingOutcome.Solved -> "freePractice.writing.solved"

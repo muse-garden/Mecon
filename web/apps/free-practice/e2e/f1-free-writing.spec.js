@@ -27,6 +27,22 @@ async function clickScoreNote(page, occurrence) {
   await page.locator("canvas").click({ position: point });
 }
 
+test("marks a selected note and enables shared harmonic-role filters", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("鎵撳紑 .mecon").setInputFiles(longFixture);
+  await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+  await clickScoreNote(page, 0);
+  await page.getByRole("button", { name: "和弦内音", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.harmonicRoles.length
+  ))).toBe(1);
+  await page.getByLabel("筛选和弦").check();
+  await page.getByLabel("筛选惯用进行").check();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.noteConstraints
+  ))).toMatchObject({ chordCatalogFilterEnabled: true, idiomCatalogFilterEnabled: true });
+});
+
 test("new free practice starts from the shared preset and exports a complete container", async ({ page }) => {
   await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await page.goto("/");

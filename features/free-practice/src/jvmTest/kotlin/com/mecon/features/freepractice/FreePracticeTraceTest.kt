@@ -318,6 +318,21 @@ class FreePracticeTraceTest {
                         inner = ScoreEditIntent.Undo(expectedRevision = 0),
                     ),
                 )
+                "setHarmonicRole" -> session.frame().let { before ->
+                    val event = before.score.runtimeScore.getAllVoiceEvents().first { !it.isRest }
+                    session.dispatch(FreePracticeIntent.SetHarmonicRole(
+                        expectedRevision = expectedRevision!!.toLong(),
+                        noteheads = setOf(com.mecon.exploration.PracticeNoteheadRef(event.id, 0)),
+                        role = com.mecon.exploration.PracticeHarmonicRole.CHORD_TONE,
+                    ))
+                }
+                "setHarmonicRoleFilters" -> session.dispatch(
+                    FreePracticeIntent.SetHarmonicRoleFilters(
+                        expectedRevision = expectedRevision!!.toLong(),
+                        chordCatalogEnabled = true,
+                        idiomCatalogEnabled = true,
+                    ),
+                )
                 "undo" -> session.dispatch(FreePracticeIntent.Undo(expectedRevision!!.toLong()))
                 "redo" -> session.dispatch(FreePracticeIntent.Redo(expectedRevision!!.toLong()))
                 "cancelWriting" -> session.dispatch(FreePracticeIntent.CancelWriting(expectedRevision!!.toLong()))
@@ -343,6 +358,18 @@ class FreePracticeTraceTest {
             }
             step["assignmentSourceCount"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(expected, update.document.workspace.voiceAssignmentSources.size)
+            }
+            step["roleCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.document.noteConstraints.harmonicRoles.size)
+            }
+            step["conflictCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.noteConstraints.noteheads.count { it.conflict })
+            }
+            step["chordRoleFilter"]?.jsonPrimitive?.boolean?.let { expected ->
+                assertEquals(expected, update.noteConstraints.chordCatalogFilterEnabled)
+            }
+            step["idiomRoleFilter"]?.jsonPrimitive?.boolean?.let { expected ->
+                assertEquals(expected, update.noteConstraints.idiomCatalogFilterEnabled)
             }
             step["scoreChanged"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.score.scoreChanged)

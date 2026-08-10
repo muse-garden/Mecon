@@ -6,6 +6,8 @@ import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.exploration.VoicePlanScoreAssembler
+import com.mecon.exploration.PracticeHarmonicRole
+import com.mecon.exploration.PracticeNoteheadRef
 import com.mecon.features.scoreediting.ScoreEditEffectKind
 import com.mecon.features.scoreediting.ScoreEditIntent
 import com.mecon.features.scoreediting.eventIdOrNull
@@ -22,6 +24,42 @@ import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
 import com.mecon.theory.freepractice.VoiceAssignmentSource
 
 class FreePracticeSessionTest {
+    @Test
+    fun harmonicRoleIsPersistentUndoableAndFiltersChordChoices() {
+        val session = session()
+        val initial = session.frame()
+        val inserted = session.dispatch(FreePracticeIntent.Score(
+            initial.revision,
+            ScoreEditIntent.InsertNote(
+                initial.score.revision,
+                initial.document.workspace.voices.first().id,
+                TimeCode.of(1, Fraction.ZERO),
+                Duration.QUARTER,
+                Pitch.C5,
+            ),
+        ))
+        val eventId = requireNotNull(inserted.frame.score.selection.single().eventIdOrNull)
+        val ref = PracticeNoteheadRef(eventId, 0)
+        val marked = session.dispatch(FreePracticeIntent.SetHarmonicRole(
+            inserted.frame.revision,
+            setOf(ref),
+            PracticeHarmonicRole.CHORD_TONE,
+        ))
+
+        assertEquals(PracticeHarmonicRole.CHORD_TONE, marked.frame.document.noteConstraints.harmonicRole(ref))
+        assertFalse(marked.frame.noteConstraints.noteheads.single { it.notehead == ref }.conflict)
+
+        val filtered = session.dispatch(FreePracticeIntent.SetHarmonicRoleFilters(
+            marked.frame.revision,
+            chordCatalogEnabled = true,
+            idiomCatalogEnabled = false,
+        ))
+        assertTrue(filtered.frame.catalog.chordChoices.all { 0 in it.choice.pitchClasses })
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(filtered.frame.revision))
+        assertEquals(null, undone.frame.document.noteConstraints.harmonicRole(ref))
+    }
+
     @Test
     fun nestedScoreInsertUpdatesManualAssignmentOnTheSameUndoBoundary() {
         val session = session()

@@ -1190,6 +1190,7 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
   onScroll,
   onViewportWidth,
   playbackStore = null,
+  elementTints = null,
   className = "score-panel",
   ariaLabel = "五线谱编辑区",
   canvasAriaLabel = "可编辑五线谱",
@@ -1238,10 +1239,11 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
           { commands: noteInputPreview.commands, color: "rgba(138, 138, 138, 0.55)" },
         ] : []),
       ],
+      elementTints,
       selectionMode: "tint",
       background,
     });
-  }, [frame, surfaceIndex, dragPreview, noteInputPreview, background]);
+  }, [frame, surfaceIndex, dragPreview, noteInputPreview, background, elementTints]);
   useEffect(() => {
     const element = scrollRef.current;
     if (element && Math.abs(element.scrollLeft - scrollLeft) > 0.5) element.scrollLeft = scrollLeft;

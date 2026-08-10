@@ -647,3 +647,17 @@ canvas:focus-visible { outline: 3px solid #9fc5ff; outline-offset: 4px; }
   .panel { border: 0; border-block: 1px solid #2c313c; }
   .status { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+.practice-role-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color, #d9d4ca);
+  background: #faf7f0;
+}
+
+.practice-role-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}

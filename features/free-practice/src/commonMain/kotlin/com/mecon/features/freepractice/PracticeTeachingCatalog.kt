@@ -48,8 +48,8 @@ object PracticeTeachingCatalogExecutor {
                     sourceExerciseId = definition.sourceExerciseId,
                     sourceChapterId = definition.sourceChapterId,
                     availableByDefault = defaultDefinitions.any { it.id == definitionId },
-                    variants = variants.map { (variant, membership) ->
-                        PracticeIdiomVariantView(
+                    variants = variants.mapNotNull { (variant, membership) ->
+                        val view = PracticeIdiomVariantView(
                             id = variant.id,
                             title = variant.title,
                             durations = variant.durations,
@@ -65,6 +65,7 @@ object PracticeTeachingCatalogExecutor {
                             relatedToFocus = membership.first,
                             availableByDefault = membership.second,
                         )
+                        view.takeIf { !request.harmonicRoleFilterEnabled || request.accepts(it) }
                     },
                     relatedToFocus = focusedVariants.isNotEmpty(),
                 )
@@ -85,4 +86,23 @@ object PracticeTeachingCatalogExecutor {
     }
 
     private fun PracticeKeyView.toTheory(): ModulationKey = ModulationKey(fifths, mode.toTheory())
+
+    private fun PracticeTeachingCatalogRequest.accepts(variant: PracticeIdiomVariantView): Boolean {
+        if (variant.chordChoices.size != variant.durations.size) return false
+        val prefix = variant.durations.take(variant.anchorStepIndex)
+            .fold(com.mecon.api.primitive.Fraction.ZERO) { total, duration -> total + duration }
+        val start = focusOnset - prefix
+        return harmonicRoleConstraints.all { constraint ->
+            var cursor = start
+            val index = variant.durations.indexOfFirst { duration ->
+                val contains = constraint.onset >= cursor && constraint.onset < cursor + duration
+                cursor += duration
+                contains
+            }
+            if (index < 0) true else {
+                val belongs = constraint.pitchClass in variant.chordChoices[index].pitchClasses
+                belongs == (constraint.role == com.mecon.exploration.PracticeHarmonicRole.CHORD_TONE)
+            }
+        }
+    }
 }
