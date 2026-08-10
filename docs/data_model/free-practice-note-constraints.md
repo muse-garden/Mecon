@@ -30,6 +30,16 @@ Locks constrain automatic writing only. Normal score-edit intents remain availab
 edit locked material directly. Undo/redo captures the constraint state in the same free-practice
 history transaction as related document or score changes.
 
+Automatic writing resolves voice/staff predicates against the current score when the request is
+executed. Locked note boundaries subdivide harmony slots so the solver can pin their sounding pitch
+at the correct onset; a locked pitch outside the selected chord participates as a sustained
+non-chord tone. Dynamic voice/staff locks protect the complete writing interval, including rests, so
+the materializer neither replaces existing notes nor inserts notes into gaps on those tracks.
+
+When locked notes force a non-bass leap larger than an octave, voice-leading smoothness is relaxed
+only for that voice on the leap edge and its immediate neighbours. General hard rules and all other
+voices retain their normal constraints.
+
 ## Derived views
 
 The shared free-practice session derives notehead presentation and catalog constraints. Desktop and
@@ -40,4 +50,3 @@ An explicit role that disagrees with membership is exposed as a conflict. Option
 apply explicit roles only: chord tones require membership and non-chord tones forbid membership.
 The session repeats this validation when a choice or idiom is committed, so UI filtering is not a
 business-rule boundary.
-

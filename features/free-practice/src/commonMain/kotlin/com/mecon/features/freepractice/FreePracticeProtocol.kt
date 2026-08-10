@@ -246,6 +246,30 @@ sealed interface FreePracticeIntent {
     ) : FreePracticeIntent
 
     @Serializable
+    @SerialName("setNoteheadLock")
+    data class SetNoteheadLock(
+        override val expectedRevision: Long,
+        val noteheads: Set<PracticeNoteheadRef>,
+        val locked: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setVoiceLock")
+    data class SetVoiceLock(
+        override val expectedRevision: Long,
+        val voiceTrackId: TrackId,
+        val locked: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setStaffLock")
+    data class SetStaffLock(
+        override val expectedRevision: Long,
+        val staffTrackId: TrackId,
+        val locked: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
     @SerialName("rebuildPractice")
     data class RebuildPractice(
         override val expectedRevision: Long,
@@ -425,6 +449,8 @@ data class PracticeNoteConstraintView(
     val noteheads: List<PracticeNoteheadRoleView> = emptyList(),
     val chordCatalogFilterEnabled: Boolean = false,
     val idiomCatalogFilterEnabled: Boolean = false,
+    val lockedVoiceTrackIds: Set<TrackId> = emptySet(),
+    val lockedStaffTrackIds: Set<TrackId> = emptySet(),
 )
 
 @Serializable
@@ -838,6 +864,9 @@ data class PracticeFindingResult(
 data class PracticeVoicingFrame(
     val slotId: WorkspaceSlotId,
     val pitchesByVoiceId: Map<TrackId, Pitch>,
+    val segmentId: String = slotId.value,
+    val onset: Fraction? = null,
+    val duration: Fraction? = null,
 )
 
 @Serializable

@@ -542,6 +542,14 @@ internal fun PracticeEditorPanel(
                         else -> emptyList()
                     }
                 }
+                val selectedEventId = selectedNoteheads.firstOrNull()?.eventId
+                val selectedVoiceId = host.runtimeScore.voiceTracks.entries
+                    .firstOrNull { (_, voice) -> voice.events.any { it.id == selectedEventId } }?.key
+                val selectedStaffId = host.runtimeScore.staffTracks.entries
+                    .firstOrNull { (_, staff) -> staff.voiceTracks.any { it.id == selectedVoiceId } }?.key
+                val selectedNotesLocked = selectedNoteheads.isNotEmpty() && selectedNoteheads.all { ref ->
+                    host.practiceNoteConstraints.noteheads.firstOrNull { it.notehead == ref }?.locked == true
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -558,6 +566,22 @@ internal fun PracticeEditorPanel(
                         enabled = selectedNoteheads.isNotEmpty(),
                         onClick = { host.setHarmonicRole(selectedNoteheads, null) },
                     ) { Text("清除标记") }
+                    Button(
+                        enabled = selectedNoteheads.isNotEmpty(),
+                        onClick = { host.setNoteheadLock(selectedNoteheads, !selectedNotesLocked) },
+                    ) { Text(if (selectedNotesLocked) "解锁音符" else "锁定音符") }
+                    Button(
+                        enabled = selectedVoiceId != null,
+                        onClick = { selectedVoiceId?.let { id ->
+                            host.setVoiceLock(id, id !in host.practiceNoteConstraints.lockedVoiceTrackIds)
+                        } },
+                    ) { Text(if (selectedVoiceId in host.practiceNoteConstraints.lockedVoiceTrackIds) "解锁声部" else "锁定声部") }
+                    Button(
+                        enabled = selectedStaffId != null,
+                        onClick = { selectedStaffId?.let { id ->
+                            host.setStaffLock(id, id !in host.practiceNoteConstraints.lockedStaffTrackIds)
+                        } },
+                    ) { Text(if (selectedStaffId in host.practiceNoteConstraints.lockedStaffTrackIds) "解锁谱表" else "锁定谱表") }
                     Button(onClick = {
                         val view = host.practiceNoteConstraints
                         host.setHarmonicRoleFilters(!view.chordCatalogFilterEnabled, view.idiomCatalogFilterEnabled)
@@ -588,9 +612,10 @@ internal fun PracticeEditorPanel(
                                 selection = selection,
                                 onSelectionChange = { selection = it },
                                 noteheadBackgroundGroups = host.practiceNoteConstraints.noteheads
-                                    .filter { it.inferredRole != null || it.explicitRole != null }
+                                    .filter { it.inferredRole != null || it.explicitRole != null || it.locked }
                                     .groupBy { item -> when {
                                         item.conflict -> RenderColor.rgb(220, 55, 55)
+                                        item.locked -> RenderColor.rgb(55, 115, 205)
                                         item.inferredRole == PracticeHarmonicRole.CHORD_TONE -> RenderColor.rgb(65, 170, 95)
                                         else -> RenderColor.rgb(225, 155, 45)
                                     } }

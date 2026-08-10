@@ -54,6 +54,10 @@
     { "kind": "redo", "expectedRevision": 44, "revision": 45, "effect": "REDONE", "layouts": ["0/1+1/2", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] },
     { "kind": "setHarmonicRole", "expectedRevision": 45, "revision": 46, "effect": "APPLIED", "roleCount": 1, "conflictCount": 1 },
     { "kind": "setHarmonicRoleFilters", "expectedRevision": 46, "revision": 47, "effect": "SELECTION_CHANGED", "roleCount": 1, "chordRoleFilter": true, "idiomRoleFilter": true },
-    { "kind": "undo", "expectedRevision": 47, "revision": 48, "effect": "UNDONE", "roleCount": 0 }
+    { "kind": "undo", "expectedRevision": 47, "revision": 48, "effect": "UNDONE", "roleCount": 0 },
+    { "kind": "setVoiceLock", "expectedRevision": 48, "revision": 49, "effect": "APPLIED", "lockedVoiceCount": 1, "lockedNoteCount": 1 },
+    { "kind": "insertLockedNote", "expectedRevision": 49, "revision": 50, "effect": "APPLIED", "lockedVoiceCount": 1, "lockedNoteCount": 2 },
+    { "kind": "setStaffLock", "expectedRevision": 50, "revision": 51, "effect": "APPLIED", "lockedStaffCount": 1, "lockedNoteCount": 2 },
+    { "kind": "undo", "expectedRevision": 51, "revision": 52, "effect": "UNDONE", "lockedVoiceCount": 1, "lockedStaffCount": 0, "lockedNoteCount": 2 }
   ]
 }

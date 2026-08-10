@@ -61,6 +61,52 @@ class FreePracticeSessionTest {
     }
 
     @Test
+    fun voiceLockIsDynamicAndWritingKeepsDenseMelodyEvents() {
+        val session = session()
+        fun insert(start: Fraction, pitch: Pitch): FreePracticeDispatchResult {
+            val before = session.frame()
+            return session.dispatch(FreePracticeIntent.Score(
+                before.revision,
+                ScoreEditIntent.InsertNote(
+                    before.score.revision,
+                    before.document.workspace.voices.first().id,
+                    TimeCode.of(1, start),
+                    Duration.EIGHTH,
+                    pitch,
+                ),
+            ))
+        }
+        val first = insert(Fraction.ZERO, Pitch.fromMidi(60))
+        val voiceId = first.frame.document.workspace.voices.first().id
+        session.dispatch(FreePracticeIntent.SetVoiceLock(
+            first.frame.revision,
+            voiceId,
+            true,
+        ))
+        val second = insert(Fraction(1, 8), Pitch.fromMidi(79))
+        val locked = second
+        assertEquals(setOf(voiceId), locked.frame.document.noteConstraints.lockedVoiceTrackIds)
+        assertTrue(locked.frame.noteConstraints.noteheads.filter { item ->
+            locked.frame.score.runtimeScore.voiceTracks.getValue(voiceId).events.any {
+                it.id == item.notehead.eventId
+            }
+        }.all { it.locked })
+
+        val slotId = locked.frame.document.workspace.slots.single().id
+        val requested = session.dispatch(FreePracticeIntent.RunWriting(locked.frame.revision, slotId))
+        val request = requested.requests.single()
+        val originalEvents = RuntimeScore.fromStorage(request.score).voiceTracks.getValue(voiceId).events
+            .filterNot { it.isRest }.map { it.id to it.pitches }.toList()
+        val solved = FreePracticeBackgroundExecutor.execute(request)
+        assertIs<PracticeWritingOutcome.Solved>(solved.outcome)
+        assertEquals(2, solved.candidates.single().frames.size)
+        val applied = session.applyBackgroundResult(solved)
+        val preserved = applied.frame.score.runtimeScore.voiceTracks.getValue(voiceId).events
+            .filterNot { it.isRest }.map { it.id to it.pitches }.toList()
+        assertEquals(originalEvents, preserved)
+    }
+
+    @Test
     fun nestedScoreInsertUpdatesManualAssignmentOnTheSameUndoBoundary() {
         val session = session()
         val before = session.frame()

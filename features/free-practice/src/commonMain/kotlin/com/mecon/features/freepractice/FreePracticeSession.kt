@@ -436,6 +436,9 @@ class FreePracticeSession private constructor(
                 revision++
                 result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
             }
+            is FreePracticeIntent.SetNoteheadLock -> setNoteheadLock(intent, baseRevision)
+            is FreePracticeIntent.SetVoiceLock -> setVoiceLock(intent, baseRevision)
+            is FreePracticeIntent.SetStaffLock -> setStaffLock(intent, baseRevision)
             is FreePracticeIntent.RebuildPractice -> rebuildPractice(intent, baseRevision)
             is FreePracticeIntent.Undo -> undo(baseRevision)
             is FreePracticeIntent.Redo -> redo(baseRevision)
@@ -466,10 +469,67 @@ class FreePracticeSession private constructor(
             com.mecon.exploration.PracticeHarmonicRoleMark(notehead, role)
         })
         if (next == noteConstraints) return noOp(baseRevision)
-        val current = manager.currentState
-        manager.commitNewState(current.runtimeScore, current.computedScore) {
-            noteConstraints = next
+        return commitNoteConstraints(baseRevision, next)
+    }
+
+    private fun setNoteheadLock(
+        intent: FreePracticeIntent.SetNoteheadLock,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        val valid = manager.currentState.runtimeScore.getAllVoiceEvents().flatMap { event ->
+            event.pitches.indices.map { index -> com.mecon.exploration.PracticeNoteheadRef(event.id, index) }
+        }.toSet()
+        if (intent.noteheads.isEmpty() || !valid.containsAll(intent.noteheads)) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.STALE_TARGET,
+                "freePractice.notehead.staleTarget",
+            ))
         }
+        val locks = noteConstraints.lockedNoteheads.toMutableSet().apply {
+            if (intent.locked) addAll(intent.noteheads) else removeAll(intent.noteheads)
+        }
+        return commitNoteConstraints(baseRevision, noteConstraints.copy(lockedNoteheads = locks))
+    }
+
+    private fun setVoiceLock(
+        intent: FreePracticeIntent.SetVoiceLock,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (intent.voiceTrackId !in manager.currentState.runtimeScore.voiceTracks) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.STALE_TARGET,
+                "freePractice.voice.staleTarget",
+            ))
+        }
+        val locks = noteConstraints.lockedVoiceTrackIds.toMutableSet().apply {
+            if (intent.locked) add(intent.voiceTrackId) else remove(intent.voiceTrackId)
+        }
+        return commitNoteConstraints(baseRevision, noteConstraints.copy(lockedVoiceTrackIds = locks))
+    }
+
+    private fun setStaffLock(
+        intent: FreePracticeIntent.SetStaffLock,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (intent.staffTrackId !in manager.currentState.runtimeScore.staffTracks) {
+            return result(baseRevision, FreePracticeEffect(
+                FreePracticeEffectKind.STALE_TARGET,
+                "freePractice.staff.staleTarget",
+            ))
+        }
+        val locks = noteConstraints.lockedStaffTrackIds.toMutableSet().apply {
+            if (intent.locked) add(intent.staffTrackId) else remove(intent.staffTrackId)
+        }
+        return commitNoteConstraints(baseRevision, noteConstraints.copy(lockedStaffTrackIds = locks))
+    }
+
+    private fun commitNoteConstraints(
+        baseRevision: Long,
+        next: PracticeNoteConstraintState,
+    ): FreePracticeDispatchResult {
+        if (next == noteConstraints) return noOp(baseRevision)
+        val current = manager.currentState
+        manager.commitNewState(current.runtimeScore, current.computedScore) { noteConstraints = next }
         scoreSession.notifyExternalCommit()
         cancelPending(PracticeWritingOutcome.Cancelled)
         activeTeachingCatalogRequest = null
@@ -621,6 +681,7 @@ class FreePracticeSession private constructor(
             RuntimeScore.fromStorage(request.score),
             targetWorkspace,
             primary,
+            request.document.noteConstraints,
         )
         val computed = computeScore(materialized.score)
         transaction.commit(materialized.score, computed, targetWorkspace)
@@ -1227,6 +1288,7 @@ class FreePracticeSession private constructor(
             manager.currentState.runtimeScore,
             workspace,
             candidate,
+            noteConstraints,
         )
         transaction.commit(materialized.score, computeScore(materialized.score), workspace)
         scoreSession.notifyExternalCommit()

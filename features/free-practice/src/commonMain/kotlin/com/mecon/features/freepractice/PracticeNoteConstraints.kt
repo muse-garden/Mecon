@@ -47,6 +47,8 @@ internal object PracticeNoteConstraintProjector {
             noteheads = items,
             chordCatalogFilterEnabled = chordCatalogFilterEnabled,
             idiomCatalogFilterEnabled = idiomCatalogFilterEnabled,
+            lockedVoiceTrackIds = state.lockedVoiceTrackIds,
+            lockedStaffTrackIds = state.lockedStaffTrackIds,
         )
     }
 

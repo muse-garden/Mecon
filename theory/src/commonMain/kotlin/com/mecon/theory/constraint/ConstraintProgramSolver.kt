@@ -325,9 +325,15 @@ object ConstraintProgramSolver {
                 WritingRulePreset.SCHOENBERG_GENERAL ->
                     add(FourPartTextbookWritingRuleProvider<ChordTarget>(effectiveProgram.rangeProfile))
                 WritingRulePreset.FREE_CLASSICAL ->
-                    add(FreeHarmonyRuleProvider(effectiveProgram, voices, classicalCounterpointPreferences = true))
+                    add(FreeHarmonyRuleProvider(
+                        effectiveProgram, voices, classicalCounterpointPreferences = true,
+                        voiceLeadingRelaxation = context.voiceLeadingRelaxation,
+                    ))
                 WritingRulePreset.FREE_JAZZ ->
-                    add(FreeHarmonyRuleProvider(effectiveProgram, voices, classicalCounterpointPreferences = false))
+                    add(FreeHarmonyRuleProvider(
+                        effectiveProgram, voices, classicalCounterpointPreferences = false,
+                        voiceLeadingRelaxation = context.voiceLeadingRelaxation,
+                    ))
                 WritingRulePreset.NONE -> Unit
             }
             if (effectiveProgram.writingRulePreset == WritingRulePreset.FREE_CLASSICAL ||
@@ -338,6 +344,7 @@ object ConstraintProgramSolver {
                         voicesHighToLow = voices,
                         policy = requireNotNull(feasibilityPolicy),
                         relaxBoundaryLargeLeaps = context.relaxBoundaryLargeLeaps,
+                        voiceLeadingRelaxation = context.voiceLeadingRelaxation,
                     ),
                 )
                 context.baseline?.let { add(BaselineSimilarityRuleProvider(effectiveProgram, voices, it)) }
@@ -357,6 +364,7 @@ object ConstraintProgramSolver {
             initialBoundary = initialBoundary,
             feasibilityPolicy = feasibilityPolicy,
             relaxBoundaryLargeLeaps = context.relaxBoundaryLargeLeaps,
+            voiceLeadingRelaxation = context.voiceLeadingRelaxation,
             space = FixedVoiceWritingCandidateSpace(
                 targetProvider = SlotDomainTargetProvider(effectiveProgram, voices),
                 voices = voices,
@@ -375,6 +383,7 @@ object ConstraintProgramSolver {
         val initialBoundary: FixedVoiceWritingFrame<ChordTarget>?,
         val feasibilityPolicy: SearchFeasibilityPolicy?,
         val relaxBoundaryLargeLeaps: Boolean,
+        val voiceLeadingRelaxation: VoiceLeadingRelaxationPlan,
         val space: FixedVoiceWritingCandidateSpace<ChordTarget>,
     )
 

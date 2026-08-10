@@ -36,6 +36,14 @@ test("marks a selected note and enables shared harmonic-role filters", async ({ 
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.harmonicRoles.length
   ))).toBe(1);
+  await page.getByRole("button", { name: "锁定声部", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.lockedVoiceTrackIds.length
+  ))).toBe(1);
+  await page.getByRole("button", { name: "锁定谱表", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.lockedStaffTrackIds.length
+  ))).toBe(1);
   await page.getByLabel("筛选和弦").check();
   await page.getByLabel("筛选惯用进行").check();
   await expect.poll(() => page.evaluate(() => (

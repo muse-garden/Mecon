@@ -345,6 +345,39 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         chordCatalogEnabled: true,
         idiomCatalogEnabled: true,
       });
+    } else if (step.kind === "setVoiceLock") {
+      const before = session.initialUpdate();
+      const event = Object.values(before.score.score.voiceTracks)
+        .flatMap((voice) => voice.events).find((candidate) => !candidate.isRest);
+      const voice = Object.values(before.score.score.voiceTracks)
+        .find((candidate) => candidate.events.some((item) => item.id === event.id));
+      update = session.dispatch({
+        type: "setVoiceLock", expectedRevision: step.expectedRevision,
+        voiceTrackId: voice.id, locked: true,
+      });
+    } else if (step.kind === "insertLockedNote") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "score",
+        expectedRevision: step.expectedRevision,
+        inner: {
+          type: "insertNote",
+          expectedRevision: before.score.revision,
+          voiceTrackId: before.document.noteConstraints.lockedVoiceTrackIds[0],
+          start: { measure: 1, beat: { numerator: 1, denominator: 4 } },
+          duration: { base: "QUARTER" },
+          pitch: { diatonicSteps: 8 },
+        },
+      });
+    } else if (step.kind === "setStaffLock") {
+      const before = session.initialUpdate();
+      const voiceId = before.document.noteConstraints.lockedVoiceTrackIds[0];
+      const staff = Object.values(before.score.score.staffTracks)
+        .find((candidate) => candidate.voiceTrackIds.includes(voiceId));
+      update = session.dispatch({
+        type: "setStaffLock", expectedRevision: step.expectedRevision,
+        staffTrackId: staff.id, locked: true,
+      });
     } else {
       update = session.dispatch({ type: step.kind, expectedRevision: step.expectedRevision });
     }
@@ -384,6 +417,18 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (step.idiomRoleFilter !== undefined) {
       assert.equal(update.noteConstraints.idiomCatalogFilterEnabled, step.idiomRoleFilter, step.kind);
+    }
+    if (step.lockedVoiceCount !== undefined) {
+      assert.equal(update.document.noteConstraints.lockedVoiceTrackIds.length,
+        step.lockedVoiceCount, step.kind);
+    }
+    if (step.lockedStaffCount !== undefined) {
+      assert.equal(update.document.noteConstraints.lockedStaffTrackIds.length,
+        step.lockedStaffCount, step.kind);
+    }
+    if (step.lockedNoteCount !== undefined) {
+      assert.equal(update.noteConstraints.noteheads.filter((item) => item.locked).length,
+        step.lockedNoteCount, step.kind);
     }
     if (step.scoreChanged !== undefined) {
       assert.equal(update.score.scoreChanged, step.scoreChanged, step.kind);

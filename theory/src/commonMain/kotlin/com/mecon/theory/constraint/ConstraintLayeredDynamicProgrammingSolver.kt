@@ -237,7 +237,9 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                             search.voices,
                             previousFrame,
                             frame,
-                        )
+                        ).filterNot { voice ->
+                            search.voiceLeadingRelaxation.relaxes(slotIndex, voice.id)
+                        }
                     } else {
                         emptyList()
                     }

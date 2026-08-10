@@ -662,6 +662,19 @@ class HarmonyPracticeScoreHost(
     fun setHarmonicRoleFilters(chords: Boolean, idioms: Boolean): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SetHarmonicRoleFilters(revision, chords, idioms) }
 
+    fun setNoteheadLock(
+        noteheads: Set<com.mecon.exploration.PracticeNoteheadRef>,
+        locked: Boolean,
+    ): Boolean = dispatchImmediate { revision ->
+        FreePracticeIntent.SetNoteheadLock(revision, noteheads, locked)
+    }
+
+    fun setVoiceLock(voiceTrackId: TrackId, locked: Boolean): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SetVoiceLock(revision, voiceTrackId, locked) }
+
+    fun setStaffLock(staffTrackId: TrackId, locked: Boolean): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SetStaffLock(revision, staffTrackId, locked) }
+
     fun rebuildPractice(polyphonyLimit: Int, key: ModulationKey): Boolean {
         writingGeneration.incrementAndGet()
         val result = freePracticeSession.dispatch(

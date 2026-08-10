@@ -30,6 +30,11 @@ import com.mecon.theory.constraint.FreeHarmonyRequest
 import com.mecon.theory.constraint.FreeHarmonySlotSpec
 import com.mecon.theory.constraint.FreeHarmonySolver
 import com.mecon.theory.constraint.FreeHarmonyStyle
+import com.mecon.theory.constraint.HarmonicTexturePlan
+import com.mecon.theory.constraint.HarmonicVoiceParticipation
+import com.mecon.theory.constraint.VoiceParticipationSpan
+import com.mecon.theory.constraint.VoicePitchPin
+import com.mecon.theory.constraint.VoiceLeadingRelaxationPlan
 import com.mecon.theory.constraint.ObservedConstraintFrame
 import com.mecon.theory.constraint.PolyphonicConstraintSolution
 import com.mecon.theory.constraint.VoicePitchBaseline
@@ -229,6 +234,21 @@ data class FreePracticeWindowSolveResult(
     val scope: PracticeWritingScope,
     val program: ConstraintProgram?,
     val outcome: ConstraintSolveOutcome,
+    val segments: List<PracticeWritingSegment> = emptyList(),
+)
+
+data class PracticeWritingSegment(
+    val id: HarmonySlotId,
+    val workspaceSlotId: WorkspaceSlotId,
+    val onset: Fraction,
+    val duration: Fraction,
+)
+
+data class PracticeWritingLockRules(
+    val lockedNoteheads: Set<SourceNoteheadId> = emptySet(),
+    val lockedVoiceTrackIds: Set<TrackId> = emptySet(),
+    val lockedStaffTrackIds: Set<TrackId> = emptySet(),
+    val explicitChordTones: Set<SourceNoteheadId> = emptySet(),
 )
 
 data class FreePracticeCandidateSession(
@@ -279,10 +299,21 @@ object FreePracticeSearchPolicy {
 
 private data class PreparedPracticeWindow(
     val slots: List<WorkspaceHarmonySlot>,
+    val segments: List<PracticeWritingSegment>,
     val allowedBySlot: List<List<ChordTarget>>,
     val program: ConstraintProgram,
     val projection: WorkspaceMaterialProjection,
     val boundary: FixedVoiceBoundaryFrame?,
+    val relaxationPlan: VoiceLeadingRelaxationPlan,
+)
+
+private data class LockedPracticeSpan(
+    val source: SourceNoteheadId,
+    val voiceId: TrackId,
+    val onset: Fraction,
+    val end: Fraction,
+    val pitch: Pitch,
+    val explicitlyChordTone: Boolean,
 )
 
 private sealed interface PracticeWindowPreparation {
@@ -300,6 +331,7 @@ object FreePracticeWindowVoicer {
         fallbackKey: ModulationKey,
         searchConfig: SearchConfig = SearchConfig(),
         context: ConstraintSolveContext = ConstraintSolveContext(),
+        lockRules: PracticeWritingLockRules = PracticeWritingLockRules(),
         teachingRuleProjector: PracticeTeachingRuleProjector =
             SchoenbergPracticeTeachingRuleProjector,
     ): FreePracticeWindowSolveResult {
@@ -310,6 +342,7 @@ object FreePracticeWindowVoicer {
             fallbackKey = fallbackKey,
             searchConfig = searchConfig,
             teachingRuleProjector = teachingRuleProjector,
+            lockRules = lockRules,
         )
         val prepared = when (preparation) {
             is PracticeWindowPreparation.Rejected -> return invalid(scope, preparation.message)
@@ -324,6 +357,7 @@ object FreePracticeWindowVoicer {
         val firstContext = context.copy(
             leftBoundary = prepared.boundary ?: context.leftBoundary,
             baseline = context.baseline ?: projectedBaseline,
+            voiceLeadingRelaxation = context.voiceLeadingRelaxation.merge(prepared.relaxationPlan),
         )
         val first = ConstraintProgramSolver.solvePolyphonicOutcome(prepared.program, firstContext)
         val outcome = if (shouldRelaxBoundary(first, prepared.boundary)) {
@@ -338,6 +372,7 @@ object FreePracticeWindowVoicer {
             scope,
             prepared.program,
             validateSolvedTargets(outcome, prepared.allowedBySlot),
+            prepared.segments,
         )
     }
 
@@ -421,6 +456,7 @@ object FreePracticeWindowVoicer {
         searchConfig: SearchConfig,
         teachingRuleProjector: PracticeTeachingRuleProjector,
         projection: WorkspaceMaterialProjection = FreePracticeMaterialProjector.project(workspace, score),
+        lockRules: PracticeWritingLockRules = PracticeWritingLockRules(),
     ): PracticeWindowPreparation {
         val slotsById = workspace.slots.associateBy { it.id }
         val slots = scope.slotIds.map { id ->
@@ -431,7 +467,48 @@ object FreePracticeWindowVoicer {
         if (slots.any { it.chordChoice == null }) {
             return PracticeWindowPreparation.Rejected("写作范围内存在未选择的和弦。")
         }
-        val readingsBySlot = slots.map { slot ->
+        val timeMap = ScoreTimeMap.from(score)
+        val staffLockedVoiceIds = score.staffTracks.values
+            .filter { it.id in lockRules.lockedStaffTrackIds }
+            .flatMapTo(linkedSetOf()) { staff -> staff.voiceTracks.map { it.id } }
+        val continuouslyLockedVoiceIds = lockRules.lockedVoiceTrackIds + staffLockedVoiceIds
+        val lockedSpans = score.voiceTracks.values.flatMap { voice ->
+            voice.events.toList().filterNot { it.isGrace || it.isRest }.flatMap { event ->
+                val onset = timeMap.absolute(event.onset)
+                val end = onset + event.duration.toFraction()
+                event.pitches.mapIndexedNotNull { pitchIndex, pitch ->
+                    val source = SourceNoteheadId(event.id, pitchIndex)
+                    val dynamicallyLocked = voice.id in continuouslyLockedVoiceIds
+                    if (!dynamicallyLocked && source !in lockRules.lockedNoteheads) null else LockedPracticeSpan(
+                        source, voice.id, onset, end, pitch,
+                        source in lockRules.explicitChordTones,
+                    )
+                }
+            }
+        }
+        val scopeStart = slots.first().onset
+        val scopeEnd = slots.last().onset + slots.last().duration
+        val boundaries = buildSet {
+            add(scopeStart)
+            add(scopeEnd)
+            slots.forEach { slot -> add(slot.onset); add(slot.onset + slot.duration) }
+            lockedSpans.forEach { span ->
+                if (span.onset > scopeStart && span.onset < scopeEnd) add(span.onset)
+                if (span.end > scopeStart && span.end < scopeEnd) add(span.end)
+            }
+        }.sorted()
+        val segments = boundaries.zipWithNext().mapNotNull { (onset, end) ->
+            val sourceSlot = slots.firstOrNull { onset >= it.onset && onset < it.onset + it.duration }
+                ?: return@mapNotNull null
+            PracticeWritingSegment(
+                id = HarmonySlotId("${sourceSlot.id.value}@${onset.numerator}_${onset.denominator}"),
+                workspaceSlotId = sourceSlot.id,
+                onset = onset,
+                duration = end - onset,
+            )
+        }
+        val segmentSlots = segments.map { segment -> slotsById.getValue(segment.workspaceSlotId) }
+        val readingsBySlot = segmentSlots.map { slot ->
             workspace.harmonicTonalReadings(slot).ifEmpty {
                 listOf(WorkspaceChordTonalReading.of(fallbackKey))
             }
@@ -460,14 +537,63 @@ object FreePracticeWindowVoicer {
                 )
             }.distinctBy(ChordTarget::identityKey)
         }.toMap()
-        val allowed = slots.map { targetsByWorkspaceSlot[it.id].orEmpty() }
+        val allowed = segmentSlots.map { targetsByWorkspaceSlot[it.id].orEmpty() }
         if (allowed.any { it.isEmpty() }) {
             val failed = allowed.indexOfFirst { it.isEmpty() }
             return PracticeWindowPreparation.Rejected(
-                "和弦槽 ${slots[failed].id.value} 没有可用的求解解释。",
+                "和弦槽 ${segmentSlots[failed].id.value} 没有可用的求解解释。",
             )
         }
-        val timeMap = ScoreTimeMap.from(score)
+        val pins = mutableListOf<VoicePitchPin>()
+        val participations = mutableListOf<VoiceParticipationSpan>()
+        val pinnedBySegment = mutableListOf<Map<TrackId, LockedPracticeSpan>>()
+        for ((index, segment) in segments.withIndex()) {
+            val active = lockedSpans.filter {
+                it.onset <= segment.onset && it.end >= segment.onset + segment.duration
+            }
+            val byVoice = active.groupBy { it.voiceId }
+            if (byVoice.any { (_, spans) -> spans.map { it.pitch.midiNumber }.distinct().size > 1 }) {
+                return PracticeWindowPreparation.Rejected(
+                    "A locked voice contains multiple simultaneous pitches in one writing segment",
+                )
+            }
+            val resolved = byVoice.mapValues { it.value.first() }
+            val choice = requireNotNull(segmentSlots[index].chordChoice)
+            resolved.forEach { (voiceId, span) ->
+                if (span.explicitlyChordTone && span.pitch.pitchClass.value !in choice.pitchClasses) {
+                    return PracticeWindowPreparation.Rejected(
+                        "An explicit chord-tone mark conflicts with the selected chord",
+                    )
+                }
+                pins += VoicePitchPin(index, voiceId, span.pitch)
+                if (span.pitch.pitchClass.value !in choice.pitchClasses) {
+                    participations += VoiceParticipationSpan(
+                        SlotWindow(index, index),
+                        voiceId,
+                        HarmonicVoiceParticipation.Sustained(span.pitch),
+                    )
+                }
+            }
+            pinnedBySegment += resolved
+        }
+        val bassVoiceId = workspace.voices.maxByOrNull { it.order }?.id
+        val relaxedEdges = linkedMapOf<Int, MutableSet<TrackId>>()
+        for (index in 1 until pinnedBySegment.size) {
+            val previous = pinnedBySegment[index - 1]
+            pinnedBySegment[index].forEach { (voiceId, span) ->
+                val before = previous[voiceId] ?: return@forEach
+                if (voiceId != bassVoiceId && kotlin.math.abs(
+                        span.pitch.midiNumber - before.pitch.midiNumber,
+                    ) > 12
+                ) {
+                    for (edge in (index - 1)..(index + 1)) {
+                        if (edge in 1 until segments.size) {
+                            relaxedEdges.getOrPut(edge) { linkedSetOf() } += voiceId
+                        }
+                    }
+                }
+            }
+        }
         val tonalPlan = TonalPlan(
             readingsBySlot.flatMapIndexed { index, readings ->
                 readings.map { reading ->
@@ -475,7 +601,7 @@ object FreePracticeWindowVoicer {
                 }
             },
         )
-        val teachingConstraints = teachingRuleProjector.project(
+        val teachingConstraints = if (segments.size == slots.size) teachingRuleProjector.project(
             PracticeTeachingRuleRequest(
                 workspace = workspace,
                 scope = scope,
@@ -483,15 +609,15 @@ object FreePracticeWindowVoicer {
                 fallbackKey = fallbackKey,
                 searchConfig = searchConfig,
             )
-        )
+        ) else emptyList()
         val request = FreeHarmonyRequest(
             key = readingsBySlot.first().first().key.key,
             tonalPlan = tonalPlan,
-            slotCount = slots.size,
-            slotSpecs = slots.map { slot ->
+            slotCount = segments.size,
+            slotSpecs = segments.map { segment ->
                 FreeHarmonySlotSpec(
-                    id = HarmonySlotId(slot.id.value),
-                    time = HarmonicTimeSpan(timeMap.timeCodeAt(slot.onset), slot.duration),
+                    id = segment.id,
+                    time = HarmonicTimeSpan(timeMap.timeCodeAt(segment.onset), segment.duration),
                 )
             },
             vocabulary = allTargets,
@@ -500,6 +626,8 @@ object FreePracticeWindowVoicer {
             allowedTargetIdentityKeysBySlot = allowed.mapIndexed { index, targets ->
                 index to targets.mapTo(linkedSetOf(), ChordTarget::identityKey)
             }.toMap(),
+            pitchPins = pins,
+            texturePlan = HarmonicTexturePlan(participations),
             additionalConstraints = teachingConstraints,
             searchConfig = searchConfig.copy(
                 prefixDiversity = searchConfig.prefixDiversity.copy(enabled = true),
@@ -514,10 +642,12 @@ object FreePracticeWindowVoicer {
         return PracticeWindowPreparation.Prepared(
             PreparedPracticeWindow(
                 slots = slots,
+                segments = segments,
                 allowedBySlot = allowed,
                 program = program,
                 projection = projection,
                 boundary = boundary,
+                relaxationPlan = VoiceLeadingRelaxationPlan(relaxedEdges),
             )
         )
     }

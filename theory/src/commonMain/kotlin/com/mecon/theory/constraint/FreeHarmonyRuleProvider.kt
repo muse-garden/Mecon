@@ -31,6 +31,7 @@ internal class FreeHarmonyRuleProvider(
     private val program: ConstraintProgram,
     private val voices: List<FixedVoice>,
     private val classicalCounterpointPreferences: Boolean,
+    private val voiceLeadingRelaxation: VoiceLeadingRelaxationPlan = VoiceLeadingRelaxationPlan(),
 ) : FixedVoiceWritingRuleProvider<ChordTarget> {
     private val boundaries = program.resolvedVoicePlan.voices.associate { it.id to it.boundary }
     private val tendencyCache =
@@ -111,11 +112,12 @@ internal class FreeHarmonyRuleProvider(
             )
             if (distance !in AWKWARD_MELODIC_INTERVALS) return@mapNotNull null
             val outer = boundaries[voice.id] != VoiceBoundary.INNER
+            val relaxed = voiceLeadingRelaxation.relaxes(context.currentFrame.slotIndex, voice.id)
             finding(
                 id = AWKWARD_LEAP,
                 message = "声部出现不易歌唱的变化音程或七度跳进。",
                 anchors = context.transitionAnchors(voice),
-                cost = if (outer) 38.0 else 20.0,
+                cost = (if (outer) 38.0 else 20.0) * if (relaxed) 0.15 else 1.0,
             )
         }
 
@@ -142,7 +144,10 @@ internal class FreeHarmonyRuleProvider(
                 CONSECUTIVE_LEAPS,
                 "两次同向跳进没有勾勒出大/小三和弦，旋律轮廓较难把握。",
                 listOf(first, middle, last).map { solverVoiceEventId(it.slotIndex, voice.id) },
-                if (boundaries[voice.id] == VoiceBoundary.INNER) 16.0 else 30.0,
+                (if (boundaries[voice.id] == VoiceBoundary.INNER) 16.0 else 30.0) *
+                    if (voiceLeadingRelaxation.relaxes(last.slotIndex, voice.id) ||
+                        voiceLeadingRelaxation.relaxes(middle.slotIndex, voice.id)
+                    ) 0.2 else 1.0,
             )
         }
     }

@@ -44,6 +44,7 @@ data class FreeHarmonyRequest(
     val allowedTargetIdentityKeysBySlot: Map<Int, Set<String>> = emptyMap(),
     val allowedDefinitionsBySlot: Map<Int, Set<ChordDefinitionId>> = emptyMap(),
     val pitchPins: List<VoicePitchPin> = emptyList(),
+    val texturePlan: HarmonicTexturePlan = HarmonicTexturePlan.allChordVoices(),
     val additionalConstraints: List<Constraint> = emptyList(),
     val ruleOverrides: Map<RuleId, RuleConfig> = emptyMap(),
     val searchConfig: SearchConfig = SearchConfig(),
@@ -198,6 +199,7 @@ object FreeHarmonySolver {
                 request.additionalConstraints,
             voicePlan = request.voicePlan,
             pitchPins = request.pitchPins,
+            texturePlan = request.texturePlan,
             writingRulePreset = when (request.style) {
                 FreeHarmonyStyle.CLASSICAL -> WritingRulePreset.FREE_CLASSICAL
                 FreeHarmonyStyle.JAZZ -> WritingRulePreset.FREE_JAZZ

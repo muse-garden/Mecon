@@ -333,6 +333,35 @@ class FreePracticeTraceTest {
                         idiomCatalogEnabled = true,
                     ),
                 )
+                "setVoiceLock" -> session.frame().let { before ->
+                    val eventId = before.score.runtimeScore.getAllVoiceEvents().first { !it.isRest }.id
+                    val voiceId = before.score.runtimeScore.voiceTracks.entries
+                        .first { (_, voice) -> voice.events.any { it.id == eventId } }.key
+                    session.dispatch(FreePracticeIntent.SetVoiceLock(
+                        expectedRevision!!.toLong(), voiceId, true,
+                    ))
+                }
+                "insertLockedNote" -> session.frame().let { before ->
+                    val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
+                    session.dispatch(FreePracticeIntent.Score(
+                        expectedRevision = expectedRevision!!.toLong(),
+                        inner = ScoreEditIntent.InsertNote(
+                            expectedRevision = before.score.revision,
+                            voiceTrackId = voiceId,
+                            start = TimeCode.of(1, Fraction.QUARTER),
+                            duration = Duration.QUARTER,
+                            pitch = Pitch.fromMidi(74),
+                        ),
+                    ))
+                }
+                "setStaffLock" -> session.frame().let { before ->
+                    val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
+                    val staffId = before.score.runtimeScore.staffTracks.entries
+                        .first { (_, staff) -> staff.voiceTracks.any { it.id == voiceId } }.key
+                    session.dispatch(FreePracticeIntent.SetStaffLock(
+                        expectedRevision!!.toLong(), staffId, true,
+                    ))
+                }
                 "undo" -> session.dispatch(FreePracticeIntent.Undo(expectedRevision!!.toLong()))
                 "redo" -> session.dispatch(FreePracticeIntent.Redo(expectedRevision!!.toLong()))
                 "cancelWriting" -> session.dispatch(FreePracticeIntent.CancelWriting(expectedRevision!!.toLong()))
@@ -370,6 +399,15 @@ class FreePracticeTraceTest {
             }
             step["idiomRoleFilter"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.noteConstraints.idiomCatalogFilterEnabled)
+            }
+            step["lockedVoiceCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.document.noteConstraints.lockedVoiceTrackIds.size)
+            }
+            step["lockedStaffCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.document.noteConstraints.lockedStaffTrackIds.size)
+            }
+            step["lockedNoteCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.noteConstraints.noteheads.count { it.locked })
             }
             step["scoreChanged"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.score.scoreChanged)

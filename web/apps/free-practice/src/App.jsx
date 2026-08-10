@@ -158,9 +158,10 @@ export function App() {
     .map((element) => [element.id, roleViewByRef.get(
       `${element.eventId}:${Number(element.metadata.pitchIndex)}`,
     )])
-    .filter(([, item]) => item?.inferredRole != null || item?.explicitRole != null)
+    .filter(([, item]) => item?.inferredRole != null || item?.explicitRole != null || item?.locked)
     .map(([id, item]) => [id, item.conflict ? "#dc3737"
-      : item.inferredRole === "CHORD_TONE" ? "#41aa5f" : "#e19b2d"]));
+      : item.locked ? "#3773cd"
+        : item.inferredRole === "CHORD_TONE" ? "#41aa5f" : "#e19b2d"]));
 
   function selectedPracticeNoteheads() {
     const views = practiceUpdate?.noteConstraints?.noteheads ?? [];
@@ -175,6 +176,14 @@ export function App() {
         .map((item) => item.notehead);
     });
   }
+  const selectedPracticeVoiceId = (practiceUpdate?.selection?.scoreTargets ?? [])
+    .find((target) => target.type === "event")?.voiceTrackId ?? null;
+  const selectedPracticeStaffId = Object.values(practiceUpdate?.score?.score?.staffTracks ?? {})
+    .find((staff) => staff.voiceTrackIds?.includes(selectedPracticeVoiceId))?.id ?? null;
+  const selectedPracticeNotesLocked = selectedPracticeNoteheads().length > 0
+    && selectedPracticeNoteheads().every((ref) => roleViewByRef.get(
+      `${ref.eventId}:${ref.pitchIndex}`,
+    )?.locked);
 
   useEffect(() => {
     const choices = practiceUpdate?.catalog?.chordChoices ?? [];
@@ -1131,6 +1140,22 @@ export function App() {
               <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
                 type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(),
               })}>清除标记</button>
+              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
+                type: "setNoteheadLock", noteheads: selectedPracticeNoteheads(),
+                locked: !selectedPracticeNotesLocked,
+              })}>{selectedPracticeNotesLocked ? "解锁音符" : "锁定音符"}</button>
+              <button disabled={!selectedPracticeVoiceId} onClick={() => dispatchPractice({
+                type: "setVoiceLock", voiceTrackId: selectedPracticeVoiceId,
+                locked: !(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? [])
+                  .includes(selectedPracticeVoiceId),
+              })}>{(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? []).includes(selectedPracticeVoiceId)
+                ? "解锁声部" : "锁定声部"}</button>
+              <button disabled={!selectedPracticeStaffId} onClick={() => dispatchPractice({
+                type: "setStaffLock", staffTrackId: selectedPracticeStaffId,
+                locked: !(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? [])
+                  .includes(selectedPracticeStaffId),
+              })}>{(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? []).includes(selectedPracticeStaffId)
+                ? "解锁谱表" : "锁定谱表"}</button>
               <label><input type="checkbox"
                 checked={practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false}
                 onChange={(event) => dispatchPractice({

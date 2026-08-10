@@ -30,6 +30,18 @@ data class VoicePitchBaseline(
     init { require(changeWeight >= 0.0) }
 }
 
+data class VoiceLeadingRelaxationPlan(
+    val voiceIdsByEdge: Map<Int, Set<TrackId>> = emptyMap(),
+) {
+    fun relaxes(edge: Int, voiceId: TrackId): Boolean = voiceId in voiceIdsByEdge[edge].orEmpty()
+
+    fun merge(other: VoiceLeadingRelaxationPlan): VoiceLeadingRelaxationPlan = VoiceLeadingRelaxationPlan(
+        (voiceIdsByEdge.keys + other.voiceIdsByEdge.keys).associateWith { edge ->
+            voiceIdsByEdge[edge].orEmpty() + other.voiceIdsByEdge[edge].orEmpty()
+        },
+    )
+}
+
 data class ConstraintSolveContext(
     val leftBoundary: FixedVoiceBoundaryFrame? = null,
     val baseline: VoicePitchBaseline? = null,
@@ -38,6 +50,7 @@ data class ConstraintSolveContext(
     val excludedDiversityGroupKeys: Set<String> = emptySet(),
     val cancellation: SearchCancellation = SearchCancellation.NONE,
     val relaxBoundaryLargeLeaps: Boolean = false,
+    val voiceLeadingRelaxation: VoiceLeadingRelaxationPlan = VoiceLeadingRelaxationPlan(),
 )
 
 sealed interface ConstraintSolveOutcome {
@@ -111,6 +124,7 @@ internal class WindowFeasibilityRuleProvider(
     private val voicesHighToLow: List<FixedVoice>,
     private val policy: SearchFeasibilityPolicy = SearchFeasibilityPolicy(),
     private val relaxBoundaryLargeLeaps: Boolean,
+    private val voiceLeadingRelaxation: VoiceLeadingRelaxationPlan = VoiceLeadingRelaxationPlan(),
 ) : FixedVoiceWritingRuleProvider<ChordTarget> {
     override fun checkVertical(
         context: FixedVoiceVerticalRuleContext<ChordTarget>,
@@ -129,11 +143,12 @@ internal class WindowFeasibilityRuleProvider(
     override fun checkTransition(
         context: FixedVoiceTransitionRuleContext<ChordTarget>,
     ): List<RuleFinding<EventId>> {
+        val edge = context.currentFrame.slotIndex
         val leaping = policy.simultaneousLargeLeapVoices(
             voicesHighToLow,
             context.previousFrame,
             context.currentFrame,
-        )
+        ).filterNot { voice -> voiceLeadingRelaxation.relaxes(edge, voice.id) }
         if (leaping.size <= policy.maxSimultaneousLargeLeapVoices) return emptyList()
         val boundaryTransition = context.previousFrame.slotIndex < 0
         return listOf(
