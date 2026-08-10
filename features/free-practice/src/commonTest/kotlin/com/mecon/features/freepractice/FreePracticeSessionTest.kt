@@ -168,10 +168,12 @@ class FreePracticeSessionTest {
         val replay = assertIs<PracticeEditPlayback.Excerpt>(applied.editPlayback).range
         assertEquals(insertedSlotIds.first(), replay.firstSlotId)
         assertEquals(insertedSlotIds.last(), replay.lastSlotId)
-        val cancelled = session.dispatch(FreePracticeIntent.CancelWriting(applied.frame.revision))
+        val tailSelected = session.dispatch(
+            FreePracticeIntent.SelectSlot(applied.frame.revision, insertedSlotIds.last()),
+        )
         val replaced = session.dispatch(
             FreePracticeIntent.ReplaceIdiom(
-                cancelled.frame.revision,
+                tailSelected.frame.revision,
                 instanceId,
                 "fixture.idiom",
                 "variant-b",

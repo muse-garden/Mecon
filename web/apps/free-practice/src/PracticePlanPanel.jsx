@@ -151,7 +151,7 @@ export function PracticePlanPanel({
           `${variant.suggestedKey.fifths}:${variant.suggestedKey.mode}` === targetKeyId;
       }),
     })).filter((definition) => definition.variants.length > 0);
-  }, [plan?.idiomCatalog?.generation, idiomTab, targetKeyId]);
+  }, [plan?.idiomCatalog?.definitions, idiomTab, targetKeyId]);
 
   if (!update || !plan || !strings) return <aside className="panel practice-plan-panel">
     <h2>{strings?.unloadedTitle ?? "计划"}</h2>

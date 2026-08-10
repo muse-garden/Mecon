@@ -846,3 +846,62 @@ test("teaching idiom catalog renders kernel data and dispatches stable-id insert
   await expect(page.locator(".timeline-idiom-range")).toHaveCount(0, { timeout: 30_000 });
   await expect(page.locator(".practice-idiom-list li")).toHaveCount(0);
 });
+
+test("idiom catalog follows the selected chord after navigating to a progression tail", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await expect(page.locator(".practice-revision-announcer")).toHaveText("revision 0", {
+    timeout: 30_000,
+  });
+
+  await page.getByRole("button", { name: "在末尾添加和弦" }).click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.timeline.slots.length)).toBe(2);
+  await page.getByRole("button", { name: /^V7 ·/ }).click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.writing.phase), { timeout: 60_000 }).toBe("READY");
+
+  const offKeyToggle = page.getByRole("checkbox", { name: "展示离调进行" });
+  await offKeyToggle.click();
+  await expect(offKeyToggle).toBeChecked({ timeout: 30_000 });
+  const idiomCatalog = page.getByTestId("idiom-catalog");
+  const gerToV7 = idiomCatalog.getByRole("button", { name: /^Ger\+6 – V7(?: ·|$)/ }).first();
+  await expect(gerToV7).toBeEnabled({ timeout: 60_000 });
+  await gerToV7.click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.document.workspace.idiomInstances.length), { timeout: 30_000 }).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.writing.phase), { timeout: 60_000 }).toBe("READY");
+
+  await page.getByRole("button", { name: "末尾和弦" }).click();
+  await expect.poll(() => page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    return update.selection.slotId === update.timeline.slots.at(-1)?.id;
+  })).toBe(true);
+
+  // Selecting another chord reprojects definitions without necessarily changing the background
+  // catalog generation. The rendered memo must follow those authoritative definitions.
+  await expect.poll(() => page.evaluate(() => {
+    const plan = window.__MECON_E2E__.snapshot().practiceUpdate.plan;
+    const expected = plan.idiomCatalog.definitions.flatMap((definition) => definition.variants
+      .filter((variant) => variant.relatedToFocus)
+      .map((variant) => variant.displayLabel));
+    const rendered = [...document.querySelectorAll('[data-testid="idiom-catalog"] button')]
+      .map((button) => button.textContent);
+    return {
+      loading: plan.idiomCatalog.loading,
+      hasCandidates: expected.length > 0,
+      matchesProjection: JSON.stringify(rendered) === JSON.stringify(expected),
+    };
+  }), { timeout: 60_000 }).toEqual({
+    loading: false,
+    hasCandidates: true,
+    matchesProjection: true,
+  });
+
+  const continuation = idiomCatalog.getByRole("button", { name: /^V7 – I(?: ·|$)/ }).first();
+  await expect(continuation).toBeEnabled();
+  await continuation.click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.document.workspace.idiomInstances.length), { timeout: 30_000 }).toBe(2);
+});

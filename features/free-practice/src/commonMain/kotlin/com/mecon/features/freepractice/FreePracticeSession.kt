@@ -288,6 +288,13 @@ class FreePracticeSession private constructor(
                 ),
             )
         }
+        // Candidate optimization is speculative: once the primary writing result is visible the
+        // workbench is READY and user input must win. Drop the optional request before handling
+        // any new intent so a selection revision cannot leave an obsolete request permanently
+        // blocking a later idiom insert or replacement.
+        if (activeRequest?.kind == PracticeBackgroundRequestKind.OPTIMIZE_CANDIDATES) {
+            activeRequest = null
+        }
         val baseRevision = revision
         return when (intent) {
             is FreePracticeIntent.Score -> dispatchScore(intent, baseRevision)
