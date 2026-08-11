@@ -77,6 +77,11 @@ fail closed。
 则保留完整解释身份。`DpStateKey` 不保存完整路径，只保存最近音高投影、极值、谓词自动机和复合
 真值向量；完整路径仅留在 label 中用于规则执行与结果恢复，不参与等价性比较。
 
+⚠️ 例外：目前有几个 `DpConstraintHistorySignature` 实为随前缀增长的累加器而非有限自动机
+（`RootProgressionPreference` 的 `applicableDegrees` 就是完整音级前缀），极值摘要的 `occurrences`
+也未按 `maxOccurrences` 饱和。逐项与影响见
+[dp-slot-scaling-review.md](dp-slot-scaling-review.md) §6。
+
 ## 3. 当前覆盖的规则
 
 ### 3.1 自由写作 provider
@@ -324,9 +329,14 @@ state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`—�
 | DFS | 8,192 节点预算耗尽，无完整结果 | 0.76 s |
 | BOUNDED DP | 2 个结果，最佳 313.65 | 1.32 s |
 
-继续探边界时，13 槽/3 结果约 25 s，17 槽配置超过 3 分钟后人工终止。结论是：DP 已适合自由练习的
-中等窗口，并比同配置 DFS 更能跨过长前缀；当前仍不适合把整首长篇一次性送入求解器。产品接入应
-保持滑动窗口/分段写作和后台取消，不应通过继续增大节点或前沿预算掩盖指数增长。
+槽位继续增加时耗时明显上升（同形态 13 槽/3 结果 6.3 s、19 槽 16.8 s、25 槽 24.4 s），但**这不是
+搜索规模或状态设计造成的**：逐层生成标签数、状态数与保留标签数不随槽位变化，转移数只线性增长，
+关闭多样化后同样的 25 槽 27.9k 条转移只需 0.73 s。超线性部分全部来自多样化标签选择在前沿裁剪里
+被反复调用（一次 13 槽求解 265 次裁剪、606 万次 `prefixSimilarity`）。完整测量、状态分量归因与
+改进顺序见 [dp-slot-scaling-review.md](dp-slot-scaling-review.md)。
+
+因此产品接入仍应保持滑动窗口/分段写作和后台取消，但理由是多样化选择的实现成本尚未优化；该项
+修好之后长窗口上限可以显著抬高，不应先靠增大节点或前沿预算掩盖。
 
 ## 10. 后续路线
 
@@ -345,4 +355,8 @@ state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`—�
    requirements 已完成（§1.1 / §3.1.1 / §3.2）；
 7. 在开放域与**勋伯格形态**上扫 §9 的 (分值, 耗时) 曲线，并复核中间层合并率，再评估是否开启
    `AUTO`。勋伯格形态尤其需要：本轮实测其 BOUNDED 首解分值明显劣于 DFS（出边宽度被
-   `maxResults=1` 压到 8），只有 EXACT 才稳定优于 DFS——这与第 1 项的解耦是同一件事。
+   `maxResults=1` 压到 8），只有 EXACT 才稳定优于 DFS——这与第 1 项的解耦是同一件事；
+8. 多样化路径的性能与状态合并率整改，见
+   [dp-slot-scaling-review.md](dp-slot-scaling-review.md) §7：相似度增量维护、前沿裁剪不做多样化、
+   `prefixSimilarity` 走 MIDI 签名、极值摘要 `occurrences` 饱和、history 签名常量化、
+   终层 BnB 下界覆盖多样化路径、基准配置入库。

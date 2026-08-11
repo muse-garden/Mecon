@@ -49,7 +49,7 @@
 | 规则适用场景模型 🚧 | [theory/rule-scenes.md](theory/rule-scenes.md) |
 | 约束程序 DSL 🚧 | [theory/constraint-program.md](theory/constraint-program.md) |
 | 约束程序多样化搜索 🚧 | [theory/diverse-search.md](theory/diverse-search.md) |
-| 分层动态规划求解器（自由写作优先）🚧 | [theory/dynamic-programming-solver.md](theory/dynamic-programming-solver.md) |
+| 分层动态规划求解器（自由写作优先）🚧 | [theory/dynamic-programming-solver.md](theory/dynamic-programming-solver.md) · [槽位扩展性评审](theory/dp-slot-scaling-review.md) |
 | 勋伯格和声学练习接入 🚧 | [theory/schoenberg/schoenberg-harmony.md](theory/schoenberg/schoenberg-harmony.md) · [根音与和弦选择规则接入](theory/schoenberg/root-chord-selection-rules.md) |
 | 和弦外音与装饰化层 🚧 | [theory/figuration.md](theory/figuration.md) |
 | 乐理求解器后续工作（优先级 roadmap） | [theory/roadmap.md](theory/roadmap.md) |
@@ -136,6 +136,7 @@ docs/
 │   ├── constraint-program.md  🚧 约束程序 DSL / LinePattern / refine
 │   ├── diverse-search.md    🚧 首解贪心 DFS / 多样化重启 / 距离门槛
 │   ├── dynamic-programming-solver.md  🚧 分层 DP / 自由写作首期 / 勋伯格迁移
+│   ├── dp-slot-scaling-review.md  🚧 槽位扩展性测量 / 状态合并率 / 改进顺序
 │   ├── figuration.md       🚧 和弦外音与装饰化层 / 拍位语义 / 还原管线
 │   ├── four-part/
 │   │   └── README.md       四部和声固定声部基础
