@@ -50,7 +50,7 @@ React 不直接修改 `StorageScore`/workspace，也不运行完整 compute、so
 ```text
 projects/
 ├── mecon-components/
-└── music-theory-frontend/
+└── Mecon/
 ```
 
 首次安装：

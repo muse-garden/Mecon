@@ -53,10 +53,13 @@ Mecon 正在积极开发中：打谱与部分乐理学习功能已经可以试�
 想现在就试用，需要先准备好 JDK 17+ 与 Gradle（暂未提供打包好的安装程序）：
 
 ```bash
-git clone <本仓库地址>
-cd music-theory-frontend
+git clone https://github.com/muse-garden/Mecon.git
+git clone https://github.com/muse-garden/mecon-components.git
+cd Mecon
 ./gradlew :apps:desktop:run       # Windows 用户: .\gradlew.bat :apps:desktop:run
 ```
+
+请注意，Mecon 依赖于 `mecon-components` 仓库，两者都需要克隆。
 
 完整的构建、测试与依赖仓库配置说明见 [docs/development.md](docs/development.md)。
 
