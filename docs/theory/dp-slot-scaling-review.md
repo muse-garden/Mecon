@@ -176,10 +176,13 @@ while (selected.size < limit && remaining.isNotEmpty()) {
 
 ## 7. 建议（按性价比排序）
 
-1. **相似度增量维护**（预计 10–30× 收益，改动最小）：`selectDiverseLabels` 为每个候选维护一个
-   `maxSimilarityToSelected` 数组，每选中一个标签只对剩余候选 O(n) 更新一次，并把选择键**先算好再
-   排序**（decorate-sort-undecorate），避免 `compareBy` 在比较器内重算。相似度调用从 `n × limit²`
-   降到 `n × limit`。
+1. ~~**相似度增量维护**~~ ✅ 2026-08-11：`selectDiverseLabels` 为每个候选维护
+   `maxSimilarity` 数组，每选中一个标签只对剩余候选 O(n) 更新一次，选择改为单趟线性扫描
+   （`isBetterDiverseCandidate` 与原比较器逐分量等价），不再让 `compareBy` 对每次比较的两个
+   操作数各重算一次 selector。相似度调用从 `n × limit²` 降到 `n × limit`。
+   本机同配置：11 槽 / 2 结果 `1.32 s → 0.44 s`；§4 的 9 / 13 / 19 槽从 `2.61 / 6.26 / 16.84 s`
+   降到 `0.81 / 0.85 / 1.94 s`（其中也含第 2 点“和弦选择规则不再计分”的贡献）。
+   曲线已固化为 `ConstraintLayeredDpSlotScalingBenchmarkTest`（第 7 项）。
 2. **前沿裁剪不做多样化**：内层循环里的 `retainBestStateGroups` 是内存保护，按 comparator 顺序裁剪
    即可；多样化选择只在层末做一次。同时把触发阈值改为摊还式（裁到 `limit` 后阈值仍为 `2 × limit`
    会立刻再次触发，应裁到更低水位或改用定容堆）。
@@ -195,8 +198,10 @@ while (selected.size < limit && remaining.isNotEmpty()) {
    > 里（见 [free-harmony-solver.md](free-harmony-solver.md) §4.0）。勋伯格章节自己的开放域
    > program 仍以 `Prefer` 使用它们——求解器一旦真正接手和弦选择，本条仍需按表格落实。
 6. **把终层 BnB 的下界扩展到多样化路径**，或至少在 trace 里显式报告「下界已关闭」。
-7. **基准配置入库**：把本文的 (槽位, maxResults, 多样化开关) 曲线固化成一个可选运行的基准测试，
-   耗时只打印、转移数与逐层状态数做断言，避免再出现无法复现的历史数字。
+7. ~~**基准配置入库**~~ ✅ 2026-08-11：`ConstraintLayeredDpSlotScalingBenchmarkTest` 固化了
+   9 / 13 / 19 槽 × 3 结果的配置，断言**逐层规模的前缀不变性**（同一前缀的层，其
+   candidate / generated / distinct / retained 四元组不随总槽数变化）与每层保留标签数不超过
+   前沿上限，耗时只打印。
 
 ## 8. 与现有文档的出入
 

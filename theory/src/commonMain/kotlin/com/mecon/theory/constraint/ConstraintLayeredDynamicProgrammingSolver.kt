@@ -610,20 +610,72 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
         remaining.removeAll(lineageRepresentatives.toSet())
         if (selected.isEmpty() && remaining.isNotEmpty()) selected += remaining.removeAt(0)
         val similarityWeight = if (config.enabled) config.similarityWeight else DEFAULT_DP_PREFIX_SIMILARITY_WEIGHT
-        while (selected.size < limit && remaining.isNotEmpty()) {
-            val pool = remaining.filter { it.score.total <= qualityCeiling }.ifEmpty { remaining }
-            val next = pool.minWith(
-                compareBy<DpLabel> { candidate ->
-                    val similarity = selected.maxOf { chosen ->
-                        search.space.prefixSimilarity(candidate.state, chosen.state)
-                    }
-                    candidate.score.total + similarity * similarityWeight
-                }.thenBy { it.score.total }.thenBy { it.diversityKey(search.space) }
-            )
+
+        // 每个候选到已选集合的最大相似度按“新选中一个就更新一次”增量维护：整轮的相似度调用
+        // 从 O(n × limit²)（比较器对每次比较的两个操作数各重算一次）降到 O(n × limit)。
+        val pool = ArrayList(remaining)
+        val maxSimilarity = DoubleArray(pool.size) { index ->
+            selected.maxOf { chosen -> search.space.prefixSimilarity(pool[index].state, chosen.state) }
+        }
+        val taken = BooleanArray(pool.size)
+        var remainingCount = pool.size
+        while (selected.size < limit && remainingCount > 0) {
+            var bestIndex = -1
+            var bestWithinCeiling = false
+            for (index in pool.indices) {
+                if (taken[index]) continue
+                val candidate = pool[index]
+                val withinCeiling = candidate.score.total <= qualityCeiling
+                if (bestIndex >= 0) {
+                    // 天花板内的候选整体优先；只有全都超出天花板时才回退到全体比较。
+                    if (bestWithinCeiling && !withinCeiling) continue
+                    if (!(withinCeiling && !bestWithinCeiling) &&
+                        !isBetterDiverseCandidate(
+                            candidate = candidate,
+                            candidateSimilarity = maxSimilarity[index],
+                            incumbent = pool[bestIndex],
+                            incumbentSimilarity = maxSimilarity[bestIndex],
+                            similarityWeight = similarityWeight,
+                            space = search.space,
+                        )
+                    ) continue
+                }
+                bestIndex = index
+                bestWithinCeiling = withinCeiling
+            }
+            if (bestIndex < 0) break
+            val next = pool[bestIndex]
+            taken[bestIndex] = true
+            remainingCount--
             selected += next
-            remaining.remove(next)
+            for (index in pool.indices) {
+                if (taken[index]) continue
+                val similarity = search.space.prefixSimilarity(pool[index].state, next.state)
+                if (similarity > maxSimilarity[index]) maxSimilarity[index] = similarity
+            }
         }
         return selected
+    }
+
+    /**
+     * 与原比较器逐分量等价：`(分数 + 相似度 × 权重, 分数, diversityKey)`。并列时保留先出现者，
+     * 与 `minWith` 的语义一致。
+     */
+    private fun isBetterDiverseCandidate(
+        candidate: DpLabel,
+        candidateSimilarity: Double,
+        incumbent: DpLabel,
+        incumbentSimilarity: Double,
+        similarityWeight: Double,
+        space: FixedVoiceWritingCandidateSpace<ChordTarget>,
+    ): Boolean {
+        val candidateCost = candidate.score.total + candidateSimilarity * similarityWeight
+        val incumbentCost = incumbent.score.total + incumbentSimilarity * similarityWeight
+        if (candidateCost != incumbentCost) return candidateCost < incumbentCost
+        if (candidate.score.total != incumbent.score.total) {
+            return candidate.score.total < incumbent.score.total
+        }
+        return candidate.diversityKey(space) < incumbent.diversityKey(space)
     }
 
     private fun seededTieBreak(value: String, seed: Long): Long {
