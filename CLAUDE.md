@@ -166,6 +166,20 @@ Web 构建运行见 [docs/web-development.md](docs/web-development.md)。以下�
    - 测试必须证明：非法符号进行在两侧都被拒绝；同一合法进行的 enumerate 和求解器和声分完全相等；
      大 / 小调、同根音不同转位、三 / 七和弦均覆盖。
 
+5. **章节规则 id 必须落在 descriptor 的 `ownedRulePrefixes` 之内**：`SchoenbergChapterRegistry.chapterFor`
+   是自由练习教学投影（`SchoenbergPracticeTeachingRuleProjector` 只投影归属某章节的约束）和禁忌进行
+   消融诊断（`withoutChapters`）共用的准入闸门，匹配规则是 `ruleId == prefix || ruleId.startsWith("$prefix.")`。
+   - `SchoenbergExerciseDescriptor.ownedRulePrefixes` 默认只有练习自己的 `ruleId` 全名。**只要章节规则
+     用了别的命名空间，就必须显式声明前缀**——否则整批规则既进不了自由练习、也无法被消融，且
+     两处都是静默失败，没有任何报错。
+   - 复合练习名尤其危险：`schoenberg.root-motion-and-repetition` 覆盖不到
+     `schoenberg.root-motion.*` / `schoenberg.repetition.*`，`…preparation-resolution` 覆盖不到
+     `…preparation` / `…resolution`（2026-08-11 一次性修复五组）。宁可让 descriptor 声明
+     `setOf("schoenberg.leading-triad")` 这样的短前缀，也不要指望练习名恰好是规则名的前缀。
+   - 新增或重命名章节规则后运行 `SchoenbergChapterRuleOwnershipTest`：它编译每个注册练习的 program，
+     断言其中所有 `schoenberg.*` 规则都能映射到章节。有意不归章节的一般四部写作规则
+     （`schoenberg.four-part.*`）在该测试里显式豁免，新增豁免必须写明理由。
+
 ## 编码规范
 
 **命名**：
@@ -177,6 +191,7 @@ Web 构建运行见 [docs/web-development.md](docs/web-development.md)。以下�
 | 常量 | UPPER_SNAKE | `MAX_VOICES` |
 | 包名 | lowercase | `com.mecon.theory` |
 | Compose UI | PascalCase | `@Composable fun ChordPanel()` |
+| 勋伯格章节 RuleId | `schoenberg.<章节命名空间>.<规则>` | `schoenberg.root-motion.rising`；命名空间须被 descriptor 的 `ownedRulePrefixes` 覆盖，见上方勋伯格第 5 条 |
 
 **提交**（Conventional Commits）：
 
