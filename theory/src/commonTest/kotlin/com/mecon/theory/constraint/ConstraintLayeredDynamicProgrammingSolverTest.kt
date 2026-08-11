@@ -5,6 +5,8 @@ import com.mecon.api.primitive.PitchClass
 import com.mecon.api.primitive.TrackId
 import com.mecon.theory.DynamicProgrammingSearchConfig
 import com.mecon.theory.DynamicProgrammingSearchMode
+import com.mecon.theory.DiversitySearchConfig
+import com.mecon.theory.PrefixDiversitySearchConfig
 import com.mecon.theory.ChordArity
 import com.mecon.theory.Key
 import com.mecon.theory.SearchBackend
@@ -12,6 +14,7 @@ import com.mecon.theory.SearchConfig
 import com.mecon.theory.RuleConfig
 import com.mecon.theory.RuleId
 import com.mecon.theory.RuleSeverity
+import com.mecon.theory.RuleSuppression
 import com.mecon.theory.SpelledPitchClass
 import com.mecon.theory.TonalContext
 import com.mecon.theory.TonalPlan
@@ -219,11 +222,30 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
     }
 
     @Test
-    fun fixedTargetRulesDoNotPolluteVoiceStateAndUnknownVoiceSummaryRejectsDp() {
+    fun profileSuppressionsFailClosedInsteadOfMergingRetractableCosts() {
+        val base = freeProgram(slotCount = 2)
+        val program = base.copy(
+            ruleProfile = base.ruleProfile.copy(
+                suppressions = listOf(
+                    RuleSuppression(
+                        dominantRuleId = RuleId("free.voice-leading.parallel-fifth"),
+                        suppressedRuleId = FreeHarmonyRuleProvider.CONSECUTIVE_LEAPS,
+                    )
+                ),
+            ),
+        )
+
+        val capability = LayeredDpCapability.analyze(program)
+        assertTrue(!capability.supported)
+        assertTrue(capability.reason.orEmpty().contains("suppressions"))
+    }
+
+    @Test
+    fun targetHistoryRulesCompileAutomataAndUnknownVoiceSummaryRejectsDp() {
         val base = freeProgram(slotCount = 3)
         val plan = requireNotNull(LayeredDpCapability.analyze(base).statePlan)
         assertTrue(plan.coveredRuleIds.any { it.value == "free.harmony.similar-chord-distance" })
-        assertTrue(plan.layers.none { layer ->
+        assertTrue(plan.layers.dropLast(1).all { layer ->
             layer.bindings.any { it.ruleId.value == "free.harmony.similar-chord-distance" }
         })
 
@@ -243,12 +265,8 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
         assertTrue(capability.reason.orEmpty().contains("VoicePitchClassCardinality"))
     }
 
-    /**
-     * 逐槽固定目标对所有 preset 生效；自然三和弦只是 FREE_* 的额外条件——它是
-     * `ROOTLESS_DIMINISHED_*` / `DISSONANCE_RELEASE` 无状态声明的代理条件。
-     */
     @Test
-    fun statePlannerRejectsOpenDomainsAlwaysAndNonNaturalTriadsUnderFreePresets() {
+    fun statePlannerAcceptsOpenDomainsAndTargetSensitiveSevenths() {
         val base = freeProgram(slotCount = 2)
         assertEquals(WritingRulePreset.FREE_CLASSICAL, base.writingRulePreset)
         val openDomains = listOf(
@@ -259,21 +277,150 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
             slotDomains = openDomains,
             slots = defaultConstraintSlots(openDomains),
         )
-        assertTrue(LayeredDpCapability.analyze(open).reason.orEmpty().contains("not a fixed chord target"))
+        assertTrue(LayeredDpCapability.analyze(open).supported, LayeredDpCapability.analyze(open).reason)
 
         val seventhDomains = List(2) { SlotDomain(listOf(seventhTonic)) }
         val seventh = base.copy(
             slotDomains = seventhDomains,
             slots = defaultConstraintSlots(seventhDomains),
         )
-        assertTrue(LayeredDpCapability.analyze(seventh).reason.orEmpty().contains("not a natural triad"))
+        assertTrue(LayeredDpCapability.analyze(seventh).supported, LayeredDpCapability.analyze(seventh).reason)
 
-        // 同一个七和弦程序换到勋伯格一般写作规则下就被接受：那一面的规则与和弦类型无关。
+        // 同一个七和弦程序换到勋伯格一般写作规则下也继续被接受。
         val schoenberg = seventh.copy(writingRulePreset = WritingRulePreset.SCHOENBERG_GENERAL)
         assertTrue(
             LayeredDpCapability.analyze(schoenberg).supported,
             "诊断：${LayeredDpCapability.analyze(schoenberg).reason}",
         )
+    }
+
+    @Test
+    fun exactOpenTargetKeepsEqualPitchesWithDifferentInterpretationsDistinct() {
+        val aliasA = AliasChordTarget(tonic, "alias-a")
+        val aliasZ = AliasChordTarget(tonic, "alias-z")
+        val domains = listOf(
+            SlotDomain(listOf(aliasA, aliasZ)),
+            SlotDomain(listOf(tonic)),
+        )
+        val rewardRule = RuleId("test.dp.target-identity-reward")
+        val program = freeProgram(slotCount = 2)
+            .copy(
+                slotDomains = domains,
+                slots = defaultConstraintSlots(domains),
+                constraints = listOf(
+                    Constraint(
+                        expr = ConstraintExpr.Atom(
+                            ConstraintPredicate.TargetMatches(
+                                TargetFeatureBonusRequirement(
+                                    window = SlotWindow(0, 0),
+                                    selector = TargetSelector(identityKeys = setOf("alias-z")),
+                                    ruleId = rewardRule,
+                                    message = "保留语义上更优的同音解释。",
+                                    bonus = 100.0,
+                                )
+                            )
+                        ),
+                        modality = ConstraintModality.Reward(100.0),
+                        ruleId = rewardRule,
+                    )
+                ),
+                writingRulePreset = WritingRulePreset.NONE,
+                searchConfig = SearchConfig(
+                    maxResults = 1,
+                    beamWidth = 32,
+                    backend = SearchBackend.LAYERED_DP,
+                    dynamicProgramming = DynamicProgrammingSearchConfig(
+                        mode = DynamicProgrammingSearchMode.EXACT,
+                        maxLabelsPerState = 1,
+                    ),
+                ),
+            )
+
+        val solved = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(program),
+        )
+        assertEquals("alias-z", solved.solutions.single().voicings.first().target.identityKey())
+        assertTrue(solved.solutions.single().breakdown.findings.any { it.ruleId == rewardRule })
+    }
+
+    @Test
+    fun boundedDpHonorsFreePracticePairwiseDiversityGates() {
+        val program = freeProgram(
+            slotCount = 4,
+            requestedVoicePlan = VoicePlan.standardFourPart(),
+        ).withoutTerminalGlobalRules().copy(
+            searchConfig = SearchConfig(
+                maxResults = 4,
+                beamWidth = 32,
+                backend = SearchBackend.LAYERED_DP,
+                prefixDiversity = PrefixDiversitySearchConfig(enabled = true, frontierWidth = 32),
+                diversity = DiversitySearchConfig(
+                    enabled = true,
+                    seed = 17L,
+                    minChangedSlotRatio = 0.35,
+                    minChangedVoiceCellRatio = 0.20,
+                ),
+                dynamicProgramming = DynamicProgrammingSearchConfig(
+                    maxCandidatesPerTarget = 128,
+                    maxLabelsPerState = 16,
+                    maxFrontierStates = 512,
+                ),
+            ),
+        )
+
+        val solved = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(program),
+        )
+        assertEquals(4, solved.solutions.size)
+        val voiceIds = program.resolvedVoicePlan.voices.map { it.id }
+        solved.solutions.indices.forEach { leftIndex ->
+            (leftIndex + 1 until solved.solutions.size).forEach { rightIndex ->
+                val left = solved.solutions[leftIndex].voicings
+                val right = solved.solutions[rightIndex].voicings
+                val changedSlots = left.indices.count { slot ->
+                    voiceIds.any { voiceId ->
+                        left[slot].pitchesByVoiceId.getValue(voiceId).pitchClass !=
+                            right[slot].pitchesByVoiceId.getValue(voiceId).pitchClass
+                    }
+                }
+                val changedCells = left.indices.sumOf { slot ->
+                    voiceIds.count { voiceId ->
+                        left[slot].pitchesByVoiceId.getValue(voiceId).pitchClass !=
+                            right[slot].pitchesByVoiceId.getValue(voiceId).pitchClass
+                    }
+                }
+                assertTrue(changedSlots.toDouble() / left.size >= 0.35)
+                assertTrue(changedCells.toDouble() / (left.size * voiceIds.size) >= 0.20)
+            }
+        }
+    }
+
+    @Test
+    fun excludedBestGroupDoesNotConsumeTheOnlyTerminalResultSlot() {
+        val program = freeProgram(
+            slotCount = 2,
+            requestedVoicePlan = VoicePlan.standardFourPart(),
+        ).withoutTerminalGlobalRules().copy(
+            searchConfig = SearchConfig(
+                maxResults = 1,
+                beamWidth = 24,
+                backend = SearchBackend.LAYERED_DP,
+                dynamicProgramming = DynamicProgrammingSearchConfig(maxLabelsPerState = 4),
+            ),
+        )
+        val first = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(program),
+        ).solutions.single()
+        val second = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(
+                program,
+                context = ConstraintSolveContext(
+                    excludedDiversityGroupKeys = setOf(first.diversityGroupKey),
+                ),
+            ),
+        ).solutions.single()
+
+        assertTrue(first.diversityGroupKey != second.diversityGroupKey)
     }
 
     @Test
@@ -574,6 +721,14 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
             )
         }
     )
+
+    private data class AliasChordTarget(
+        val delegate: ChordTarget,
+        val alias: String,
+    ) : ChordTarget by delegate {
+        override fun identityKey(): String = alias
+        override fun interpretationIdentityKey(): String = alias
+    }
 
     private fun voice(
         id: String,

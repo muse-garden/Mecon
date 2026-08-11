@@ -10,25 +10,13 @@ import kotlin.test.assertEquals
  * 新增 RuleId 而忘记声明会让 DP 的等价性建立在没被审计过的规则上——那时这条测试变红。
  */
 class LayeredDpStateDeclarationCompletenessTest {
-    /**
-     * 只允许自由写作 provider 的三条规则缺席，因为 FREE_* 的 DP 能力集被自然三和弦审计限定，
-     * 而这三条只可能在减七和弦（`ROOTLESS_DIMINISHED_*`）或带张力音角色的和弦
-     * （`DISSONANCE_RELEASE`）上发射，在该子集内不可达。放宽自然三和弦审计前必须先声明它们。
-     */
-    private val knownUnreachableInFreeNaturalTriadSubset: Set<RuleId> = setOf(
-        FreeHarmonyRuleProvider.ROOTLESS_DIMINISHED_ROOT,
-        FreeHarmonyRuleProvider.ROOTLESS_DIMINISHED_ALTERED_STEP,
-        FreeHarmonyRuleProvider.DISSONANCE_RELEASE,
-    )
-
     private fun declared(declarations: List<LayeredDpRuleStateDeclaration>): Set<RuleId> =
         declarations.mapTo(mutableSetOf()) { it.ruleId }
 
     @Test
     fun freeClassicalDeclaresEveryReachableProviderRule() {
         val undeclared = FreeHarmonyRuleProvider.ALL_RULE_IDS -
-            declared(FreeHarmonyRuleProvider.naturalTriadDpStateDeclarations(classical = true)) -
-            knownUnreachableInFreeNaturalTriadSubset
+            declared(FreeHarmonyRuleProvider.dpStateDeclarations(classical = true))
         assertEquals(emptySet(), undeclared, "自由古典 provider 有规则缺少 DP 状态声明")
     }
 
@@ -39,10 +27,12 @@ class LayeredDpStateDeclarationCompletenessTest {
             FreeHarmonyRuleProvider.PARALLEL_PERFECT,
             FreeHarmonyRuleProvider.HIDDEN_PERFECT,
             FreeHarmonyRuleProvider.TENDENCY_TONE,
+            FreeHarmonyRuleProvider.ROOTLESS_DIMINISHED_ROOT,
+            FreeHarmonyRuleProvider.ROOTLESS_DIMINISHED_ALTERED_STEP,
+            FreeHarmonyRuleProvider.DISSONANCE_RELEASE,
         )
         val undeclared = FreeHarmonyRuleProvider.ALL_RULE_IDS -
-            declared(FreeHarmonyRuleProvider.naturalTriadDpStateDeclarations(classical = false)) -
-            knownUnreachableInFreeNaturalTriadSubset -
+            declared(FreeHarmonyRuleProvider.dpStateDeclarations(classical = false)) -
             classicalOnly
         assertEquals(emptySet(), undeclared, "自由爵士 provider 有规则缺少 DP 状态声明")
     }

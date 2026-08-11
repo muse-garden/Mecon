@@ -3,9 +3,11 @@ package com.mecon.theory.constraint
 import com.mecon.api.primitive.NoteName
 import com.mecon.api.primitive.PitchClass
 import com.mecon.theory.DynamicProgrammingSearchConfig
+import com.mecon.theory.DiversitySearchConfig
 import com.mecon.theory.Key
 import com.mecon.theory.SearchBackend
 import com.mecon.theory.SearchConfig
+import com.mecon.theory.PrefixDiversitySearchConfig
 import com.mecon.theory.SlotWindow
 import com.mecon.theory.SpelledPitchClass
 import com.mecon.theory.TonalContext
@@ -84,6 +86,52 @@ class ConstraintDpVersusDfsQualityBenchmarkTest {
         )
     }
 
+    @Test
+    fun longerOpenProgressionUsesDpForDiverseFreeWriting() {
+        val slots = canon + listOf(5, 1)
+        val common = SearchConfig(
+            maxResults = 2,
+            beamWidth = 12,
+            prefixDiversity = PrefixDiversitySearchConfig(enabled = true, frontierWidth = 12),
+            diversity = DiversitySearchConfig(
+                enabled = true,
+                minChangedSlotRatio = 0.25,
+                minChangedVoiceCellRatio = 0.10,
+            ),
+        )
+        val dfsProgram = buildOpenProgram(slots, common.copy(backend = SearchBackend.GREEDY_DFS))
+        val dpProgram = buildOpenProgram(
+            slots,
+            common.copy(
+                backend = SearchBackend.LAYERED_DP,
+                dynamicProgramming = DynamicProgrammingSearchConfig(
+                    maxCandidatesPerTarget = 48,
+                    maxLabelsPerState = 2,
+                    maxFrontierStates = 32,
+                    maxTransitionEvaluations = 100_000,
+                ),
+            ),
+        )
+
+        // One untimed DP pass removes first-use/JIT noise; elapsed time remains diagnostic only.
+        solve(dpProgram, "long DP")
+        val dfs = measureTimedValue {
+            ConstraintProgramSolver.solvePolyphonicOutcome(dfsProgram, maxTraceEntries = 0)
+        }
+        val dp = measureTimedValue { solve(dpProgram, "long DP") }
+
+        println(
+            "== 11-slot open free writing ==\n" +
+                "  DFS outcome=${dfs.value::class.simpleName} time=${dfs.duration}\n" +
+                "  DP  best=${dp.value.first} count=${dp.value.second} time=${dp.duration}"
+        )
+        assertIs<ConstraintSolveOutcome.BudgetExhausted>(
+            dfs.value,
+            "the long diverse DFS baseline should expose its node-budget limit",
+        )
+        assertTrue(dp.value.second >= 2, "diverse DP should retain multiple long-form results")
+    }
+
     private data class Config(val name: String, val program: ConstraintProgram)
 
     private data class Result(val best: Double, val count: Int, val time: Duration)
@@ -109,10 +157,12 @@ class ConstraintDpVersusDfsQualityBenchmarkTest {
         }
     }
 
-    private fun solve(program: ConstraintProgram): Pair<Double, Int> {
-        val solved = assertIs<ConstraintSolveOutcome.Solved>(
-            ConstraintProgramSolver.solvePolyphonicOutcome(program, maxTraceEntries = 0),
+    private fun solve(program: ConstraintProgram, label: String = ""): Pair<Double, Int> {
+        val outcome = ConstraintProgramSolver.solvePolyphonicOutcome(
+            program,
+            maxTraceEntries = if (label.isEmpty()) 0 else 16,
         )
+        val solved = assertIs<ConstraintSolveOutcome.Solved>(outcome, "$label outcome=$outcome")
         return solved.solutions.minOf { it.breakdown.total } to solved.solutions.size
     }
 
@@ -159,6 +209,44 @@ class ConstraintDpVersusDfsQualityBenchmarkTest {
                 fixedTargetIdentityBySlot = canon.withIndex().associate { (index, degree) ->
                     index to requireNotNull(byDegree[degree]).identityKey()
                 },
+                searchConfig = searchConfig,
+            )
+        )
+    }
+
+    private fun buildOpenProgram(
+        degrees: List<Int>,
+        searchConfig: SearchConfig,
+    ): ConstraintProgram {
+        val vocabulary = DiatonicChordVocabulary.forContext(
+            context = context,
+            compatibilityKey = key,
+            includeSevenths = true,
+            includeInversions = false,
+        )
+        val triads = vocabulary.filter { it.arity == com.mecon.theory.ChordArity.TRIAD }
+            .associateBy { it.degree }
+        val sevenths = vocabulary.filter { it.arity == com.mecon.theory.ChordArity.SEVENTH }
+            .associateBy { it.degree }
+        val allowed = degrees.mapIndexedNotNull { index, degree ->
+            if (index % 4 != 1) return@mapIndexedNotNull null
+            index to setOf(
+                requireNotNull(triads[degree]).identityKey(),
+                requireNotNull(sevenths[degree]).identityKey(),
+            )
+        }.toMap()
+        val fixed = degrees.mapIndexedNotNull { index, degree ->
+            if (index % 4 == 1) null else index to requireNotNull(triads[degree]).identityKey()
+        }.toMap()
+        return FreeHarmonySolver.compile(
+            FreeHarmonyRequest(
+                key = key,
+                tonalPlan = plan,
+                slotCount = degrees.size,
+                vocabulary = vocabulary,
+                voicePlan = VoicePlan.standardFourPart(),
+                allowedTargetIdentityKeysBySlot = allowed,
+                fixedTargetIdentityBySlot = fixed,
                 searchConfig = searchConfig,
             )
         )

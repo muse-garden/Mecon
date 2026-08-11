@@ -108,6 +108,17 @@ interface FixedVoiceWritingRuleProvider<T> {
     fun checkScore(context: FixedVoiceScoreRuleContext<T>): List<RuleFinding<EventId>> = emptyList()
 }
 
+/** Optional DP split for providers with a small prefix-sensitive vertical subset. */
+internal interface DpPartitionedVerticalRuleProvider<T> : FixedVoiceWritingRuleProvider<T> {
+    fun checkDpPrefixIndependentVertical(
+        context: FixedVoiceVerticalRuleContext<T>,
+    ): List<RuleFinding<EventId>>
+
+    fun checkDpPrefixSensitiveVertical(
+        context: FixedVoiceVerticalRuleContext<T>,
+    ): List<RuleFinding<EventId>>
+}
+
 fun interface FixedVoiceCandidateFactory<T> {
     fun candidates(
         state: FixedVoiceWritingState<T>,
@@ -291,16 +302,31 @@ class FixedVoiceWritingCandidateSpace<T>(
         )
     }
 
-    /**
-     * DP-only vertical pass. The state plan guarantees that enabled vertical rules depend on the
-     * current frame only, so one result can be shared by every incoming label in the layer.
-     */
-    internal fun dpVerticalFindings(
+    internal fun dpPrefixIndependentVerticalFindings(
         representativeState: FixedVoiceWritingState<T>,
         frame: FixedVoiceWritingFrame<T>,
         verticality: FixedVoiceVerticality = frame.toVerticality(voices),
-    ): List<RuleFinding<EventId>> =
-        verticalFindingsForNewFrame(representativeState, frame, verticality)
+    ): List<RuleFinding<EventId>> {
+        val context = FixedVoiceVerticalRuleContext(frame, verticality, representativeState)
+        return ruleProviders.flatMap { provider ->
+            @Suppress("UNCHECKED_CAST")
+            val partitioned = provider as? DpPartitionedVerticalRuleProvider<T>
+            partitioned?.checkDpPrefixIndependentVertical(context) ?: provider.checkVertical(context)
+        }
+    }
+
+    internal fun dpPrefixSensitiveVerticalFindings(
+        representativeState: FixedVoiceWritingState<T>,
+        frame: FixedVoiceWritingFrame<T>,
+        verticality: FixedVoiceVerticality = frame.toVerticality(voices),
+    ): List<RuleFinding<EventId>> {
+        val context = FixedVoiceVerticalRuleContext(frame, verticality, representativeState)
+        return ruleProviders.flatMap { provider ->
+            @Suppress("UNCHECKED_CAST")
+            val partitioned = provider as? DpPartitionedVerticalRuleProvider<T>
+            partitioned?.checkDpPrefixSensitiveVertical(context).orEmpty()
+        }
+    }
 
     /** 一帧的合成事件视图；DP 每层只构建一次，供该层所有入边共享。 */
     internal fun verticalityOf(frame: FixedVoiceWritingFrame<T>): FixedVoiceVerticality =

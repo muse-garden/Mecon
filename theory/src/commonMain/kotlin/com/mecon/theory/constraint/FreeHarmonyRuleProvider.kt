@@ -481,13 +481,8 @@ internal class FreeHarmonyRuleProvider(
             CONTINUATION_RESERVE,
         )
 
-        /**
-         * 只在 FREE_* 的自然三和弦子集内成立的 DP 状态声明。
-         * [ROOTLESS_DIMINISHED_ROOT] / [ROOTLESS_DIMINISHED_ALTERED_STEP] / [DISSONANCE_RELEASE]
-         * 在该子集内不可能发射（无减七、无张力音角色），故不在此冒充覆盖——
-         * 这正是 planner 对 FREE_* 保留自然三和弦审计的原因。
-         */
-        internal fun naturalTriadDpStateDeclarations(
+        /** All provider rules are local to the current frame or the preceding transition. */
+        internal fun dpStateDeclarations(
             classical: Boolean,
         ): List<LayeredDpRuleStateDeclaration> = buildList {
             add(LayeredDpRuleStateDeclaration(OUTER_CROSSING))
@@ -499,9 +494,38 @@ internal class FreeHarmonyRuleProvider(
             if (classical) {
                 add(LayeredDpRuleStateDeclaration(PARALLEL_PERFECT, recentFrames = 1))
                 add(LayeredDpRuleStateDeclaration(HIDDEN_PERFECT, recentFrames = 1))
-                add(LayeredDpRuleStateDeclaration(TENDENCY_TONE, recentFrames = 1))
+                add(
+                    LayeredDpRuleStateDeclaration(
+                        TENDENCY_TONE,
+                        recentFrames = 1,
+                        spelledPitches = true,
+                        targetSemantics = true,
+                    )
+                )
+                add(
+                    LayeredDpRuleStateDeclaration(
+                        ROOTLESS_DIMINISHED_ROOT,
+                        recentFrames = 1,
+                        spelledPitches = true,
+                        targetSemantics = true,
+                    )
+                )
+                add(
+                    LayeredDpRuleStateDeclaration(
+                        ROOTLESS_DIMINISHED_ALTERED_STEP,
+                        recentFrames = 1,
+                        spelledPitches = true,
+                        targetSemantics = true,
+                    )
+                )
+                add(
+                    LayeredDpRuleStateDeclaration(
+                        DISSONANCE_RELEASE,
+                        recentFrames = 1,
+                        targetSemantics = true,
+                    )
+                )
             }
-            // ROOTLESS_DIMINISHED_* and DISSONANCE_RELEASE cannot apply in this subset.
         }
 
         private val DISSONANT_MEMBER_ROLES = setOf(

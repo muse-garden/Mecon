@@ -77,6 +77,7 @@ class ChordTargetCandidateFactory(
         slotIndex: Int,
         target: ChordTarget,
         maxCandidates: Int?,
+        diversifyLocally: Boolean = false,
     ): LayerCandidateBatch {
         require(maxCandidates == null || maxCandidates > 0) { "maxCandidates must be positive" }
         // 排序 key 每帧只算一次：比较器里重算省略音集合与结构字符串会主导整层构建成本。
@@ -89,6 +90,24 @@ class ChordTargetCandidateFactory(
                 candidates.sortedWith(RANKED_FRAME_ORDER).map { it.frame }.toList(),
                 truncated = false,
             )
+        }
+        if (diversifyLocally) {
+            val allowed = candidates.map { it.frame }.toList()
+            val exploreQuota = maxCandidates - (maxCandidates * EXPLOIT_NUMERATOR) / EXPLOIT_DENOMINATOR
+            val exploitQuota = maxCandidates - exploreQuota
+            val ranked = allowed.map { frame ->
+                RankedFrame(frame, verticalPriority(frame), verticalSpan(frame), frameStructuralKey(frame))
+            }
+            val exploit = ranked.asSequence().best(exploitQuota, RANKED_FRAME_ORDER).map { it.frame }
+            val exploitKeys = exploit.mapTo(HashSet()) { frameExplorationKey(it) }
+            val explore = stratifiedSample(
+                allowed = allowed,
+                previous = null,
+                excludeKeys = exploitKeys,
+                quota = exploreQuota,
+            )
+            val frames = (exploit + explore).distinct().take(maxCandidates)
+            return LayerCandidateBatch(frames = frames, truncated = allowed.size > frames.size)
         }
         val sampled = candidates.best(maxCandidates + 1, RANKED_FRAME_ORDER)
         return LayerCandidateBatch(

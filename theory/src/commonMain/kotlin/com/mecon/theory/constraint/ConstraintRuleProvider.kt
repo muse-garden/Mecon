@@ -2,6 +2,7 @@ package com.mecon.theory.constraint
 
 import com.mecon.api.primitive.EventId
 import com.mecon.theory.FixedVoice
+import com.mecon.theory.DpPartitionedVerticalRuleProvider
 import com.mecon.theory.FixedVoiceRole
 import com.mecon.theory.FixedVoiceScoreRuleContext
 import com.mecon.theory.FixedVoiceTransitionRuleContext
@@ -17,7 +18,17 @@ import com.mecon.theory.RuleScoreIntent
 import com.mecon.theory.RuleSeverity
 import com.mecon.theory.solverVoiceEventId
 import com.mecon.theory.solverPitchEventId
+import com.mecon.theory.toFixedVoiceScore
 import kotlin.math.abs
+
+internal data class DpAtomicConstraintTruth(
+    val truth: ConstraintTruth,
+    val active: Boolean,
+)
+
+internal data class DpCompositeConstraintTruth(
+    val atoms: List<DpAtomicConstraintTruth>,
+)
 
 /**
  * M6 单一 finding 桥。基础 textbook/module provider 先产出 Kotlin 逃生舱 finding，本 provider 再对
@@ -27,7 +38,7 @@ internal class ConstraintCompositeRuleProvider(
     private val delegates: List<FixedVoiceWritingRuleProvider<ChordTarget>>,
     program: ConstraintProgram,
     voices: List<FixedVoice>,
-) : FixedVoiceWritingRuleProvider<ChordTarget> {
+) : DpPartitionedVerticalRuleProvider<ChordTarget> {
     private val algebra = ConstraintAlgebraRuleProvider(program, voices)
     private val constraintOwnedRuleIds = program.constraints
         .filter { constraint -> constraint.expr.atomicPredicates().any { it !is ConstraintPredicate.RuleFound } }
@@ -42,6 +53,21 @@ internal class ConstraintCompositeRuleProvider(
         )
         return observed + algebra.checkVertical(context)
     }
+
+    override fun checkDpPrefixIndependentVertical(
+        context: FixedVoiceVerticalRuleContext<ChordTarget>,
+    ): List<RuleFinding<EventId>> {
+        val observed = algebra.adjustDemonstratedViolations(
+            delegates.flatMap { it.checkVertical(context) }
+                .filterNot { it.ruleId in constraintOwnedRuleIds },
+            listOf(context.frame),
+        )
+        return observed + algebra.checkPrefixIndependentVertical(context)
+    }
+
+    override fun checkDpPrefixSensitiveVertical(
+        context: FixedVoiceVerticalRuleContext<ChordTarget>,
+    ): List<RuleFinding<EventId>> = algebra.checkPrefixSensitiveVertical(context)
 
     override fun checkTransition(context: FixedVoiceTransitionRuleContext<ChordTarget>): List<RuleFinding<EventId>> {
         val observed = algebra.adjustDemonstratedViolations(
@@ -69,6 +95,12 @@ internal class ConstraintAlgebraRuleProvider(
     // 约束的表达式结构在程序编译后就固定了，但 atomicPredicates() 是协程 Sequence：逐帧重算
     // 分区会主导每条转移的成本。这里按“前缀是否完整”预先分好两套分区。
     private val atomConstraints = program.constraints.filter { it.expr is ConstraintExpr.Atom }
+    private val prefixSensitiveVerticalConstraints = atomConstraints.filter { constraint ->
+        (constraint.expr as ConstraintExpr.Atom).predicate is ConstraintPredicate.DistinctIdentities
+    }
+    private val prefixIndependentVerticalConstraints = atomConstraints.filterNot { constraint ->
+        (constraint.expr as ConstraintExpr.Atom).predicate is ConstraintPredicate.DistinctIdentities
+    }
     private val completeScorePartition = partitionScoreConstraints(complete = true)
     private val incompleteScorePartition = partitionScoreConstraints(complete = false)
 
@@ -113,6 +145,33 @@ internal class ConstraintAlgebraRuleProvider(
             constraint to predicate
         }
 
+    /**
+     * Finite DP summary for composite expressions. Atom order is the stable expression-tree order;
+     * atom-specific pitch/target/history state is carried separately by the layered state plan.
+     */
+    internal fun dpCompositeTruths(
+        state: com.mecon.theory.FixedVoiceWritingState<ChordTarget>,
+        constraintIndices: IntArray,
+    ): List<DpCompositeConstraintTruth> {
+        if (constraintIndices.isEmpty()) return emptyList()
+        val context = FixedVoiceScoreRuleContext(state) {
+            state.toFixedVoiceScore(voices)
+        }
+        return constraintIndices.map { index ->
+            val constraint = program.constraints[index]
+            DpCompositeConstraintTruth(
+                constraint.expr.atomicPredicates().map { predicate ->
+                    val evaluation = predicate.evaluateGlobal(
+                        context = context,
+                        observed = state.localFindings,
+                        scope = constraint.scope,
+                    )
+                    DpAtomicConstraintTruth(evaluation.truth, evaluation.active)
+                }.toList(),
+            )
+        }
+    }
+
     fun adjustDemonstratedViolations(
         findings: List<RuleFinding<EventId>>,
         frames: List<FixedVoiceWritingFrame<ChordTarget>>,
@@ -136,6 +195,22 @@ internal class ConstraintAlgebraRuleProvider(
             if (!constraint.scope.matches(context.frame.slotIndex, context.frame.target)) return@mapNotNull null
             constraint.emit(constraint.expr.evaluate { it.evaluateVertical(context) })
         }
+
+    internal fun checkPrefixIndependentVertical(
+        context: FixedVoiceVerticalRuleContext<ChordTarget>,
+    ): List<RuleFinding<EventId>> = checkVerticalConstraints(prefixIndependentVerticalConstraints, context)
+
+    internal fun checkPrefixSensitiveVertical(
+        context: FixedVoiceVerticalRuleContext<ChordTarget>,
+    ): List<RuleFinding<EventId>> = checkVerticalConstraints(prefixSensitiveVerticalConstraints, context)
+
+    private fun checkVerticalConstraints(
+        constraints: List<Constraint>,
+        context: FixedVoiceVerticalRuleContext<ChordTarget>,
+    ): List<RuleFinding<EventId>> = constraints.mapNotNull { constraint ->
+        if (!constraint.scope.matches(context.frame.slotIndex, context.frame.target)) return@mapNotNull null
+        constraint.emit(constraint.expr.evaluate { it.evaluateVertical(context) })
+    }
 
     fun checkTransition(context: FixedVoiceTransitionRuleContext<ChordTarget>): List<RuleFinding<EventId>> =
         atomConstraints.mapNotNull { constraint ->
@@ -1008,8 +1083,16 @@ private fun ConstraintPredicate.isTargetOnly(): Boolean =
 internal fun terminalGlobalScoreLowerBound(
     program: ConstraintProgram,
     policy: FixedVoiceWritingScorePolicy,
-): Double =
-    program.constraints
+    profile: com.mecon.theory.RuleProfile,
+): Double? {
+    // Suppression can retract already accumulated local cost, and weight overrides can introduce
+    // a lower score than the modality-derived bound. Composite branches also carry their own
+    // scoreDelta. In all three cases there is no proven static lower bound, so callers must fully
+    // evaluate terminal candidates.
+    if (profile.suppressions.isNotEmpty()) return null
+    if (profile.overrides.values.any { it.enabled && it.weightOverride != null }) return null
+    if (program.constraints.any { it.expr !is ConstraintExpr.Atom }) return null
+    return program.constraints
         .filter { constraint ->
             constraint.expr.atomicPredicates().any { it.requiresGlobalEvaluation() }
         }
@@ -1030,6 +1113,7 @@ internal fun terminalGlobalScoreLowerBound(
             }
             minOf(0.0, emittedLowerBound)
         }
+}
 
 /**
  * 谓词自带 `branchScoreDelta` 时的最小可能值。新增谓词必须在此显式表态：漏判会让终层
@@ -1051,6 +1135,7 @@ private fun ConstraintPredicate.branchScoreDeltaLowerBound(): Double =
         is ConstraintPredicate.NeighborTone,
         is ConstraintPredicate.TargetMatches,
         is ConstraintPredicate.SameSonority,
+        is ConstraintPredicate.RootDiatonicMotion,
         is ConstraintPredicate.VoiceDiatonicSteps,
         is ConstraintPredicate.VoicePitchClassCardinality,
         is ConstraintPredicate.ToneMultiplicity,

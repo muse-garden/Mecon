@@ -1,20 +1,31 @@
 package com.mecon.theory.constraint
 
 import com.mecon.theory.AdjacentVoiceUnisonRule
-import com.mecon.theory.ChordArity
-import com.mecon.theory.NaturalTriads
 import com.mecon.theory.RuleId
 import com.mecon.theory.textbook.FourPartTextbookRules
 
 /** Minimal future state requested by one active rule after a completed layer. */
 internal sealed interface LayeredDpStateNeed {
-    data class RecentFrames(val count: Int) : LayeredDpStateNeed
+    data class RecentFrames(
+        val count: Int,
+        val spelledPitches: Boolean = false,
+        val targetSemantics: Boolean = false,
+    ) : LayeredDpStateNeed
 
     data class VoiceExtreme(
         val constraintIndex: Int,
         val voiceFilter: ChordToneVoiceFilter,
         val extreme: com.mecon.theory.constraint.VoiceExtreme,
     ) : LayeredDpStateNeed
+
+    /** A target-history atom owns a compact, predicate-specific automaton in the DP key. */
+    data class ConstraintHistory(
+        val constraintIndex: Int,
+        val predicateIndex: Int,
+    ) : LayeredDpStateNeed
+
+    /** Finite Kleene-state vector for the atoms inside one And/Or/Not expression. */
+    data class CompositeTruth(val constraintIndex: Int) : LayeredDpStateNeed
 
     /** The rule is scored only on complete paths; bounded DP keeps extra labels for final reranking. */
     data object TerminalRerank : LayeredDpStateNeed
@@ -30,6 +41,8 @@ internal data class LayeredDpRuleStateDeclaration(
     val ruleId: RuleId,
     /** Frames that must remain after the current layer for this rule's next evaluation. */
     val recentFrames: Int = 0,
+    val spelledPitches: Boolean = false,
+    val targetSemantics: Boolean = false,
 )
 
 internal data class LayeredDpLayerStatePlan(
@@ -40,14 +53,40 @@ internal data class LayeredDpLayerStatePlan(
         (it.need as? LayeredDpStateNeed.RecentFrames)?.count
     }.maxOrNull() ?: 0
 
+    val recentFramesNeedSpelling: Boolean = bindings.any {
+        (it.need as? LayeredDpStateNeed.RecentFrames)?.spelledPitches == true
+    }
+
+    val recentFramesNeedTarget: Boolean = bindings.any {
+        (it.need as? LayeredDpStateNeed.RecentFrames)?.targetSemantics == true
+    }
+
     val voiceExtremes: List<LayeredDpStateNeed.VoiceExtreme> = bindings.mapNotNull {
         it.need as? LayeredDpStateNeed.VoiceExtreme
     }.distinct()
 
+    val constraintHistories: List<LayeredDpStateNeed.ConstraintHistory> = bindings.mapNotNull {
+        it.need as? LayeredDpStateNeed.ConstraintHistory
+    }.distinct()
+
+    val compositeTruths: List<LayeredDpStateNeed.CompositeTruth> = bindings.mapNotNull {
+        it.need as? LayeredDpStateNeed.CompositeTruth
+    }.distinct()
+
     fun describe(): String = buildList {
-        add("recentFrames=$recentFrameCount")
+        add(
+            "recentFrames=$recentFrameCount" +
+                (if (recentFramesNeedSpelling) ":spelled" else ":midi") +
+                (if (recentFramesNeedTarget) ":target" else "")
+        )
         if (voiceExtremes.isNotEmpty()) {
             add("extrema=${voiceExtremes.joinToString(",") { "c${it.constraintIndex}:${it.voiceFilter}:${it.extreme}" }}")
+        }
+        if (constraintHistories.isNotEmpty()) {
+            add("constraintHistory=${constraintHistories.joinToString(",") { "c${it.constraintIndex}.a${it.predicateIndex}" }}")
+        }
+        if (compositeTruths.isNotEmpty()) {
+            add("compositeTruth=${compositeTruths.joinToString(",") { "c${it.constraintIndex}" }}")
         }
         val owners = bindings.map { it.ruleId.value }.distinct().sorted()
         add("rules=${owners.joinToString(",")}")
@@ -69,38 +108,17 @@ internal data class LayeredDpStatePlan(
 }
 
 /**
- * First incremental state compiler. Its intentionally narrow contract is a fixed progression of
- * natural triads. Every active rule must be registered here; unknown rules fail capability audit.
+ * Incremental state compiler. Every active rule must be registered here; unknown rules fail the
+ * capability audit. Open target domains are supported when every target-sensitive rule has an
+ * explicit recent-frame or constraint-history state declaration.
  */
 internal object LayeredDpStatePlanner {
     fun collect(program: ConstraintProgram): LayeredDpStatePlan {
         val unsupported = mutableListOf<String>()
-        val fixedTargets = program.slotDomains.mapIndexed { slot, domain ->
-            domain.targets.singleOrNull() ?: run {
-                unsupported += "slot $slot is not a fixed chord target"
-                null
-            }
-        }
-        /**
-         * 自然三和弦审计是 [FreeHarmonyRuleProvider] 目标敏感规则的代理条件：
-         * `ROOTLESS_DIMINISHED_*` 与 `DISSONANCE_RELEASE` 只对减七 / 张力音发射，没有状态声明，
-         * 因此 FREE_* 下必须靠和弦类型把它们排除在外。SCHOENBERG_GENERAL 装的是
-         * `FourPartTextbookWritingRuleProvider`，其规则只读音高、音程与音域，与和弦类型无关，
-         * 不需要这条限制。
-         */
-        fun requireNaturalTriads() {
-            fixedTargets.forEachIndexed { slot, target ->
-                if (target == null) return@forEachIndexed
-                val natural = target.arity == ChordArity.TRIAD &&
-                    NaturalTriads.matchesPitchClasses(target.key, target.sonority.pitchClasses).any { triad ->
-                        triad.degree == target.degree && triad.quality == target.quality
-                    }
-                if (!natural) unsupported += "slot $slot is not a natural triad"
-            }
-        }
         if (program.ruleModules?.isNotEmpty() != false) unsupported += "chord modules must be explicitly empty"
         if (program.includeDerivedTextbookConstraints) unsupported += "derived textbook constraints are not registered"
         if (program.ruleProfile.requirements.isNotEmpty()) unsupported += "RuleProfile requirements are not registered"
+        if (program.ruleProfile.suppressions.isNotEmpty()) unsupported += "RuleProfile suppressions are not registered"
 
         val layerBindings = List(program.length) { linkedSetOf<LayeredDpStateBinding>() }
         val covered = linkedSetOf<RuleId>()
@@ -110,13 +128,22 @@ internal object LayeredDpStatePlanner {
         fun cover(ruleId: RuleId) {
             if (enabled(ruleId)) covered += ruleId
         }
-        fun retainForFuture(ruleId: RuleId, frames: Int) {
+        fun retainForFuture(
+            ruleId: RuleId,
+            frames: Int,
+            spelledPitches: Boolean = false,
+            targetSemantics: Boolean = false,
+        ) {
             if (!enabled(ruleId)) return
             covered += ruleId
             (0 until (program.length - 1).coerceAtLeast(0)).forEach { layer ->
                 layerBindings[layer] += LayeredDpStateBinding(
                     ruleId,
-                    LayeredDpStateNeed.RecentFrames(minOf(frames, layer + 1)),
+                    LayeredDpStateNeed.RecentFrames(
+                        count = minOf(frames, layer + 1),
+                        spelledPitches = spelledPitches,
+                        targetSemantics = targetSemantics,
+                    ),
                 )
             }
         }
@@ -125,10 +152,35 @@ internal object LayeredDpStatePlanner {
             covered += ruleId
             terminal += ruleId
         }
+        fun retainConstraintHistory(ruleId: RuleId, constraintIndex: Int, predicateIndex: Int) {
+            if (!enabled(ruleId)) return
+            covered += ruleId
+            (0 until (program.length - 1).coerceAtLeast(0)).forEach { layer ->
+                layerBindings[layer] += LayeredDpStateBinding(
+                    ruleId,
+                    LayeredDpStateNeed.ConstraintHistory(constraintIndex, predicateIndex),
+                )
+            }
+        }
+        fun retainCompositeTruth(ruleId: RuleId, constraintIndex: Int) {
+            if (!enabled(ruleId)) return
+            covered += ruleId
+            (0 until (program.length - 1).coerceAtLeast(0)).forEach { layer ->
+                layerBindings[layer] += LayeredDpStateBinding(
+                    ruleId,
+                    LayeredDpStateNeed.CompositeTruth(constraintIndex),
+                )
+            }
+        }
         fun declare(declarations: List<LayeredDpRuleStateDeclaration>) {
             declarations.forEach { declaration ->
                 if (declaration.recentFrames == 0) cover(declaration.ruleId)
-                else retainForFuture(declaration.ruleId, declaration.recentFrames)
+                else retainForFuture(
+                    declaration.ruleId,
+                    declaration.recentFrames,
+                    declaration.spelledPitches,
+                    declaration.targetSemantics,
+                )
             }
         }
 
@@ -136,12 +188,11 @@ internal object LayeredDpStatePlanner {
             WritingRulePreset.FREE_CLASSICAL,
             WritingRulePreset.FREE_JAZZ,
             -> {
-                requireNaturalTriads()
                 // Vertical-only rules contribute cost now and no future state.
                 cover(AdjacentVoiceUnisonRule.RULE_ID)
                 retainForFuture(MOTION_COST_RULE_ID, 1)
                 declare(
-                    FreeHarmonyRuleProvider.naturalTriadDpStateDeclarations(
+                    FreeHarmonyRuleProvider.dpStateDeclarations(
                         classical = program.writingRulePreset == WritingRulePreset.FREE_CLASSICAL,
                     ) + WindowFeasibilityRuleProvider.dpStateDeclarations() +
                         BaselineSimilarityRuleProvider.dpStateDeclarations()
@@ -160,10 +211,14 @@ internal object LayeredDpStatePlanner {
         program.constraints.forEachIndexed { index, constraint ->
             val ruleId = constraint.ruleId ?: defaultConstraintRuleId(constraint.expr)
             if (!enabled(ruleId)) return@forEachIndexed
-            // 合成式（And/Or/Not）按原子逐个表态，整条约束取最强状态需求：求值 Not(p) 需要的帧与 p 相同，
-            // And/Or 需要的是各支需求的并集。任一原子被拒 → 整条约束被拒。单 Atom 是一个原子的特例。
+            if (constraint.expr !is ConstraintExpr.Atom) {
+                // The expression tree itself is immutable. Its future behavior is determined by
+                // the finite truth/active state of each atom plus the atom-specific summaries
+                // declared below; retaining the entire frame prefix would defeat DP merging.
+                retainCompositeTruth(ruleId, index)
+            }
             val atoms = constraint.expr.atomicPredicates().toList()
-            atoms.forEach { predicate ->
+            atoms.forEachIndexed { predicateIndex, predicate ->
                 when (predicate) {
                     is ConstraintPredicate.ToneCompleteness,
                     is ConstraintPredicate.ToneDoubled,
@@ -172,6 +227,8 @@ internal object LayeredDpStatePlanner {
                     is ConstraintPredicate.Spacing,
                     is ConstraintPredicate.ToneMultiplicity,
                     is ConstraintPredicate.ToneInVoiceFilter,
+                    -> cover(ruleId)
+
                     is ConstraintPredicate.DistinctIdentities,
                     is ConstraintPredicate.TargetMatches,
                     is ConstraintPredicate.SameSonority,
@@ -179,17 +236,19 @@ internal object LayeredDpStatePlanner {
                     is ConstraintPredicate.MinimumSimilarChordDistance,
                     ConstraintPredicate.DistinctSimilarChordProgressions,
                     is ConstraintPredicate.RootProgressionPreference,
-                    -> cover(ruleId)
+                    -> retainConstraintHistory(ruleId, index, predicateIndex)
 
                     is ConstraintPredicate.CommonToneWithPrevious,
+                    -> retainForFuture(ruleId, 1, targetSemantics = true)
+
                     is ConstraintPredicate.NeighborTone,
-                    -> retainForFuture(ruleId, 1)
+                    -> retainForFuture(ruleId, 1, spelledPitches = true, targetSemantics = true)
 
                     is ConstraintPredicate.VoiceDiatonicSteps -> {
                         if (predicate.slots.zipWithNext().any { (before, after) -> after != before + 1 }) {
                             unsupported += "constraint[$index] uses non-adjacent VoiceDiatonicSteps"
                         } else {
-                            retainForFuture(ruleId, 1)
+                            retainForFuture(ruleId, 1, spelledPitches = true, targetSemantics = true)
                         }
                     }
                     is ConstraintPredicate.UniqueVoiceExtreme -> {
