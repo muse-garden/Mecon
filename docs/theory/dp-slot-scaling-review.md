@@ -195,9 +195,12 @@ while (selected.size < limit && remaining.isNotEmpty()) {
    `O(槽 × 声部)` 次按 `VoiceId` 的 map 查找与 `Pitch` 拆包。与
    `FixedVoiceWritingCandidateSpace.prefixSimilarity` 同义，结果不变。
    本机 19 槽：层内裁剪 `218 ms → 32 ms`（第 17 层），整体 `1.88 s → 1.03 s`。
-4. **极值摘要瘦身**：`occurrences` 饱和到 `maxOccurrences + 1`；进一步在 BOUNDED 模式下评估把
-   `UniqueVoiceExtreme` 降为 terminal rerank（它已是 `Prefer` 软约束且带 `futureCanSupersedeExtreme`
-   可恢复语义），可把合并率提高约 3.4–5×。EXACT 保持现状。
+4. **极值摘要瘦身**：`occurrences` ✅ 2026-08-11 已饱和到 `maxOccurrences + 1`（判定只看
+   `出现次数 > maxOccurrences`，出现 3 次与 4 次对未来裁决完全等价）。**但收益有限**：13 槽逐层
+   distinctStates 只降 0–20%（最深一层 274 → 218），因为主要分裂源是极值**数值**而非计数。
+   要拿到 §3 那 3.4–5× 的合并率，仍需在 BOUNDED 模式下把 `UniqueVoiceExtreme` 整体降为
+   terminal rerank（它已是 `Prefer` 软约束且带 `futureCanSupersedeExtreme` 可恢复语义）；
+   EXACT 必须保持现状。
 5. **history 签名常量化**（§6 表格），为开放和声域做准备；`RootProgressionPreference` 若无法有限
    表示，应在 planner 里 fail closed 而不是塞进完整前缀。
    > 2026-08-11 部分解决：和弦选择规则在自由练习里已降为 `ConstraintModality.Remind`，planner

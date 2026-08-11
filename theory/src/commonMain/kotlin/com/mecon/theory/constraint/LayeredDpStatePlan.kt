@@ -16,6 +16,8 @@ internal sealed interface LayeredDpStateNeed {
         val constraintIndex: Int,
         val voiceFilter: ChordToneVoiceFilter,
         val extreme: com.mecon.theory.constraint.VoiceExtreme,
+        /** 判定只关心是否超过该次数，因此 key 里的计数饱和到 `maxOccurrences + 1`。 */
+        val maxOccurrences: Int,
     ) : LayeredDpStateNeed
 
     /** A target-history atom owns a compact, predicate-specific automaton in the DP key. */
@@ -274,6 +276,7 @@ internal object LayeredDpStatePlanner {
                                         index,
                                         predicate.voiceFilter,
                                         predicate.extreme,
+                                        predicate.maxOccurrences,
                                     ),
                                 )
                             }

@@ -789,6 +789,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                                 constraintIndex = need.constraintIndex,
                                 extreme = need.extreme,
                                 voiceIndex = index,
+                                maxOccurrences = need.maxOccurrences,
                             )
                         }
                 }
@@ -1405,6 +1406,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
         val constraintIndex: Int,
         val extreme: VoiceExtreme,
         val voiceIndex: Int,
+        val maxOccurrences: Int,
     )
 
     /**
@@ -1428,7 +1430,11 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                         nextValues[index] = pitch
                         nextOccurrences[index] = 1
                     }
-                    pitch == current -> nextOccurrences[index]++
+                    // 判定只看 `出现次数 > maxOccurrences`，因此计数饱和即可：出现 3 次与 4 次
+                    // 对未来裁决完全等价，不饱和会把行为相同的前缀拆成两个状态。
+                    pitch == current ->
+                        nextOccurrences[index] =
+                            minOf(nextOccurrences[index] + 1, slot.maxOccurrences + 1)
                     slot.extreme == VoiceExtreme.HIGHEST && pitch > current -> {
                         nextValues[index] = pitch
                         nextOccurrences[index] = 1
