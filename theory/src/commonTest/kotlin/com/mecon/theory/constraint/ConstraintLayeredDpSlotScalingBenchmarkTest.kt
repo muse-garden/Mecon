@@ -50,7 +50,8 @@ class ConstraintLayeredDpSlotScalingBenchmarkTest {
         runs.forEach { (slots, run) ->
             println(
                 "  slots=$slots time=${run.duration} transitions=${run.transitions} " +
-                    "terminalGlobal=${run.terminalGlobalEvaluations}"
+                    "terminalGlobal=${run.terminalGlobalEvaluations} " +
+                    "terminalLowerBound=${run.terminalLowerBoundApplied}"
             )
         }
 
@@ -97,6 +98,7 @@ class ConstraintLayeredDpSlotScalingBenchmarkTest {
             solutions = solved.solutions.size,
             transitions = solved.trace.evaluatedTransitions,
             terminalGlobalEvaluations = solved.trace.terminalGlobalEvaluations,
+            terminalLowerBoundApplied = solved.trace.terminalLowerBoundApplied,
             layers = solved.trace.entries
                 .filter { it.kind == WritingSearchTraceEventKind.LAYER_COMPLETED }
                 .sortedBy { it.depth },
@@ -108,6 +110,7 @@ class ConstraintLayeredDpSlotScalingBenchmarkTest {
         val solutions: Int,
         val transitions: Int,
         val terminalGlobalEvaluations: Int,
+        val terminalLowerBoundApplied: Boolean,
         val layers: List<WritingSearchTraceEntry>,
     )
 

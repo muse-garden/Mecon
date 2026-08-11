@@ -169,7 +169,9 @@ fail closed。
 `boundedGlobalRerank`。这是一种受控近似，不保证全局最优；`EXACT` 不做出边截断。
 
 终点 branch-and-bound 只在下界可证明安全时启用；suppression、权重覆盖、复合约束、EXACT、多样化
-和排除项都会关闭该优化。排除组先过滤再占用 top-k 槽位。全局原子规则只在完整进行上评分，避免把尚未完成的唯一极值或反复模式误当作前缀代价。极值摘要
+和排除项都会关闭该优化，trace 的 `terminalLowerBoundApplied` 显式报告下界是否生效——为 `false` 时
+`terminalGlobalEvaluations` 等于终层全部候选数，不要误读成规则变贵（自由练习开启多样化后恒为
+`false`）。排除组先过滤再占用 top-k 槽位。全局原子规则只在完整进行上评分，避免把尚未完成的唯一极值或反复模式误当作前缀代价。极值摘要
 仍需进入中间层 key，因为不同前缀对未来终局结果可能不同。
 
 ## 5. Trace 与结果语义

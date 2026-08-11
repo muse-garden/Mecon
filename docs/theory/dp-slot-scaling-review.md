@@ -207,7 +207,12 @@ while (selected.size < limit && remaining.isNotEmpty()) {
    > 不再为 `Annotate` / `Remind` 收集状态，因此这四个累加式签名不会出现在自由练习的 DP key
    > 里（见 [free-harmony-solver.md](free-harmony-solver.md) §4.0）。勋伯格章节自己的开放域
    > program 仍以 `Prefer` 使用它们——求解器一旦真正接手和弦选择，本条仍需按表格落实。
-6. **把终层 BnB 的下界扩展到多样化路径**，或至少在 trace 里显式报告「下界已关闭」。
+6. **把终层 BnB 的下界扩展到多样化路径**：✅ 2026-08-11 已在 trace 增加
+   `terminalLowerBoundApplied`，自由练习形态下它恒为 `false`，`terminalGlobalEvaluations`
+   等于终层全部候选数（本基准 1,008–1,152 次），不会再被误读成规则本身变贵。
+   **下界本身仍未开启**：终层要为多样化保留一个远大于 `maxResults` 的候选池，按基础分提前截断
+   会先淘汰掉“分数略差但足够不同”的路径，正是多样化要留的那批。要开启必须先定义
+   多样化感知的下界，属于独立课题；当前终层约占本基准总耗时的 20%。
 7. ~~**基准配置入库**~~ ✅ 2026-08-11：`ConstraintLayeredDpSlotScalingBenchmarkTest` 固化了
    9 / 13 / 19 槽 × 3 结果的配置，断言**逐层规模的前缀不变性**（同一前缀的层，其
    candidate / generated / distinct / retained 四元组不随总槽数变化）与每层保留标签数不超过

@@ -523,6 +523,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                 transitionBudget = config.maxTransitionEvaluations,
                 boundedGlobalRerank = !exact && capability.requiresBoundedGlobalRerank,
                 terminalGlobalEvaluations = terminalGlobalEvaluations,
+                terminalLowerBoundApplied = terminalGlobalLowerBound != null,
                 dpStatePlan = statePlan.describeLayers(),
                 dpCoveredRules = statePlan.coveredRuleIds.map { it.value }.sorted(),
                 dpTerminalRerankRules = statePlan.terminalRerankRuleIds.map { it.value }.sorted(),

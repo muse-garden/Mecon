@@ -215,6 +215,12 @@ data class WritingSearchTrace(
      * 的路径评估全局规则，因此该值通常远小于终层接受的转移数。
      */
     val terminalGlobalEvaluations: Int = 0,
+    /**
+     * 终层 branch-and-bound 的下界是否生效。为 `false` 时 [terminalGlobalEvaluations] 等于终层
+     * 全部候选数——EXACT、多样化、排除项、suppression、权重覆盖与复合约束都会关掉下界，
+     * 此时不要把终层耗时误读为规则本身变贵。
+     */
+    val terminalLowerBoundApplied: Boolean = false,
     /** Human-readable DP state requirements compiled from the active rules, one entry per layer. */
     val dpStatePlan: List<String> = emptyList(),
     val dpCoveredRules: List<String> = emptyList(),
