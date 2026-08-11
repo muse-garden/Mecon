@@ -113,6 +113,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                 lineageKey = null,
                 constraintHistories = summaryPlan.initialConstraintHistories(),
                 extremes = DpExtremeSummary.initial(summaryPlan.slots.size),
+                pathMidi = IntArray(0),
             )
         )
 
@@ -365,6 +366,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                             frame,
                         ),
                         extremes = label.extremes.extend(summaryPlan.slots, layerFrame),
+                        pathMidi = label.pathMidi + layerFrame.profile.midi,
                     )
                     if (terminalCandidates != null) {
                         terminalCandidates += nextLabel
@@ -615,7 +617,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
         // 从 O(n × limit²)（比较器对每次比较的两个操作数各重算一次）降到 O(n × limit)。
         val pool = ArrayList(remaining)
         val maxSimilarity = DoubleArray(pool.size) { index ->
-            selected.maxOf { chosen -> search.space.prefixSimilarity(pool[index].state, chosen.state) }
+            selected.maxOf { chosen -> prefixSimilarity(pool[index], chosen) }
         }
         val taken = BooleanArray(pool.size)
         var remainingCount = pool.size
@@ -650,11 +652,27 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
             selected += next
             for (index in pool.indices) {
                 if (taken[index]) continue
-                val similarity = search.space.prefixSimilarity(pool[index].state, next.state)
+                val similarity = prefixSimilarity(pool[index], next)
                 if (similarity > maxSimilarity[index]) maxSimilarity[index] = similarity
             }
         }
         return selected
+    }
+
+    /**
+     * 与 `FixedVoiceWritingCandidateSpace.prefixSimilarity` 同义（逐 (帧, 声部) 比较 MIDI 后取
+     * 命中比例），但直接读 label 上展平的整型路径，省掉每次调用 `O(槽 × 声部)` 次按
+     * `VoiceId` 的 map 查找与 `Pitch` 拆包。
+     */
+    private fun prefixSimilarity(left: DpLabel, right: DpLabel): Double {
+        val leftPath = left.pathMidi
+        val rightPath = right.pathMidi
+        if (leftPath.size != rightPath.size || leftPath.isEmpty()) return 0.0
+        var same = 0
+        for (index in leftPath.indices) {
+            if (leftPath[index] == rightPath[index]) same++
+        }
+        return same.toDouble() / leftPath.size.toDouble()
     }
 
     /**
@@ -1009,9 +1027,16 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
             .sortedWith { left, right -> comparator.compare(left.value.first(), right.value.first()) }
         val retained = if (preserveDiverseLabels) {
             val selected = selectDiverseLabels(ordered.map { it.value.first() }, limit, search).toSet()
-            val diverse = ordered.filter { it.value.first() in selected }.toMutableList()
+            // 按 state key 记录已入选组：此前 `it in diverse` 在 entry 列表上线性查找，
+            // 每次比较还要逐条比对整组 label，是 O(n²) 的深比较。
+            val diverseKeys = hashSetOf<DpStateKey>()
+            val diverse = ordered.filterTo(mutableListOf()) { entry ->
+                (entry.value.first() in selected).also { if (it) diverseKeys += entry.key }
+            }
             if (diverse.size < limit) {
-                diverse += ordered.filterNot { it in diverse }.take(limit - diverse.size)
+                diverse += ordered.asSequence()
+                    .filter { it.key !in diverseKeys }
+                    .take(limit - diverse.size)
             }
             diverse
         } else {
@@ -1073,6 +1098,8 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
         val lineageKey: String?,
         val constraintHistories: List<DpConstraintHistorySignature>,
         val extremes: DpExtremeSummary,
+        /** 整条前缀按 (帧, 声部) 展平的 MIDI；只供 [prefixSimilarity] 做整型比较。 */
+        val pathMidi: IntArray,
     ) {
         private var cachedDiversityKey: String? = null
 
@@ -1090,6 +1117,7 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
                 lineageKey,
                 constraintHistories,
                 extremes,
+                pathMidi,
             )
     }
 

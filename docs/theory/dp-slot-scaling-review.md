@@ -186,8 +186,15 @@ while (selected.size < limit && remaining.isNotEmpty()) {
 2. **前沿裁剪不做多样化**：内层循环里的 `retainBestStateGroups` 是内存保护，按 comparator 顺序裁剪
    即可；多样化选择只在层末做一次。同时把触发阈值改为摊还式（裁到 `limit` 后阈值仍为 `2 × limit`
    会立刻再次触发，应裁到更低水位或改用定容堆）。
-3. **`prefixSimilarity` 走 MIDI 签名**：label 上已有 `DpVoiceFrameSignature.midi`（`IntArray`），
-   在 label 上顺带维护累积路径签名，避免 `pitchFor` 的 map 查找。
+   > 2026-08-11 暂缓：第 1、3 项落地后，层内裁剪占比已从约 83% 降到约 39%，而本项会改变哪些
+   > 状态存活（进而影响结果多样性）。收益已不足以承担这个行为变更；若后续 profile 再次显示它是
+   > 瓶颈，应连同前缀多样性质量一起评估。同一函数里 `ordered.filterNot { it in diverse }` 的
+   > O(n²) entry 深比较已改为按 state key 查表（行为不变）。
+3. ~~**`prefixSimilarity` 走 MIDI 签名**~~ ✅ 2026-08-11：`DpLabel.pathMidi` 随每条转移增量拼接出
+   按 (帧, 声部) 展平的 `IntArray`，DP 内部的 `prefixSimilarity` 直接做整型比较，不再每次调用做
+   `O(槽 × 声部)` 次按 `VoiceId` 的 map 查找与 `Pitch` 拆包。与
+   `FixedVoiceWritingCandidateSpace.prefixSimilarity` 同义，结果不变。
+   本机 19 槽：层内裁剪 `218 ms → 32 ms`（第 17 层），整体 `1.88 s → 1.03 s`。
 4. **极值摘要瘦身**：`occurrences` 饱和到 `maxOccurrences + 1`；进一步在 BOUNDED 模式下评估把
    `UniqueVoiceExtreme` 降为 terminal rerank（它已是 `Prefer` 软约束且带 `futureCanSupersedeExtreme`
    可恢复语义），可把合并率提高约 3.4–5×。EXACT 保持现状。
