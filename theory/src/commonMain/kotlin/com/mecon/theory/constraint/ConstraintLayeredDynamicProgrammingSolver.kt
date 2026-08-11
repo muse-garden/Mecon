@@ -1025,19 +1025,24 @@ internal object ConstraintLayeredDynamicProgrammingSolver {
         search: ConstraintProgramSolver.ConstraintSearch,
         preserveDiverseLabels: Boolean,
     ) {
+        // 立即把 entry 拷成普通 pair：Kotlin/JS 的 `Map.Entry` 是回指哈希表的活引用，下方
+        // `grouped.clear()` 之后再读它的 key/value 会抛 ConcurrentModificationException
+        // （"The backing map has been modified after this entry was obtained."）。JVM 的
+        // LinkedHashMap 节点在 clear 后仍持有 key/value，所以该缺陷只在 Web 端暴露。
         val ordered = grouped.entries
             .sortedWith { left, right -> comparator.compare(left.value.first(), right.value.first()) }
+            .map { it.key to it.value }
         val retained = if (preserveDiverseLabels) {
-            val selected = selectDiverseLabels(ordered.map { it.value.first() }, limit, search).toSet()
+            val selected = selectDiverseLabels(ordered.map { it.second.first() }, limit, search).toSet()
             // 按 state key 记录已入选组：此前 `it in diverse` 在 entry 列表上线性查找，
             // 每次比较还要逐条比对整组 label，是 O(n²) 的深比较。
             val diverseKeys = hashSetOf<DpStateKey>()
-            val diverse = ordered.filterTo(mutableListOf()) { entry ->
-                (entry.value.first() in selected).also { if (it) diverseKeys += entry.key }
+            val diverse = ordered.filterTo(mutableListOf()) { (key, labels) ->
+                (labels.first() in selected).also { if (it) diverseKeys += key }
             }
             if (diverse.size < limit) {
                 diverse += ordered.asSequence()
-                    .filter { it.key !in diverseKeys }
+                    .filter { it.first !in diverseKeys }
                     .take(limit - diverse.size)
             }
             diverse

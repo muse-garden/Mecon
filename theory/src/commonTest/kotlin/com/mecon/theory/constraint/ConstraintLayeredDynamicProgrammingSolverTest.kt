@@ -443,6 +443,47 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
         }
     }
 
+    /**
+     * 前沿裁剪必须先把 `Map.Entry` 拷成快照，再 `clear()` 重填分组表。Kotlin/JS 的 entry 是回指
+     * 哈希表的活引用，clear 之后读它的 key/value 会抛
+     * "The backing map has been modified after this entry was obtained."；JVM 的 LinkedHashMap
+     * 节点在 clear 后仍带着 key/value，所以该缺陷只在 Web 端暴露，需由 jsNodeTest 守护。
+     */
+    @Test
+    fun boundedDpPrunesTheFrontierWithoutReadingStaleMapEntries() {
+        fun prunedProgram(preserveDiverseLabels: Boolean): ConstraintProgram = freeProgram(
+            slotCount = 3,
+            requestedVoicePlan = VoicePlan.standardFourPart(),
+        ).withoutTerminalGlobalRules().copy(
+            searchConfig = SearchConfig(
+                // 前沿上限 = min(maxFrontierStates, max(beamWidth, 有效搜索宽度) × maxResults)。
+                // 出边宽度受 beamWidth 约束，因此改用 maxFrontierStates 压低上限，保证每层都触发裁剪。
+                maxResults = 1,
+                beamWidth = 32,
+                backend = SearchBackend.LAYERED_DP,
+                prefixDiversity = PrefixDiversitySearchConfig(
+                    enabled = preserveDiverseLabels,
+                    frontierWidth = 32,
+                ),
+                dynamicProgramming = DynamicProgrammingSearchConfig(
+                    maxLabelsPerState = 4,
+                    maxFrontierStates = 2,
+                ),
+            ),
+        )
+
+        listOf(false, true).forEach { preserveDiverseLabels ->
+            val solved = assertIs<ConstraintSolveOutcome.Solved>(
+                ConstraintProgramSolver.solvePolyphonicOutcome(prunedProgram(preserveDiverseLabels)),
+            )
+            assertTrue(
+                solved.trace.frontierTruncated,
+                "preserveDiverseLabels=$preserveDiverseLabels 未触发前沿裁剪，回归失去意义",
+            )
+            assertEquals(3, solved.solutions.single().voicings.size)
+        }
+    }
+
     @Test
     fun excludedBestGroupDoesNotConsumeTheOnlyTerminalResultSlot() {
         val program = freeProgram(
