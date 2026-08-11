@@ -200,6 +200,15 @@ progression 槽数时可信，否则回退到 `findTargetSpan`。禁止再遍历
 猜原 program，也禁止按截短后的槽数误判终止类型（如把 `N6–I64–V` 当作三槽的 `N6–V–I`）。
 被 viewed-as 重新解读的实例，源调以 viewed-as 参数为准，优先于变体自带的 teaching source。
 
+投影的**准入闸门是 `SchoenbergChapterRegistry.chapterFor(ruleId)`**：只有归属某个章节的约束会被
+投影，`withoutChapters` 的禁忌进行消融诊断也按同一映射删规则。归属由 descriptor 的
+`ownedRulePrefixes` 决定，默认值只是练习自己的 `ruleId`——**章节规则用了别的命名空间时必须显式声明**，
+否则整批规则会静默地既进不了自由练习、也无法被消融（2026-08-11 修复：`schoenberg.leading-triad.*`、
+`schoenberg.second-inversion.*`、`schoenberg.seventh-chord.*`、`schoenberg.root-motion.*` /
+`schoenberg.repetition.*`、`schoenberg.freer.*` 五组均曾漏配）。守卫见
+`SchoenbergChapterRuleOwnershipTest`：它编译每个注册练习的 program，断言其中所有 `schoenberg.*`
+规则都能映射到章节；`schoenberg.four-part.*` 是一般四部写作规则，按设计不归章节。
+
 `FreePracticeWindowVoicer.solve` 接受可替换的 `PracticeTeachingRuleProjector`；未来爵士或插件体系
 提供自己的注册表适配器即可，`FreeHarmonySolver`、约束代数与搜索器不依赖勋伯格类型。
 
