@@ -27,6 +27,55 @@ async function clickScoreNote(page, occurrence) {
   await page.locator("canvas").click({ position: point });
 }
 
+async function marqueeFirstTwoScoreOnsets(page) {
+  const box = await page.evaluate(() => {
+    const frame = window.__MECON_E2E__.snapshot();
+    const surface = frame.bundle.surfaces[0];
+    const value = (item) => Number(item?.value ?? item ?? 0);
+    const origin = frame.bundle.paginated ? { x: 0, y: surface.contentOffsetY ?? 0 } : {
+      x: value(frame.bundle.bounds?.origin?.x), y: value(frame.bundle.bounds?.origin?.y),
+    };
+    const fraction = (item) => Number(item?.numerator ?? 0) / Number(item?.denominator ?? 1);
+    const sameTime = (left, right) => left.measure === right.measure
+      && fraction(left.beat) === fraction(right.beat);
+    const slots = frame.practiceUpdate.timeline.slots;
+    const renderedEventIds = new Set(surface.elements
+      .filter((element) => element.type === "NOTEHEAD").map((element) => element.eventId));
+    const eventsBySlot = Object.values(frame.practiceUpdate.score.score.voiceTracks)
+      .flatMap((voice) => voice.events ?? []).reduce((result, event) => {
+        if (!renderedEventIds.has(event.id)) return result;
+        const eventTime = frame.playbackAnchors.find((anchor) => sameTime(anchor.scoreTime, event.onset))?.time;
+        const absolute = fraction(eventTime);
+        const index = slots.findIndex((slot) => fraction(slot.onset) <= absolute
+          && fraction(slot.onset) + fraction(slot.duration) > absolute);
+        if (index >= 0) {
+          if (!result.has(index)) result.set(index, new Set());
+          result.get(index).add(event.id);
+        }
+        return result;
+      }, new Map());
+    const populatedSlots = [...eventsBySlot.keys()].sort((left, right) => left - right).slice(0, 2);
+    const eventIdsBySlot = new Set(populatedSlots.flatMap((index) => [...eventsBySlot.get(index)]));
+    const selected = surface.elements.filter((element) => element.type === "NOTEHEAD"
+      && eventIdsBySlot.has(element.eventId));
+    if (populatedSlots.length < 2 || !selected.length) throw new Error("Missing two populated score slots");
+    return {
+      left: Math.min(...selected.map((element) => value(element.hitBox.origin.x))) - origin.x - 12,
+      top: Math.min(...selected.map((element) => value(element.hitBox.origin.y))) - origin.y - 12,
+      right: Math.max(...selected.map((element) => value(element.hitBox.origin.x)
+        + value(element.hitBox.width))) - origin.x + 12,
+      bottom: Math.max(...selected.map((element) => value(element.hitBox.origin.y)
+        + value(element.hitBox.height))) - origin.y + 12,
+    };
+  });
+  const canvas = page.locator("canvas");
+  const canvasBox = await canvas.boundingBox();
+  await page.mouse.move(canvasBox.x + box.left, canvasBox.y + box.top);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + box.right, canvasBox.y + box.bottom, { steps: 4 });
+  await page.mouse.up();
+}
+
 test("new free practice starts from the shared preset and exports a complete container", async ({ page }) => {
   await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await page.goto("/");
@@ -423,6 +472,46 @@ test("score note selection consumes shared edit audition playback", async ({ pag
     .some((entry) => entry.kind === "edit-playback" && entry.type === "audition")))
     .toBe(true);
   await expect(page.locator(".score-playhead")).toHaveCount(0);
+});
+
+test("marquee rewrite and alternate keep the selected score time range", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('input[type="file"]').setInputFiles(longFixture);
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision
+  )), { timeout: 60_000 }).toBe(0);
+
+  await marqueeFirstTwoScoreOnsets(page);
+  await expect.poll(() => page.evaluate(() => new Set(
+    window.__MECON_E2E__.snapshot().practiceUpdate.selection.scoreTargets
+      .filter((target) => target.type === "event").map((target) => target.eventId),
+  ).size)).toBeGreaterThan(1);
+
+  const rewrite = page.locator('[data-control-id="writing.rewrite"] button');
+  await expect(rewrite).toBeEnabled();
+  await rewrite.click();
+  await expect.poll(() => page.evaluate(() => {
+    const writing = window.__MECON_E2E__.snapshot().practiceUpdate.writing;
+    return writing.lastScope?.length > 1 ? writing.lastScope : null;
+  })).not.toBeNull();
+  const requestedScope = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.writing.lastScope
+  ));
+
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.writing.phase
+  )), { timeout: 60_000 }).toBe("READY");
+  const expectedScope = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.writing.lastScope
+  ));
+  expect(expectedScope).toEqual(requestedScope);
+
+  const alternate = page.locator('[data-control-id="writing.alternate"] button');
+  await expect(alternate).toBeEnabled({ timeout: 60_000 });
+  await alternate.click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.writing.lastScope
+  ))).toEqual(expectedScope);
 });
 
 test("score transport steps its playhead, resumes complete notes, and starts from score selection", async ({ page }) => {

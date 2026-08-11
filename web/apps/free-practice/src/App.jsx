@@ -38,6 +38,7 @@ import { createRecoveryWriter, loadRecoveryState, saveRecovery } from "./recover
 import { createPracticeIntentQueue } from "./practice-intents.js";
 import { createNewPracticeDocument } from "./new-document.js";
 import { saveMeconDocument } from "./save-document.js";
+import { writingSlotIdsForScoreSelection } from "./writing-selection.js";
 import { HarmonyTimeline } from "./HarmonyTimeline.jsx";
 import { PracticeFeedbackPanel } from "./PracticeFeedbackPanel.jsx";
 import { PracticePlanPanel } from "./PracticePlanPanel.jsx";
@@ -1204,6 +1205,7 @@ function PracticeTopToolbar({
   const settings = update?.document?.settings;
   const writing = settings?.writing;
   const selectedSlotId = update?.selection?.slotId ?? update?.selectedSlotId;
+  const rewriteSlotIds = writingSlotIdsForScoreSelection(frame, update);
   const updateWriting = (fields) => writing && dispatchPractice({
     type: "updateWritingSettings", settings: { ...writing, ...fields },
   });
@@ -1221,8 +1223,8 @@ function PracticeTopToolbar({
     "file.save": <button disabled={!frame} onClick={onSave}><ToolbarIcon icon={Save} />保存</button>,
     "history.undo": <button disabled={!frame?.update.canUndo} onClick={() => dispatch({ type: "undo" })}><ToolbarIcon icon={Undo2} />撤销</button>,
     "history.redo": <button disabled={!frame?.update.canRedo} onClick={() => dispatch({ type: "redo" })}><ToolbarIcon icon={Redo2} />重做</button>,
-    "writing.rewrite": <button disabled={!selectedSlotId || update?.writing?.phase === "RUNNING"}
-      onClick={() => dispatchPractice({ type: "rewriteSelection", slotIds: [selectedSlotId] })}>
+    "writing.rewrite": <button disabled={!rewriteSlotIds.length || update?.writing?.phase === "RUNNING"}
+      onClick={() => dispatchPractice({ type: "rewriteSelection", slotIds: rewriteSlotIds })}>
       <ToolbarIcon icon={RefreshCw} />重新写作
     </button>,
     "writing.alternate": <button disabled={!update?.writing?.canAlternate}
