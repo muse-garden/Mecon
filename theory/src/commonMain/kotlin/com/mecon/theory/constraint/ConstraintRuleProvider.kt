@@ -112,9 +112,7 @@ internal class ConstraintAlgebraRuleProvider(
         val (dependent, direct) = scoreConstraints.partition { constraint ->
             constraint.expr.atomicPredicates().any { it is ConstraintPredicate.RuleFound }
         }
-        val (targetOnlyDirect, voiceDependentDirect) = direct.partition { constraint ->
-            constraint.expr.atomicPredicates().all { it.isTargetOnly() }
-        }
+        val (targetOnlyDirect, voiceDependentDirect) = direct.partition { it.isChordSelectionOnly }
         return ScoreConstraintPartition(
             targetOnlyDirect = targetOnlyDirect,
             voiceDependentDirect = voiceDependentDirect,
@@ -843,7 +841,10 @@ internal class ConstraintAlgebraRuleProvider(
     private fun Constraint.emit(result: ConstraintEvaluation): RuleFinding<EventId>? {
         if (!result.active || result.truth == ConstraintTruth.UNDETERMINED) return null
         val shouldEmit = when (modality) {
-            ConstraintModality.Require, is ConstraintModality.Prefer -> result.truth == ConstraintTruth.VIOLATED
+            ConstraintModality.Require,
+            is ConstraintModality.Prefer,
+            ConstraintModality.Remind,
+            -> result.truth == ConstraintTruth.VIOLATED
             is ConstraintModality.Reward, ConstraintModality.Annotate -> result.truth == ConstraintTruth.SATISFIED
         }
         if (!shouldEmit) return null
@@ -860,7 +861,10 @@ internal class ConstraintAlgebraRuleProvider(
                     RuleSeverity.HARD
                 }
                 is ConstraintModality.Prefer -> RuleSeverity.SOFT
-                is ConstraintModality.Reward, ConstraintModality.Annotate -> RuleSeverity.HINT
+                is ConstraintModality.Reward,
+                ConstraintModality.Annotate,
+                ConstraintModality.Remind,
+                -> RuleSeverity.HINT
             },
             message = if (success) effectiveExplanation.satisfied else effectiveExplanation.violated,
             anchors = result.anchors,
@@ -869,7 +873,13 @@ internal class ConstraintAlgebraRuleProvider(
                 is ConstraintModality.Reward -> -mode.bonus
                 else -> 0.0
             },
-            scoreIntent = if (success) RuleScoreIntent.EXPLANATORY else RuleScoreIntent.DEFAULT,
+            // Remind 只提醒：保留 VIOLATION 语义给 UI，但按 EXPLANATORY 计 0 分，
+            // 否则 scoreDelta=0 会退回按 severity 收 hintCost，仍旧干扰搜索。
+            scoreIntent = if (success || modality == ConstraintModality.Remind) {
+                RuleScoreIntent.EXPLANATORY
+            } else {
+                RuleScoreIntent.DEFAULT
+            },
         )
     }
 
@@ -1064,16 +1074,6 @@ private fun satisfied(anchors: List<EventId>) = ConstraintEvaluation(ConstraintT
 private fun verdict(ok: Boolean, anchors: List<EventId>) =
     ConstraintEvaluation(if (ok) ConstraintTruth.SATISFIED else ConstraintTruth.VIOLATED, anchors = anchors)
 
-private fun ConstraintPredicate.isTargetOnly(): Boolean =
-    when (this) {
-        is ConstraintPredicate.RootDiatonicMotion,
-        is ConstraintPredicate.MinimumSimilarChordDistance,
-        ConstraintPredicate.DistinctSimilarChordProgressions,
-        is ConstraintPredicate.RootProgressionPreference,
-        -> true
-        else -> false
-    }
-
 /**
  * 终层全局规则一次求值可能贡献的最小分数（可采纳下界）。DP 终层用它做 branch-and-bound：
  * 只要「基础分 + 下界」已经劣于当前 top-k 的第 k 名，后续路径就不必再展开全局规则。
@@ -1108,8 +1108,8 @@ internal fun terminalGlobalScoreLowerBound(
                     minOf(branchLowerBound, modality.weight ?: policy.softCost)
                 // Reward / Annotate 在 SATISFIED 时发射，Reward 记为负分奖励。
                 is ConstraintModality.Reward -> minOf(branchLowerBound, -modality.bonus)
-                // Annotate 发射的 finding 是 EXPLANATORY，scoreDelta 为 0 时不计分。
-                ConstraintModality.Annotate -> minOf(branchLowerBound, 0.0)
+                // Annotate 发射的 finding 是 EXPLANATORY，Remind 只提醒；两者 scoreDelta 都为 0。
+                ConstraintModality.Annotate, ConstraintModality.Remind -> minOf(branchLowerBound, 0.0)
             }
             minOf(0.0, emittedLowerBound)
         }

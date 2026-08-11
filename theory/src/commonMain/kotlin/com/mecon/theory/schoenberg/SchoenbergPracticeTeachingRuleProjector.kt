@@ -12,6 +12,7 @@ import com.mecon.theory.constraint.ConstraintPredicate
 import com.mecon.theory.constraint.ConstraintProgram
 import com.mecon.theory.constraint.InterpretedChordTarget
 import com.mecon.theory.constraint.TargetSelector
+import com.mecon.theory.constraint.isChordSelectionOnly
 import com.mecon.theory.constraint.projectSlots
 import com.mecon.theory.freepractice.PracticeTeachingRuleProjector
 import com.mecon.theory.freepractice.PracticeTeachingRuleRequest
@@ -307,9 +308,15 @@ object SchoenbergPracticeTeachingRuleProjector : PracticeTeachingRuleProjector {
             CHAPTER_RULE_WEIGHT
         }
 
+    /**
+     * 和弦选择规则在自由练习里只做提醒：和弦由用户选定，写作阶段改变声部排列既不能满足也不能
+     * 违反它们，让它们参与评分只会白白干扰声部搜索（并给分层 DP 增加无法合并的前缀状态）。
+     * 求解器将来若接手和弦选择，再单独考虑它们如何参与那一阶段。
+     */
     private fun Constraint.freePracticeModality(): ConstraintModality =
-        when (modality) {
-            ConstraintModality.Annotate -> ConstraintModality.Annotate
+        when {
+            modality == ConstraintModality.Annotate -> ConstraintModality.Annotate
+            isChordSelectionOnly -> ConstraintModality.Remind
             else -> ConstraintModality.Prefer(freePracticeWeight())
         }
 

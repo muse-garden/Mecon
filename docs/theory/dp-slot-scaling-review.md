@@ -190,6 +190,10 @@ while (selected.size < limit && remaining.isNotEmpty()) {
    可恢复语义），可把合并率提高约 3.4–5×。EXACT 保持现状。
 5. **history 签名常量化**（§6 表格），为开放和声域做准备；`RootProgressionPreference` 若无法有限
    表示，应在 planner 里 fail closed 而不是塞进完整前缀。
+   > 2026-08-11 部分解决：和弦选择规则在自由练习里已降为 `ConstraintModality.Remind`，planner
+   > 不再为 `Annotate` / `Remind` 收集状态，因此这四个累加式签名不会出现在自由练习的 DP key
+   > 里（见 [free-harmony-solver.md](free-harmony-solver.md) §4.0）。勋伯格章节自己的开放域
+   > program 仍以 `Prefer` 使用它们——求解器一旦真正接手和弦选择，本条仍需按表格落实。
 6. **把终层 BnB 的下界扩展到多样化路径**，或至少在 trace 里显式报告「下界已关闭」。
 7. **基准配置入库**：把本文的 (槽位, maxResults, 多样化开关) 曲线固化成一个可选运行的基准测试，
    耗时只打印、转移数与逐层状态数做断言，避免再出现无法复现的历史数字。

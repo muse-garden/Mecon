@@ -14,7 +14,7 @@
 
 自由求解器把请求编译为现有 `ConstraintProgram`，复用：
 
-- `Constraint` 的 `Require / Prefer / Reward / Annotate`；
+- `Constraint` 的 `Require / Prefer / Reward / Annotate / Remind`；
 - `RuleFinding`、`RuleProfile` 与 suppression；
 - 固定声部候选空间；
 - 确定性首解与多样化重启搜索；
@@ -79,11 +79,21 @@ data class ProgressionPlacement(
 
 ## 4. 默认软规则
 
-以下规则在自由 profile 中全部为 `Prefer`。普通章节形式仍低于通用声部可读性；章节明确指定的
+以下写作规则在自由 profile 中为 `Prefer`。普通章节形式仍低于通用声部可读性；章节明确指定的
 逐声部邻接/级进则高于相邻声部同音与普通旋律成本。用户 pin 始终优先，软规则不得把固定交错
 或特殊织体变成无解。
 
-### 4.1 和声反复
+### 4.0 和弦选择与写作分离
+
+只依赖符号和弦序列的规则（`ConstraintPredicate.isChordSelectionOnly`：根音进行方向、根音进行
+偏好评分、类似和弦距离、类似进行重复）属于**和弦选择**阶段。自由练习的和弦一律由用户选定，
+写作阶段改变声部排列既不能满足也不能违反它们，因此它们一律编译为 `ConstraintModality.Remind`：
+违反时照常发 HINT finding 提醒用户，但 `scoreDelta = 0`、按 EXPLANATORY 计 0 分、不参与剪枝，
+也不占用分层 DP 的合并状态。勋伯格章节规则经 `SchoenbergPracticeTeachingRuleProjector` 投影进
+自由练习时同样降级。求解器将来若接手和弦选择，再单独决定这些规则如何参与那一阶段——
+届时不要把它们塞回写作搜索。
+
+### 4.1 和声反复（和弦选择，只作提醒）
 
 - 相似和弦不宜过近；
 - 相似有向进行不宜短距离重复；

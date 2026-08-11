@@ -132,6 +132,12 @@ DFS 与 DP 还共用一套不进入乐理评分的字典序搜索优先级：完
 | 有限摘要 | `UniqueVoiceExtreme` |
 | 有界终局重排 | `NoRepeatedVoicePattern` |
 
+`Annotate` 与 `Remind` 约束不计分也不能否决，因此不影响任何搜索决策，planner 只把它们记为
+covered 而**不收集状态**。自由写作的和弦选择规则正是这一类（见
+[free-harmony-solver.md](free-harmony-solver.md) §4.0），所以 `MinimumSimilarChordDistance` /
+`DistinctSimilarChordProgressions` / `RootProgressionPreference` 的前缀历史不会进入自由练习的
+DP key。
+
 **合成式（`And` / `Or` / `Not`）使用有限自动机**：planner 遍历 `expr.atomicPredicates()`，收集每个
 原子的音高/历史需求，同时把各原子的 Kleene 三值真值与 active 位纳入 key。它不会把完整前缀塞入
 状态，也不会只保存整体真假而丢掉各分支进展。任一原子被拒则整条约束被拒。这解锁了勋伯格的两处合成式：

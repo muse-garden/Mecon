@@ -243,10 +243,18 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
     @Test
     fun targetHistoryRulesCompileAutomataAndUnknownVoiceSummaryRejectsDp() {
         val base = freeProgram(slotCount = 3)
-        val plan = requireNotNull(LayeredDpCapability.analyze(base).statePlan)
-        assertTrue(plan.coveredRuleIds.any { it.value == "free.harmony.similar-chord-distance" })
+        val scoringRuleId = RuleId("test.similar-chord-distance.scoring")
+        val scoring = base.copy(
+            constraints = base.constraints + Constraint(
+                expr = ConstraintExpr.Atom(ConstraintPredicate.MinimumSimilarChordDistance(3)),
+                modality = ConstraintModality.Prefer(28.0),
+                ruleId = scoringRuleId,
+            ),
+        )
+        val plan = requireNotNull(LayeredDpCapability.analyze(scoring).statePlan)
+        assertTrue(plan.coveredRuleIds.contains(scoringRuleId))
         assertTrue(plan.layers.dropLast(1).all { layer ->
-            layer.bindings.any { it.ruleId.value == "free.harmony.similar-chord-distance" }
+            layer.bindings.any { it.ruleId == scoringRuleId }
         })
 
         val unsupported = base.copy(
@@ -263,6 +271,46 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
         val capability = LayeredDpCapability.analyze(unsupported)
         assertTrue(!capability.supported)
         assertTrue(capability.reason.orEmpty().contains("VoicePitchClassCardinality"))
+    }
+
+    /**
+     * 和弦选择规则在自由写作里是 [ConstraintModality.Remind]：仍被 capability 审计覆盖，但既不计分
+     * 也不能否决，因此不得占用任何合并状态——否则整条前缀历史会被塞进 DP key，状态永不合并。
+     */
+    @Test
+    fun chordSelectionRemindersAreCoveredWithoutClaimingMergeState() {
+        val base = freeProgram(slotCount = 3)
+        val reminders = base.constraints
+            .filter { it.modality == ConstraintModality.Remind }
+            .mapNotNull { it.ruleId }
+        assertTrue(reminders.isNotEmpty(), "自由写作应至少有一条和弦选择提醒")
+
+        val plan = requireNotNull(LayeredDpCapability.analyze(base).statePlan)
+        reminders.forEach { ruleId ->
+            assertTrue(plan.coveredRuleIds.contains(ruleId), "${ruleId.value} 应通过能力审计")
+            assertTrue(
+                plan.layers.none { layer -> layer.bindings.any { it.ruleId == ruleId } },
+                "${ruleId.value} 是提醒，不应占用 DP 合并状态",
+            )
+        }
+    }
+
+    /** 提醒发 finding、但不进入总分，也不会把路径判成硬违规。 */
+    @Test
+    fun chordSelectionRemindersDoNotChangeScores() {
+        val base = freeProgram(slotCount = 3)
+        val withoutReminders = base.copy(
+            constraints = base.constraints.filterNot { it.modality == ConstraintModality.Remind },
+        )
+        val withReminders = ConstraintProgramSolver.solvePolyphonicOutcome(base, maxTraceEntries = 0)
+        val without = ConstraintProgramSolver.solvePolyphonicOutcome(withoutReminders, maxTraceEntries = 0)
+        val left = assertIs<ConstraintSolveOutcome.Solved>(withReminders)
+        val right = assertIs<ConstraintSolveOutcome.Solved>(without)
+        assertEquals(
+            right.solutions.first().breakdown.total,
+            left.solutions.first().breakdown.total,
+            "提醒不得改变总分",
+        )
     }
 
     @Test

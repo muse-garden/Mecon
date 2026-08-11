@@ -187,7 +187,9 @@ baseline 永远不是 hard pin；真正必须保留的材料继续使用 `VoiceP
 
 惯用进行保存的 `sourceExerciseId/sourceChapterId` 由 `PracticeTeachingRuleProjector` 解析。默认的
 `SchoenbergPracticeTeachingRuleProjector` 只向章节注册表请求原始 program，再通过通用
-`Constraint.projectSlots` 映射到当前写作槽窗并降为 `Prefer`；普通章节偏好权重为 4，明确指定
+`Constraint.projectSlots` 映射到当前写作槽窗并降为 `Prefer`（只依赖符号和弦序列的**和弦选择**
+规则改为降到 `Remind`，见 [free-harmony-solver.md](free-harmony-solver.md) §4.0：用户已自行选定
+和弦，这些规则只发提醒 finding，不计分也不占 DP 状态）；普通章节偏好权重为 4，明确指定
 逐声部邻接/级进的 `NeighborTone` 与 `VoiceDiatonicSteps` 权重为 120，高于相邻声部同音的通用
 软成本 100。这样 N6–I64 中 `b2–1`、`b6–5` 的平顺平行四度会促使低音选择合法的低八度 4，
 而不会为了避免后继同音而改走更差的变化音程。投影同时按选中的 `ChordInterpretation` 重映射

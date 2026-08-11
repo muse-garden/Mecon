@@ -461,7 +461,7 @@ object ConstraintProgramSolver {
         return program.constraints.filter { constraint ->
             constraint.modality == ConstraintModality.Require &&
                 constraint.ruleId !in program.demonstratedViolationRuleIds &&
-                constraint.expr.atomicPredicates().all { it.isTargetOnlyPreflightPredicate() } &&
+                constraint.isChordSelectionOnly &&
                 constraint.expr.evaluateTruth { predicate ->
                     predicate.evaluateTargetOnly(program, targets, constraint.scope)
                 } == ConstraintTruth.VIOLATED
@@ -486,16 +486,6 @@ private fun RuleFinding<EventId>.remapAnchors(
         )
     },
 )
-
-private fun ConstraintPredicate.isTargetOnlyPreflightPredicate(): Boolean =
-    when (this) {
-        is ConstraintPredicate.RootDiatonicMotion,
-        is ConstraintPredicate.MinimumSimilarChordDistance,
-        ConstraintPredicate.DistinctSimilarChordProgressions,
-        is ConstraintPredicate.RootProgressionPreference,
-        -> true
-        else -> false
-    }
 
 private fun ConstraintPredicate.evaluateTargetOnly(
     program: ConstraintProgram,

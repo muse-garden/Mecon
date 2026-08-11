@@ -211,6 +211,15 @@ internal object LayeredDpStatePlanner {
         program.constraints.forEachIndexed { index, constraint ->
             val ruleId = constraint.ruleId ?: defaultConstraintRuleId(constraint.expr)
             if (!enabled(ruleId)) return@forEachIndexed
+            if (
+                constraint.modality == ConstraintModality.Annotate ||
+                constraint.modality == ConstraintModality.Remind
+            ) {
+                // 解释与提醒都不计分、不能否决，因此不影响任何搜索决策：无需为它们保留合并状态。
+                // finding 仍由规则管线在最终路径上求值，与保留哪条 label 无关。
+                covered += ruleId
+                return@forEachIndexed
+            }
             if (constraint.expr !is ConstraintExpr.Atom) {
                 // The expression tree itself is immutable. Its future behavior is determined by
                 // the finite truth/active state of each atom plus the atom-specific summaries
