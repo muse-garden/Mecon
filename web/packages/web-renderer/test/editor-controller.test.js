@@ -1,6 +1,35 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createScoreEditorCommandController, createScoreEditorDragController } from "../editor/index.js";
+import {
+  createControlledScrollSync,
+  createScoreEditorCommandController,
+  createScoreEditorDragController,
+} from "../editor/index.js";
+
+test("controlled scroll sync does not pull an active native scrollbar back to a stale prop", () => {
+  const sync = createControlledScrollSync();
+  const element = { scrollLeft: 0 };
+
+  element.scrollLeft = 80;
+  assert.equal(sync.observe(80), true);
+  sync.apply(element, 0);
+  assert.equal(element.scrollLeft, 80);
+
+  sync.apply(element, 80);
+  sync.apply(element, 24);
+  assert.equal(element.scrollLeft, 24);
+  assert.equal(sync.observe(24), false);
+});
+
+test("a no-op boundary scroll cannot block later sibling scroll updates", () => {
+  const sync = createControlledScrollSync();
+  const element = { scrollLeft: 80 };
+
+  assert.equal(sync.observe(80, 80), false);
+  sync.apply(element, 36);
+  assert.equal(element.scrollLeft, 36);
+  assert.equal(sync.observe(36, 36), false);
+});
 
 const input = {
   insertMeasure: "3",

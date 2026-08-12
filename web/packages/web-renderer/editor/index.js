@@ -3,6 +3,7 @@ export * from "./controller.js";
 export * from "./drag-controller.js";
 export * from "./music-glyphs.js";
 export * from "./playback.js";
+export * from "./scroll-sync.js";
 export {
   FULL_SCORE_EDITOR_TOOLBAR,
   FREE_PRACTICE_SCORE_TOOLBAR,

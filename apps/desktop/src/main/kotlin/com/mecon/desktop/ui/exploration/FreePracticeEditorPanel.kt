@@ -410,6 +410,7 @@ internal fun PracticeEditorPanel(
     }
     val pianoRollProjection = activeTimeAxis?.let { settled ->
         val axis = settled.axis
+        val timelineEnd = state.workspace.slots.maxOf { it.onset + it.duration }
         PianoRollTimeProjection(
             xAtTicks = { ticks ->
                 val absolute = Fraction(
@@ -436,6 +437,13 @@ internal fun PracticeEditorPanel(
             onHorizontalDrag = { delta ->
                 scope.launch { timeScrollState.scrollBy(-delta) }
             },
+            contentEndX = freePracticeExtendedAxisX(
+                axis = axis,
+                settledEndTime = settled.coveredUntil,
+                absoluteTime = timelineEnd,
+                beatWidthPx = beatWidthPx,
+                renderDensity = density.density,
+            ) - timeScrollState.value,
         )
     }
     androidx.compose.runtime.LaunchedEffect(host) {
@@ -1148,7 +1156,12 @@ internal fun SharedHarmonicTimeline(
             Modifier
                 .fillMaxWidth()
                 .height(scene.contentHeight.dp)
-                .horizontalScroll(scrollState)
+                // A chord/handle drag and viewport panning must never own the same horizontal
+                // pointer stream. If the scrollable stays enabled after the timeline controller
+                // captures a target, it moves the child underneath the stationary pointer; the
+                // next scene-local x then includes that scroll delta and the preview visibly
+                // oscillates left and right. Blank-space drags still pan while no gesture is active.
+                .horizontalScroll(scrollState, enabled = gesture == null)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {

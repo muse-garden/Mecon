@@ -1042,6 +1042,9 @@ export function App() {
         scrollLeft: sharedScrollLeft,
         onScroll: setSharedScrollLeft,
         onViewportWidth: updatePracticeViewportWidth,
+        // The timeline owns one append-duration tail after the score. Give notation the same
+        // scrollable extent so both native scrollbars reach and leave their right edge together.
+        scrollContentWidth: timelineScene?.contentWidth ?? 0,
         playbackStore: playbackCursorRef.current,
       }}
     >

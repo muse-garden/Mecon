@@ -160,3 +160,8 @@ export function createScoreEditorDragController(options: {
   onPointerMove(event: any): void;
   finish(event: any, cancelled?: boolean): void;
 };
+
+export function createControlledScrollSync(tolerance?: number): {
+  apply(element: { scrollLeft: number } | null, controlled: number): void;
+  observe(next: number, controlled?: number | null): boolean;
+};

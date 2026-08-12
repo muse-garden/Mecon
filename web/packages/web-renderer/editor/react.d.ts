@@ -169,6 +169,8 @@ export interface ScoreEditorSurfaceProps {
   scrollLeft?: number;
   onScroll?: (scrollLeft: number) => void;
   onViewportWidth?: (width: number) => void;
+  /** Shared horizontal extent; extra width becomes trailing margin after the engraved score. */
+  scrollContentWidth?: number;
   playbackStore?: import("./index.js").PlaybackCursorStore | null;
   className?: string;
   ariaLabel?: string;
