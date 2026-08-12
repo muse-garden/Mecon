@@ -105,6 +105,7 @@ export function PracticePlanPanel({
   onSetCatalogFilter,
   sections = ["tonality", "harmony", "details", "idioms"],
   chordDetailsInitiallyOpen = false,
+  beforeTonality = null,
 }) {
   const plan = update?.plan;
   const strings = plan?.strings;
@@ -173,6 +174,7 @@ export function PracticePlanPanel({
   const visibleSections = new Set(sections);
 
   return <aside className="panel practice-plan-panel" aria-label={strings.panelAriaLabel}>
+    {visibleSections.has("tonality") && beforeTonality}
     {visibleSections.has("tonality") && <details className="plan-section workbench-panel" open>
       <summary><ChevronRight className="disclosure-icon" aria-hidden="true" size={17} strokeWidth={1.8} /><h2>{strings.currentTonalityTitle}</h2></summary>
     <div className="tonal-layout-actions">

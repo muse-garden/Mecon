@@ -172,6 +172,9 @@ export interface ScoreEditorSurfaceProps {
   /** Shared horizontal extent; extra width becomes trailing margin after the engraved score. */
   scrollContentWidth?: number;
   playbackStore?: import("./index.js").PlaybackCursorStore | null;
+  elementTints?: Map<string, string> | Record<string, string> | null;
+  elementCenterMarkers?: Map<string, string | { color: string; radius?: number }> |
+    Record<string, string | { color: string; radius?: number }> | null;
   className?: string;
   ariaLabel?: string;
   canvasAriaLabel?: string;

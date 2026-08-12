@@ -28,11 +28,24 @@ async function clickScoreNote(page, occurrence) {
 }
 
 test("marks a selected note and enables shared harmonic-role filters", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByLabel("鎵撳紑 .mecon").setInputFiles(longFixture);
-  await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().bundle.surfaces
+      .flatMap((surface) => surface.elements)
+      .filter((element) => element.type === "NOTEHEAD").length
+  )), { timeout: 30_000 }).toBeGreaterThan(0);
+  const noteProperties = page.locator("#workbench-panel-plan .practice-note-properties");
+  await expect(noteProperties).toBeVisible();
+  await expect(noteProperties.getByRole("heading", { name: "和弦内外音" })).toBeVisible();
+  await expect(noteProperties.getByRole("heading", { name: "锁定情况" })).toBeVisible();
+  expect(await noteProperties.evaluate((panel) => (
+    panel.nextElementSibling?.textContent?.includes("当前调性") ?? false
+  ))).toBe(true);
   await clickScoreNote(page, 0);
-  await page.getByRole("button", { name: "和弦内音", exact: true }).click();
+  await noteProperties.getByRole("button", { name: "标记为和弦内音", exact: true }).click();
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.harmonicRoles.length
   ))).toBe(1);
@@ -44,8 +57,11 @@ test("marks a selected note and enables shared harmonic-role filters", async ({ 
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.lockedStaffTrackIds.length
   ))).toBe(1);
-  await page.getByLabel("筛选和弦").check();
-  await page.getByLabel("筛选惯用进行").check();
+  await page.getByLabel("筛选和弦").click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.noteConstraints.chordCatalogFilterEnabled
+  ))).toBe(true);
+  await page.getByLabel("筛选惯用进行").click();
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.noteConstraints
   ))).toMatchObject({ chordCatalogFilterEnabled: true, idiomCatalogFilterEnabled: true });

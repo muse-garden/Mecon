@@ -55,6 +55,8 @@ data class RenderedScoreSelectionConfig(
     val highlightedElements: Set<RenderElementId> = emptySet(),
     val localEventStyles: Map<EventId, StyleOverride> = emptyMap(),
     val noteheadBackgroundGroups: List<RenderedScoreNoteheadBackgroundGroup> = emptyList(),
+    /** Stable noteheads decorated with renderer-computed centered contrast dots. */
+    val noteheadCenterMarkerNotes: Set<NoteRef> = emptySet(),
     val selectableSection: (EventSection) -> Boolean = { true },
 ) {
     companion object {

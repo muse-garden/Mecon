@@ -119,6 +119,19 @@ test("SVG restores omitted Kotlin command colors and supports per-element tint",
   assert.match(svg, /data-mecon-id="elem_2".*fill="#a6abb3"/);
 });
 
+test("selection tint outranks semantic tint and center markers remain visible", () => {
+  const svg = renderSvg(bundle, {
+    selectedIds: ["elem_2"],
+    selectionMode: "tint",
+    selectionColor: "#2878ff",
+    elementTints: { elem_2: "#41aa5f" },
+    elementCenterMarkers: { elem_2: { color: "#fff", radius: 1.5 } },
+  });
+  assert.match(svg, /data-mecon-id="elem_2".*fill="#2878ff"/);
+  assert.match(svg, /data-mecon-id="elem_2".*<circle[^>]*r="1.5"[^>]*fill="#fff"/);
+  assert.doesNotMatch(svg, /data-mecon-id="elem_2".*fill="#41aa5f"/);
+});
+
 test("SVG omits elements listed in hiddenIds", () => {
   const svg = renderSvg(bundle, { hiddenIds: ["elem_2"] });
   assert.match(svg, /data-mecon-id="elem_1"/);

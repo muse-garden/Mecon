@@ -34,6 +34,8 @@ export interface RenderOptions {
   hiddenIds?: Iterable<string>;
   elementOffsets?: Map<string, { x?: number; y?: number }> | Record<string, { x?: number; y?: number }>;
   elementTints?: Map<string, string> | Record<string, string>;
+  elementCenterMarkers?: Map<string, string | { color: string; radius?: number }> |
+    Record<string, string | { color: string; radius?: number }>;
   commandLayers?: Array<{ commands: readonly unknown[]; color?: string }>;
   musicFontFamily?: string;
   background?: string;

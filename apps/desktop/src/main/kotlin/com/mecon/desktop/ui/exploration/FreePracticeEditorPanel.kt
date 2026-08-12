@@ -34,10 +34,10 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -554,54 +554,8 @@ internal fun PracticeEditorPanel(
                         else -> emptyList()
                     }
                 }
-                val selectedEventId = selectedNoteheads.firstOrNull()?.eventId
-                val selectedVoiceId = host.runtimeScore.voiceTracks.entries
-                    .firstOrNull { (_, voice) -> voice.events.any { it.id == selectedEventId } }?.key
-                val selectedStaffId = host.runtimeScore.staffTracks.entries
-                    .firstOrNull { (_, staff) -> staff.voiceTracks.any { it.id == selectedVoiceId } }?.key
-                val selectedNotesLocked = selectedNoteheads.isNotEmpty() && selectedNoteheads.all { ref ->
-                    host.practiceNoteConstraints.noteheads.firstOrNull { it.notehead == ref }?.locked == true
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(
-                        enabled = selectedNoteheads.isNotEmpty(),
-                        onClick = { host.setHarmonicRole(selectedNoteheads, PracticeHarmonicRole.CHORD_TONE) },
-                    ) { Text("和弦内音") }
-                    Button(
-                        enabled = selectedNoteheads.isNotEmpty(),
-                        onClick = { host.setHarmonicRole(selectedNoteheads, PracticeHarmonicRole.NON_CHORD_TONE) },
-                    ) { Text("和弦外音") }
-                    Button(
-                        enabled = selectedNoteheads.isNotEmpty(),
-                        onClick = { host.setHarmonicRole(selectedNoteheads, null) },
-                    ) { Text("清除标记") }
-                    Button(
-                        enabled = selectedNoteheads.isNotEmpty(),
-                        onClick = { host.setNoteheadLock(selectedNoteheads, !selectedNotesLocked) },
-                    ) { Text(if (selectedNotesLocked) "解锁音符" else "锁定音符") }
-                    Button(
-                        enabled = selectedVoiceId != null,
-                        onClick = { selectedVoiceId?.let { id ->
-                            host.setVoiceLock(id, id !in host.practiceNoteConstraints.lockedVoiceTrackIds)
-                        } },
-                    ) { Text(if (selectedVoiceId in host.practiceNoteConstraints.lockedVoiceTrackIds) "解锁声部" else "锁定声部") }
-                    Button(
-                        enabled = selectedStaffId != null,
-                        onClick = { selectedStaffId?.let { id ->
-                            host.setStaffLock(id, id !in host.practiceNoteConstraints.lockedStaffTrackIds)
-                        } },
-                    ) { Text(if (selectedStaffId in host.practiceNoteConstraints.lockedStaffTrackIds) "解锁谱表" else "锁定谱表") }
-                    Button(onClick = {
-                        val view = host.practiceNoteConstraints
-                        host.setHarmonicRoleFilters(!view.chordCatalogFilterEnabled, view.idiomCatalogFilterEnabled)
-                    }) { Text(if (host.practiceNoteConstraints.chordCatalogFilterEnabled) "和弦筛选：开" else "和弦筛选：关") }
-                    Button(onClick = {
-                        val view = host.practiceNoteConstraints
-                        host.setHarmonicRoleFilters(view.chordCatalogFilterEnabled, !view.idiomCatalogFilterEnabled)
-                    }) { Text(if (host.practiceNoteConstraints.idiomCatalogFilterEnabled) "进行筛选：开" else "进行筛选：关") }
+                val selectedNoteRefs = selectedNoteheads.mapTo(hashSetOf()) {
+                    NoteRef(it.eventId, it.pitchIndex)
                 }
                 HorizontalScoreEditor(
                     state = noteTool,
@@ -624,19 +578,28 @@ internal fun PracticeEditorPanel(
                                 selection = selection,
                                 onSelectionChange = { selection = it },
                                 noteheadBackgroundGroups = host.practiceNoteConstraints.noteheads
-                                    .filter { it.inferredRole != null || it.explicitRole != null || it.locked }
-                                    .groupBy { item -> when {
-                                        item.conflict -> RenderColor.rgb(220, 55, 55)
-                                        item.locked -> RenderColor.rgb(55, 115, 205)
-                                        item.inferredRole == PracticeHarmonicRole.CHORD_TONE -> RenderColor.rgb(65, 170, 95)
-                                        else -> RenderColor.rgb(225, 155, 45)
-                                    } }
-                                    .map { (color, items) -> RenderedScoreNoteheadBackgroundGroup(
-                                        notes = items.mapTo(linkedSetOf()) { item ->
-                                            NoteRef(item.notehead.eventId, item.notehead.pitchIndex)
-                                        },
-                                        color = color,
-                                    ) },
+                                    .filter { item ->
+                                        val ref = NoteRef(item.notehead.eventId, item.notehead.pitchIndex)
+                                        (item.inferredRole != null || item.explicitRole != null) &&
+                                            ref !in selectedNoteRefs
+                                    }
+                                    .map { item ->
+                                        RenderedScoreNoteheadBackgroundGroup(
+                                            notes = setOf(NoteRef(item.notehead.eventId, item.notehead.pitchIndex)),
+                                            color = when {
+                                                item.conflict -> RenderColor.rgb(220, 55, 55)
+                                                (item.explicitRole ?: item.inferredRole) ==
+                                                    PracticeHarmonicRole.CHORD_TONE ->
+                                                    RenderColor.rgb(65, 170, 95)
+                                                else -> RenderColor.rgb(225, 155, 45)
+                                            },
+                                        )
+                                    },
+                                noteheadCenterMarkerNotes = host.practiceNoteConstraints.noteheads
+                                    .filter { it.locked }
+                                    .mapTo(linkedSetOf()) { item ->
+                                        NoteRef(item.notehead.eventId, item.notehead.pitchIndex)
+                                    },
                             ),
                             display = RenderedScoreDisplayConfig(
                                 readOnly = false,

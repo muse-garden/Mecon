@@ -193,6 +193,11 @@ data class NoteElement(
                     .measureNumber(measureNumber)
                     .staffIndex(staffIndex)
                     .metadata("pitchIndex", noteheadInfo.pitchIndex.toString())
+                    .metadata(
+                        "noteheadFilled",
+                        (noteheadInfo.geometry.glyph.name == com.mecon.renderer.smufl.SmuflGlyphs.noteheadBlack.name)
+                            .toString(),
+                    )
                     .build()
                 elements.add(element)
                 if (computedEvent != null) {

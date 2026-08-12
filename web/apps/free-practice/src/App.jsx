@@ -54,6 +54,20 @@ import {
 // Keep the classic branch available for the future Web piano-roll layout switch.
 const DEFAULT_WEB_PRACTICE_LAYOUT = "writing-with-lower-panels";
 
+function practiceRoleStatus(noteheads, roleViewByRef) {
+  if (!noteheads.length) return "和弦角色：—";
+  const views = noteheads.map((ref) => roleViewByRef.get(`${ref.eventId}:${ref.pitchIndex}`))
+    .filter(Boolean);
+  if (views.some((item) => item.conflict)) return "和弦角色：存在冲突";
+  const explicit = new Set(views.map((item) => item.explicitRole).filter(Boolean));
+  const resolved = new Set(views.map((item) => item.explicitRole ?? item.inferredRole).filter(Boolean));
+  if (explicit.size > 1 || resolved.size > 1) return "和弦角色：混合";
+  const role = [...(explicit.size ? explicit : resolved)][0];
+  if (!role) return "和弦角色：未判定";
+  const label = role === "CHORD_TONE" ? "和弦内音" : "和弦外音";
+  return `${explicit.size ? "已标记" : "推断"}：${label}`;
+}
+
 /**
  * Effects the session raises when a background engine crashed. The session has already rolled the
  * workbench back to its last committed state by the time one of these frames arrives; the shell
@@ -179,10 +193,20 @@ export function App() {
     .map((element) => [element.id, roleViewByRef.get(
       `${element.eventId}:${Number(element.metadata.pitchIndex)}`,
     )])
-    .filter(([, item]) => item?.inferredRole != null || item?.explicitRole != null || item?.locked)
+    .filter(([, item]) => item?.inferredRole != null || item?.explicitRole != null)
     .map(([id, item]) => [id, item.conflict ? "#dc3737"
-      : item.locked ? "#3773cd"
-        : item.inferredRole === "CHORD_TONE" ? "#41aa5f" : "#e19b2d"]));
+      : (item.explicitRole ?? item.inferredRole) === "CHORD_TONE" ? "#41aa5f" : "#e19b2d"]));
+  const practiceElementCenterMarkers = Object.fromEntries((frame?.bundle?.surfaces ?? [])
+    .flatMap((surface) => surface.elements)
+    .filter((element) => element.type === "NOTEHEAD" && element.eventId != null
+      && element.metadata?.pitchIndex != null)
+    .map((element) => [element, roleViewByRef.get(
+      `${element.eventId}:${Number(element.metadata.pitchIndex)}`,
+    )])
+    .filter(([, item]) => item?.locked)
+    .map(([element]) => [element.id, {
+      color: element.metadata?.noteheadFilled === "true" ? "#fff" : "#000",
+    }]));
 
   function selectedPracticeNoteheads() {
     const views = practiceUpdate?.noteConstraints?.noteheads ?? [];
@@ -197,12 +221,13 @@ export function App() {
         .map((item) => item.notehead);
     });
   }
+  const selectedNoteheads = selectedPracticeNoteheads();
   const selectedPracticeVoiceId = (practiceUpdate?.selection?.scoreTargets ?? [])
     .find((target) => target.type === "event")?.voiceTrackId ?? null;
   const selectedPracticeStaffId = Object.values(practiceUpdate?.score?.score?.staffTracks ?? {})
     .find((staff) => staff.voiceTrackIds?.includes(selectedPracticeVoiceId))?.id ?? null;
-  const selectedPracticeNotesLocked = selectedPracticeNoteheads().length > 0
-    && selectedPracticeNoteheads().every((ref) => roleViewByRef.get(
+  const selectedPracticeNotesLocked = selectedNoteheads.length > 0
+    && selectedNoteheads.every((ref) => roleViewByRef.get(
       `${ref.eventId}:${ref.pitchIndex}`,
     )?.locked);
 
@@ -985,6 +1010,70 @@ export function App() {
     });
   }
 
+  const practiceNoteProperties = practiceUpdate && <details
+    className="plan-section workbench-panel practice-note-properties" open>
+    <summary><h2>音符属性</h2></summary>
+    <p className="practice-note-properties-summary">
+      {selectedNoteheads.length
+        ? `已选择 ${selectedNoteheads.length} 个符头`
+        : "选择一个或多个符头以编辑属性"}
+    </p>
+    <section className="practice-note-property-group" aria-labelledby="practice-role-heading">
+      <h3 id="practice-role-heading">和弦内外音</h3>
+      <p>{practiceRoleStatus(selectedNoteheads, roleViewByRef)}</p>
+      <div className="practice-note-property-actions">
+        <button disabled={!selectedNoteheads.length} onClick={() => dispatchPractice({
+          type: "setHarmonicRole", noteheads: selectedNoteheads, role: "CHORD_TONE",
+        })}>标记为和弦内音</button>
+        <button disabled={!selectedNoteheads.length} onClick={() => dispatchPractice({
+          type: "setHarmonicRole", noteheads: selectedNoteheads, role: "NON_CHORD_TONE",
+        })}>标记为和弦外音</button>
+        <button disabled={!selectedNoteheads.length} onClick={() => dispatchPractice({
+          type: "setHarmonicRole", noteheads: selectedNoteheads,
+        })}>清除内外音标记</button>
+        <label><input type="checkbox"
+          checked={practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false}
+          onChange={(event) => dispatchPractice({
+            type: "setHarmonicRoleFilters",
+            chordCatalogEnabled: event.target.checked,
+            idiomCatalogEnabled: practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false,
+          })} />筛选和弦</label>
+        <label><input type="checkbox"
+          checked={practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false}
+          onChange={(event) => dispatchPractice({
+            type: "setHarmonicRoleFilters",
+            chordCatalogEnabled: practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false,
+            idiomCatalogEnabled: event.target.checked,
+          })} />筛选惯用进行</label>
+      </div>
+    </section>
+    <section className="practice-note-property-group" aria-labelledby="practice-lock-heading">
+      <h3 id="practice-lock-heading">锁定情况</h3>
+      <p>{selectedNoteheads.length
+        ? `当前音符：${selectedPracticeNotesLocked ? "已锁定" : "未锁定或混合"}`
+        : "当前音符：—"}</p>
+      <p className="practice-note-properties-summary">锁定音符以符头中央圆点标记</p>
+      <div className="practice-note-property-actions">
+        <button disabled={!selectedNoteheads.length} onClick={() => dispatchPractice({
+          type: "setNoteheadLock", noteheads: selectedNoteheads,
+          locked: !selectedPracticeNotesLocked,
+        })}>{selectedPracticeNotesLocked ? "解锁音符" : "锁定音符"}</button>
+        <button disabled={!selectedPracticeVoiceId} onClick={() => dispatchPractice({
+          type: "setVoiceLock", voiceTrackId: selectedPracticeVoiceId,
+          locked: !(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? [])
+            .includes(selectedPracticeVoiceId),
+        })}>{(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? []).includes(selectedPracticeVoiceId)
+          ? "解锁声部" : "锁定声部"}</button>
+        <button disabled={!selectedPracticeStaffId} onClick={() => dispatchPractice({
+          type: "setStaffLock", staffTrackId: selectedPracticeStaffId,
+          locked: !(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? [])
+            .includes(selectedPracticeStaffId),
+        })}>{(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? []).includes(selectedPracticeStaffId)
+          ? "解锁谱表" : "锁定谱表"}</button>
+      </div>
+    </section>
+  </details>;
+
   const renderPlanPanel = (sections, chordDetailsInitiallyOpen = false) => <PracticePlanPanel
     update={practiceUpdate}
     catalogChoiceId={practiceCatalogChoiceId}
@@ -1046,6 +1135,7 @@ export function App() {
     onRemoveIdiom={(idiomInstanceId) => dispatchPractice({ type: "removeIdiom", idiomInstanceId })}
     sections={sections}
     chordDetailsInitiallyOpen={chordDetailsInitiallyOpen}
+    beforeTonality={sections.includes("tonality") ? practiceNoteProperties : null}
   />;
 
   return (
@@ -1083,6 +1173,7 @@ export function App() {
         scrollContentWidth: timelineScene?.contentWidth ?? 0,
         playbackStore: playbackCursorRef.current,
         elementTints: practiceElementTints,
+        elementCenterMarkers: practiceElementCenterMarkers,
       }}
     >
     {({ toolbar, surface, inspectors }) => (
@@ -1159,47 +1250,6 @@ export function App() {
           <div id="workbench-panel-score" role="tabpanel" aria-labelledby="workbench-tab-score"
             className={`workbench-pane score-pane ${mobileTab === "score" ? "active" : ""}`}>
             {practiceUpdate && toolbar}
-            {practiceUpdate && <div className="practice-role-toolbar" role="toolbar" aria-label="和弦内外音标记">
-              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
-                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(), role: "CHORD_TONE",
-              })}>和弦内音</button>
-              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
-                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(), role: "NON_CHORD_TONE",
-              })}>和弦外音</button>
-              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
-                type: "setHarmonicRole", noteheads: selectedPracticeNoteheads(),
-              })}>清除标记</button>
-              <button disabled={!selectedPracticeNoteheads().length} onClick={() => dispatchPractice({
-                type: "setNoteheadLock", noteheads: selectedPracticeNoteheads(),
-                locked: !selectedPracticeNotesLocked,
-              })}>{selectedPracticeNotesLocked ? "解锁音符" : "锁定音符"}</button>
-              <button disabled={!selectedPracticeVoiceId} onClick={() => dispatchPractice({
-                type: "setVoiceLock", voiceTrackId: selectedPracticeVoiceId,
-                locked: !(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? [])
-                  .includes(selectedPracticeVoiceId),
-              })}>{(practiceUpdate.noteConstraints?.lockedVoiceTrackIds ?? []).includes(selectedPracticeVoiceId)
-                ? "解锁声部" : "锁定声部"}</button>
-              <button disabled={!selectedPracticeStaffId} onClick={() => dispatchPractice({
-                type: "setStaffLock", staffTrackId: selectedPracticeStaffId,
-                locked: !(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? [])
-                  .includes(selectedPracticeStaffId),
-              })}>{(practiceUpdate.noteConstraints?.lockedStaffTrackIds ?? []).includes(selectedPracticeStaffId)
-                ? "解锁谱表" : "锁定谱表"}</button>
-              <label><input type="checkbox"
-                checked={practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false}
-                onChange={(event) => dispatchPractice({
-                  type: "setHarmonicRoleFilters",
-                  chordCatalogEnabled: event.target.checked,
-                  idiomCatalogEnabled: practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false,
-                })} />筛选和弦</label>
-              <label><input type="checkbox"
-                checked={practiceUpdate.noteConstraints?.idiomCatalogFilterEnabled ?? false}
-                onChange={(event) => dispatchPractice({
-                  type: "setHarmonicRoleFilters",
-                  chordCatalogEnabled: practiceUpdate.noteConstraints?.chordCatalogFilterEnabled ?? false,
-                  idiomCatalogEnabled: event.target.checked,
-                })} />筛选惯用进行</label>
-            </div>}
             {surface}
           </div>
           {practiceUpdate && DEFAULT_WEB_PRACTICE_LAYOUT === "writing-with-lower-panels" &&

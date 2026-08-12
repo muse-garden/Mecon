@@ -890,5 +890,8 @@ test("generated frozen chord noteheads preserve pitch indices for partial select
   assert.deepEqual(pitchIndices, ["0", "1"], JSON.stringify(allElements
     .filter((element) => element.type === "NOTEHEAD")
     .map((element) => ({ eventId: element.eventId, metadata: element.metadata }))));
+  assert.ok(allElements
+    .filter((element) => element.type === "NOTEHEAD" && element.eventId === eventId)
+    .every((element) => element.metadata?.noteheadFilled === "true"));
   editor.close();
 });

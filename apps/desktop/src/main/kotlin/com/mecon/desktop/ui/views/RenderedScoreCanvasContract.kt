@@ -18,6 +18,7 @@ import com.mecon.renderer.render.RenderElementId
 import com.mecon.renderer.render.RenderPage
 import com.mecon.renderer.render.RenderResult
 import com.mecon.renderer.render.TimeCodePosition
+import com.mecon.renderer.render.NoteheadCenterMarker
 import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
@@ -63,6 +64,7 @@ internal data class RenderedScoreSelectionOverlay(
     val selectedAttachmentSection: StaffAttachmentSection?,
     val selectedAttachmentElements: List<RenderElement>,
     val noteheadBackgroundGroups: List<RenderedScoreNoteheadBackgroundGroup>,
+    val noteheadCenterMarkers: List<NoteheadCenterMarker>,
 )
 
 internal data class RenderedScoreGhostOverlay(

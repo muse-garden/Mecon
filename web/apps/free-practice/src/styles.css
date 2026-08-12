@@ -204,6 +204,19 @@ button:disabled { cursor: default; opacity: .45; }
 .harmony-timeline-scroll::-webkit-scrollbar-thumb:hover { background: #536a8b; background-clip: padding-box; }
 .workbench-pane { display: contents; }
 .workbench-pane.score-pane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.practice-note-properties {
+  padding-top: 12px;
+}
+.practice-note-properties > summary { margin-bottom: 12px; }
+.practice-note-properties h3 { margin: 0 0 6px; font-size: 13px; }
+.practice-note-properties p { margin: 4px 0; color: #c4cad5; font-size: 11px; }
+.practice-note-properties .practice-note-properties-summary { color: #929baa; font-size: 10px; }
+.practice-note-property-group { display: grid; gap: 7px; }
+.practice-note-property-group + .practice-note-property-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #353c49;
+}
 .workbench-toolbar {
   position: relative;
   z-index: 6;
@@ -655,16 +668,15 @@ canvas:focus-visible { outline: 3px solid #9fc5ff; outline-offset: 4px; }
   .panel { border: 0; border-block: 1px solid #2c313c; }
   .status { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
-.practice-role-toolbar {
-  display: flex;
-  align-items: center;
+.practice-note-property-actions {
+  display: grid;
+  align-items: stretch;
   gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border-bottom: 1px solid var(--border-color, #d9d4ca);
-  background: #faf7f0;
 }
 
-.practice-role-toolbar label {
+.practice-note-property-actions button { width: 100%; }
+
+.practice-note-property-actions label {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;

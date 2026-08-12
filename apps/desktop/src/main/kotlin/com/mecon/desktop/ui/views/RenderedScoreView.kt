@@ -97,6 +97,7 @@ fun RenderedScoreView(
     val highlightedElements = selectionConfig.highlightedElements
     val localEventStyles = selectionConfig.localEventStyles
     val noteheadBackgroundGroups = selectionConfig.noteheadBackgroundGroups
+    val noteheadCenterMarkerNotes = selectionConfig.noteheadCenterMarkerNotes
     val selectableSection = selectionConfig.selectableSection
     val noteStyleRefreshKey = display.noteStyleRefreshKey
     val renderRefreshKey = display.renderRefreshKey
@@ -282,6 +283,14 @@ fun RenderedScoreView(
     // Collect style snapshot from render engine
     val styleOverrideManager = renderEngine?.getStyleOverrideManager()
     val effectiveSnapshot by (styleOverrideManager?.snapshotFlow ?: kotlinx.coroutines.flow.MutableStateFlow(StyleSnapshot.EMPTY)).collectAsState()
+
+    // Lock markers are session overlays. Resolve their stable note references once per immutable
+    // render frame, never in the Canvas draw hot path.
+    val noteheadCenterMarkers = remember(renderResultIdentityKey, noteheadCenterMarkerNotes) {
+        renderResult?.let { result ->
+            NoteheadCenterMarkerComputer.compute(result.elements, noteheadCenterMarkerNotes)
+        }.orEmpty()
+    }
 
     // Voice 1 remains the transient/default selection blue. Persistent selection styles below use
     // the selected section's voice-specific swatch.
@@ -1116,6 +1125,7 @@ fun RenderedScoreView(
                                 selectedAttachmentSection = selectedAttachmentSection,
                                 selectedAttachmentElements = selectedAttachmentElements,
                                 noteheadBackgroundGroups = noteheadBackgroundGroups,
+                                noteheadCenterMarkers = noteheadCenterMarkers,
                             ),
                             ghosts = RenderedScoreGhostOverlay(
                                 note = ghost,

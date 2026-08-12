@@ -822,6 +822,13 @@ internal fun FreePracticeWorkbench(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
+                        host?.let {
+                            PracticeNotePropertiesPanel(
+                                host = it,
+                                selection = scoreSelection,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                         androidx.compose.runtime.key(workbenchLayout) {
                             PracticePlanPanel(
                                 planState,

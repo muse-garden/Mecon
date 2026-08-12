@@ -50,3 +50,11 @@ An explicit role that disagrees with membership is exposed as a conflict. Option
 apply explicit roles only: chord tones require membership and non-chord tones forbid membership.
 The session repeats this validation when a choice or idiom is committed, so UI filtering is not a
 business-rule boundary.
+
+Role and lock presentation are intentionally independent. Chord/non-chord roles use a background
+accent, but the selected-note style always wins and suppresses that accent for selected noteheads.
+Locks use a renderer overlay centered in the engraved notehead: filled heads receive a small white
+dot and hollow heads a black dot. The overlay is derived from stable notehead references plus
+`noteheadFilled` render metadata; it does not add a persisted score element or affect layout/splicing.
+Desktop and Web expose the same state and actions in the workbench's existing right rail,
+immediately above Current Tonality. The panel separates chord/non-chord controls from lock status.

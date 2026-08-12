@@ -1193,6 +1193,7 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
   scrollContentWidth = 0,
   playbackStore = null,
   elementTints = null,
+  elementCenterMarkers = null,
   className = "score-panel",
   ariaLabel = "五线谱编辑区",
   canvasAriaLabel = "可编辑五线谱",
@@ -1244,10 +1245,12 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
         ] : []),
       ],
       elementTints,
+      elementCenterMarkers,
       selectionMode: "tint",
       background,
     });
-  }, [frame, surfaceIndex, dragPreview, noteInputPreview, background, elementTints]);
+  }, [frame, surfaceIndex, dragPreview, noteInputPreview, background, elementTints,
+    elementCenterMarkers]);
   useEffect(() => {
     scrollSyncRef.current.apply(scrollRef.current, scrollLeft);
   }, [scrollLeft]);

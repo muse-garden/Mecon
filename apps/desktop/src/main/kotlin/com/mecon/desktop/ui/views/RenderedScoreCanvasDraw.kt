@@ -66,6 +66,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     val selectedAttachmentSection = request.selection.selectedAttachmentSection
     val selectedAttachmentElements = request.selection.selectedAttachmentElements
     val noteheadBackgroundGroups = request.selection.noteheadBackgroundGroups
+    val noteheadCenterMarkers = request.selection.noteheadCenterMarkers
     val ghost = request.ghosts.note
     val clefGhost = request.ghosts.clef
     val timeGhost = request.ghosts.timeSignature
@@ -246,6 +247,30 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
         }
     }
 
+    fun DrawScope.drawNoteheadCenterMarkers(pageIndex: Int? = null) {
+        if (noteheadCenterMarkers.isEmpty()) return
+
+        fun pageFor(y: Float): Int? = pages.indexOfFirst { page ->
+            val pageTop = page.contentOffsetY.value
+            y in pageTop..(pageTop + page.height.value)
+        }.takeIf { it >= 0 }
+
+        noteheadCenterMarkers.forEach { marker ->
+            if (pageIndex != null && pageFor(marker.center.y.value) != pageIndex) return@forEach
+            val design = if (paginatedView) {
+                globalToDesign(marker.center.x.value, marker.center.y.value, pages, pageSlots)
+            } else {
+                Offset(marker.center.x.value, marker.center.y.value)
+            } ?: return@forEach
+            val local = if (pageIndex != null) design - pageSlots[pageIndex] else design
+            drawCircle(
+                color = Color(marker.color.toArgb()),
+                radius = marker.radius.value * density,
+                center = local * density,
+            )
+        }
+    }
+
     // Render the score with style overrides applied.
     if (paginatedView) {
         // Each page is its own paper sheet: shadow + white fill + border, then
@@ -283,6 +308,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
                 )
                 drawNoteheadBackgrounds(i)
                 composeRenderer.drawCachedPage(this, page, textMeasurer, snapshot, sectionIndex)
+                drawNoteheadCenterMarkers(i)
                 if (showEditorMarkers) {
                     composeRenderer.render(
                         this,
@@ -316,6 +342,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
             this, rr.elements, rr.bounds,
             textMeasurer, snapshot, sectionIndex,
         )
+        drawNoteheadCenterMarkers()
         if (showEditorMarkers) {
             composeRenderer.render(
                 this,

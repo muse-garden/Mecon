@@ -375,13 +375,12 @@ export function renderCanvas(canvas, bundleInput, options = {}) {
           context,
           command,
           options,
-          elementTint(options.elementTints, element.id) ?? (
-            selected.has(String(element.id)) && options.selectionMode === "tint"
-              ? (options.selectionColor ?? "#2878ff")
-              : null
-          ),
+          selected.has(String(element.id)) && options.selectionMode === "tint"
+            ? (options.selectionColor ?? "#2878ff")
+            : elementTint(options.elementTints, element.id),
         );
       }
+      drawElementCenterMarkerCanvas(context, element, elementMarker(options.elementCenterMarkers, element.id));
       if (selected.has(String(element.id)) && options.selectionMode !== "tint") {
         drawSelectionCanvas(context, element, options);
       }
@@ -404,6 +403,27 @@ function elementOffset(offsets, id) {
 
 function elementTint(tints, id) {
   return tints instanceof Map ? tints.get(String(id)) ?? tints.get(id) : tints?.[String(id)];
+}
+
+function elementMarker(markers, id) {
+  return markers instanceof Map ? markers.get(String(id)) ?? markers.get(id) : markers?.[String(id)];
+}
+
+function markerRadius(element, marker) {
+  if (Number.isFinite(marker?.radius)) return marker.radius;
+  const box = rect(element.hitBox);
+  return Math.max(1.25, Math.min(2.2, Math.min(box.width, box.height) * 0.16));
+}
+
+function drawElementCenterMarkerCanvas(context, element, marker) {
+  if (!marker) return;
+  const box = rect(element.hitBox);
+  context.save();
+  context.beginPath();
+  context.arc(box.x + box.width / 2, box.y + box.height / 2, markerRadius(element, marker), 0, Math.PI * 2);
+  context.fillStyle = typeof marker === "string" ? marker : marker.color;
+  context.fill();
+  context.restore();
 }
 
 function drawCanvasCommand(context, command, options, tint = null) {
@@ -565,17 +585,29 @@ export function renderSvg(bundleInput, options = {}) {
   const hidden = new Set(options.hiddenIds ?? []);
   const content = surface.elements.map((element) => {
     if (hidden.has(String(element.id))) return "";
-    const tint = elementTint(options.elementTints, element.id);
+    const isTintSelected = selected.has(String(element.id)) && options.selectionMode === "tint";
+    const tint = isTintSelected
+      ? (options.selectionColor ?? "#2878ff")
+      : elementTint(options.elementTints, element.id);
     const commands = (element.commands ?? []).map((command) => svgCommand(command, options, tint)).join("");
-    const selection = selected.has(String(element.id)) ? svgSelection(element, options) : "";
+    const marker = svgElementCenterMarker(element, elementMarker(options.elementCenterMarkers, element.id));
+    const selection = selected.has(String(element.id)) && options.selectionMode !== "tint"
+      ? svgSelection(element, options) : "";
     const offset = elementOffset(options.elementOffsets, element.id);
     const transform = offset.x || offset.y ? ` transform="translate(${offset.x} ${offset.y})"` : "";
-    return `<g data-mecon-id="${escapeXml(element.id)}" data-mecon-type="${escapeXml(element.type)}"${transform}>${commands}${selection}</g>`;
+    return `<g data-mecon-id="${escapeXml(element.id)}" data-mecon-type="${escapeXml(element.type)}"${transform}>${commands}${marker}${selection}</g>`;
   }).join("");
   const background = options.background
     ? `<rect x="${origin.x}" y="${origin.y}" width="${surface.width}" height="${surface.height}" fill="${escapeXml(options.background)}"/>`
     : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${surface.width}" height="${surface.height}" viewBox="${origin.x} ${origin.y} ${surface.width} ${surface.height}" role="img">${background}${content}</svg>`;
+}
+
+function svgElementCenterMarker(element, marker) {
+  if (!marker) return "";
+  const box = rect(element.hitBox);
+  const color = typeof marker === "string" ? marker : marker.color;
+  return `<circle cx="${box.x + box.width / 2}" cy="${box.y + box.height / 2}" r="${markerRadius(element, marker)}" fill="${escapeXml(color)}" pointer-events="none"/>`;
 }
 
 function surfaceOrigin(bundle, surface) {
