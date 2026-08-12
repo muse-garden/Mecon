@@ -160,7 +160,7 @@ while (selected.size < limit && remaining.isNotEmpty()) {
 | `DpDistinctProgressionHistorySignature` | `usedPairs: Set<Int>` | 集合随前缀增长；`violated` 已是吸收态却仍继续累积 pair | 49 位 `Long` 掩码；`violated` 后丢弃掩码 |
 | `DpSameSonorityHistorySignature` | `selectedPitchClassSets: List<List<Int>>` | 逐槽追加整份音级集合 | 只需 `(首个集合, 是否全部相同)` |
 | `DpIdentityHistorySignature` | `seen: Set<String>` | 语义上必需（窗口内互异），但用字符串集合做 key | 词表位掩码 |
-| `DpExtremeSummary.occurrences` | 无上限计数 | 语义只需 `≤ maxOccurrences` / `> maxOccurrences` | 饱和到 `maxOccurrences + 1` |
+| `DpExtremeSummary.occurrences` | ✅ 已饱和到 `maxOccurrences + 1` | — | 收益有限，见 §7 第 4 项 |
 
 这些在本次两种基准形态里几乎没有代价（音级多由层号决定），但 commit `a8fc6978` 的目标正是把 DP 推向
 **真正开放的和声域**，届时前四项会直接把合并率打到 0。
@@ -218,13 +218,13 @@ while (selected.size < limit && remaining.isNotEmpty()) {
    candidate / generated / distinct / retained 四元组不随总槽数变化）与每层保留标签数不超过
    前沿上限，耗时只打印。
 
-## 8. 与现有文档的出入
+## 8. 与现有文档的出入（2026-08-12 已回写主文档）
 
-- 主文档 §9.1 记「13 槽 / 3 结果约 25 s，17 槽超过 3 分钟」。本次同形态实测 13 槽 / 3 结果 6.26 s、
-  17 槽 12.79 s、25 槽 24.45 s（11 槽 / 2 结果 1.53 s 与原记录 1.32 s 吻合）。原记录未写明 13 / 17 槽
-  的具体配置，无法复现，应按第 7 条第 7 项固化后重写该节。
-- 主文档 §9.1 的结论「不应通过增大预算掩盖**指数**增长」在测量上不成立：本形态下转移数随槽位
-  **线性**增长，耗时的超线性完全来自 §5 的多样化裁剪。滑动窗口/分段写作的产品建议仍然成立，
-  但理由应改为「多样化选择的实现成本」，修好之后长窗口上限可以显著抬高。
-- 主文档 §2 的「不保存完整路径」需按 §6 修正为「除 `RootProgressionPreference` 外」，或把该谓词
-  改造/降级。
+- 主文档 §9.1 原记「13 槽 / 3 结果约 25 s，17 槽超过 3 分钟」。本次同形态实测 13 槽 / 3 结果 6.26 s、
+  17 槽 12.79 s、25 槽 24.45 s；第 7 条第 1、3 项落地后 13 槽降到 0.85 s、19 槽降到 1.03 s。
+  主文档 §9.1 已改写为整改前后的对照表，并指向 `ConstraintLayeredDpSlotScalingBenchmarkTest`。
+- 主文档 §9.1 原结论「不应通过增大预算掩盖**指数**增长」在测量上不成立：本形态下转移数随槽位
+  **线性**增长，耗时的超线性完全来自 §5 的多样化裁剪。已改写为「滑动窗口是产品交互选择，
+  不是性能下限」。
+- 主文档 §2 的「不保存完整路径」已按 §6 补上例外清单，并注明这四项累加式签名不出现在自由练习
+  的 DP key 里（和弦选择规则已降为 `Remind`），只影响勋伯格开放域 program。

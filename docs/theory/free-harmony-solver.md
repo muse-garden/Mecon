@@ -227,7 +227,10 @@ free base
 约束分区）按目标/程序缓存，DFS 也共享这些收益。
 
 普通单结果 `SearchBackend.AUTO` 保持 `GREEDY_DFS`；自由练习启用前缀或结果多样化时 AUTO
-选择 `LAYERED_DP`，由一个前沿统一维护竞争路径。`EXACT` 超过候选、状态或边预算
+选择 `LAYERED_DP`，由一个前沿统一维护竞争路径。**自由练习的首解与优化两档都开前缀多样化，
+因此实际后端恒为分层 DP**；该形态含终局重排规则（`free.melody.no-repeated-pattern`），只能用
+`BOUNDED`，且退回 DFS 是静默的（`fallbackReason` 无人消费）——实测与缺口见
+[dynamic-programming-solver.md](dynamic-programming-solver.md) §1.2。`EXACT` 超过候选、状态或边预算
 返回 `BudgetExhausted`，含终局重排规则时拒绝精确模式。`BOUNDED` 另按结果数限制每个前驱的
 排序出边；各类截断、五档转移计数与终局重排均写入 trace，不得称为全局最优。left boundary、
 baseline、pin 与 `ConstraintSolveOutcome` 语义在两个后端一致。逐规则覆盖表与审计数据见

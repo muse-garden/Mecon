@@ -1,10 +1,14 @@
 # 分层动态规划求解器
 
-> 状态（2026-08-11）：DP 状态由当前槽位的声部音高，以及启用规则声明的有限附加状态组成；
+> 状态（2026-08-12）：DP 状态由当前槽位的声部音高，以及启用规则声明的有限附加状态组成；
 > 开放和弦域、七和弦和同音响多解释均已进入能力集。固定目标、低音锁、音高 pin 与解释选择是
 > 候选域过滤或评分输入，不再是 DP 能力门槛。`EXACT` 按真实总分排序并对不安全的终点下界关闭
 > branch-and-bound；`BOUNDED` 支持路径谱系、多样性硬门槛与排除项。普通单结果 `AUTO` 仍选 DFS，
 > 启用自由练习的前缀/结果多样化时 `AUTO` 选择 `LAYERED_DP`。
+>
+> **自由练习已在用 DP**：首解与优化两档都开前缀多样化，因此两档都走 `LAYERED_DP`（§1.2 有实测
+> 证据）；勋伯格章节与其它单结果调用仍走 DFS。剩余工作是性能/参数解耦与状态合并率，不是能力
+> 缺口——路线见 §10。
 >
 > 前置：[free-harmony-solver.md](free-harmony-solver.md) ·
 > [constraint-program.md](constraint-program.md) ·
@@ -51,6 +55,39 @@ fail closed。
 
 和弦外音义务与 textbook 模块仍未进入能力集。
 
+### 1.2 自由练习的实际后端
+
+自由练习的写作请求由 `FreePracticeWindowVoicer.prepare` 编译（`FreeHarmonySolver.compile`，
+`FREE_CLASSICAL`、`ruleModules = emptyList()`、`includeDerivedTextbookConstraints = false`），
+`FreePracticeSearchPolicy.initial` 与 `optimization(seed)`（桌面/Web 共用的
+`FreePracticeWriting` 后台请求同样构造这两档）**都设 `prefixDiversity.enabled = true`**，
+`prepare` 还会再强制打开一次。`SearchConfig.backend` 默认 `AUTO`，而 `LayeredDpCapability`
+在任一多样化开启时置 `autoPreferred = true`，因此两档实际都跑分层 DP。
+
+本机以卡农进行（C 大调 9 槽、标准 SATB、含七和弦与转位词汇）复现两档配置：
+
+| 档位 | supported | autoPreferred | trace.backend | fallbackReason | terminalLowerBoundApplied |
+|---|---|---|---|---|---|
+| `initial` | true | true | `LAYERED_DP` | null | false |
+| `optimization` | true | true | `LAYERED_DP` | null | false |
+
+两档的 `requiresBoundedGlobalRerank` 均为 `true`（`free.melody.no-repeated-pattern` 是终局重排
+规则），所以**自由练习形态只能用 `BOUNDED`**，显式请求 `EXACT` 会被拒；这也是终层
+branch-and-bound 在自由练习里恒不生效的第二个原因（第一个是多样化，见 §8）。
+
+⚠️ 两处缺口：
+
+1. **没有守卫**。仓库里没有任何测试断言自由练习程序仍选 DP。教学约束由
+   `SchoenbergPracticeTeachingRuleProjector` 投影进来，一旦某章节规则投影出未注册谓词
+   （非相邻 `VoiceDiatonicSteps`、`RuleFound`、与其它原子共处的 `UniqueVoiceExtreme`），
+   整个窗口会**静默退回 DFS**。当前章节程序不设 `RuleProfile.requirements`，投影又要求
+   源/目标槽都连续，因此实际不会触发，但这是巧合而非约束。
+2. **`fallbackReason` 无人读取**。它只写进 `WritingSearchTrace`，产品侧（session、桌面、Web）
+   一处都没消费，因此退回既不报警也不可观测。
+
+`SearchBackend` 在自由练习里不可配置：UI 与 intent 都不暴露该开关，只能改
+`FreePracticeSearchPolicy`。
+
 ## 2. 状态由规则自动收集
 
 状态计划由 `LayeredDpStatePlanner.collect(program)` 在求解前编译。它读取实际和弦类型、preset、
@@ -78,11 +115,31 @@ fail closed。
 真值向量；完整路径仅留在 label 中用于规则执行与结果恢复，不参与等价性比较。
 
 ⚠️ 例外：目前有几个 `DpConstraintHistorySignature` 实为随前缀增长的累加器而非有限自动机
-（`RootProgressionPreference` 的 `applicableDegrees` 就是完整音级前缀），极值摘要的 `occurrences`
-也未按 `maxOccurrences` 饱和。逐项与影响见
-[dp-slot-scaling-review.md](dp-slot-scaling-review.md) §6。
+（`RootProgressionPreference` 的 `applicableDegrees` 就是完整音级前缀，
+`MinimumSimilarChordDistance` 存绝对槽号，`DistinctSimilarChordProgressions` 与
+`DistinctIdentities` 用不断增长的集合）。**这四项都不出现在自由练习的 key 里**：和弦选择规则
+已降为 `Remind`，planner 不为其收集状态；勋伯格开放域 program 仍以 `Prefer` 使用它们。
+极值摘要的 `occurrences` 已按 `maxOccurrences + 1` 饱和（`DpExtremeSummary.extend`），但主要
+分裂源是极值**数值**而不是计数，合并率只降 0–20%。逐项与影响见
+[dp-slot-scaling-review.md](dp-slot-scaling-review.md) §6 / §7。
 
 ## 3. 当前覆盖的规则
+
+覆盖 = planner 为该规则收集到有限状态（或证明它不需要状态），DP 因此不会漏判它。规则总数按
+**RuleId** 计，不含由约束代数按槽实例化的份数。
+
+| 面 | provider / 来源 | 规则数 | 备注 |
+|---|---|---|---|
+| `FREE_CLASSICAL` provider | `FreeHarmonyRuleProvider` 12 + 交错同音 1 + 移动成本 1 + `WindowFeasibility` 2 + `BaselineSimilarity` 1 | **17** | jazz 少 6 条古典规则 → 11 |
+| `SCHOENBERG_GENERAL` provider | `FourPartTextbookRules` 8 + 交错同音 1 + 移动成本 1 | **10** | 全部只需 `RecentFrames(1)` |
+| 约束代数谓词 | §3.2 的 5 类 | 17 个谓词已注册 | 3 个明确拒绝 |
+
+典型自由练习窗口（卡农进行、无教学 idiom）实测 `coveredRuleIds` 为 **24** 条 = 17 条 provider 规则
++ 7 条程序约束（`free.harmony.triad-complete` / `seventh-complete`、
+`free.harmony.similar-chord-distance` / `distinct-progressions`（`Remind`，不收状态）、
+`free.melody.unique-high` / `unique-low`（极值摘要）、`free.melody.no-repeated-pattern`（终局重排））。
+挂上勋伯格教学 idiom 时，投影出的章节约束按 §3.2 逐条计入，不改变 provider 那 17 条。
+该形态的逐层计划为 `[1, 2, 2, 2, 2, 2, 2, 2, 0]` 帧 + 两个外声部极值槽。
 
 ### 3.1 自由写作 provider
 
@@ -216,7 +273,12 @@ trace 还携带逐层状态计划、已覆盖规则、终局重排规则和独�
 14. 状态声明完整性守卫（`LayeredDpStateDeclarationCompletenessTest`）：每个 provider 的
     `ALL_RULE_IDS` 减去已声明规则后必须为空；新增 RuleId 而忘记声明即测试红；
 15. 前沿裁剪不读失效 entry（`boundedDpPrunesTheFrontierWithoutReadingStaleMapEntries`）：见 §6.1，
-    该回归只在 Kotlin/JS 上才会红。
+    该回归只在 Kotlin/JS 上才会红；
+16. 槽位扩展性（`ConstraintLayeredDpSlotScalingBenchmarkTest`，JVM）：同一前缀的层其
+    candidate / generated / distinct / retained 四元组不随总槽数变化，每层保留标签数不超过前沿上限。
+
+**未覆盖**：没有任何测试断言**自由练习程序仍然选到 DP**（§1.2）。`LayeredDpCapability` 的输入
+包含教学投影出的章节约束，退回 DFS 是静默的，因此这条链目前只靠人工复核。
 
 ### 6.1 ⚠️ 求解器是共享代码，`Map.Entry` 在 Kotlin/JS 上是活引用
 
@@ -268,15 +330,10 @@ JVM-only 的 `toSortedMap`），所以这类缺陷完全没有守卫。现在三
 
 ### 7.1 层候选构建：排序 key 每帧只算一次
 
-上一轮之后按阶段重新归因，最大的一段并不在终层，而是**层候选构建**（占 DP 的 26.6%）：
-`layerCandidates` 与 `verticalCandidates` 都把 `(verticalPriority, verticalSpan, frameStructuralKey)`
-写在比较器里，而 `best()` 每插入一个候选要做 `O(log n)` 次比较——每次比较都重算一遍省略音集合
-（`chordMemberNotes` → 逐声部查 `texturePlan.participationAt`）并重新拼一次结构字符串。一层枚举
-上百个候选，等于把这些 key 各算十几遍。
-
-改为 decorate-sort-undecorate（`RankedFrame` 携带预先算好的三个分量）后该阶段减半（246→130 ms /
-5 次），DFS 与 DP 共用这条路径，两个后端一起受益。这与 §7 表格里“出边排序”那一行是同一类
-错误，只是漏在了层内枚举这一侧。
+`layerCandidates` / `verticalCandidates` 曾把 `(verticalPriority, verticalSpan, frameStructuralKey)`
+写在比较器里，于是 `best()` 每次插入的 `O(log n)` 比较都重算省略音集合并重拼结构字符串。改为
+decorate-sort-undecorate（`RankedFrame` 预先携带三个分量）后该阶段减半，DFS 与 DP 共用这条路径。
+这与 §7 表格“出边排序”那行是同一类错误，只是漏在了层内枚举一侧。
 
 ## 8. 终层：branch-and-bound
 
@@ -307,20 +364,14 @@ terminalBranchAndBoundKeepsTheExhaustiveOptimumWithGlobalRules` 另在终层全�
 
 ### 8.1 state key 也改为增量摘要
 
-`stateKey` 此前每条边都重建各声部 MIDI 列表，并为每个 `UniqueVoiceExtreme` 需求**回扫整条前缀**
-求极值与出现次数（2 个需求 × 2 个外声部 = 4 趟）。现在：
+`stateKey` 此前每条边都重建各声部 MIDI 列表，并为每个 `UniqueVoiceExtreme` 需求回扫整条前缀。
+现在每帧的 MIDI 签名是写在 `DpLayerFrame` 上的层常量，极值摘要 `DpExtremeSummary` 随 label
+增量更新（加一帧 O(槽数)、计数按 `maxOccurrences + 1` 饱和），key 只读紧凑 `IntArray`。
 
-- 每帧的 MIDI 签名是层常量，写在 `DpLayerFrame` 上，同层所有入边共用一个实例；
-- 极值摘要 `DpExtremeSummary` 随 label 增量更新（加一帧 O(槽数)），key 只读已经算好的紧凑
-  `IntArray`。
-
-该阶段从 51.1 ms 降到 1.9 ms（/5 次）。三项合计后卡农基准 DP 从 132.7 ms 降到 **71–93 ms**，
-DFS 从 54.8 ms 降到 **35–46 ms**（本机逐次抖动就有这么大，只能看量级）；最低分 `266.70`、
-转移数 1864、逐层 tier 分布全部逐项不变。
-
-按阶段重测后的剩余占比：逐边转移规则求值约 30%，层候选构建约 26%，终层全局规则约 11%，
-state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`——按 §9 它在本形态下换不到
-任何分值，却让每层转移从 64 条涨到 256 条，因此这里的绝对耗时并不代表 DP 的最优配置。
+三项合计后卡农基准 DP 从 132.7 ms 降到 **71–93 ms**、DFS 从 54.8 ms 降到 **35–46 ms**；最低分
+`266.70`、转移数 1864、逐层 tier 分布逐项不变。剩余占比：逐边转移规则求值约 30%、层候选构建
+约 26%、终层全局规则约 11%，state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`
+——按 §9 它在本形态下换不到任何分值，绝对耗时并不代表 DP 的最优配置。
 
 ## 9. 同等分值下的 DFS / DP 对比
 
@@ -353,21 +404,25 @@ state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`—�
 ### 9.1 较长开放域自由写作
 
 `longerOpenProgressionUsesDpForDiverseFreeWriting` 使用 11 槽进行，其中 3 槽允许同音级三和弦/七和弦
-二选一，并要求 2 个满足 pairwise 槽位/声部差异门槛的结果。2026-08-11 本机预热后：
+二选一，并要求 2 个满足 pairwise 槽位/声部差异门槛的结果。DFS 在 8,192 节点预算内拿不到完整结果
+（0.76 s 后 `BudgetExhausted`），BOUNDED DP 给出 2 个结果、最佳 313.65。
 
-| 后端 | 结果 | 耗时 |
+多样化路径的耗时经 [dp-slot-scaling-review.md](dp-slot-scaling-review.md) §7 第 1、3 项整改后：
+
+| 形态（3 结果，除首行外） | 整改前 | 现在 |
 |---|---|---|
-| DFS | 8,192 节点预算耗尽，无完整结果 | 0.76 s |
-| BOUNDED DP | 2 个结果，最佳 313.65 | 1.32 s |
+| 11 槽 / 2 结果 | 1.32 s | **0.44 s** |
+| 9 槽 | 2.61 s | 0.81 s |
+| 13 槽 | 6.26 s | 0.85 s |
+| 19 槽 | 16.84 s | 1.94 s → 1.03 s（MIDI 签名后） |
 
-槽位继续增加时耗时明显上升（同形态 13 槽/3 结果 6.3 s、19 槽 16.8 s、25 槽 24.4 s），但**这不是
-搜索规模或状态设计造成的**：逐层生成标签数、状态数与保留标签数不随槽位变化，转移数只线性增长，
-关闭多样化后同样的 25 槽 27.9k 条转移只需 0.73 s。超线性部分全部来自多样化标签选择在前沿裁剪里
-被反复调用（一次 13 槽求解 265 次裁剪、606 万次 `prefixSimilarity`）。完整测量、状态分量归因与
-改进顺序见 [dp-slot-scaling-review.md](dp-slot-scaling-review.md)。
+**槽位增长本身从来不是问题**：逐层生成标签数、状态数与保留标签数不随槽位变化，转移数只线性
+增长（关闭多样化时 25 槽 27.9k 条转移只需 0.73 s）。原先的超线性完全来自多样化标签选择在前沿
+裁剪里被反复调用；现在相似度增量维护 + `pathMidi` 整型比较已把它压掉一个量级，曲线由
+`ConstraintLayeredDpSlotScalingBenchmarkTest` 固化（断言逐层规模的前缀不变性，耗时只打印）。
 
-因此产品接入仍应保持滑动窗口/分段写作和后台取消，但理由是多样化选择的实现成本尚未优化；该项
-修好之后长窗口上限可以显著抬高，不应先靠增大节点或前沿预算掩盖。
+产品接入仍保持滑动窗口/分段写作与后台取消，但这已是产品交互选择而非性能下限；进一步抬高长
+窗口上限之前应先做 §10 第 1 项的宽度解耦，不要靠增大节点或前沿预算掩盖。
 
 ## 10. 后续路线
 
@@ -388,6 +443,13 @@ state key 已降到 1% 以下。注意该基准用 `maxFrontierStates = 32`—�
    `AUTO`。勋伯格形态尤其需要：本轮实测其 BOUNDED 首解分值明显劣于 DFS（出边宽度被
    `maxResults=1` 压到 8），只有 EXACT 才稳定优于 DFS——这与第 1 项的解耦是同一件事；
 8. 多样化路径的性能与状态合并率整改，见
-   [dp-slot-scaling-review.md](dp-slot-scaling-review.md) §7：相似度增量维护、前沿裁剪不做多样化、
-   `prefixSimilarity` 走 MIDI 签名、极值摘要 `occurrences` 饱和、history 签名常量化、
-   终层 BnB 下界覆盖多样化路径、基准配置入库。
+   [dp-slot-scaling-review.md](dp-slot-scaling-review.md) §7。已完成：相似度增量维护、
+   `prefixSimilarity` 走 MIDI 签名、极值摘要 `occurrences` 饱和、基准配置入库、
+   `terminalLowerBoundApplied` 可观测。**剩余**：
+   - 前沿裁剪不做多样化（会改变哪些状态存活，需连同前缀多样性质量一起评估）；
+   - `UniqueVoiceExtreme` 在 BOUNDED 下整体降为终局重排——这是拿回 §3 那 3.4–5× 合并率的唯一
+     途径，EXACT 必须保持现状；
+   - history 签名常量化（仅影响勋伯格开放域，自由练习已因 `Remind` 规避）；
+   - 终层 BnB 需要多样化感知的下界才能开启，当前终层约占多样化基准总耗时的 20%；
+   - 终层标签池仍绑在 `restartBudget × mutationPoolSize`（=128），与 DP 无关，应独立配置；
+9. 为自由练习补一条后端守卫测试，并把 `fallbackReason` 接到可观测通道（§1.2 的两处缺口）。
