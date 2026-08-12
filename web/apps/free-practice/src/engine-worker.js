@@ -30,6 +30,7 @@ let pendingTimelineMove = null;
 let timelineMoveFlushQueued = false;
 let timelineGridUnit = { numerator: 1, denominator: 8 };
 let timelineDefaultChordDuration = { numerator: 1, denominator: 4 };
+let timelineDisplayMode = "FULL";
 
 self.onmessage = (event) => {
   if (event.data.type === "timelineInput" && event.data.input?.type === "MOVE") {
@@ -137,6 +138,7 @@ async function handle(message) {
     case "timelinePreferences":
       timelineGridUnit = message.gridUnit ?? timelineGridUnit;
       timelineDefaultChordDuration = message.defaultChordDuration ?? timelineDefaultChordDuration;
+      timelineDisplayMode = message.displayMode ?? timelineDisplayMode;
       if (latestFreePracticeUpdate) publishTimelineScene(latestFreePracticeUpdate, timelineRequest?.gesture ?? null);
       break;
     case "timelineInput":
@@ -305,6 +307,7 @@ function publishTimelineScene(update, gesture, timeline = update.timeline) {
     selectedIdiomId: update.selection?.idiomInstanceId ?? null,
     gridUnit: timelineGridUnit,
     defaultChordDuration: timelineDefaultChordDuration,
+    displayMode: timelineDisplayMode,
     showRemoveAction: false,
     gesture,
   };

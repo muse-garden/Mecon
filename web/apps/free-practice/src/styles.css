@@ -395,6 +395,7 @@ button:disabled { cursor: default; opacity: .45; }
 .plan-section { display: block; padding: 15px 0 16px; border: 0; border-bottom: 1px solid #293a55; }
 .plan-section:first-child { padding-top: 12px; }
 .plan-section > summary { display: flex; align-items: center; gap: 9px; margin: 0 0 17px; cursor: pointer; list-style: none; }
+.workbench-lower .plan-section > summary { margin-bottom: 0; }
 .plan-section > summary::-webkit-details-marker { display: none; }
 .disclosure-icon { flex: none; color: #8d9aaf; transition: transform .12s ease; }
 .plan-section[open] > summary .disclosure-icon { transform: rotate(90deg); }
@@ -568,8 +569,15 @@ button:disabled { cursor: default; opacity: .45; }
 canvas { display: block; margin: 0; box-shadow: none; cursor: default; touch-action: none; }
 canvas:focus-visible { outline: 3px solid #9fc5ff; outline-offset: 4px; }
 .empty-state { display: grid; place-items: center; color: #8e96a7; }
-.harmony-timeline-shell { min-width: 0; background: #1c2028; border-bottom: 1px solid #303642; }
-.harmony-timeline-scroll { overflow-x: auto; overflow-y: hidden; padding-inline: 28px; }
+.harmony-timeline-shell { display: grid; grid-template-columns: 28px minmax(0, 1fr); min-width: 0; background: #1c2028; border-bottom: 1px solid #303642; }
+.harmony-timeline-mode { z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 3px; background: #1c2028; color: #9eabbc; font: 600 8px/1 system-ui; }
+.harmony-timeline-mode button { position: relative; width: 18px; height: 34px; padding: 0; border: 1px solid #46566e; border-radius: 9px; background: #252c38; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.harmony-timeline-mode button[aria-checked="true"] { border-color: #70a7ef; background: #356fc6; }
+.harmony-timeline-mode-thumb { position: absolute; left: 1px; top: 1px; width: 14px; height: 14px; border-radius: 50%; background: #e1e7ee; transition: transform .15s; }
+.harmony-timeline-mode button[aria-checked="true"] .harmony-timeline-mode-thumb { transform: translateY(16px); }
+.harmony-timeline-mode button:hover { border-color: #9fc5ff; }
+.harmony-timeline-mode button:focus-visible { outline: 2px solid #9fc5ff; outline-offset: 2px; }
+.harmony-timeline-scroll { min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 0 28px 0 0; }
 .harmony-timeline { position: relative; overflow: hidden; background: #1c2028; touch-action: none; }
 .harmony-timeline > svg { position: absolute; inset: 0; display: block; pointer-events: none; }
 .timeline-semantic-layer { position: absolute; inset: 0; pointer-events: auto; }

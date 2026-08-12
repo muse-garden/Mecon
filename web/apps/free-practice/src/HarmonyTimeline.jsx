@@ -44,7 +44,14 @@ function DrawObject({ object }) {
 }
 
 /** Thin browser adapter: raw input in, shared draw/a11y objects out. */
-export function HarmonyTimeline({ scene, scrollLeft = 0, onScroll, onInput }) {
+export function HarmonyTimeline({
+  scene,
+  scrollLeft = 0,
+  onScroll,
+  onInput,
+  displayMode = "FULL",
+  onDisplayModeChange,
+}) {
   const surfaceRef = useRef(null);
   const scrollRef = useRef(null);
   const lastScrollLeftRef = useRef(scrollLeft);
@@ -140,7 +147,19 @@ export function HarmonyTimeline({ scene, scrollLeft = 0, onScroll, onInput }) {
     ? [...(scene.drawObjects ?? []), ...(hovered.overlay ?? [])].sort((left, right) => left.z - right.z)
     : (scene.drawObjects ?? []);
 
-  return <section className="harmony-timeline-shell" aria-label="和声时间轴" data-axis-source="renderer">
+  const compact = displayMode === "COMPACT";
+
+  return <section className="harmony-timeline-shell" aria-label="和声时间轴" data-axis-source="renderer"
+    data-display-mode={compact ? "compact" : "full"}>
+    <div className="harmony-timeline-mode">
+      <span>完整</span>
+      <button type="button" role="switch" aria-label="时间轴显示模式"
+        aria-checked={compact} title={`当前为${compact ? "精简" : "完整"}模式`}
+        onClick={() => onDisplayModeChange?.(compact ? "FULL" : "COMPACT")}>
+        <span className="harmony-timeline-mode-thumb" aria-hidden="true" />
+      </button>
+      <span>精简</span>
+    </div>
     <div className="harmony-timeline-scroll" ref={scrollRef}
       onScroll={(event) => {
         const next = event.currentTarget.scrollLeft;

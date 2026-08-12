@@ -130,6 +130,7 @@ export function App() {
   const [sharedScrollLeft, setSharedScrollLeft] = useState(0);
   const [gridDenominator, setGridDenominator] = useState(8);
   const [defaultChordBeats, setDefaultChordBeats] = useState(1);
+  const [timelineDisplayMode, setTimelineDisplayMode] = useState("FULL");
   const [playbackRate, setPlaybackRate] = useState(1);
   const [audioSettings, setAudioSettings] = useState({
     instrument: PlaybackInstrument.piano,
@@ -378,8 +379,9 @@ export function App() {
       type: "timelinePreferences",
       gridUnit: { numerator: 1, denominator: gridDenominator },
       defaultChordDuration: { numerator: defaultChordBeats, denominator: 4 },
+      displayMode: timelineDisplayMode,
     });
-  }, [gridDenominator, defaultChordBeats]);
+  }, [gridDenominator, defaultChordBeats, timelineDisplayMode]);
 
   useEffect(() => {
     playbackRateRef.current = playbackRate;
@@ -1107,7 +1109,9 @@ export function App() {
             className={`workbench-pane timeline-pane ${mobileTab === "timeline" ? "active" : ""}`}>
             {practiceUpdate
               ? <HarmonyTimeline scene={timelineScene} onInput={sendTimelineInput}
-                  scrollLeft={sharedScrollLeft} onScroll={setSharedScrollLeft} />
+                  scrollLeft={sharedScrollLeft} onScroll={setSharedScrollLeft}
+                  displayMode={timelineDisplayMode}
+                  onDisplayModeChange={setTimelineDisplayMode} />
               : <section className="harmony-timeline empty" aria-label="和声时间轴">
                   新建或打开自由练习后显示时间轴
                 </section>}

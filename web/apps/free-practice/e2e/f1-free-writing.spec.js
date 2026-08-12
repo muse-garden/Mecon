@@ -802,6 +802,48 @@ test("harmony timeline replays the shared hover cursor and highlight for real po
   expect(await cursor()).toBe("default");
 });
 
+test("harmony timeline switches between full and compact shared scenes without editing the practice", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  const revision = page.locator(".practice-revision-announcer");
+  await expect(revision).toHaveText("revision 0", { timeout: 30_000 });
+
+  const timeline = page.getByLabel("和声时间轴");
+  const surface = page.locator(".harmony-timeline");
+  const modeSwitch = page.getByRole("switch", { name: "时间轴显示模式" });
+  await expect(timeline).toHaveAttribute("data-display-mode", "full");
+  await expect(page.locator(".timeline-key-labels")).not.toHaveCount(0);
+  await expect(timeline.locator(".harmony-timeline-mode")).toContainText("完整精简");
+  const fullHeight = (await surface.boundingBox()).height;
+
+  const timelineScroll = page.locator(".harmony-timeline-scroll");
+  await timelineScroll.evaluate((element) => { element.style.width = "220px"; });
+  const appendControl = page.getByRole("button", { name: "追加和弦槽" }).locator("..");
+  const appendLeft = await appendControl.evaluate((element) => element.style.left);
+  await timelineScroll.evaluate((element) => {
+    element.scrollLeft = 70;
+    element.dispatchEvent(new Event("scroll"));
+  });
+  await expect.poll(() => appendControl.evaluate((element) => element.style.left)).toBe(appendLeft);
+  const switchBox = await modeSwitch.boundingBox();
+  const firstSlotBox = await page.locator('[data-slot-id="slot-0"]').boundingBox();
+  expect(firstSlotBox.x).toBeGreaterThanOrEqual(switchBox.x + switchBox.width);
+
+  await expect(modeSwitch).toHaveAttribute("aria-checked", "false");
+  await modeSwitch.click();
+  await expect(timeline).toHaveAttribute("data-display-mode", "compact");
+  await expect(modeSwitch).toHaveAttribute("aria-checked", "true");
+  await expect(page.locator(".timeline-key-labels")).toHaveCount(0);
+  await expect.poll(async () => (await surface.boundingBox()).height).toBeLessThan(fullHeight);
+  await expect(revision).toHaveText("revision 0");
+
+  await modeSwitch.click();
+  await expect(timeline).toHaveAttribute("data-display-mode", "full");
+  await expect(modeSwitch).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator(".timeline-key-labels")).not.toHaveCount(0);
+  await expect(revision).toHaveText("revision 0");
+});
+
 test("tonal layouts stay session-owned and narrow workbench tabs preserve the mounted views", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("打开 .mecon").setInputFiles(fixture);

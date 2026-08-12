@@ -54,11 +54,32 @@ class PracticeTimelineControllerTest {
     }
 
     @Test
-    fun appendAffordancePinsToVisibleRightEdgeWhenContentOverflows() {
-        val long = request(viewport = 220f, scrollLeft = 70f)
-        val scene = PracticeTimelineSceneProjector.project(long)
-        assertEquals(248f, scene.contentAnchors.appendX)
-        assertTrue(scene.scrollExtent > 0f)
+    fun appendAffordanceStaysAfterTheFinalChordWhenContentOverflows() {
+        val unscrolled = PracticeTimelineSceneProjector.project(request(viewport = 220f))
+        val scrolled = PracticeTimelineSceneProjector.project(request(viewport = 220f, scrollLeft = 70f))
+        assertEquals(308f, unscrolled.contentAnchors.appendX)
+        assertEquals(unscrolled.contentAnchors.appendX, scrolled.contentAnchors.appendX)
+        val finalChord = scrolled.hitObjects.first { it.id == "slot:${second.value}" }.bounds
+        val append = scrolled.hitObjects.first { it.id == "append" }.bounds
+        assertEquals(finalChord.x + finalChord.width, append.x)
+        assertTrue(append.x + append.width <= scrolled.contentWidth)
+        assertTrue(scrolled.scrollExtent > 0f)
+    }
+
+    @Test
+    fun minimumAppendWidthIsIncludedInTheScrollableContent() {
+        val narrowTail = request().copy(
+            pixelsPerWhole = 40f,
+            axisAnchors = emptyList(),
+            axisContentEndX = 0f,
+            axisSurfaceWidth = 0f,
+            viewportWidth = 100f,
+        )
+        val scene = PracticeTimelineSceneProjector.project(narrowTail)
+        val append = scene.hitObjects.first { it.id == "append" }.bounds
+
+        assertEquals(56f, append.width)
+        assertTrue(append.x + append.width <= scene.contentWidth)
     }
 
     @Test
@@ -143,6 +164,88 @@ class PracticeTimelineControllerTest {
         val longerMask = longerTitleScene.drawObjects.first { it.id == "idiom:cadence:text:mask" }
         assertTrue(longerMask.bounds.width > idiomMask.bounds.width)
         assertTrue(scene.contentHeight >= 148f)
+    }
+
+    @Test
+    fun tonalLinesReuseRowsWhenTheirRangesDoNotOverlap() {
+        val base = request()
+        val timeline = base.timeline.copy(
+            tonalLayouts = listOf(
+                PracticeTonalLayoutView(
+                    WorkspaceTonalLayoutId("baseline"),
+                    0,
+                    WorkspaceKeyMode.MAJOR,
+                    Fraction.ZERO,
+                    isBaseline = true,
+                ),
+                PracticeTonalLayoutView(
+                    WorkspaceTonalLayoutId("first"),
+                    1,
+                    WorkspaceKeyMode.MAJOR,
+                    Fraction.ZERO,
+                    Fraction.QUARTER,
+                ),
+                PracticeTonalLayoutView(
+                    WorkspaceTonalLayoutId("second"),
+                    2,
+                    WorkspaceKeyMode.MAJOR,
+                    Fraction.QUARTER,
+                    Fraction.HALF,
+                ),
+            ),
+        )
+        val scene = PracticeTimelineSceneProjector.project(base.copy(timeline = timeline))
+
+        fun y(id: String) = scene.drawObjects.first { it.id == "tonal:$id" }.bounds.y
+        assertEquals(20f, y("baseline"))
+        assertEquals(42f, y("first"))
+        assertEquals(y("first"), y("second"))
+    }
+
+    @Test
+    fun compactModeMovesIdiomTitlesIntoTheirFirstChordAndRemovesAuxiliaryLines() {
+        val base = request()
+        val timeline = base.timeline.copy(
+            tonalLayouts = listOf(
+                PracticeTonalLayoutView(
+                    WorkspaceTonalLayoutId("baseline"),
+                    0,
+                    WorkspaceKeyMode.MAJOR,
+                    Fraction.ZERO,
+                    isBaseline = true,
+                ),
+            ),
+            idioms = listOf(
+                PracticeIdiomView(
+                    id = WorkspaceIdiomInstanceId("cadence"),
+                    definitionId = "cadence",
+                    variantId = "authentic",
+                    slotIds = listOf(first, second),
+                    title = "正格终止",
+                ),
+            ),
+        )
+        val full = PracticeTimelineSceneProjector.project(base.copy(timeline = timeline))
+        val compact = PracticeTimelineSceneProjector.project(
+            base.copy(timeline = timeline, displayMode = PracticeTimelineDisplayMode.COMPACT),
+        )
+
+        assertTrue(compact.contentHeight < full.contentHeight)
+        assertFalse(compact.drawObjects.any { it.id.startsWith("tonal:") })
+        assertFalse(compact.drawObjects.any { it.id == "idiom:cadence" })
+        assertFalse(compact.hitObjects.any {
+            it.kind == PracticeTimelineHitKind.TONAL_LAYOUT || it.kind == PracticeTimelineHitKind.IDIOM
+        })
+        assertTrue(compact.drawObjects.any {
+            it.id == "slot:slot-a:idiom-label:0" && it.text == "正格终止"
+        })
+        assertFalse(compact.drawObjects.any { it.id.startsWith("slot:slot-b:idiom-label:") })
+        assertEquals(20f, compact.hitObjects.first { it.id == "slot:slot-a" }.bounds.y)
+        assertTrue(
+            compact.hitObjects.first { it.id == "slot:slot-a" }.bounds.height >
+                base.copy(timeline = timeline).let(PracticeTimelineSceneProjector::project)
+                    .hitObjects.first { it.id == "slot:slot-a" }.bounds.height,
+        )
     }
 
     @Test
@@ -305,8 +408,8 @@ class PracticeTimelineControllerTest {
         // The surface width is a floor, not a cap: the dragged chord must stay reachable.
         assertTrue(scene.contentWidth >= bounds(beyondAxis.value).let { it.x + it.width })
 
-        // A settled timeline still matches the notation surface exactly — the append affordance
-        // pins itself to the visible right edge instead of widening the shared scroll surface.
+        // A wider settled notation surface remains the shared scroll-width floor; the append
+        // affordance keeps its musical position after the final chord within that surface.
         val settled = request().copy(axisSurfaceWidth = 1200f, viewportWidth = 600f)
         assertEquals(1200f, PracticeTimelineSceneProjector.project(settled).contentWidth)
     }

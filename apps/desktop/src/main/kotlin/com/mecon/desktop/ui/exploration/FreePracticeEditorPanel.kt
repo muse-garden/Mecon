@@ -12,6 +12,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,6 +35,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.HorizontalDivider
@@ -83,6 +85,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
@@ -158,6 +161,7 @@ import com.mecon.features.freepractice.FreePracticeTimelineController
 import com.mecon.features.freepractice.FreePracticeViewProjector
 import com.mecon.features.freepractice.PracticeTimelineAxisAnchor
 import com.mecon.features.freepractice.PracticeTimelineDrawKind
+import com.mecon.features.freepractice.PracticeTimelineDisplayMode
 import com.mecon.features.freepractice.PracticeTimelineInput
 import com.mecon.features.freepractice.PracticeTimelineInputType
 import com.mecon.features.freepractice.PracticeTimelineSceneProjector
@@ -958,6 +962,9 @@ internal fun SharedHarmonicTimeline(
     var hoveredHitId by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf<String?>(null)
     }
+    var displayMode by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(PracticeTimelineDisplayMode.FULL)
+    }
     val baseTimeline = androidx.compose.runtime.remember(workspace, idiomTitles) {
         val projected = FreePracticeViewProjector.timeline(workspace)
         projected.copy(idioms = projected.idioms.map { idiom ->
@@ -1069,6 +1076,7 @@ internal fun SharedHarmonicTimeline(
                 ChordToneLabelMode.RELATIVE -> PracticeTimelineToneLabelMode.RELATIVE
                 ChordToneLabelMode.ABSOLUTE -> PracticeTimelineToneLabelMode.ABSOLUTE
             },
+            displayMode = displayMode,
             palette = desktopTimelinePalette(),
             showRemoveAction = false,
             gesture = gesture,
@@ -1369,7 +1377,63 @@ internal fun SharedHarmonicTimeline(
                 }
             }
         }
+        VerticalTimelineDisplaySwitch(
+            compact = displayMode == PracticeTimelineDisplayMode.COMPACT,
+            onCompactChange = { compact ->
+                displayMode = if (compact) {
+                    PracticeTimelineDisplayMode.COMPACT
+                } else {
+                    PracticeTimelineDisplayMode.FULL
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .fillMaxHeight()
+                .zIndex(300f),
+        )
         }
+    }
+}
+
+@Composable
+private fun VerticalTimelineDisplaySwitch(
+    compact: Boolean,
+    onCompactChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .width(36.dp)
+            .background(MeconColors.Surface),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.Top),
+    ) {
+        Text("完整", color = MeconColors.TextMuted, fontSize = 8.sp)
+        Box(
+            Modifier
+                .size(width = 18.dp, height = 34.dp)
+                .background(
+                    if (compact) MeconColors.Primary else MeconColors.SurfaceLight,
+                    RoundedCornerShape(9.dp),
+                )
+                .semantics {
+                    contentDescription = "时间轴显示模式"
+                    stateDescription = if (compact) "精简" else "完整"
+                }
+                .toggleable(
+                    value = compact,
+                    role = Role.Switch,
+                    onValueChange = onCompactChange,
+                ),
+        ) {
+            Box(
+                Modifier
+                    .offset(x = 2.dp, y = if (compact) 18.dp else 2.dp)
+                    .size(14.dp)
+                    .background(MeconColors.TextPrimary, CircleShape),
+            )
+        }
+        Text("精简", color = MeconColors.TextMuted, fontSize = 8.sp)
     }
 }
 
