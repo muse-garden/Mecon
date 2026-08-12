@@ -5,6 +5,16 @@ Semantic Versioning。未发布的用户可见变化先记录在 `Unreleased`，
 
 ## [Unreleased]
 
+### Changed
+
+- 动态规划求解器优化，实测性能已无问题，默认开启。
+
+### Fixed
+
+- 部分规则因id命名原因，并未接入自由练习，已修复。
+
+## [0.1.0] - 2026-08-10
+
 ### Added
 
 - 自由练习新增共享时间线 raw scene/手势控制器、统一双层工具栏描述符，以及 JVM/JS raw-input、Web/桌面截图和浏览器导出回读门禁。
