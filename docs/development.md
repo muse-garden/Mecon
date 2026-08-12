@@ -22,7 +22,7 @@
 ```text
 projects/
 ├── mecon-components/
-└── music-theory-frontend/
+└── Mecon/
 ```
 
 如果缺少该目录，Gradle 无法解析 `com.mecon:mecon-components`，Desktop 模块将无法编译。

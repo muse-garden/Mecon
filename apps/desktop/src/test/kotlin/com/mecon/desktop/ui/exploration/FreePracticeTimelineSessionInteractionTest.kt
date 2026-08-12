@@ -1,5 +1,6 @@
 package com.mecon.desktop.ui.exploration
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -50,6 +51,65 @@ class FreePracticeTimelineSessionInteractionTest {
     private val beatWidth = 144.dp
     private val width = 960
     private val height = 220
+
+    @Test
+    fun chordDragDoesNotAlsoPanTheTimelineViewport() {
+        val workspace = initialWorkspace(4)
+        val wideBeat = 600.dp
+        var timelineScrollState: ScrollState? = null
+        var previewCount = 0
+        @OptIn(ExperimentalComposeUiApi::class)
+        val scene = ImageComposeScene(width, height, Density(1f)) {
+            MaterialTheme {
+                val scrollState = rememberScrollState()
+                timelineScrollState = scrollState
+                SharedHarmonicTimeline(
+                    workspace = workspace,
+                    selectedSlotId = workspace.slots.first().id,
+                    selectedIdiomInstanceId = null,
+                    onSelectIdiom = {},
+                    idiomTitles = emptyMap(),
+                    toneMode = com.mecon.desktop.uikit.components.ChordToneLabelMode.RELATIVE,
+                    beatWidth = wideBeat,
+                    onBeatWidthChange = {},
+                    gridUnit = Fraction(1, 8),
+                    defaultChordDuration = Fraction(1, 4),
+                    scrollState = scrollState,
+                    resolvedTimeAxis = null,
+                    onSelect = {},
+                    onInsertRange = { _, _ -> },
+                    onCommitTimelineEdit = { true },
+                    onPreviewTimelineEdit = {
+                        previewCount += 1
+                        null
+                    },
+                    onError = {},
+                    onDelete = {},
+                    onSelectTonalLayout = {},
+                )
+            }
+        }
+
+        try {
+            scene.png()
+            val target = scene.slotCenter(workspace, workspace.slots.first().id, wideBeat)
+            val pressed = PointerButtons(isPrimaryPressed = true)
+            scene.sendPointerEvent(PointerEventType.Press, target, buttons = pressed)
+            scene.png() // let the captured timeline gesture disable viewport panning
+            scene.sendPointerEvent(PointerEventType.Move, Offset(target.x - 80f, target.y), buttons = pressed)
+            scene.png()
+            scene.sendPointerEvent(PointerEventType.Move, Offset(target.x - DX, target.y), buttons = pressed)
+            scene.png()
+
+            assertTrue(previewCount > 0, "The regression probe did not capture the chord drag")
+            assertTrue(
+                requireNotNull(timelineScrollState).value == 0,
+                "Dragging a chord also panned the timeline viewport",
+            )
+        } finally {
+            scene.close()
+        }
+    }
 
     @Test
     fun previewFollowsTheSecondDragAfterAnUndo() = runBlocking {
@@ -194,6 +254,7 @@ class FreePracticeTimelineSessionInteractionTest {
     private fun ImageComposeScene.slotCenter(
         workspace: HarmonyWorkspaceState,
         slotId: WorkspaceSlotId,
+        sceneBeatWidth: androidx.compose.ui.unit.Dp = beatWidth,
     ): Offset {
         val projected = PracticeTimelineSceneProjector.project(
             PracticeTimelineSceneRequest(
@@ -203,7 +264,7 @@ class FreePracticeTimelineSessionInteractionTest {
                 scrollLeft = 0f,
                 axisAnchors = emptyList(),
                 axisContentEndX = 0f,
-                pixelsPerWhole = beatWidth.value * 4f,
+                pixelsPerWhole = sceneBeatWidth.value * 4f,
                 timeline = FreePracticeViewProjector.timeline(workspace),
                 selectedSlotId = slotId.value,
                 selectedIdiomId = null,

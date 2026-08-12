@@ -11,6 +11,7 @@ import {
 import { FULL_SCORE_EDITOR_TOOLBAR, resolveToolbarLayout } from "./toolbar.js";
 import { DURATION_GLYPHS, SMUFL_GLYPHS } from "./music-glyphs.js";
 import { scorePlayheadGeometry } from "./playback.js";
+import { createControlledScrollSync } from "./scroll-sync.js";
 import {
   ChevronLeft,
   ChevronRight,
@@ -1189,6 +1190,7 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
   scrollLeft = 0,
   onScroll,
   onViewportWidth,
+  scrollContentWidth = 0,
   playbackStore = null,
   elementTints = null,
   className = "score-panel",
@@ -1197,6 +1199,8 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
 }, canvasRef) {
   const localCanvasRef = useRef(null);
   const scrollRef = useRef(null);
+  const scrollSyncRef = useRef(null);
+  if (!scrollSyncRef.current) scrollSyncRef.current = createControlledScrollSync();
   const summaryId = useId();
   // The surface commonly mounts before its snapshot, so the canvas does not
   // exist during the first layout pass. Refresh the forwarded handle after
@@ -1245,8 +1249,7 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
     });
   }, [frame, surfaceIndex, dragPreview, noteInputPreview, background, elementTints]);
   useEffect(() => {
-    const element = scrollRef.current;
-    if (element && Math.abs(element.scrollLeft - scrollLeft) > 0.5) element.scrollLeft = scrollLeft;
+    scrollSyncRef.current.apply(scrollRef.current, scrollLeft);
   }, [scrollLeft]);
   useEffect(() => {
     const element = scrollRef.current;
@@ -1275,9 +1278,13 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
       )}
       {frame ? (
         <div className="canvas-scroll" ref={scrollRef}
-          onScroll={(event) => onScroll?.(event.currentTarget.scrollLeft)}>
+          onScroll={(event) => {
+            const next = event.currentTarget.scrollLeft;
+            if (scrollSyncRef.current.observe(next, scrollLeft)) onScroll?.(next);
+          }}>
           <div className="score-canvas-stage" style={{
-            position: "relative", width: surface?.width ?? 0, height: surface?.height ?? 0,
+            position: "relative", width: Math.max(surface?.width ?? 0, scrollContentWidth),
+            height: surface?.height ?? 0,
           }}>
             <canvas ref={localCanvasRef} role="img" aria-label={canvasAriaLabel}
               aria-describedby={summaryId} tabIndex={0} onClick={onClick} onPointerDown={onPointerDown}

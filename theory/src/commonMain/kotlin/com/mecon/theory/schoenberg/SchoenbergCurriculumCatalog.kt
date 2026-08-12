@@ -11,6 +11,9 @@ internal object SchoenbergCurriculumCatalog {
             MAJOR_BRANCH_RULE_ID,
             requiresEnumeratedProgression = true,
             enumerationWindowLimit = 3,
+            // 章节规则叫 schoenberg.leading-triad.preparation / .resolution，
+            // 默认前缀（练习 ruleId 全名）覆盖不到它们。
+            ownedRulePrefixes = setOf("schoenberg.leading-triad"),
         ),
         SchoenbergExerciseDescriptor(
             FIRST_INVERSION_EXERCISE_ID,
@@ -25,6 +28,7 @@ internal object SchoenbergCurriculumCatalog {
             MAJOR_BRANCH_RULE_ID,
             requiresEnumeratedProgression = true,
             enumerationWindowLimit = 3,
+            ownedRulePrefixes = setOf("schoenberg.second-inversion"),
         ),
         SchoenbergExerciseDescriptor(
             SEVENTH_CHORD_EXERCISE_ID,
@@ -32,6 +36,7 @@ internal object SchoenbergCurriculumCatalog {
             MAJOR_BRANCH_RULE_ID,
             requiresEnumeratedProgression = true,
             enumerationWindowLimit = 8,
+            ownedRulePrefixes = setOf("schoenberg.seventh-chord"),
         ),
         SchoenbergExerciseDescriptor(
             DIMINISHED_SEVENTH_EXERCISE_ID,
@@ -119,6 +124,11 @@ internal object SchoenbergCurriculumCatalog {
             requiresEnumeratedProgression = true,
             continuationChordCountRange = 6..12,
             harmonicTreatmentIds = SchoenbergHarmonicTreatments.integratedDiatonicTreatments,
+            ownedRulePrefixes = setOf(
+                ROOT_MOTION_AND_REPETITION_RULE_ID.value,
+                "schoenberg.root-motion",
+                "schoenberg.repetition",
+            ),
         ),
         SchoenbergExerciseDescriptor(
             CADENCE_EXERCISE_ID,
@@ -139,6 +149,10 @@ internal object SchoenbergCurriculumCatalog {
             continuationChordCountRange = 8..14,
             exhaustEnumeratedPrograms = true,
             harmonicTreatmentIds = SchoenbergHarmonicTreatments.integratedDiatonicTreatments,
+            ownedRulePrefixes = setOf(
+                FREER_SEVENTH_LEADING_RULE_ID.value,
+                "schoenberg.freer",
+            ),
         ),
         SchoenbergExerciseDescriptor(
             SECONDARY_HARMONY_EXERCISE_ID,

@@ -504,6 +504,10 @@ internal fun FreePracticeWorkbench(
             if (!enabled) selectedIdiomTargetKey = null
         },
         selectIdiomTargetKey = { selectedIdiomTargetKey = it },
+        selectIdiomTonalLayout = { id ->
+            currentHost.value?.selectIdiomTonalLayout(id)
+                ?: reportMissingPracticeHost { operationError = it }
+        },
         replaceChord = ::replaceChordWithOptionalWriting,
         setChordBass = ::setChordBassWithOptionalWriting,
         setChordTonality = { tonality ->

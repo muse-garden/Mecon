@@ -138,6 +138,7 @@ object FreePracticeViewProjector {
         selectedSlotId: com.mecon.theory.freepractice.WorkspaceSlotId?,
         selectedTonalLayoutId: com.mecon.theory.freepractice.WorkspaceTonalLayoutId? = null,
         catalog: PracticeCatalogView,
+        selectedIdiomTonalLayoutId: com.mecon.theory.freepractice.WorkspaceTonalLayoutId? = null,
         idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
     ): PracticePlanView {
         val strings = PracticePlanStrings()
@@ -151,6 +152,50 @@ object FreePracticeViewProjector {
             ?.let { id -> workspace.tonalLayouts.firstOrNull { it.id == id } }
             ?: slot?.let(workspace::selectedTonalLayout)
             ?: activeLayouts.firstOrNull()
+        val chordCatalogLayout = slot?.let(workspace::selectedTonalLayout)
+            ?: editableLayout
+        val idiomCatalogLayout = selectedIdiomTonalLayoutId
+            ?.let { id -> activeLayouts.firstOrNull { it.id == id } }
+            ?: activeLayouts.singleOrNull()
+            ?: slot?.let(workspace::selectedTonalLayout)
+            ?: activeLayouts.lastOrNull()
+        val keyedCatalogs = activeLayouts.distinctBy { it.key }.map { layout ->
+            layout to projectPracticeCatalog(layout.key)
+        }
+        val catalogChoicesBySound = keyedCatalogs.associate { (layout, keyedCatalog) ->
+            layout.key to keyedCatalog.chordChoices.associateBy { it.choice.pitchClasses.toSet() }
+        }
+        val chordCatalogFilters = keyedCatalogs.map { (layout, currentCatalog) ->
+            val enrichedGroups = currentCatalog.chordGroups.map { group ->
+                group.copy(
+                    choices = group.choices.map { choice ->
+                        choice.copy(
+                            alternateTonalReadings = keyedCatalogs.mapNotNull { (otherLayout, _) ->
+                                if (otherLayout.key == layout.key) return@mapNotNull null
+                                catalogChoicesBySound[otherLayout.key]
+                                    ?.get(choice.choice.pitchClasses.toSet())?.let { other ->
+                                    PracticeChordCatalogAlternateReadingView(
+                                        key = PracticeKeyView(otherLayout.fifths, otherLayout.mode),
+                                        keyLabel = otherLayout.key.displayLabel(),
+                                        functionalSymbol = other.symbol,
+                                        relativeLabel = other.relativeLabel,
+                                        absoluteLabel = other.absoluteLabel,
+                                    )
+                                }
+                            },
+                        )
+                    },
+                )
+            }
+            PracticeChordCatalogFilterView(
+                id = "${layout.key.fifths}:${layout.key.mode.name}",
+                key = PracticeKeyView(layout.fifths, layout.mode),
+                keyLabel = layout.key.displayLabel(),
+                tonalLayoutId = layout.id,
+                selected = layout.id == chordCatalogLayout?.id,
+                chordGroups = enrichedGroups,
+            )
+        }
         val projectedIdiomCatalog = idiomCatalog.copy(
             definitions = idiomCatalog.definitions.map { definition ->
                 definition.copy(
@@ -432,6 +477,7 @@ object FreePracticeViewProjector {
             selectedChord = selectedChord,
             chordDetail = chordDetail,
             chordCatalogGroups = catalog.chordGroups,
+            chordCatalogFilters = chordCatalogFilters,
             selectedChordReadings = chordReadings,
             bassOptions = slot?.chordChoice?.pitchClasses.orEmpty(),
             bassChoices = bassChoices,
@@ -447,6 +493,15 @@ object FreePracticeViewProjector {
             currentTonalityRows = currentTonalityRows,
             doubleTonalityChoices = doubleTonalityChoices,
             idiomTargetKeys = targetKeys,
+            idiomCatalogFilters = activeLayouts.map { layout ->
+                PracticePlanTonalLayoutFilterView(
+                    id = layout.id.value,
+                    key = PracticeKeyView(layout.fifths, layout.mode),
+                    label = layout.key.displayLabel(),
+                    tonalLayoutId = layout.id,
+                    selected = layout.id == idiomCatalogLayout?.id,
+                )
+            },
             idiomCatalog = projectedIdiomCatalog,
         )
     }

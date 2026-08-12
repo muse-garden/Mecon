@@ -19,6 +19,8 @@ let timelineRequest = null;
 const searchWorkers = new Map();
 let catalogWorker = null;
 let findingWorker = null;
+let pendingCatalogRequestId = null;
+let pendingFindingRequestId = null;
 let rendered = null;
 let renderedTimelineKey = null;
 let queue = Promise.resolve();
@@ -28,6 +30,7 @@ let pendingTimelineMove = null;
 let timelineMoveFlushQueued = false;
 let timelineGridUnit = { numerator: 1, denominator: 8 };
 let timelineDefaultChordDuration = { numerator: 1, denominator: 4 };
+let timelineDisplayMode = "FULL";
 
 self.onmessage = (event) => {
   if (event.data.type === "timelineInput" && event.data.input?.type === "MOVE") {
@@ -46,13 +49,27 @@ self.onmessage = (event) => {
  * caused it. The shell tracks one in-flight practice intent at a time, so an error that carried no
  * request id would leave it waiting forever and silently freeze the whole workbench.
  */
+const RESULT_FAILURE_TYPES = {
+  backgroundResult: "backgroundFailure",
+  teachingCatalogResult: "teachingCatalogFailure",
+  findingResult: "findingFailure",
+};
+
 function enqueue(message) {
   queue = queue.then(() => handle(message)).catch((error) => {
+    const reason = error?.message ?? String(error);
     self.postMessage({
       type: "error",
-      message: error?.message ?? String(error),
+      message: reason,
       clientRequestId: message.clientRequestId ?? null,
     });
+    // Applying a result is itself engine work and can throw. The request stays active in the
+    // session when it does, so route the same crash back through the failure channel; otherwise
+    // the workbench keeps waiting for an answer that was already lost.
+    const failureType = RESULT_FAILURE_TYPES[message.type];
+    if (failureType && message.result?.requestId != null) {
+      enqueue({ type: failureType, failure: { requestId: message.result.requestId, reason } });
+    }
   });
 }
 
@@ -121,6 +138,7 @@ async function handle(message) {
     case "timelinePreferences":
       timelineGridUnit = message.gridUnit ?? timelineGridUnit;
       timelineDefaultChordDuration = message.defaultChordDuration ?? timelineDefaultChordDuration;
+      timelineDisplayMode = message.displayMode ?? timelineDisplayMode;
       if (latestFreePracticeUpdate) publishTimelineScene(latestFreePracticeUpdate, timelineRequest?.gesture ?? null);
       break;
     case "timelineInput":
@@ -165,6 +183,18 @@ async function handle(message) {
     case "findingResult":
       if (!freePractice) throw new Error("No free-practice session is open");
       publishFreePractice(freePractice.applyFindingResult(message.result));
+      break;
+    case "backgroundFailure":
+      if (!freePractice) break;
+      publishFreePractice(freePractice.applyBackgroundFailure(message.failure));
+      break;
+    case "teachingCatalogFailure":
+      if (!freePractice) break;
+      publishFreePractice(freePractice.applyTeachingCatalogFailure(message.failure));
+      break;
+    case "findingFailure":
+      if (!freePractice) break;
+      publishFreePractice(freePractice.applyFindingFailure(message.failure));
       break;
     case "playback":
       if (!freePractice) throw new Error("No free-practice session is open");
@@ -277,6 +307,7 @@ function publishTimelineScene(update, gesture, timeline = update.timeline) {
     selectedIdiomId: update.selection?.idiomInstanceId ?? null,
     gridUnit: timelineGridUnit,
     defaultChordDuration: timelineDefaultChordDuration,
+    displayMode: timelineDisplayMode,
     showRemoveAction: false,
     gesture,
   };
@@ -318,18 +349,38 @@ function handleTimelineInput(input) {
  * cold engine start per click. Superseded answers are cheap to drop instead: the session validates
  * `requestId / baseRevision / fingerprint` and reports STALE_BACKGROUND_RESULT.
  */
-function residentSearchWorker(current, resultType) {
+function residentSearchWorker(current, resultType, pendingRequestId, onDead) {
   if (current) return current;
   const worker = new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });
+  const fail = (reason, requestId = pendingRequestId()) => {
+    self.postMessage({ type: "error", message: reason });
+    if (requestId != null) {
+      enqueue({ type: RESULT_FAILURE_TYPES[resultType], failure: { requestId, reason } });
+    }
+  };
   worker.onmessage = ({ data }) => {
     if (data.type === resultType) enqueue({ type: resultType, result: data.result });
-    else if (data.type === "error") self.postMessage(data);
+    else if (data.type === "error") fail(data.message ?? "后台搜索失败", data.requestId ?? pendingRequestId());
+  };
+  // A resident worker that dies (engine chunk failed to load, out of memory) can never answer
+  // again. Drop the reference so the next request starts a fresh one instead of posting into a
+  // dead worker forever.
+  worker.onerror = (event) => {
+    onDead();
+    worker.terminate();
+    fail(event?.message || "后台搜索 Worker 已崩溃");
   };
   return worker;
 }
 
 function runFindings(request) {
-  findingWorker = residentSearchWorker(findingWorker, "findingResult");
+  pendingFindingRequestId = request.requestId;
+  findingWorker = residentSearchWorker(
+    findingWorker,
+    "findingResult",
+    () => pendingFindingRequestId,
+    () => { findingWorker = null; },
+  );
   findingWorker.postMessage({ type: "executeFindings", request });
 }
 
@@ -341,19 +392,32 @@ function runBackground(request) {
   searchWorkers.get(request.kind)?.terminate();
   const worker = new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });
   searchWorkers.set(request.kind, worker);
+  // A crashed solve must reach the session, not just the status bar: the request stays active
+  // until it does, and the workbench stays locked in RUNNING with the pending workspace showing.
+  const fail = (reason) => {
+    self.postMessage({ type: "error", message: reason });
+    enqueue({ type: "backgroundFailure", failure: { requestId: request.requestId, reason } });
+  };
   worker.onmessage = ({ data }) => {
     if (data.type === "backgroundResult") {
       self.postMessage({ type: "backgroundProgress", requestId: request.requestId });
       enqueue({ type: "backgroundResult", result: data.result });
     } else if (data.type === "error") {
-      self.postMessage(data);
+      fail(data.message ?? "自动写作失败");
     }
   };
+  worker.onerror = (event) => fail(event?.message || "自动写作 Worker 已崩溃");
   worker.postMessage({ type: "execute", request });
 }
 
 function runTeachingCatalog(request) {
-  catalogWorker = residentSearchWorker(catalogWorker, "teachingCatalogResult");
+  pendingCatalogRequestId = request.requestId;
+  catalogWorker = residentSearchWorker(
+    catalogWorker,
+    "teachingCatalogResult",
+    () => pendingCatalogRequestId,
+    () => { catalogWorker = null; },
+  );
   catalogWorker.postMessage({ type: "executeTeachingCatalog", request });
 }
 
@@ -389,6 +453,8 @@ function closeCurrent() {
   timelineRequest = null;
   catalogWorker = null;
   findingWorker = null;
+  pendingCatalogRequestId = null;
+  pendingFindingRequestId = null;
   renderer = null;
   latestFreePracticeUpdate = null;
   renderedTimelineKey = null;

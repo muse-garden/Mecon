@@ -115,12 +115,24 @@ longUpdate = longSession.dispatch({
   expectedRevision: longUpdate.revision,
   settings: { ...longUpdate.document.settings.writing, autoWritingEnabled: false },
 });
-while (longUpdate.timeline.slots.length < 64) {
+// Add and populate the first rewrite window before extending the stress fixture. Timeline commits
+// synchronize the nested score session, so inserting these notes after all 64 geometry commits can
+// leave the fixture's inner score revision stale and silently exercise an empty score instead.
+while (longUpdate.timeline.slots.length < 3) {
   longUpdate = longSession.dispatch({
     type: "insertChordRange",
     expectedRevision: longUpdate.revision,
     onset: longUpdate.timeline.end,
     duration: { numerator: 1, denominator: 4 },
+  });
+}
+const rewriteChoice = longUpdate.document.workspace.slots[0].chordChoice;
+for (const slot of longUpdate.document.workspace.slots.slice(1, 3)) {
+  longUpdate = longSession.dispatch({
+    type: "replaceChord",
+    expectedRevision: longUpdate.revision,
+    slotId: slot.id,
+    chordChoice: rewriteChoice,
   });
 }
 for (const [numerator, pitch] of [[2, 0], [3, 1], [4, 2]]) {
@@ -135,6 +147,14 @@ for (const [numerator, pitch] of [[2, 0], [3, 1], [4, 2]]) {
       duration: { base: "EIGHTH" },
       pitch: { diatonicSteps: pitch },
     },
+  });
+}
+while (longUpdate.timeline.slots.length < 64) {
+  longUpdate = longSession.dispatch({
+    type: "insertChordRange",
+    expectedRevision: longUpdate.revision,
+    onset: longUpdate.timeline.end,
+    duration: { numerator: 1, denominator: 4 },
   });
 }
 longSession.close();

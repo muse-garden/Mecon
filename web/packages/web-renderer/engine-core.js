@@ -125,6 +125,22 @@ export class FreePracticeFacade {
     return JSON.parse(this.session.applyFindingResultJson(asJson(result)));
   }
 
+  /**
+   * Report that a background worker crashed and will never answer. `failure` is
+   * `{ requestId, reason }`; the session owns the rollback and unlocks the workbench.
+   */
+  applyBackgroundFailure(failure) {
+    return JSON.parse(this.session.applyBackgroundFailureJson(asJson(failure)));
+  }
+
+  applyTeachingCatalogFailure(failure) {
+    return JSON.parse(this.session.applyTeachingCatalogFailureJson(asJson(failure)));
+  }
+
+  applyFindingFailure(failure) {
+    return JSON.parse(this.session.applyFindingFailureJson(asJson(failure)));
+  }
+
   previewTimelineEdit(request) {
     return JSON.parse(this.session.previewTimelineEditJson(asJson(request)));
   }

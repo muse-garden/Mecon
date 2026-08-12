@@ -69,6 +69,14 @@ Future mobile adapter ─────────┘       ├─ HarmonyWorkspa
 都不进入 document，也不进 undo 历史。谱面拖动 ghost 虽是瞬时状态，其乐谱元素命令仍须由共享
 renderer preview computer 生成；JS 只重放命令，不自行拼装或平移乐谱元素作为降级实现。
 
+和声时间轴的精简/完整切换同样是平台瞬时布局状态，但两端必须把模式传给 commonMain 的
+`PracticeTimelineSceneRequest`，由共享 projector 决定高度和内容：完整模式将不重叠的调性区间交错
+复用轨道；精简模式隐藏调性线与惯用进行括号，并把惯用进行标题投影到首个和弦框。平台不得自行
+筛选 draw/hit object 或从 workspace 推导首和弦。两端入口使用同语义的竖向 Switch；末端 `＋`
+作为最后一个和弦后的普通滚动内容固定排布，不吸附或悬浮于当前视口右缘。Switch 的“完整/精简”
+标签始终同时展示，并占用独立的左侧固定控制区；内容位于滚动起点时保持原有屏幕 X，滚动后由该控制区
+裁切经过左缘的和弦，避免与 Switch 重叠。scene 总宽度必须覆盖末端 `＋` 的实际最小宽度。
+
 右栏统一消费 `PracticePlanView`：选中槽与导航、活动调性线、和弦读法/锁定能力、离调候选的
 ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProjector` 给出。React 不得再从
 `timeline` 或 document workspace 查找并拼出这些关系。面板拖宽是平台布局状态；已由顶栏 descriptor

@@ -22,6 +22,8 @@ import com.mecon.theory.freepractice.WorkspaceIdiomInstance
 import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
 import com.mecon.theory.freepractice.VoiceAssignmentSource
+import com.mecon.theory.KeySignatureMode
+import com.mecon.theory.ModulationKey
 
 class FreePracticeSessionTest {
     @Test
@@ -252,10 +254,12 @@ class FreePracticeSessionTest {
         val replay = assertIs<PracticeEditPlayback.Excerpt>(applied.editPlayback).range
         assertEquals(insertedSlotIds.first(), replay.firstSlotId)
         assertEquals(insertedSlotIds.last(), replay.lastSlotId)
-        val cancelled = session.dispatch(FreePracticeIntent.CancelWriting(applied.frame.revision))
+        val tailSelected = session.dispatch(
+            FreePracticeIntent.SelectSlot(applied.frame.revision, insertedSlotIds.last()),
+        )
         val replaced = session.dispatch(
             FreePracticeIntent.ReplaceIdiom(
-                cancelled.frame.revision,
+                tailSelected.frame.revision,
                 instanceId,
                 "fixture.idiom",
                 "variant-b",
@@ -384,6 +388,84 @@ class FreePracticeSessionTest {
 
         val undone = session.dispatch(FreePracticeIntent.Undo(removed.frame.revision))
         assertTrue(undone.frame.document.workspace.tonalLayouts.any { it.id == insertedId })
+    }
+
+    @Test
+    fun idiomCatalogTonalityIsIndependentFromChordAndTimelineSelection() {
+        val session = session()
+        val initial = session.frame()
+        val slotId = requireNotNull(initial.selectedSlotId)
+        val baselineId = initial.document.workspace.tonalLayouts.single().id
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertTonalLayout(
+                expectedRevision = initial.revision,
+                fifths = 6,
+                mode = com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR,
+                start = Fraction.ZERO,
+                end = Fraction.QUARTER,
+            ),
+        )
+        val laterId = inserted.frame.document.workspace.tonalLayouts.single { it.id != baselineId }.id
+        val chordSelected = session.dispatch(
+            FreePracticeIntent.SelectChordTonalLayout(inserted.frame.revision, slotId, laterId),
+        )
+        val idiomBaseline = session.dispatch(
+            FreePracticeIntent.SelectIdiomTonalLayout(chordSelected.frame.revision, baselineId),
+        )
+        assertEquals(laterId, idiomBaseline.frame.selection.tonalLayoutId)
+        assertEquals(laterId, idiomBaseline.frame.plan.chordCatalogFilters.single { it.selected }.tonalLayoutId)
+        assertEquals(baselineId, idiomBaseline.frame.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId)
+        assertEquals(0, idiomBaseline.catalogRequests.single().catalogKey.fifths)
+
+        val idiomLater = session.dispatch(
+            FreePracticeIntent.SelectIdiomTonalLayout(idiomBaseline.frame.revision, laterId),
+        )
+        assertEquals(laterId, idiomLater.frame.selection.tonalLayoutId)
+        assertEquals(laterId, idiomLater.frame.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId)
+        val request = idiomLater.catalogRequests.single()
+        assertEquals(6, request.catalogKey.fifths)
+
+        val choice = projectPracticeCatalog(ModulationKey(6, KeySignatureMode.MAJOR))
+            .chordChoices.first().choice
+        val catalogApplied = session.applyTeachingCatalogResult(
+            PracticeTeachingCatalogResult(
+                requestId = request.requestId,
+                baseRevision = request.baseRevision,
+                fingerprint = request.fingerprint,
+                definitions = listOf(
+                    PracticeIdiomDefinitionView(
+                        id = "fixture.later-key",
+                        title = "Later key",
+                        sourceExerciseId = "fixture-exercise",
+                        sourceChapterId = "fixture-chapter",
+                        availableByDefault = true,
+                        variants = listOf(
+                            PracticeIdiomVariantView(
+                                id = "fixture.later-key.variant",
+                                title = "Later key variant",
+                                durations = listOf(Fraction.QUARTER),
+                                chordIdentities = listOf("I"),
+                                chordChoices = listOf(choice),
+                                availableByDefault = true,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val insertedIdiom = session.dispatch(
+            FreePracticeIntent.InsertIdiom(
+                catalogApplied.frame.revision,
+                slotId,
+                "fixture.later-key",
+                "fixture.later-key.variant",
+            ),
+        )
+        assertEquals(laterId, insertedIdiom.frame.selection.tonalLayoutId)
+        assertEquals(
+            laterId,
+            insertedIdiom.requests.single().document.workspace.idiomInstances.single().tonalLayoutId,
+        )
     }
 
     @Test
@@ -714,6 +796,138 @@ class FreePracticeSessionTest {
 
         assertEquals(FreePracticeEffectKind.STALE_BACKGROUND_RESULT, stale.effect.kind)
         assertEquals(cancelled.frame.revision, stale.frame.revision)
+    }
+
+    /**
+     * A crashed search worker used to leave the request active forever: the workbench stayed in
+     * RUNNING with the uncommitted workspace showing and refused every further intent.
+     */
+    @Test
+    fun crashedFirstSolveRollsBackToTheLastCommittedWorkspaceAndUnlocksTheWorkbench() {
+        val session = session()
+        val before = session.frame()
+        val slot = requireNotNull(before.selectedSlotId)
+        val choice = WorkspaceChordChoice.of(listOf(2, 5, 9))
+        val requested = session.dispatch(FreePracticeIntent.ReplaceChord(before.revision, slot, choice))
+        assertEquals(FreePracticeEffectKind.WRITING_REQUESTED, requested.effect.kind)
+        assertEquals(choice, requested.frame.document.workspace.slots.single().chordChoice)
+        val request = requested.requests.single()
+
+        val failed = session.applyBackgroundFailure(
+            PracticeBackgroundFailure(request.requestId, "engine crashed")
+        )
+
+        assertEquals(FreePracticeEffectKind.INVALID, failed.effect.kind)
+        assertEquals("freePractice.writing.failed", failed.effect.messageKey)
+        assertEquals("engine crashed", failed.effect.arguments["reason"])
+        assertEquals(PracticeWritingOutcome.Failed("engine crashed"), failed.frame.writing.outcome)
+        assertEquals(PracticeWritingPhase.READY, failed.frame.writing.phase)
+        // The pending chord was never committed, so dropping the request is the rollback.
+        assertEquals(
+            before.document.workspace.slots.single().chordChoice,
+            failed.frame.document.workspace.slots.single().chordChoice,
+        )
+        assertFalse(failed.frame.score.runtimeScore.getAllVoiceEvents().any { !it.isRest })
+
+        // The workbench must accept work again immediately.
+        val afterFailure = session.dispatch(
+            FreePracticeIntent.ReplaceChord(failed.frame.revision, slot, choice)
+        )
+        assertEquals(FreePracticeEffectKind.WRITING_REQUESTED, afterFailure.effect.kind)
+    }
+
+    @Test
+    fun crashedCandidateOptimizationKeepsTheAppliedWritingAndOnlyUnlocks() {
+        val session = session()
+        val slot = requireNotNull(session.frame().selectedSlotId)
+        val requested = session.dispatch(FreePracticeIntent.RunWriting(session.frame().revision, slot))
+        val request = requested.requests.single()
+        val voices = request.document.workspace.voices.sortedBy { it.order }
+        val applied = session.applyBackgroundResult(
+            PracticeBackgroundResult(
+                requestId = request.requestId,
+                baseRevision = request.baseRevision,
+                scopeFingerprint = request.scopeFingerprint,
+                kind = request.kind,
+                candidates = listOf(
+                    PracticeVoicingCandidate(
+                        frames = listOf(
+                            PracticeVoicingFrame(
+                                slot,
+                                voices.mapIndexed { index, voice ->
+                                    voice.id to Pitch.fromMidi(72 - index * 7)
+                                }.toMap(),
+                            )
+                        ),
+                        diversityGroupKey = "fixture-primary",
+                        score = 0.0,
+                    )
+                ),
+                outcome = PracticeWritingOutcome.Solved(listOf(slot), null),
+            )
+        )
+        val optimize = applied.requests.single()
+
+        val failed = session.applyBackgroundFailure(
+            PracticeBackgroundFailure(optimize.requestId, "alternate crashed")
+        )
+
+        assertEquals(FreePracticeEffectKind.INVALID, failed.effect.kind)
+        assertEquals("freePractice.writing.alternateFailed", failed.effect.messageKey)
+        assertIs<PracticeWritingOutcome.Solved>(failed.frame.writing.outcome)
+        assertTrue(failed.frame.score.runtimeScore.getAllVoiceEvents().any { !it.isRest })
+    }
+
+    @Test
+    fun backgroundFailureForAnotherRequestIsRejectedAsStale() {
+        val session = session()
+        val slot = requireNotNull(session.frame().selectedSlotId)
+        val requested = session.dispatch(FreePracticeIntent.RunWriting(session.frame().revision, slot))
+
+        val stale = session.applyBackgroundFailure(
+            PracticeBackgroundFailure(requested.requests.single().requestId + 1_000, "late crash")
+        )
+
+        assertEquals(FreePracticeEffectKind.STALE_BACKGROUND_RESULT, stale.effect.kind)
+        assertEquals(PracticeWritingPhase.RUNNING, stale.frame.writing.phase)
+        assertEquals(requested.frame.revision, stale.frame.revision)
+    }
+
+    /**
+     * The pending request is what suppresses the next request for the same fingerprint, so a
+     * crashed finding worker would otherwise freeze the feedback panel as permanently stale —
+     * while re-issuing it immediately would spin on a reproducible crash.
+     */
+    @Test
+    fun crashedFindingRequestDoesNotSpinAndIsReissuedWhenInputsChange() {
+        val session = session()
+        val request = session.initialUpdate().findingRequests.single()
+
+        val failed = session.applyFindingFailure(PracticeBackgroundFailure(request.requestId, "boom"))
+        assertEquals(FreePracticeEffectKind.INVALID, failed.effect.kind)
+        assertEquals("freePractice.findings.failed", failed.effect.messageKey)
+        assertTrue(failed.frame.findings.stale)
+        assertTrue(failed.findingRequests.isEmpty(), "同一输入不得立刻重发，否则会在必现崩溃上空转")
+
+        val slot = requireNotNull(session.frame().selectedSlotId)
+        val changed = session.dispatch(
+            FreePracticeIntent.ReplaceChord(failed.frame.revision, slot, WorkspaceChordChoice.of(listOf(2, 5, 9)))
+        )
+        assertEquals(1, changed.findingRequests.size)
+    }
+
+    @Test
+    fun crashedTeachingCatalogRequestStopsLoadingAndReportsTheError() {
+        val session = session()
+        val request = session.initialUpdate().catalogRequests.single()
+
+        val failed = session.applyTeachingCatalogFailure(
+            PracticeBackgroundFailure(request.requestId, "catalog boom")
+        )
+
+        assertEquals(FreePracticeEffectKind.INVALID, failed.effect.kind)
+        assertFalse(failed.frame.plan.idiomCatalog.loading)
+        assertEquals("freePractice.catalog.failed", failed.frame.plan.idiomCatalog.errorKey)
     }
 
     @Test

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createControlledScrollSync } from "@mecon/web-renderer/editor";
 
 const TIMELINE_KEYS = new Set([
   "Enter", " ", "ArrowLeft", "ArrowRight", "Delete", "Backspace", "Escape",
@@ -44,19 +45,30 @@ function DrawObject({ object }) {
 }
 
 /** Thin browser adapter: raw input in, shared draw/a11y objects out. */
-export function HarmonyTimeline({ scene, scrollLeft = 0, onScroll, onInput }) {
+export function HarmonyTimeline({
+  scene,
+  scrollLeft = 0,
+  onScroll,
+  onInput,
+  displayMode = "FULL",
+  onDisplayModeChange,
+}) {
   const surfaceRef = useRef(null);
   const scrollRef = useRef(null);
   const lastScrollLeftRef = useRef(scrollLeft);
+  // Native scrollbar drags are DOM-owned. React can render an older sharedScrollLeft while a rapid
+  // drag is already farther ahead; writing that stale value back makes the thumb jump backwards.
+  // Keep the locally reported position pending until the parent acknowledges it, and distinguish
+  // scroll events caused by synchronising the sibling score surface from genuine user input.
+  const scrollSyncRef = useRef(null);
+  if (!scrollSyncRef.current) scrollSyncRef.current = createControlledScrollSync(1);
   // Pointer feedback stays on the main thread: hover must not wait for an engine Worker round trip.
   // `hoverTargets` already arrives sorted by the controller's hit priority, so the whole browser-side
   // rule is "first target that contains the pointer" — no priority or highlight logic is copied here.
   const [hoverHitId, setHoverHitId] = useState(null);
 
   useEffect(() => {
-    if (scrollRef.current && Math.abs(scrollRef.current.scrollLeft - scrollLeft) > 1) {
-      scrollRef.current.scrollLeft = scrollLeft;
-    }
+    scrollSyncRef.current.apply(scrollRef.current, scrollLeft);
   }, [scrollLeft]);
 
   if (!scene) return <section className="harmony-timeline loading" aria-label="和声时间轴">正在生成时间轴…</section>;
@@ -140,12 +152,27 @@ export function HarmonyTimeline({ scene, scrollLeft = 0, onScroll, onInput }) {
     ? [...(scene.drawObjects ?? []), ...(hovered.overlay ?? [])].sort((left, right) => left.z - right.z)
     : (scene.drawObjects ?? []);
 
-  return <section className="harmony-timeline-shell" aria-label="和声时间轴" data-axis-source="renderer">
+  const compact = displayMode === "COMPACT";
+
+  return <section className="harmony-timeline-shell" aria-label="和声时间轴" data-axis-source="renderer"
+    data-display-mode={compact ? "compact" : "full"}>
+    <div className="harmony-timeline-mode">
+      <span>完整</span>
+      <button type="button" role="switch" aria-label="时间轴显示模式"
+        aria-checked={compact} title={`当前为${compact ? "精简" : "完整"}模式`}
+        onClick={() => onDisplayModeChange?.(compact ? "FULL" : "COMPACT")}>
+        <span className="harmony-timeline-mode-thumb" aria-hidden="true" />
+      </button>
+      <span>精简</span>
+    </div>
     <div className="harmony-timeline-scroll" ref={scrollRef}
       onScroll={(event) => {
         const next = event.currentTarget.scrollLeft;
         const deltaX = next - lastScrollLeftRef.current;
         lastScrollLeftRef.current = next;
+        // The parent already owns programmatic positions. Echoing them through React and the Worker
+        // is the feedback loop that used to fight an in-progress native scrollbar drag.
+        if (!scrollSyncRef.current.observe(next, scrollLeft)) return;
         onScroll?.(next);
         if (Math.abs(deltaX) > 0.5) onInput?.({
           type: "WHEEL", sceneGeneration: scene.generation, deltaX, deltaY: 0,

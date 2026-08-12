@@ -10,7 +10,6 @@ import com.mecon.theory.SearchBackend
 import com.mecon.theory.SearchConfig
 import com.mecon.theory.constraint.ConstraintProgram
 import com.mecon.theory.constraint.ConstraintProgramSolver
-import com.mecon.theory.constraint.ConstraintSolveDiagnosticCode
 import com.mecon.theory.constraint.ConstraintSolveOutcome
 import com.mecon.theory.constraint.WritingRulePreset
 import com.mecon.theory.harmony.HarmonicTreatmentId
@@ -20,7 +19,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * 勋伯格进入 DP 能力集的边界：**逐槽固定目标**是唯一的门槛，和弦类型不再是。
+ * 勋伯格的一般四部写作规则只读音高 / 音程 / 音域；开放和弦目标由 DP 的 target 状态摘要处理。
  * SCHOENBERG_GENERAL 只装 FourPartTextbookWritingRuleProvider，其规则只读音高 / 音程 / 音域。
  */
 class SchoenbergLayeredDynamicProgrammingTest {
@@ -57,7 +56,7 @@ class SchoenbergLayeredDynamicProgrammingTest {
     }
 
     @Test
-    fun openChordDomainsStillFailClosedForExplicitDp() {
+    fun openChordDomainsEnterDpInsteadOfCapabilityRejection() {
         // 首尾槽恒为主和弦，中间槽才是开放的；长度 2 时没有中间槽。
         val program = SchoenbergIntegratedTechTree.program(
             key = key,
@@ -70,14 +69,13 @@ class SchoenbergLayeredDynamicProgrammingTest {
         assertEquals(WritingRulePreset.SCHOENBERG_GENERAL, program.writingRulePreset)
         assertTrue(program.slotDomains.any { it.targets.size > 1 }, "本例应确实是开放域")
 
-        val outcome = assertIs<ConstraintSolveOutcome.Invalid>(
-            ConstraintProgramSolver.solvePolyphonicOutcome(program),
-        )
-        assertEquals(
-            ConstraintSolveDiagnosticCode.UNSUPPORTED_SEARCH_BACKEND,
-            outcome.diagnostics.single().code,
-            "诊断：${outcome.diagnostics}",
-        )
+        val explicit = ConstraintProgramSolver.solvePolyphonicOutcome(program)
+        val explicitTrace = when (explicit) {
+            is ConstraintSolveOutcome.Solved -> explicit.trace
+            is ConstraintSolveOutcome.BudgetExhausted -> explicit.trace
+            else -> error("开放域不应再被 capability 拒绝：$explicit")
+        }
+        assertEquals(SearchBackend.LAYERED_DP, explicitTrace.backend)
 
         val automatic = assertIs<ConstraintSolveOutcome.Solved>(
             ConstraintProgramSolver.solvePolyphonicOutcome(
@@ -85,7 +83,7 @@ class SchoenbergLayeredDynamicProgrammingTest {
             ),
         )
         assertEquals(SearchBackend.GREEDY_DFS, automatic.trace.backend)
-        assertTrue(automatic.trace.fallbackReason?.contains("not a fixed chord target") == true)
+        assertTrue(automatic.trace.fallbackReason != null)
     }
 
     @Test
@@ -129,8 +127,7 @@ class SchoenbergLayeredDynamicProgrammingTest {
             "这条卡尺必须含七和弦，否则证明不了自然三和弦限制已解除",
         )
 
-        val dp = assertIs<ConstraintSolveOutcome.Solved>(
-            ConstraintProgramSolver.solvePolyphonicOutcome(
+        val rawDp = ConstraintProgramSolver.solvePolyphonicOutcome(
                 base.copy(
                     searchConfig = base.searchConfig.copy(
                         backend = SearchBackend.LAYERED_DP,
@@ -139,14 +136,16 @@ class SchoenbergLayeredDynamicProgrammingTest {
                         ),
                     ),
                 ),
-            ),
-        )
+            )
+        val dp = assertIs<ConstraintSolveOutcome.Solved>(rawDp, "outcome=$rawDp")
         val dfs = assertIs<ConstraintSolveOutcome.Solved>(
             ConstraintProgramSolver.solvePolyphonicOutcome(
                 base.copy(searchConfig = base.searchConfig.copy(backend = SearchBackend.GREEDY_DFS)),
             ),
         )
         assertEquals(SearchBackend.LAYERED_DP, dp.trace.backend)
+        assertTrue(dp.trace.dpStatePlan.any { it.contains("compositeTruth=") })
+        assertTrue(dp.trace.dpStatePlan.none { it.contains("fullPrefix=") })
         assertEquals(SearchBackend.GREEDY_DFS, dfs.trace.backend)
         val dpTotal = dp.solutions.first().breakdown.total
         val dfsTotal = dfs.solutions.first().breakdown.total

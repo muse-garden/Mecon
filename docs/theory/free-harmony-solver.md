@@ -14,7 +14,7 @@
 
 自由求解器把请求编译为现有 `ConstraintProgram`，复用：
 
-- `Constraint` 的 `Require / Prefer / Reward / Annotate`；
+- `Constraint` 的 `Require / Prefer / Reward / Annotate / Remind`；
 - `RuleFinding`、`RuleProfile` 与 suppression；
 - 固定声部候选空间；
 - 确定性首解与多样化重启搜索；
@@ -79,11 +79,21 @@ data class ProgressionPlacement(
 
 ## 4. 默认软规则
 
-以下规则在自由 profile 中全部为 `Prefer`。普通章节形式仍低于通用声部可读性；章节明确指定的
+以下写作规则在自由 profile 中为 `Prefer`。普通章节形式仍低于通用声部可读性；章节明确指定的
 逐声部邻接/级进则高于相邻声部同音与普通旋律成本。用户 pin 始终优先，软规则不得把固定交错
 或特殊织体变成无解。
 
-### 4.1 和声反复
+### 4.0 和弦选择与写作分离
+
+只依赖符号和弦序列的规则（`ConstraintPredicate.isChordSelectionOnly`：根音进行方向、根音进行
+偏好评分、类似和弦距离、类似进行重复）属于**和弦选择**阶段。自由练习的和弦一律由用户选定，
+写作阶段改变声部排列既不能满足也不能违反它们，因此它们一律编译为 `ConstraintModality.Remind`：
+违反时照常发 HINT finding 提醒用户，但 `scoreDelta = 0`、按 EXPLANATORY 计 0 分、不参与剪枝，
+也不占用分层 DP 的合并状态。勋伯格章节规则经 `SchoenbergPracticeTeachingRuleProjector` 投影进
+自由练习时同样降级。求解器将来若接手和弦选择，再单独决定这些规则如何参与那一阶段——
+届时不要把它们塞回写作搜索。
+
+### 4.1 和声反复（和弦选择，只作提醒）
 
 - 相似和弦不宜过近；
 - 相似有向进行不宜短距离重复；
@@ -206,16 +216,21 @@ free base
 
 ### 6.1 分层 DP 后端
 
-当前分层 DP 只接受每槽已选定的自然三和弦，并根据实际 preset、规则开关和约束谓词自动编译逐层
-状态；完整目标/声部路径不再进入 key。未注册规则、开放和弦域、七和弦、textbook 与勋伯格程序
-明确拒绝，不会静默漏规则。
+分层 DP 接受开放 `ChordTarget` 域、三/七和弦和同音响多解释，并根据实际 preset、规则开关与
+约束谓词自动编译逐层有限状态。用户低音锁、pitch pin、完整解释选择和目标白名单仍在候选域或
+估值层处理，不参与“能否使用 DP”的判断。未注册规则、profile suppression、requirements 与
+未支持谓词明确 fail closed，不会静默漏规则。
 
-分层 DP 的层候选常量（各声部 MIDI、省略音数、tie-break key、纵向 finding 与合成事件视图）每层
-只算一次，路径优先级与硬违规计数随标签增量维护；规则侧的目标相关数据（倾向音表、张力音集合、
+分层 DP 的层候选常量（各声部 MIDI/拼写/目标签名、省略音数、tie-break key 与合成事件视图）每层
+只算一次；依赖前缀的纵向 finding 按入边评估。路径优先级、硬违规计数和目标历史自动机随标签
+增量维护；规则侧的目标相关数据（倾向音表、张力音集合、
 约束分区）按目标/程序缓存，DFS 也共享这些收益。
 
-卡农基准的中间层合并率约 21.0%，DP 仍明显慢于 DFS，因此 `SearchBackend.AUTO` 保持
-`GREEDY_DFS`。DP 仅供显式 opt-in、小域精确差分与状态审计；`EXACT` 超过候选、状态或边预算
+普通单结果 `SearchBackend.AUTO` 保持 `GREEDY_DFS`；自由练习启用前缀或结果多样化时 AUTO
+选择 `LAYERED_DP`，由一个前沿统一维护竞争路径。**自由练习的首解与优化两档都开前缀多样化，
+因此实际后端恒为分层 DP**；该形态含终局重排规则（`free.melody.no-repeated-pattern`），只能用
+`BOUNDED`，且退回 DFS 是静默的（`fallbackReason` 无人消费）——实测与缺口见
+[dynamic-programming-solver.md](dynamic-programming-solver.md) §1.2。`EXACT` 超过候选、状态或边预算
 返回 `BudgetExhausted`，含终局重排规则时拒绝精确模式。`BOUNDED` 另按结果数限制每个前驱的
 排序出边；各类截断、五档转移计数与终局重排均写入 trace，不得称为全局最优。left boundary、
 baseline、pin 与 `ConstraintSolveOutcome` 语义在两个后端一致。逐规则覆盖表与审计数据见
@@ -231,6 +246,10 @@ baseline、pin 与 `ConstraintSolveOutcome` 语义在两个后端一致。逐规
 候选工厂在该模式下扩大局部可见池，并正确按 exploit/explore 配额分别取样。explore 分层键同时
 包含声部音级配置与外声部实际音区，避免紧凑但交错的排列占满候选上限。该机制只改变候选访问与
 保留顺序，不改变 HARD/SOFT 规则裁决。
+
+最终结果还执行 `DiversitySearchConfig` 的两项硬门槛：任意结果对都必须达到最低改动槽比例与最低
+改动声部单元格比例；seed 只用于确定性同分排序。排除的 diversity group 在占用 top-k 前过滤，
+不会让已排除最佳解挤掉唯一可返回槽位。
 
 非末槽若某声部距音域边缘不超过两个半音，`free.range.continuation-reserve` 产生低权重 SOFT
 成本，用于保留后续展开余量。用户 pin 到边缘音仍必须可解；该成本低于交错、平五平八等通用

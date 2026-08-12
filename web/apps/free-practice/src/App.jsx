@@ -38,6 +38,7 @@ import { createRecoveryWriter, loadRecoveryState, saveRecovery } from "./recover
 import { createPracticeIntentQueue } from "./practice-intents.js";
 import { createNewPracticeDocument } from "./new-document.js";
 import { saveMeconDocument } from "./save-document.js";
+import { writingSlotIdsForScoreSelection } from "./writing-selection.js";
 import { HarmonyTimeline } from "./HarmonyTimeline.jsx";
 import { PracticeFeedbackPanel } from "./PracticeFeedbackPanel.jsx";
 import { PracticePlanPanel } from "./PracticePlanPanel.jsx";
@@ -52,6 +53,25 @@ import {
 
 // Keep the classic branch available for the future Web piano-roll layout switch.
 const DEFAULT_WEB_PRACTICE_LAYOUT = "writing-with-lower-panels";
+
+/**
+ * Effects the session raises when a background engine crashed. The session has already rolled the
+ * workbench back to its last committed state by the time one of these frames arrives; the shell
+ * only has to say so instead of clearing the alert like it does for ordinary frames.
+ */
+const PRACTICE_FAILURE_ALERTS = {
+  "freePractice.writing.failed": "自动写作出错，已回退到上一个正常状态",
+  "freePractice.writing.alternateFailed": "备选写法搜索出错，已保留当前写作结果",
+  "freePractice.catalog.failed": "教学目录加载出错",
+  "freePractice.findings.failed": "规则检查出错",
+};
+
+function practiceEffectAlert(effect) {
+  const text = PRACTICE_FAILURE_ALERTS[effect?.messageKey];
+  if (!text) return "";
+  const reason = effect.arguments?.reason;
+  return reason ? `${text}：${reason}` : text;
+}
 
 function ToolbarIcon({ icon: Icon, size = 16 }) {
   return <Icon aria-hidden="true" size={size} strokeWidth={1.8} />;
@@ -110,6 +130,7 @@ export function App() {
   const [sharedScrollLeft, setSharedScrollLeft] = useState(0);
   const [gridDenominator, setGridDenominator] = useState(8);
   const [defaultChordBeats, setDefaultChordBeats] = useState(1);
+  const [timelineDisplayMode, setTimelineDisplayMode] = useState("FULL");
   const [playbackRate, setPlaybackRate] = useState(1);
   const [audioSettings, setAudioSettings] = useState({
     instrument: PlaybackInstrument.piano,
@@ -334,7 +355,9 @@ export function App() {
         setInsertMeasure(next.measure);
         setInsertBeat(formatQuarterBeat(next.beat));
       }
-      setPracticeAlert("");
+      // A rollback frame is still a normal frame, so clearing the alert unconditionally would
+      // erase the only notice the user gets that a background engine crashed.
+      setPracticeAlert(practiceEffectAlert(data.update?.effect));
       if (data.type !== "freePracticeFrame") {
         setStatus(`revision ${editorFrame.update.revision}`);
       } else {
@@ -392,8 +415,9 @@ export function App() {
       type: "timelinePreferences",
       gridUnit: { numerator: 1, denominator: gridDenominator },
       defaultChordDuration: { numerator: defaultChordBeats, denominator: 4 },
+      displayMode: timelineDisplayMode,
     });
-  }, [gridDenominator, defaultChordBeats]);
+  }, [gridDenominator, defaultChordBeats, timelineDisplayMode]);
 
   useEffect(() => {
     playbackRateRef.current = playbackRate;
@@ -864,13 +888,10 @@ export function App() {
     setAudioSettings(next);
   }
 
-  function replacePracticeChord(choiceId = practiceCatalogChoiceId) {
+  function replacePracticeChord(chordChoice) {
     const slotId = selectedPracticeSlotId;
-    if (!slotId) return;
-    const choices = practiceUpdate.catalog?.chordChoices ?? [];
-    const selected = choices.find((item) => item.id === choiceId) ?? choices[0];
-    if (!selected) return;
-    dispatchPractice({ type: "replaceChord", slotId, chordChoice: selected.choice });
+    if (!slotId || !chordChoice) return;
+    dispatchPractice({ type: "replaceChord", slotId, chordChoice });
   }
 
   const {
@@ -1011,6 +1032,9 @@ export function App() {
     onSelectTonalLayout={(tonalLayoutId) => selectedPracticeSlotId && dispatchPractice({
       type: "selectChordTonalLayout", slotId: selectedPracticeSlotId, tonalLayoutId,
     })}
+    onSelectIdiomTonalLayout={(tonalLayoutId) => dispatchPractice({
+      type: "selectIdiomTonalLayout", tonalLayoutId,
+    })}
     onInsertIdiom={(definitionId, variantId) => selectedPracticeSlotId && dispatchPractice({
       type: "insertIdiom", anchorSlotId: selectedPracticeSlotId, definitionId, variantId,
     })}
@@ -1054,6 +1078,9 @@ export function App() {
         scrollLeft: sharedScrollLeft,
         onScroll: setSharedScrollLeft,
         onViewportWidth: updatePracticeViewportWidth,
+        // The timeline owns one append-duration tail after the score. Give notation the same
+        // scrollable extent so both native scrollbars reach and leave their right edge together.
+        scrollContentWidth: timelineScene?.contentWidth ?? 0,
         playbackStore: playbackCursorRef.current,
         elementTints: practiceElementTints,
       }}
@@ -1122,7 +1149,9 @@ export function App() {
             className={`workbench-pane timeline-pane ${mobileTab === "timeline" ? "active" : ""}`}>
             {practiceUpdate
               ? <HarmonyTimeline scene={timelineScene} onInput={sendTimelineInput}
-                  scrollLeft={sharedScrollLeft} onScroll={setSharedScrollLeft} />
+                  scrollLeft={sharedScrollLeft} onScroll={setSharedScrollLeft}
+                  displayMode={timelineDisplayMode}
+                  onDisplayModeChange={setTimelineDisplayMode} />
               : <section className="harmony-timeline empty" aria-label="和声时间轴">
                   新建或打开自由练习后显示时间轴
                 </section>}
@@ -1282,6 +1311,7 @@ function PracticeTopToolbar({
   const settings = update?.document?.settings;
   const writing = settings?.writing;
   const selectedSlotId = update?.selection?.slotId ?? update?.selectedSlotId;
+  const rewriteSlotIds = writingSlotIdsForScoreSelection(frame, update);
   const updateWriting = (fields) => writing && dispatchPractice({
     type: "updateWritingSettings", settings: { ...writing, ...fields },
   });
@@ -1299,8 +1329,8 @@ function PracticeTopToolbar({
     "file.save": <button disabled={!frame} onClick={onSave}><ToolbarIcon icon={Save} />保存</button>,
     "history.undo": <button disabled={!frame?.update.canUndo} onClick={() => dispatch({ type: "undo" })}><ToolbarIcon icon={Undo2} />撤销</button>,
     "history.redo": <button disabled={!frame?.update.canRedo} onClick={() => dispatch({ type: "redo" })}><ToolbarIcon icon={Redo2} />重做</button>,
-    "writing.rewrite": <button disabled={!selectedSlotId || update?.writing?.phase === "RUNNING"}
-      onClick={() => dispatchPractice({ type: "rewriteSelection", slotIds: [selectedSlotId] })}>
+    "writing.rewrite": <button disabled={!rewriteSlotIds.length || update?.writing?.phase === "RUNNING"}
+      onClick={() => dispatchPractice({ type: "rewriteSelection", slotIds: rewriteSlotIds })}>
       <ToolbarIcon icon={RefreshCw} />重新写作
     </button>,
     "writing.alternate": <button disabled={!update?.writing?.canAlternate}

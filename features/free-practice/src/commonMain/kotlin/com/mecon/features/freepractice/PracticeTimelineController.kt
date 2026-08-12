@@ -20,6 +20,9 @@ data class PracticeTimelineAxisAnchor(val time: Fraction, val x: Float)
 enum class PracticeTimelineToneLabelMode { RELATIVE, ABSOLUTE }
 
 @Serializable
+enum class PracticeTimelineDisplayMode { COMPACT, FULL }
+
+@Serializable
 data class PracticeTimelinePalette(
     val surface: String = "#1A2537",
     val surfaceLight: String = "#26344A",
@@ -57,6 +60,7 @@ data class PracticeTimelineSceneRequest(
     val gridUnit: Fraction = Fraction.SIXTEENTH,
     val defaultChordDuration: Fraction = Fraction.QUARTER,
     val toneLabelMode: PracticeTimelineToneLabelMode = PracticeTimelineToneLabelMode.RELATIVE,
+    val displayMode: PracticeTimelineDisplayMode = PracticeTimelineDisplayMode.FULL,
     val palette: PracticeTimelinePalette = PracticeTimelinePalette(),
     val showRemoveAction: Boolean = true,
     val gesture: PracticeTimelineGestureState? = null,
@@ -242,8 +246,8 @@ object PracticeTimelineSceneProjector {
     private const val IDIOM_ROW_HEIGHT = 24f
     private const val IDIOM_BRACKET_HEIGHT = 16f
     private const val IDIOM_LABEL_FONT_SIZE = 11f
+    private const val COMPACT_IDIOM_LABEL_HEIGHT = 15f
     private const val TERMINAL_INSERT_MIN_WIDTH = 56f
-    private const val PINNED_APPEND_WIDTH = 42f
     private const val HANDLE_WIDTH = 9f
 
     /** Below this share of the requested spacing an anchor segment carries no usable position. */
@@ -255,20 +259,40 @@ object PracticeTimelineSceneProjector {
     fun project(request: PracticeTimelineSceneRequest): PracticeTimelineScene {
         val generation = generation(request)
         val timeScale = TimeScale(request)
-        val tonalRows = (request.timeline.tonalLayouts.size + request.timeline.derivedTonalSpans.size)
-            .coerceAtLeast(1)
-        val tonalRowsHeight = tonalRows * TONAL_ROW_HEIGHT
-        val maximumReadings = request.timeline.slots.maxOfOrNull { it.readings.size.coerceAtLeast(1) } ?: 1
-        val chordHeight = maxOf(MIN_CHORD_HEIGHT, 16f * maximumReadings + 12f)
-        val chordY = TONAL_TOP + tonalRowsHeight
-        val idiomRanges = idiomRanges(request.timeline)
-        val laneCount = (idiomRanges.maxOfOrNull { it.lane } ?: 0) + 1
-        val height = 54f + chordHeight + tonalRowsHeight + IDIOM_ROW_HEIGHT * (laneCount - 1)
         val displayEnd = maxOf(Fraction.HALF, request.timeline.end + request.defaultChordDuration)
+        val tonalLanes = tonalLanes(request.timeline, displayEnd)
+        val tonalRows = if (request.displayMode == PracticeTimelineDisplayMode.FULL) {
+            tonalLanes.laneCount.coerceAtLeast(1)
+        } else {
+            0
+        }
+        val tonalRowsHeight = tonalRows * TONAL_ROW_HEIGHT
+        val idiomRanges = idiomRanges(request.timeline)
+        val compactIdiomLabels = if (request.displayMode == PracticeTimelineDisplayMode.COMPACT) {
+            compactIdiomLabels(request.timeline)
+        } else {
+            emptyMap()
+        }
+        val compactLabelRows = compactIdiomLabels.values.maxOfOrNull(List<String>::size) ?: 0
+        val compactLabelInset = compactLabelRows * COMPACT_IDIOM_LABEL_HEIGHT
+        val maximumReadings = request.timeline.slots.maxOfOrNull { it.readings.size.coerceAtLeast(1) } ?: 1
+        val chordHeight = maxOf(MIN_CHORD_HEIGHT, 16f * maximumReadings + 12f) + compactLabelInset
+        val chordY = TONAL_TOP + tonalRowsHeight
+        val idiomLaneCount = if (request.displayMode == PracticeTimelineDisplayMode.FULL) {
+            (idiomRanges.maxOfOrNull { it.lane } ?: 0) + 1
+        } else {
+            0
+        }
+        val height = 54f + chordHeight + tonalRowsHeight +
+            IDIOM_ROW_HEIGHT * (idiomLaneCount - 1).coerceAtLeast(0)
         val intrinsicEnd = request.contentOriginX + maxOf(timeScale.x(displayEnd), request.axisContentEndX)
+        val appendNaturalX = request.contentOriginX + timeScale.x(request.timeline.end)
+        val appendNaturalWidth = (timeScale.x(displayEnd) - timeScale.x(request.timeline.end))
+            .coerceAtLeast(TERMINAL_INSERT_MIN_WIDTH)
+        val appendContentEnd = appendNaturalX + appendNaturalWidth
         // Chords must stay reachable even while a drag preview holds them past the settled score:
         // the notation surface has not been re-laid out yet, so its width cannot cap them. The
-        // append affordance is not part of this floor — it pins itself to the visible right edge.
+        // append affordance is laid out after the final chord as ordinary scrollable content.
         val chordEnd = maxOf(
             request.timeline.end,
             request.timeline.slots.maxOfOrNull { it.onset + it.duration } ?: Fraction.ZERO,
@@ -281,6 +305,7 @@ object PracticeTimelineSceneProjector {
                 maxOf(request.viewportWidth, intrinsicEnd)
             },
             reachableEnd,
+            appendContentEnd,
         )
         val draw = mutableListOf<PracticeTimelineDrawObject>()
         val hit = mutableListOf<PracticeTimelineHitObject>()
@@ -348,12 +373,12 @@ object PracticeTimelineSceneProjector {
             .firstOrNull { it.isBaseline }
             ?.toKey()
             ?: request.timeline.tonalLayouts.firstOrNull()?.toKey()
-        request.timeline.tonalLayouts.forEachIndexed { index, layout ->
+        if (request.displayMode == PracticeTimelineDisplayMode.FULL) request.timeline.tonalLayouts.forEachIndexed { index, layout ->
             val startX = request.contentOriginX + timeScale.x(layout.start)
             val endX = request.contentOriginX + timeScale.x(layout.end ?: displayEnd)
             val bounds = PracticeTimelineBounds(
                 startX,
-                TONAL_TOP + index * TONAL_ROW_HEIGHT,
+                TONAL_TOP + tonalLanes.manual[index] * TONAL_ROW_HEIGHT,
                 (endX - startX).coerceAtLeast(18f),
                 TONAL_BAR_HEIGHT,
             )
@@ -427,12 +452,12 @@ object PracticeTimelineSceneProjector {
                 endBounds, actions = listOf("resize"))
         }
 
-        request.timeline.derivedTonalSpans.forEachIndexed { derivedIndex, span ->
+        if (request.displayMode == PracticeTimelineDisplayMode.FULL) request.timeline.derivedTonalSpans.forEachIndexed { derivedIndex, span ->
             val startX = request.contentOriginX + timeScale.x(span.start)
             val endX = request.contentOriginX + timeScale.x(span.end)
             val bounds = PracticeTimelineBounds(
                 startX,
-                TONAL_TOP + (request.timeline.tonalLayouts.size + derivedIndex) * TONAL_ROW_HEIGHT,
+                TONAL_TOP + tonalLanes.derived[derivedIndex] * TONAL_ROW_HEIGHT,
                 (endX - startX).coerceAtLeast(18f),
                 TONAL_BAR_HEIGHT,
             )
@@ -480,7 +505,35 @@ object PracticeTimelineSceneProjector {
                 strokeWidth = if (selected) 2f else 1f,
                 radius = 6f,
             )
-            addSlotText(draw, id, slot, bounds, request.toneLabelMode, palette)
+            val slotLabels = compactIdiomLabels[slot.id.value].orEmpty()
+            val slotContentBounds = if (compactLabelInset == 0f) {
+                bounds
+            } else {
+                bounds.copy(
+                    y = bounds.y + compactLabelInset,
+                    height = bounds.height - compactLabelInset,
+                )
+            }
+            slotLabels.forEachIndexed { labelIndex, title ->
+                draw += PracticeTimelineDrawObject(
+                    "$id:idiom-label:$labelIndex",
+                    PracticeTimelineDrawKind.TEXT,
+                    PracticeTimelineBounds(
+                        bounds.x + 5f,
+                        bounds.y + labelIndex * COMPACT_IDIOM_LABEL_HEIGHT + 2f,
+                        (bounds.width - 10f).coerceAtLeast(1f),
+                        COMPACT_IDIOM_LABEL_HEIGHT - 2f,
+                    ),
+                    22,
+                    fill = palette.orangeLight,
+                    text = title,
+                    fontFamily = "system-ui",
+                    fontSize = 9f,
+                    fontWeight = 600,
+                    textAlign = "center",
+                )
+            }
+            addSlotText(draw, id, slot, slotContentBounds, request.toneLabelMode, palette)
             hit += PracticeTimelineHitObject(id, PracticeTimelineHitKind.SLOT, slot.id.value, bounds,
                 if (slot.capabilities.canTranslate) "grab" else "pointer",
                 listOf("select") + if (slot.capabilities.canTranslate) listOf("translate") else emptyList())
@@ -515,7 +568,11 @@ object PracticeTimelineSceneProjector {
                 a11y += PracticeTimelineAccessibilityObject("$id:end", "button",
                     "调整 ${slot.symbol ?: "和弦 ${index + 1}"} 终点", endBounds, actions = listOf("resize"))
             }
-            a11y += PracticeTimelineAccessibilityObject(id, "button", slot.symbol ?: "和弦 ${index + 1}", bounds,
+            val accessibilityLabel = buildString {
+                append(slot.symbol ?: "和弦 ${index + 1}")
+                if (slotLabels.isNotEmpty()) append("，惯用进行 ${slotLabels.joinToString("、")}")
+            }
+            a11y += PracticeTimelineAccessibilityObject(id, "button", accessibilityLabel, bounds,
                 selected = selected,
                 actions = listOf("select") + if (slot.capabilities.canTranslate) listOf("move") else emptyList())
         }
@@ -545,7 +602,7 @@ object PracticeTimelineSceneProjector {
             }
         }
 
-        idiomRanges.forEach { range ->
+        if (request.displayMode == PracticeTimelineDisplayMode.FULL) idiomRanges.forEach { range ->
             val startX = request.contentOriginX + timeScale.x(range.start)
             val endX = request.contentOriginX + timeScale.x(range.end)
             val y = chordY + chordHeight + 4f + range.lane * IDIOM_ROW_HEIGHT
@@ -607,18 +664,7 @@ object PracticeTimelineSceneProjector {
             )
         }
 
-        val appendNaturalX = request.contentOriginX + timeScale.x(request.timeline.end)
-        val appendNaturalWidth = (timeScale.x(displayEnd) - timeScale.x(request.timeline.end))
-            .coerceAtLeast(TERMINAL_INSERT_MIN_WIDTH)
-        val viewportEnd = request.scrollLeft + request.viewportWidth
-        val appendPinned = appendNaturalX + appendNaturalWidth / 2f > viewportEnd
-        val appendWidth = if (appendPinned) PINNED_APPEND_WIDTH else appendNaturalWidth
-        val appendX = if (appendPinned) {
-            (viewportEnd - appendWidth).coerceAtLeast(request.contentOriginX)
-        } else {
-            appendNaturalX
-        }
-        val appendBounds = PracticeTimelineBounds(appendX, chordY, appendWidth, chordHeight)
+        val appendBounds = PracticeTimelineBounds(appendNaturalX, chordY, appendNaturalWidth, chordHeight)
         addInsertAffordance(
             draw = draw,
             hit = hit,
@@ -688,7 +734,7 @@ object PracticeTimelineSceneProjector {
                 scoreOriginX = request.contentOriginX,
                 timeZeroX = request.contentOriginX + timeScale.x(Fraction.ZERO),
                 contentEndX = request.contentOriginX + timeScale.x(request.timeline.end),
-                appendX = appendX,
+                appendX = appendNaturalX,
             ),
             gestureState = request.gesture,
         )
@@ -932,7 +978,7 @@ object PracticeTimelineSceneProjector {
 
     private fun generation(request: PracticeTimelineSceneRequest): Long =
         (((request.revision * 31L + request.axisRevision) * 31L + request.viewportWidth.roundToInt()) * 31L +
-            request.scrollLeft.roundToInt())
+            request.scrollLeft.roundToInt()) * 31L + request.displayMode.ordinal
 
     internal class TimeScale(private val request: PracticeTimelineSceneRequest) {
         /**
@@ -1021,6 +1067,56 @@ object PracticeTimelineSceneProjector {
     }
 
     private data class IdiomRange(val id: String, val title: String, val start: Fraction, val end: Fraction, val lane: Int)
+
+    private data class TonalLanes(
+        val manual: List<Int>,
+        val derived: List<Int>,
+        val laneCount: Int,
+    )
+
+    private data class TonalInterval(
+        val sourceIndex: Int,
+        val derived: Boolean,
+        val start: Fraction,
+        val end: Fraction,
+    )
+
+    /** Packs non-overlapping manual and derived tonal spans onto the same row. */
+    private fun tonalLanes(timeline: PracticeTimelineView, displayEnd: Fraction): TonalLanes {
+        val intervals = buildList {
+            timeline.tonalLayouts.forEachIndexed { index, layout ->
+                add(TonalInterval(index, false, layout.start, layout.end ?: displayEnd))
+            }
+            timeline.derivedTonalSpans.forEachIndexed { index, span ->
+                add(TonalInterval(index, true, span.start, span.end))
+            }
+        }.sortedWith(
+            compareBy<TonalInterval> { it.start }
+                .thenByDescending { it.end }
+                .thenBy { it.derived }
+                .thenBy { it.sourceIndex },
+        )
+        val laneEnds = mutableListOf<Fraction>()
+        val manual = MutableList(timeline.tonalLayouts.size) { 0 }
+        val derived = MutableList(timeline.derivedTonalSpans.size) { 0 }
+        intervals.forEach { interval ->
+            val lane = laneEnds.indexOfFirst { it <= interval.start }
+                .takeIf { it >= 0 }
+                ?: laneEnds.size.also { laneEnds += Fraction.ZERO }
+            laneEnds[lane] = interval.end
+            if (interval.derived) derived[interval.sourceIndex] = lane else manual[interval.sourceIndex] = lane
+        }
+        return TonalLanes(manual, derived, laneEnds.size)
+    }
+
+    private fun compactIdiomLabels(timeline: PracticeTimelineView): Map<String, List<String>> =
+        timeline.idioms.mapNotNull { idiom ->
+            val firstSlot = timeline.slots
+                .filter { it.id in idiom.slotIds }
+                .minByOrNull { it.onset }
+                ?: return@mapNotNull null
+            firstSlot.id.value to (idiom.title ?: idiom.definitionId)
+        }.groupBy({ it.first }, { it.second })
 
     private fun idiomRanges(timeline: PracticeTimelineView): List<IdiomRange> {
         val laneEnds = mutableListOf<Fraction>()

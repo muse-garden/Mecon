@@ -116,6 +116,16 @@ class FreePracticeTraceTest {
                         },
                     )
                 )
+                "selectIdiomTonalLayout" -> session.dispatch(
+                    FreePracticeIntent.SelectIdiomTonalLayout(
+                        expectedRevision!!.toLong(),
+                        if (step.getValue("target").jsonPrimitive.content == "inserted") {
+                            requireNotNull(insertedTonalLayoutId)
+                        } else {
+                            session.frame().document.workspace.tonalLayouts.first().id
+                        },
+                    ),
+                )
                 "setInsertedTonalLayoutKey" -> session.dispatch(
                     FreePracticeIntent.SetTonalLayoutKey(
                         expectedRevision!!.toLong(),
@@ -365,6 +375,13 @@ class FreePracticeTraceTest {
                 "undo" -> session.dispatch(FreePracticeIntent.Undo(expectedRevision!!.toLong()))
                 "redo" -> session.dispatch(FreePracticeIntent.Redo(expectedRevision!!.toLong()))
                 "cancelWriting" -> session.dispatch(FreePracticeIntent.CancelWriting(expectedRevision!!.toLong()))
+                // The crash channel every shell must use when a background worker dies.
+                "backgroundFailure" -> session.applyBackgroundFailure(
+                    PracticeBackgroundFailure(
+                        requireNotNull(request).requestId,
+                        step.getValue("reason").jsonPrimitive.content,
+                    )
+                )
                 else -> error("Unknown trace step")
             }
             result.catalogRequests.singleOrNull()?.let { catalogRequest = it }
@@ -452,6 +469,12 @@ class FreePracticeTraceTest {
             }
             step["selectionLayout"]?.jsonPrimitive?.content?.let { expected ->
                 assertEquals(expected, update.selection.tonalLayoutId?.value)
+            }
+            step["idiomCatalogLayout"]?.jsonPrimitive?.content?.let { expected ->
+                assertEquals(
+                    expected,
+                    update.plan.idiomCatalogFilters.single { it.selected }.tonalLayoutId.value,
+                )
             }
             step["selectionIdiom"]?.jsonPrimitive?.content?.let { expected ->
                 assertEquals(expected, update.selection.idiomInstanceId?.value)
@@ -554,6 +577,7 @@ class FreePracticeTraceTest {
         PracticeWritingOutcome.BudgetExhausted -> "budgetExhausted"
         PracticeWritingOutcome.Cancelled -> "cancelled"
         is PracticeWritingOutcome.Invalid -> "invalid"
+        is PracticeWritingOutcome.Failed -> "failed"
         null -> null
     }
 }

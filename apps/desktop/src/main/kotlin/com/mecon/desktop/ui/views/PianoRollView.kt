@@ -79,6 +79,8 @@ data class PianoRollTimeProjection(
     val xAtTicks: (Float) -> Float,
     val ticksAtX: (Float) -> Long,
     val onHorizontalDrag: (Float) -> Unit = {},
+    /** Visible X of the notation/timeline content end; everything to its right is shared margin. */
+    val contentEndX: Float? = null,
 )
 
 data class PianoRollStyleConfig(
@@ -512,6 +514,15 @@ internal fun PianoRollSurface(
                     displayedPositionTicks, timelineOffset, tickToPx, textMeasurer, style,
                     timeProjection, gesture, interaction?.gridStepTicks ?: 0L,
                 )
+                timeProjection?.contentEndX?.let { contentEndX ->
+                    if (contentEndX < size.width) {
+                        drawRect(
+                            color = MeconColors.SurfaceDark,
+                            topLeft = Offset(contentEndX.coerceAtLeast(0f), 0f),
+                            size = Size((size.width - contentEndX).coerceAtLeast(0f), size.height),
+                        )
+                    }
+                }
             } else {
                 drawVerticalRoll(
                     state, notes, chordSpans, selection, barBeatPositions,

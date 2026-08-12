@@ -1,6 +1,6 @@
 # 自由练习 Web 五线谱编辑能力矩阵
 
-> 基线：2026-08-05；更新：2026-08-07。共享五线谱编辑、自由练习 session、时间轴 raw
+> 基线：2026-08-05；更新：2026-08-12。共享五线谱编辑、自由练习 session、时间轴 raw
 > geometry/interaction、谱面 origin/extent 与两层工具栏桌面等价门禁均已完成。
 > 钢琴卷轴按产品边界保留桌面实现。实施证据见
 > [完整工作台 Web 化记录](free-practice-web-workbench-completion-plan.md)，后续改动见
@@ -84,9 +84,9 @@ Web，须单独完成禁忌表平台无关索引与 JVM/JS key 集合等价门�
 | 复合 score update/effect/revision 正确透传 | ✅ | inner no-op/selection/effect、`scoreChanged`、stale revision 与普通音符 incremental render hint 已进入同一 JVM/JS practice trace |
 | slot/layout/idiom/score 统一 selection | ✅ | 独立 intent 在 Web/桌面都经 session；frame 投影稳定 ID 与 score targets，revision 36 JVM/JS trace 验证 layout/idiom 选择、手工记谱来源及 undo/redo 恢复 |
 | 和弦槽移动、左右端点、共享边界与插删 | ✅ | commonMain controller 统一 hit-test/量化/gesture/edit；JVM/JS raw trace 与真实 pointer/keyboard reload/undo/redo 通过 |
-| 桌面时间轴视觉与 pointer adapter | ✅ | 共享 scene 恢复改造前的刻度、调性线、多行读法、音级、状态层次、手柄、括号与插入区；Compose 使用稳定 pointer coroutine 读取最新 scene，代表性 golden 和拖动门禁通过 |
+| 桌面时间轴视觉与 pointer adapter | ✅ | 共享 scene 恢复改造前的刻度、调性线、多行读法、音级、状态层次、手柄、括号与插入区；完整模式的调性区间按重叠关系交错复用轨道，精简模式隐藏调性/惯用进行轨道并在首和弦框标注进行标题；两端用始终同时显示“完整/精简”的竖向 Switch 切换，固定左侧控制区在滚动时遮挡经过左缘的内容但不移动初始和弦 X；末端 `＋` 固定排在最后一个和弦之后，不随视口悬浮且其完整最小宽度计入 scroll extent；Compose 使用稳定 pointer coroutine 读取最新 scene，代表性 golden 和拖动门禁通过 |
 | 调性布局增删改选与范围拖动 | ✅ | 稳定 layout id intent、JVM/JS trace、React 表单与 pointer 双端手柄 E2E 已过 |
-| 枢纽与惯用进行插入/替换/删除 | ✅ | 稳定 ID intent、目录 title、范围括号、lane、锁定与选择均由共享 timeline scene 投影；浏览器插入/删除与导出回读通过 |
+| 枢纽与惯用进行插入/替换/删除 | ✅ | 稳定 ID intent、目录 title、范围括号、lane、精简模式首和弦标注、锁定与选择均由共享 timeline scene 投影；浏览器插入/删除与导出回读通过 |
 | 完整工作台设置与显式重建 | ✅ | 声部数/初始调性用 `RebuildPractice` 原子重建；上下谱表分配用 `UpdateStaffVoices` 迁移并可撤销；React 显式确认，写作设置已 typed |
 | 当前调性/和声选择/详情/惯用进行面板 | ✅ | `PracticePlanView` 直接提供选中槽、前后/末尾导航、追加位置、活动调性线、typed 和弦读法、锁定能力、离调读法 payload、低音候选、覆盖的惯用进行、分类和弦目录与全部动态展示标签；静态文案统一来自 `PracticePlanStrings`。和弦详情的正文、构造线路、倾向音、来源及示例音高事件由 commonMain 的 `PracticeChordDetailProjector` 一次投影，Desktop/Web 消费同一 read model；Web Worker 再把共享构造事件交给 Kotlin renderer 生成冻结谱，只读展示且不提供线路选择或应用。React 不再从 timeline/workspace 二次查找或格式化动态文案，并与桌面保持折叠分区、平铺芯片、分类目录和调性下拉组件语义一致。Web 默认分区布局把和声选择与惯用进行置于五线谱下方的等宽双栏，支持 180–560px pointer/键盘调高；右栏保留当前调性、默认展开的和弦详情与 finding，并继续支持拖宽。经典组合分支保留，待 Web 钢琴卷轴接入后开放切换。写作、重建、播放等已在上方工具栏出现的控件不重复；finding 来自独立后台 channel，并可按稳定事件锚点聚焦共享选区 |
 | finding 与教学目录后台 generation | ✅ | writing 按 kind、catalog、findings 各用独立 newest-wins Worker；finding 结果校验 request/base revision/fingerprint，`frame()` 不再同步跑整谱检查 |

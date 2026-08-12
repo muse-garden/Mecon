@@ -16,6 +16,16 @@ sealed interface ConstraintModality {
     data class Prefer(val weight: Double? = null) : ConstraintModality
     data class Reward(val bonus: Double) : ConstraintModality
     data object Annotate : ConstraintModality
+
+    /**
+     * 违反时发 HINT 提醒，但不计分、不剪枝。
+     *
+     * 用于**求解阶段无法改变其真假**的规则：自由练习的和弦由用户选定，和弦选择规则（见
+     * [isChordSelectionOnly]）无论声部怎么写都恒真或恒假，让它们参与评分只会干扰声部搜索。
+     * 与 [Annotate] 的区别是发射条件：[Annotate] 在 SATISFIED 时解释“这里发生了什么”，
+     * [Remind] 在 VIOLATED 时提示“这个选择有问题，但要改和弦才行”。
+     */
+    data object Remind : ConstraintModality
 }
 
 data class ConstraintExplanation(
@@ -171,6 +181,48 @@ enum class VoiceExtreme {
     HIGHEST,
     LOWEST,
 }
+
+/**
+ * 只依赖符号和弦序列（音级、转位、arity、音响）的谓词，与四部写作的具体声部无关。
+ *
+ * 这类谓词表达的是**和弦选择**规则：写作阶段无法通过改变声部排列满足或违反它们。单一判据供三处
+ * 共用——目标预检（`targetOnlyHardViolations`）、评分分区
+ * （`ConstraintAlgebraRuleProvider.partitionScoreConstraints`），以及自由练习教学投影的 modality
+ * 降级（用户已自行选定和弦，和弦选择规则只做提醒）。
+ *
+ * 穷尽 `when`：新增谓词必须在此表态，避免默认落入“依赖声部”而悄悄参与搜索。
+ */
+internal val ConstraintPredicate.isChordSelectionOnly: Boolean
+    get() = when (this) {
+        is ConstraintPredicate.RootDiatonicMotion,
+        is ConstraintPredicate.MinimumSimilarChordDistance,
+        ConstraintPredicate.DistinctSimilarChordProgressions,
+        is ConstraintPredicate.RootProgressionPreference,
+        -> true
+
+        is ConstraintPredicate.ToneCompleteness,
+        is ConstraintPredicate.ToneDoubled,
+        is ConstraintPredicate.ToneNotDoubled,
+        is ConstraintPredicate.ScaleDegreeNotDoubled,
+        is ConstraintPredicate.Spacing,
+        is ConstraintPredicate.DistinctIdentities,
+        is ConstraintPredicate.CommonToneWithPrevious,
+        is ConstraintPredicate.NeighborTone,
+        is ConstraintPredicate.TargetMatches,
+        is ConstraintPredicate.SameSonority,
+        is ConstraintPredicate.VoiceDiatonicSteps,
+        is ConstraintPredicate.VoicePitchClassCardinality,
+        is ConstraintPredicate.ToneMultiplicity,
+        is ConstraintPredicate.ToneInVoiceFilter,
+        is ConstraintPredicate.UniqueVoiceExtreme,
+        is ConstraintPredicate.NoRepeatedVoicePattern,
+        is ConstraintPredicate.RuleFound,
+        -> false
+    }
+
+/** 整条约束是否只依赖符号和弦序列。 */
+internal val Constraint.isChordSelectionOnly: Boolean
+    get() = expr.atomicPredicates().all { it.isChordSelectionOnly }
 
 internal data class ConstraintEvaluation(
     val truth: ConstraintTruth,

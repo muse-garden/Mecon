@@ -263,15 +263,15 @@ object FreeHarmonySolver {
 
     private fun generalPreferenceConstraints(): List<Constraint> =
         listOf(
-            preference(
+            // 和弦选择规则：自由练习的和弦一律由用户选定，写作阶段改不了它们的真假，
+            // 因此只作为提醒发 finding，不参与搜索评分（见 §和弦选择与写作分离）。
+            reminder(
                 RuleId("free.harmony.similar-chord-distance"),
                 ConstraintPredicate.MinimumSimilarChordDistance(3),
-                28.0,
             ),
-            preference(
+            reminder(
                 RuleId("free.harmony.distinct-progressions"),
                 ConstraintPredicate.DistinctSimilarChordProgressions,
-                20.0,
             ),
             preference(
                 RuleId("free.melody.no-repeated-pattern"),
@@ -311,6 +311,21 @@ object FreeHarmonySolver {
             modality = ConstraintModality.Prefer(weight),
             ruleId = id,
         )
+
+    /** 只发 finding、不计分的和弦选择提醒。 */
+    private fun reminder(
+        id: RuleId,
+        predicate: ConstraintPredicate,
+    ): Constraint {
+        require(predicate.isChordSelectionOnly) {
+            "Only chord-selection predicates may be downgraded to reminders"
+        }
+        return Constraint(
+            expr = ConstraintExpr.Atom(predicate),
+            modality = ConstraintModality.Remind,
+            ruleId = id,
+        )
+    }
 
     val TRIAD_COMPLETE = RuleId("free.harmony.triad-complete")
     val SEVENTH_COMPLETE = RuleId("free.harmony.seventh-complete")

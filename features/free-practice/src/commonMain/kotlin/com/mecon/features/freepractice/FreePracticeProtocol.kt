@@ -52,6 +52,13 @@ sealed interface FreePracticeIntent {
     ) : FreePracticeIntent
 
     @Serializable
+    @SerialName("selectIdiomTonalLayout")
+    data class SelectIdiomTonalLayout(
+        override val expectedRevision: Long,
+        val tonalLayoutId: WorkspaceTonalLayoutId,
+    ) : FreePracticeIntent
+
+    @Serializable
     @SerialName("selectIdiom")
     data class SelectIdiom(
         override val expectedRevision: Long,
@@ -372,6 +379,15 @@ sealed interface PracticeWritingOutcome {
     @Serializable
     @SerialName("invalid")
     data class Invalid(val diagnostics: List<PracticeDiagnostic>) : PracticeWritingOutcome
+
+    /**
+     * The background engine crashed instead of answering. Deliberately distinct from [Invalid]:
+     * nothing about the request was wrong, so shells must report a defect — and say that the
+     * workbench rolled back — rather than present it as a teaching result.
+     */
+    @Serializable
+    @SerialName("failed")
+    data class Failed(val reason: String) : PracticeWritingOutcome
 }
 
 @Serializable
@@ -407,6 +423,15 @@ data class PracticeFindingsView(
 )
 
 @Serializable
+data class PracticeChordCatalogAlternateReadingView(
+    val key: PracticeKeyView,
+    val keyLabel: String,
+    val functionalSymbol: String,
+    val relativeLabel: String,
+    val absoluteLabel: String,
+)
+
+@Serializable
 data class PracticeChordCatalogItem(
     val id: String,
     val symbol: String,
@@ -417,6 +442,7 @@ data class PracticeChordCatalogItem(
     val interpretationCount: Int = 0,
     val relativeLabel: String = "",
     val absoluteLabel: String = "",
+    val alternateTonalReadings: List<PracticeChordCatalogAlternateReadingView> = emptyList(),
 )
 
 @Serializable
@@ -451,6 +477,16 @@ data class PracticeNoteConstraintView(
     val idiomCatalogFilterEnabled: Boolean = false,
     val lockedVoiceTrackIds: Set<TrackId> = emptySet(),
     val lockedStaffTrackIds: Set<TrackId> = emptySet(),
+)
+
+@Serializable
+data class PracticeChordCatalogFilterView(
+    val id: String,
+    val key: PracticeKeyView,
+    val keyLabel: String,
+    val tonalLayoutId: WorkspaceTonalLayoutId,
+    val selected: Boolean = false,
+    val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
 )
 
 @Serializable
@@ -701,6 +737,8 @@ data class PracticePlanStrings(
     val removeChordTonality: String = "删除和弦调性解释",
     val followManualTonality: String = "跟随调性线",
     val chordCatalog: String = "选择和弦",
+    val chordCatalogTonality: String = "按哪个调选和弦",
+    val idiomCatalogTonality: String = "按哪个调选惯用进行",
     val chooseChord: String = "选用和弦",
     val bass: String = "低音",
     val anyBass: String = "任意",
@@ -741,6 +779,7 @@ data class PracticePlanView(
     val selectedChord: PracticeChordCatalogItem? = null,
     val chordDetail: PracticeChordDetailView? = null,
     val chordCatalogGroups: List<PracticeChordCatalogGroupView> = emptyList(),
+    val chordCatalogFilters: List<PracticeChordCatalogFilterView> = emptyList(),
     val selectedChordReadings: List<PracticeTimelineChordReadingView> = emptyList(),
     val bassOptions: List<Int> = emptyList(),
     val bassChoices: List<PracticeBassOptionView> = emptyList(),
@@ -754,7 +793,17 @@ data class PracticePlanView(
     val currentTonalityRows: List<PracticeTonalityReadingRowView> = emptyList(),
     val doubleTonalityChoices: List<PracticeChordTonalityChoiceView> = emptyList(),
     val idiomTargetKeys: List<PracticePlanKeyFilterView> = emptyList(),
+    val idiomCatalogFilters: List<PracticePlanTonalLayoutFilterView> = emptyList(),
     val idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
+)
+
+@Serializable
+data class PracticePlanTonalLayoutFilterView(
+    val id: String,
+    val key: PracticeKeyView,
+    val label: String,
+    val tonalLayoutId: WorkspaceTonalLayoutId,
+    val selected: Boolean,
 )
 
 /** Stable workbench selection projected from both the harmony and score sessions. */
@@ -914,6 +963,20 @@ data class PracticeBackgroundResult(
     val outcome: PracticeWritingOutcome,
 )
 
+/**
+ * A background channel reporting that it crashed and will never deliver a result.
+ *
+ * Only [requestId] identifies it: the session already holds every other property of the request it
+ * issued, and a crashed worker must not be trusted to reconstruct them. Shells send this whenever a
+ * background worker throws, dies or fails to load — otherwise the session waits forever and the
+ * workbench stays locked in [PracticeWritingPhase.RUNNING].
+ */
+@Serializable
+data class PracticeBackgroundFailure(
+    val requestId: Long,
+    val reason: String,
+)
+
 /** Serializable update used by JVM/JS traces and the web worker boundary. */
 @Serializable
 data class FreePracticeUpdate(
@@ -998,6 +1061,12 @@ object FreePracticeCodec {
 
     fun decodeBackgroundResult(value: String): PracticeBackgroundResult =
         json.decodeFromString(PracticeBackgroundResult.serializer(), value)
+
+    fun encodeBackgroundFailure(value: PracticeBackgroundFailure): String =
+        json.encodeToString(PracticeBackgroundFailure.serializer(), value)
+
+    fun decodeBackgroundFailure(value: String): PracticeBackgroundFailure =
+        json.decodeFromString(PracticeBackgroundFailure.serializer(), value)
 
     fun encodeBackgroundRequest(value: PracticeBackgroundRequest): String =
         json.encodeToString(PracticeBackgroundRequest.serializer(), value)

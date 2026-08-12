@@ -6,8 +6,9 @@
 
 自由和声求解器正在作为统一底座实施：调性、和弦词汇与调号正交建模，支持任意固定声部，
 习惯进行编译为 `ConstraintProgram`，勋伯格/textbook/爵士作为可组合 preset。设计与验收见
-[free-harmony-solver.md](free-harmony-solver.md)；自由写作优先的分层动态规划后端设计见
-[dynamic-programming-solver.md](dynamic-programming-solver.md)；数据模型见
+[free-harmony-solver.md](free-harmony-solver.md)；分层动态规划后端（**自由练习两档写作的实际
+后端**）见 [dynamic-programming-solver.md](dynamic-programming-solver.md)（槽位扩展性与状态
+合并率测量见 [dp-slot-scaling-review.md](dp-slot-scaling-review.md)）；数据模型见
 [../data_model/harmony.md](../data_model/harmony.md)。
 
 共同和弦转调工具与第一套勋伯格转调练习见 [modulation.md](modulation.md)；相差三 / 四个

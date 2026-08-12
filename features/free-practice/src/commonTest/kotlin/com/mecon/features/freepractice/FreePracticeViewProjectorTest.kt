@@ -3,10 +3,13 @@ package com.mecon.features.freepractice
 import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationKey
 import com.mecon.api.primitive.Pitch
+import com.mecon.api.primitive.Fraction
 import com.mecon.theory.freepractice.WorkspaceChordChoice
 import com.mecon.theory.freepractice.WorkspaceChordTonality
 import com.mecon.theory.freepractice.WorkspaceChordTonalReading
 import com.mecon.theory.freepractice.WorkspaceSlotId
+import com.mecon.theory.freepractice.HarmonyWorkspaceCommand
+import com.mecon.theory.freepractice.HarmonyWorkspaceEditor
 import com.mecon.theory.harmony.ChordSelectionCatalog
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -108,6 +111,92 @@ class FreePracticeViewProjectorTest {
         assertTrue(plan.tonalityChoices.any { it.id == "manual" && it.selected })
         assertFalse(plan.chordLocked)
         assertFalse(plan.inversionLocked)
+    }
+
+    @Test
+    fun overlappingTonalLayoutsExposeOneSharedChordCatalogPerKey() {
+        val c = ModulationKey(0, KeySignatureMode.MAJOR)
+        val fs = ModulationKey(6, KeySignatureMode.MAJOR)
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = c)
+        val workspace = HarmonyWorkspaceEditor.apply(
+            initial,
+            HarmonyWorkspaceCommand.InsertTonalLayout(key = fs, start = initial.slots.single().onset),
+        )
+        val insertedLayout = workspace.tonalLayouts.last()
+
+        val plan = FreePracticeViewProjector.plan(
+            workspace = workspace,
+            selectedSlotId = workspace.slots.single().id,
+            selectedTonalLayoutId = insertedLayout.id,
+            catalog = projectPracticeCatalog(fs),
+        )
+
+        assertEquals(
+            listOf(c, fs).map { it.fifths to it.mode.name },
+            plan.chordCatalogFilters.map { it.key.fifths to it.key.mode.name },
+        )
+        assertEquals(
+            workspace.tonalLayouts.first().id,
+            plan.chordCatalogFilters.single { it.selected }.tonalLayoutId,
+        )
+        val reboundWorkspace = HarmonyWorkspaceEditor.apply(
+            workspace,
+            HarmonyWorkspaceCommand.SelectChordTonalLayout(0, insertedLayout.id),
+        )
+        val reboundPlan = FreePracticeViewProjector.plan(
+            workspace = reboundWorkspace,
+            selectedSlotId = reboundWorkspace.slots.single().id,
+            selectedTonalLayoutId = insertedLayout.id,
+            catalog = projectPracticeCatalog(fs),
+        )
+        assertEquals(insertedLayout.id, reboundPlan.chordCatalogFilters.single { it.selected }.tonalLayoutId)
+        val independentPlan = FreePracticeViewProjector.plan(
+            workspace = reboundWorkspace,
+            selectedSlotId = reboundWorkspace.slots.single().id,
+            selectedTonalLayoutId = insertedLayout.id,
+            selectedIdiomTonalLayoutId = reboundWorkspace.tonalLayouts.first().id,
+            catalog = projectPracticeCatalog(fs),
+        )
+        assertEquals(insertedLayout.id, independentPlan.chordCatalogFilters.single { it.selected }.tonalLayoutId)
+        assertEquals(
+            reboundWorkspace.tonalLayouts.first().id,
+            independentPlan.idiomCatalogFilters.single { it.selected }.tonalLayoutId,
+        )
+        assertTrue(plan.chordCatalogFilters.all { it.chordGroups.isNotEmpty() })
+        assertTrue(
+            plan.chordCatalogFilters.map { it.chordGroups.first().choices.first().choice.pitchClasses }
+                .distinct().size > 1,
+        )
+        assertTrue(
+            plan.chordCatalogFilters.flatMap { it.chordGroups }
+                .flatMap { it.choices }
+                .any { it.alternateTonalReadings.isNotEmpty() },
+        )
+
+        val boundary = Fraction.QUARTER
+        val baselineEnded = HarmonyWorkspaceEditor.apply(
+            workspace,
+            HarmonyWorkspaceCommand.SetTonalLayoutBounds(
+                workspace.tonalLayouts.first().id,
+                Fraction.ZERO,
+                boundary,
+            ),
+        )
+        val laterStarted = HarmonyWorkspaceEditor.apply(
+            baselineEnded,
+            HarmonyWorkspaceCommand.SetTonalLayoutBounds(insertedLayout.id, boundary, null),
+        ).let { state ->
+            state.copy(slots = listOf(state.slots.single().copy(onset = boundary)))
+        }
+        val boundaryPlan = FreePracticeViewProjector.plan(
+            workspace = laterStarted,
+            selectedSlotId = laterStarted.slots.single().id,
+            selectedTonalLayoutId = workspace.tonalLayouts.first().id,
+            selectedIdiomTonalLayoutId = workspace.tonalLayouts.first().id,
+            catalog = projectPracticeCatalog(fs),
+        )
+        assertEquals(listOf(insertedLayout.id), boundaryPlan.idiomCatalogFilters.map { it.tonalLayoutId })
+        assertTrue(boundaryPlan.idiomCatalogFilters.single().selected)
     }
 
     @Test
