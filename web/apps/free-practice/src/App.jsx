@@ -54,6 +54,25 @@ import {
 // Keep the classic branch available for the future Web piano-roll layout switch.
 const DEFAULT_WEB_PRACTICE_LAYOUT = "writing-with-lower-panels";
 
+/**
+ * Effects the session raises when a background engine crashed. The session has already rolled the
+ * workbench back to its last committed state by the time one of these frames arrives; the shell
+ * only has to say so instead of clearing the alert like it does for ordinary frames.
+ */
+const PRACTICE_FAILURE_ALERTS = {
+  "freePractice.writing.failed": "自动写作出错，已回退到上一个正常状态",
+  "freePractice.writing.alternateFailed": "备选写法搜索出错，已保留当前写作结果",
+  "freePractice.catalog.failed": "教学目录加载出错",
+  "freePractice.findings.failed": "规则检查出错",
+};
+
+function practiceEffectAlert(effect) {
+  const text = PRACTICE_FAILURE_ALERTS[effect?.messageKey];
+  if (!text) return "";
+  const reason = effect.arguments?.reason;
+  return reason ? `${text}：${reason}` : text;
+}
+
 function ToolbarIcon({ icon: Icon, size = 16 }) {
   return <Icon aria-hidden="true" size={size} strokeWidth={1.8} />;
 }
@@ -299,7 +318,9 @@ export function App() {
         setInsertMeasure(next.measure);
         setInsertBeat(formatQuarterBeat(next.beat));
       }
-      setPracticeAlert("");
+      // A rollback frame is still a normal frame, so clearing the alert unconditionally would
+      // erase the only notice the user gets that a background engine crashed.
+      setPracticeAlert(practiceEffectAlert(data.update?.effect));
       if (data.type !== "freePracticeFrame") {
         setStatus(`revision ${editorFrame.update.revision}`);
       } else {

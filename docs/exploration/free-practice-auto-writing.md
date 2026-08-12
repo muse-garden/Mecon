@@ -210,11 +210,33 @@ pitch event cells。物化器再按 `[scope.start, scope.end)` 原子替换全�
 - 无解/预算耗尽：用户和弦选择仍成功，作为同一个和弦选择操作提交；谱面保持原样、标为写作
   过期并显示诊断，不自动回放可能仍对应旧和弦的音符；
 - 取消：恢复提交前 draft，不产生历史项；
+- 后台引擎崩溃：见 §8.1；
 - undo/redo 只恢复历史帧，绝不再次触发自动写作。
 
 CPU 搜索增加协作取消检查；worker 使用 operation id、基础 document version、scope/target fingerprint
 校验结果。写作未完成时禁用冲突编辑与 history 动作，关闭工作台会取消 worker。完整
 Runtime/Computed 发布前继续显示旧谱面帧，遵守大乐谱交互保护约束。
+
+### 8.1 后台崩溃必须走共享失败通道
+
+后台 channel 抛异常、worker 死亡或引擎 chunk 加载失败时，**平台不得只把错误打到状态栏**：
+请求仍挂在 `FreePracticeSession.activeRequest` 上，工作台会永远停在
+`PracticeWritingPhase.RUNNING`、显示尚未提交的 workspace 且拒绝后续 intent（用户只能刷新页面）。
+
+- 协议：`PracticeBackgroundFailure(requestId, reason)`。只带 requestId——其余属性 session 自己
+  持有，崩掉的 worker 不可信。
+- 入口：`applyBackgroundFailure` / `applyTeachingCatalogFailure` / `applyFindingFailure`；
+  requestId 与当前 active request 不符时按 `STALE_BACKGROUND_RESULT` 丢弃。
+- 首解崩溃 = 回退：`requestWritingForWorkspace` 只把待提交 workspace 挂在请求上、从不预先提交，
+  因此**丢弃请求本身就是回退到最后一次提交的 workspace 与谱面**。禁止在这里提交请求自带的
+  快照——崩溃后恰恰是那份 pending 状态不可信。结果为 `PracticeWritingOutcome.Failed(reason)`
+  加 `INVALID` + `freePractice.writing.failed`，与「无解」区分开：无解是教学结论，崩溃是缺陷。
+- 备选（`OPTIMIZE_CANDIDATES`）崩溃只解锁，不回滚已应用的首解。
+- finding / teaching catalog 崩溃要把 fingerprint 记为「已尝试」再清空 pending 请求：只清空会让
+  下一次 `result()` 立刻重发同一请求，在必现崩溃上空转；只标 stale 又会永远卡住。
+- 桌面：`EditableScoreHost.solveInBackground` 捕获 `Throwable`（`CancellationException` 透传）；
+  Web：`engine-worker.js` 为每个 search worker 挂 `onerror` 与 error 消息路由，并在 apply 结果
+  自身抛错时补发 failure。两端共用同一 session 语义，不各写一套回退。
 
 ## 9. 换一个结果与回放
 

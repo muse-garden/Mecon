@@ -584,6 +584,66 @@ class FreePracticeSession private constructor(
         )
     }
 
+    /**
+     * Releases a writing request whose background channel crashed.
+     *
+     * A first solve is never committed while it runs — [requestWritingForWorkspace] only parks the
+     * prepared workspace on the request — so dropping the request *is* the rollback to the last
+     * good state: the visible workspace falls back to the committed one and the score was never
+     * touched. Do not commit the request's own snapshot here: after a crash the pending workspace
+     * is exactly what we cannot vouch for.
+     *
+     * A crashed candidate optimization is different. Its first solve already committed, so this
+     * only unlocks the workbench and keeps the applied writing and its alternates.
+     */
+    fun applyBackgroundFailure(value: PracticeBackgroundFailure): FreePracticeDispatchResult {
+        beginOperation()
+        val request = activeRequest
+        if (request == null || value.requestId != request.requestId) {
+            return result(
+                revision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.STALE_BACKGROUND_RESULT,
+                    "freePractice.staleBackgroundResult",
+                ),
+            )
+        }
+        activeRequest = null
+        val baseRevision = revision
+        val arguments = mapOf("reason" to value.reason)
+        if (request.kind == PracticeBackgroundRequestKind.OPTIMIZE_CANDIDATES) {
+            writing = writing.copy(
+                phase = PracticeWritingPhase.READY,
+                canAlternate = nextCandidateIndex < candidates.size,
+            )
+            revision++
+            return result(
+                baseRevision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.INVALID,
+                    "freePractice.writing.alternateFailed",
+                    arguments,
+                ),
+            )
+        }
+        candidates = emptyList()
+        nextCandidateIndex = 1
+        writing = PracticeWritingStatus(
+            phase = PracticeWritingPhase.READY,
+            outcome = PracticeWritingOutcome.Failed(value.reason),
+            lastScope = writing.lastScope,
+        )
+        revision++
+        return result(
+            baseRevision,
+            FreePracticeEffect(
+                FreePracticeEffectKind.INVALID,
+                "freePractice.writing.failed",
+                arguments,
+            ),
+        )
+    }
+
     fun applyTeachingCatalogResult(value: PracticeTeachingCatalogResult): FreePracticeDispatchResult {
         beginOperation()
         val request = activeTeachingCatalogRequest
@@ -643,6 +703,68 @@ class FreePracticeSession private constructor(
         return result(
             value.baseRevision,
             FreePracticeEffect(FreePracticeEffectKind.FINDINGS_UPDATED),
+        )
+    }
+
+    /**
+     * Releases a crashed teaching-catalog request. Without this the view stays `loading` forever:
+     * the pending request is what suppresses the next one for the same fingerprint.
+     */
+    fun applyTeachingCatalogFailure(value: PracticeBackgroundFailure): FreePracticeDispatchResult {
+        beginOperation()
+        val request = activeTeachingCatalogRequest
+        if (request == null || value.requestId != request.requestId) {
+            return result(
+                revision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.STALE_BACKGROUND_RESULT,
+                    "freePractice.staleCatalogResult",
+                ),
+            )
+        }
+        activeTeachingCatalogRequest = null
+        teachingCatalog = teachingCatalog.copy(
+            generation = teachingCatalog.generation + 1,
+            loading = false,
+            errorKey = "freePractice.catalog.failed",
+        )
+        return result(
+            request.baseRevision,
+            FreePracticeEffect(
+                FreePracticeEffectKind.INVALID,
+                "freePractice.catalog.failed",
+                mapOf("reason" to value.reason),
+            ),
+        )
+    }
+
+    /**
+     * Releases a crashed finding request. The fingerprint is recorded as attempted so the very
+     * next [result] does not immediately re-issue the same request and spin on a reproducible
+     * crash; the panel stays marked stale and any later input change asks again.
+     */
+    fun applyFindingFailure(value: PracticeBackgroundFailure): FreePracticeDispatchResult {
+        beginOperation()
+        val request = activeFindingRequest
+        if (request == null || value.requestId != request.requestId) {
+            return result(
+                revision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.STALE_BACKGROUND_RESULT,
+                    "freePractice.staleFindingResult",
+                ),
+            )
+        }
+        activeFindingRequest = null
+        findingsFingerprint = request.fingerprint
+        findings = findings.copy(stale = true)
+        return result(
+            request.baseRevision,
+            FreePracticeEffect(
+                FreePracticeEffectKind.INVALID,
+                "freePractice.findings.failed",
+                mapOf("reason" to value.reason),
+            ),
         )
     }
 
@@ -1532,6 +1654,7 @@ class FreePracticeSession private constructor(
         PracticeWritingOutcome.BudgetExhausted -> "freePractice.writing.budgetExhausted"
         PracticeWritingOutcome.Cancelled -> "freePractice.writing.cancelled"
         is PracticeWritingOutcome.Invalid -> "freePractice.writing.invalid"
+        is PracticeWritingOutcome.Failed -> "freePractice.writing.failed"
     }
 
     companion object {

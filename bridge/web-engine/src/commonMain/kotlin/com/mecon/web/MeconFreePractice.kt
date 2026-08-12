@@ -86,6 +86,38 @@ class MeconFreePractice(
         )
     }
 
+    /**
+     * Crash channel for the terminable search workers. A worker that throws, dies or fails to load
+     * can never answer, so the shell reports the failure here and the session rolls back to its
+     * last committed state instead of staying locked in RUNNING.
+     */
+    fun applyBackgroundFailureJson(failureJson: String): String {
+        val active = requireSession()
+        return FreePracticeCodec.encodeUpdate(
+            active.toWireUpdate(
+                active.applyBackgroundFailure(FreePracticeCodec.decodeBackgroundFailure(failureJson)),
+            ),
+        )
+    }
+
+    fun applyTeachingCatalogFailureJson(failureJson: String): String {
+        val active = requireSession()
+        return FreePracticeCodec.encodeUpdate(
+            active.toWireUpdate(
+                active.applyTeachingCatalogFailure(FreePracticeCodec.decodeBackgroundFailure(failureJson)),
+            ),
+        )
+    }
+
+    fun applyFindingFailureJson(failureJson: String): String {
+        val active = requireSession()
+        return FreePracticeCodec.encodeUpdate(
+            active.toWireUpdate(
+                active.applyFindingFailure(FreePracticeCodec.decodeBackgroundFailure(failureJson)),
+            ),
+        )
+    }
+
     fun previewTimelineEditJson(requestJson: String): String {
         val active = requireSession()
         return FreePracticeCodec.encodeTimelinePreviewResult(

@@ -214,7 +214,30 @@ trace 还携带逐层状态计划、已覆盖规则、终局重排规则和独�
 13. 勋伯格（`SchoenbergLayeredDynamicProgrammingTest`）：开放域显式进入 DP、普通 `AUTO` 仍选 DFS；
     **含七和弦**的固定进行上 EXACT DP 不劣于 DFS，复合约束使用 `compositeTruth` 而非完整前缀；
 14. 状态声明完整性守卫（`LayeredDpStateDeclarationCompletenessTest`）：每个 provider 的
-    `ALL_RULE_IDS` 减去已声明规则后必须为空；新增 RuleId 而忘记声明即测试红。
+    `ALL_RULE_IDS` 减去已声明规则后必须为空；新增 RuleId 而忘记声明即测试红；
+15. 前沿裁剪不读失效 entry（`boundedDpPrunesTheFrontierWithoutReadingStaleMapEntries`）：见 §6.1，
+    该回归只在 Kotlin/JS 上才会红。
+
+### 6.1 ⚠️ 求解器是共享代码，`Map.Entry` 在 Kotlin/JS 上是活引用
+
+Kotlin/JS 的 `Map.Entry` 回指底层哈希表并记录 modCount，表结构变动后再读它的 `key`/`value` 会抛
+`ConcurrentModificationException("The backing map has been modified after this entry was obtained.")`。
+JVM 的 `LinkedHashMap` 节点在 `clear()` 后仍持有 key/value，**同一段代码在桌面端完全正常**。
+
+`retainBestStateGroups` 曾把 `grouped.entries` 排序后的 entry 列表留到 `grouped.clear()` 之后再重填，
+于是 Web 端任何触发前沿裁剪的求解（离调 / Ger+6 一类的大搜索）都会在写作阶段整体崩溃。规则：
+**跨越任何 map 结构性修改之前，先把 entry 拷成普通 `Pair`**。`entries.toList()` / `sortedWith` /
+`asSequence()` 保留的都是活引用，只有 `map { it.key to it.value }` 这类拷贝才安全。
+
+`theory` 的 commonTest 此前根本无法为 JS 编译（`ConstraintLayeredDpCanonBenchmarkTest` 用了
+JVM-only 的 `toSortedMap`），所以这类缺陷完全没有守卫。现在三个 JVM 计时基准已移到
+`theory/src/jvmTest`，Mocha 超时提到 120s（穷举对照测试在 JS 上比 JVM 慢一个量级），定向回归用
+`./gradlew.bat :theory:jsNodeTest --tests "*ConstraintLayeredDynamicProgrammingSolverTest*"`。
+
+整个 `:theory:jsNodeTest` 仍有 29 个既有失败，全部是同一个原因：勋伯格章节测试要读禁忌进行表，
+而 JS build 按设计不打包该资源（`SchoenbergForbiddenTransitions` 的 JS actual 显式 `error(...)`，
+以免静默退化成空表）。要让该 target 整体转绿，需要另行决定是把这些测试标为 JVM-only，还是把表
+打进 JS 产物；不要误读为本次改动引入。
 
 ## 7. 每条转移的成本
 

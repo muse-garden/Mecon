@@ -17,6 +17,12 @@ self.onmessage = async ({ data }) => {
       result: executor.executeFindingRequest(data.request),
     });
   } catch (error) {
-    self.postMessage({ type: "error", message: error?.message ?? String(error) });
+    // Echo the request id: the resident workers serve several requests, and the session can only
+    // release the one that actually crashed.
+    self.postMessage({
+      type: "error",
+      message: error?.message ?? String(error),
+      requestId: data.request?.requestId ?? null,
+    });
   }
 };

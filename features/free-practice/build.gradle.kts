@@ -11,7 +11,12 @@ kotlin {
     }
     js(IR) {
         browser()
-        nodejs()
+        nodejs {
+            // 教学目录与写作用例在 JS 上比 JVM 慢一个量级，Mocha 默认 2s 会误报超时。
+            testTask {
+                useMocha { timeout = "120s" }
+            }
+        }
         compilerOptions {
             moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_ES)
         }

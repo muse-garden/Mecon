@@ -331,6 +331,13 @@ class FreePracticeTraceTest {
                 "undo" -> session.dispatch(FreePracticeIntent.Undo(expectedRevision!!.toLong()))
                 "redo" -> session.dispatch(FreePracticeIntent.Redo(expectedRevision!!.toLong()))
                 "cancelWriting" -> session.dispatch(FreePracticeIntent.CancelWriting(expectedRevision!!.toLong()))
+                // The crash channel every shell must use when a background worker dies.
+                "backgroundFailure" -> session.applyBackgroundFailure(
+                    PracticeBackgroundFailure(
+                        requireNotNull(request).requestId,
+                        step.getValue("reason").jsonPrimitive.content,
+                    )
+                )
                 else -> error("Unknown trace step")
             }
             result.catalogRequests.singleOrNull()?.let { catalogRequest = it }
@@ -505,6 +512,7 @@ class FreePracticeTraceTest {
         PracticeWritingOutcome.BudgetExhausted -> "budgetExhausted"
         PracticeWritingOutcome.Cancelled -> "cancelled"
         is PracticeWritingOutcome.Invalid -> "invalid"
+        is PracticeWritingOutcome.Failed -> "failed"
         null -> null
     }
 }

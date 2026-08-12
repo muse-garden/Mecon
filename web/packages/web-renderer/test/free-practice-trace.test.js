@@ -300,6 +300,9 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         }],
         outcome: { type: "solved", scope: request.scopeSlotIds, replayRange: null },
       });
+    } else if (step.kind === "backgroundFailure") {
+      // The crash channel every shell must use when a background worker dies.
+      update = session.applyBackgroundFailure({ requestId: request.requestId, reason: step.reason });
     } else if (step.kind === "insertManualNote") {
       const before = session.initialUpdate();
       update = session.dispatch({

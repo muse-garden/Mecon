@@ -61,6 +61,19 @@ Web 构建运行见 [docs/web-development.md](docs/web-development.md)。以下�
   结果必须回到 session 校验，React 不直接接收并合并领域结果。
 - 新能力必须追加 `features/free-practice/testdata/practice-trace.json` 并让 JVM/Kotlin-JS 重放同一流程；
   当前该 trace 由开发者显式编辑并先经 JVM 校验，`-Pfreepractice.trace.write=true` 尚无生成器。
+- **后台崩溃必须走共享失败通道**：后台 channel 抛异常 / worker 死亡时，平台只报错是不够的——请求
+  仍挂在 session 上，工作台会永远停在 `RUNNING` 且拒绝交互。一律用
+  `PracticeBackgroundFailure(requestId, reason)` 调
+  `applyBackgroundFailure` / `applyTeachingCatalogFailure` / `applyFindingFailure`，由 session 回退到
+  最后一次提交的状态并给出 `freePractice.*.failed`。桌面捕获 `Throwable`（`CancellationException`
+  透传），Web 为每个 search worker 挂 `onerror` 并路由 error 消息。详见
+  [docs/exploration/free-practice-auto-writing.md](docs/exploration/free-practice-auto-writing.md) §8.1。
+- **共享代码里 `Map.Entry` 不得跨越 map 结构性修改**：Kotlin/JS 的 entry 是回指哈希表的活引用，
+  `clear()`/插入新键之后再读 `key`/`value` 会抛
+  “The backing map has been modified after this entry was obtained.”，而 JVM 完全正常——这类缺陷
+  只在 Web 端暴露。`entries.toList()` / `sortedWith` / `asSequence()` 保留的都是活引用；先
+  `map { it.key to it.value }` 拷贝再改表。见
+  [docs/theory/dynamic-programming-solver.md](docs/theory/dynamic-programming-solver.md) §6.1。
 - 钢琴卷轴当前明确保留桌面实现；除非任务明确把它纳入范围，不要借自由练习改动扩张或复制其旁路。
 
 ## ⚠️ Renderer 与 Computed 层职责划分

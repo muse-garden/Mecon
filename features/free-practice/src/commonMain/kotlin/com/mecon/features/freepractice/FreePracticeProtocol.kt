@@ -337,6 +337,15 @@ sealed interface PracticeWritingOutcome {
     @Serializable
     @SerialName("invalid")
     data class Invalid(val diagnostics: List<PracticeDiagnostic>) : PracticeWritingOutcome
+
+    /**
+     * The background engine crashed instead of answering. Deliberately distinct from [Invalid]:
+     * nothing about the request was wrong, so shells must report a defect — and say that the
+     * workbench rolled back — rather than present it as a teaching result.
+     */
+    @Serializable
+    @SerialName("failed")
+    data class Failed(val reason: String) : PracticeWritingOutcome
 }
 
 @Serializable
@@ -876,6 +885,20 @@ data class PracticeBackgroundResult(
     val outcome: PracticeWritingOutcome,
 )
 
+/**
+ * A background channel reporting that it crashed and will never deliver a result.
+ *
+ * Only [requestId] identifies it: the session already holds every other property of the request it
+ * issued, and a crashed worker must not be trusted to reconstruct them. Shells send this whenever a
+ * background worker throws, dies or fails to load — otherwise the session waits forever and the
+ * workbench stays locked in [PracticeWritingPhase.RUNNING].
+ */
+@Serializable
+data class PracticeBackgroundFailure(
+    val requestId: Long,
+    val reason: String,
+)
+
 /** Serializable update used by JVM/JS traces and the web worker boundary. */
 @Serializable
 data class FreePracticeUpdate(
@@ -958,6 +981,12 @@ object FreePracticeCodec {
 
     fun decodeBackgroundResult(value: String): PracticeBackgroundResult =
         json.decodeFromString(PracticeBackgroundResult.serializer(), value)
+
+    fun encodeBackgroundFailure(value: PracticeBackgroundFailure): String =
+        json.encodeToString(PracticeBackgroundFailure.serializer(), value)
+
+    fun decodeBackgroundFailure(value: String): PracticeBackgroundFailure =
+        json.decodeFromString(PracticeBackgroundFailure.serializer(), value)
 
     fun encodeBackgroundRequest(value: PracticeBackgroundRequest): String =
         json.encodeToString(PracticeBackgroundRequest.serializer(), value)

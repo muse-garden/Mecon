@@ -236,3 +236,33 @@ test("service worker refreshes the application shell before using its offline co
   assert.ok(navigation >= 0, "navigation requests need an explicit update strategy");
   assert.ok(network > navigation && fallback > network, "navigation must be network-first with an offline fallback");
 });
+
+/**
+ * A background worker that dies can never answer, and the session keeps the request active until
+ * something tells it otherwise — the workbench then stays locked in RUNNING and only a page reload
+ * recovers. Every search worker must therefore report crashes into the shared failure channel.
+ */
+test("every search worker routes crashes into the shared session failure channel", async () => {
+  const worker = await readFile(join(sourceRoot, "engine-worker.js"), "utf8");
+  for (const failure of ["backgroundFailure", "teachingCatalogFailure", "findingFailure"]) {
+    assert.ok(
+      worker.includes(`case "${failure}"`),
+      `the Worker must apply ${failure} through the session`,
+    );
+  }
+  assert.ok(
+    worker.includes("applyBackgroundFailure("),
+    "writing crashes must reach FreePracticeSession.applyBackgroundFailure",
+  );
+  // Two death modes: a caught exception posted as `error`, and a worker that dies outright.
+  assert.equal(
+    (worker.match(/worker\.onerror\s*=/g) ?? []).length,
+    2,
+    "both the terminable solve worker and the resident search worker need an onerror",
+  );
+  const shell = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  assert.ok(
+    shell.includes("freePractice.writing.failed"),
+    "the shell must surface the rollback instead of silently clearing the alert",
+  );
+});

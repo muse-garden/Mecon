@@ -30,6 +30,9 @@ export interface KotlinFreePractice {
   applyBackgroundResultJson(resultJson: string): string;
   applyTeachingCatalogResultJson(resultJson: string): string;
   applyFindingResultJson(resultJson: string): string;
+  applyBackgroundFailureJson(failureJson: string): string;
+  applyTeachingCatalogFailureJson(failureJson: string): string;
+  applyFindingFailureJson(failureJson: string): string;
   previewTimelineEditJson(requestJson: string): string;
   buildPlaybackExcerptJson(rangeJson: string): string;
   close(): void;
@@ -100,6 +103,9 @@ export class MeconFreePractice {
   applyBackgroundResult(result: string | object): any;
   applyTeachingCatalogResult(result: string | object): any;
   applyFindingResult(result: string | object): any;
+  applyBackgroundFailure(failure: string | object): any;
+  applyTeachingCatalogFailure(failure: string | object): any;
+  applyFindingFailure(failure: string | object): any;
   previewTimelineEdit(request: string | object): any;
   buildPlaybackExcerpt(range: string | object): { notes: Array<{
     midiNumber: number; velocity: number; startSeconds: number; durationSeconds: number;

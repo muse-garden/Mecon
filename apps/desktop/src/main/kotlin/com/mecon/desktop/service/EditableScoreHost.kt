@@ -37,6 +37,9 @@ import com.mecon.features.freepractice.FreePracticeEffectKind
 import com.mecon.features.freepractice.FreePracticeIntent
 import com.mecon.features.freepractice.FreePracticeSession
 import com.mecon.features.freepractice.FreePracticeSelection
+import com.mecon.features.freepractice.PracticeBackgroundFailure
+import com.mecon.features.freepractice.PracticeBackgroundRequest
+import com.mecon.features.freepractice.PracticeBackgroundResult
 import com.mecon.features.freepractice.PracticeWritingOutcome
 import com.mecon.features.freepractice.PracticeWritingPhase
 import com.mecon.features.freepractice.PracticeFindingView
@@ -69,6 +72,7 @@ import com.mecon.theory.writing.NotationEventSpan
 import com.mecon.theory.writing.NotationLaneSpec
 import com.mecon.theory.writing.PendingNotationNote
 import com.mecon.theory.writing.GrandStaffVoiceLayout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -406,22 +410,19 @@ class HarmonyPracticeScoreHost(
         }
         scope.launch {
             val applied = try {
-                val background = withContext(Dispatchers.Default) {
-                    FreePracticeBackgroundExecutor.execute(
-                        request,
-                        SearchCancellation { generation != writingGeneration.get() },
-                    )
-                }
+                val background = solveInBackground(request, generation)
                 editMutex.withLock {
                     if (generation != writingGeneration.get()) return@withLock null
-                    freePracticeSession.applyBackgroundResult(background).also(::publishWritingFrame)
+                    background?.let {
+                        freePracticeSession.applyBackgroundResult(it).also(::publishWritingFrame)
+                    }
                 }
             } finally {
                 pendingWorkspaceCommits -= 1
             }
-            if (applied != null && generation == writingGeneration.get()) {
+            if (generation == writingGeneration.get()) {
                 onComplete(practiceWritingState.message)
-                applied.requests.forEach { launchOptimization(generation, it) }
+                applied?.requests?.forEach { launchOptimization(generation, it) }
             }
         }
     }
@@ -445,19 +446,16 @@ class HarmonyPracticeScoreHost(
             return
         }
         scope.launch {
-            val background = withContext(Dispatchers.Default) {
-                FreePracticeBackgroundExecutor.execute(
-                    request,
-                    SearchCancellation { generation != writingGeneration.get() },
-                )
-            }
+            val background = solveInBackground(request, generation)
             val applied = editMutex.withLock {
                 if (generation != writingGeneration.get()) return@withLock null
-                freePracticeSession.applyBackgroundResult(background).also(::publishWritingFrame)
+                background?.let {
+                    freePracticeSession.applyBackgroundResult(it).also(::publishWritingFrame)
+                }
             }
-            if (applied != null && generation == writingGeneration.get()) {
+            if (generation == writingGeneration.get()) {
                 onComplete(practiceWritingState.message)
-                applied.requests.forEach { launchOptimization(generation, it) }
+                applied?.requests?.forEach { launchOptimization(generation, it) }
             }
         }
     }
@@ -716,22 +714,19 @@ class HarmonyPracticeScoreHost(
         val accepted = dispatched.effect.kind.acceptedByWorkspace()
         scope.launch {
             val applied = try {
-                val background = withContext(Dispatchers.Default) {
-                    FreePracticeBackgroundExecutor.execute(
-                        request,
-                        SearchCancellation { generation != writingGeneration.get() },
-                    )
-                }
+                val background = solveInBackground(request, generation)
                 editMutex.withLock {
                     if (generation != writingGeneration.get()) return@withLock null
-                    freePracticeSession.applyBackgroundResult(background).also(::publishWritingFrame)
+                    background?.let {
+                        freePracticeSession.applyBackgroundResult(it).also(::publishWritingFrame)
+                    }
                 }
             } finally {
                 pendingWorkspaceCommits -= 1
             }
-            if (applied != null && generation == writingGeneration.get()) {
+            if (generation == writingGeneration.get()) {
                 onComplete(practiceWritingState.message)
-                applied.requests.forEach { launchOptimization(generation, it) }
+                applied?.requests?.forEach { launchOptimization(generation, it) }
             }
         }
         return accepted
@@ -745,17 +740,9 @@ class HarmonyPracticeScoreHost(
             this == FreePracticeEffectKind.WRITING_APPLIED ||
             this == FreePracticeEffectKind.NO_OP
 
-    private fun launchOptimization(
-        generation: Long,
-        request: com.mecon.features.freepractice.PracticeBackgroundRequest,
-    ) {
+    private fun launchOptimization(generation: Long, request: PracticeBackgroundRequest) {
         scope.launch {
-            val background = withContext(Dispatchers.Default) {
-                FreePracticeBackgroundExecutor.execute(
-                    request,
-                    SearchCancellation { generation != writingGeneration.get() },
-                )
-            }
+            val background = solveInBackground(request, generation) ?: return@launch
             editMutex.withLock {
                 if (generation == writingGeneration.get()) {
                     publishWritingFrame(freePracticeSession.applyBackgroundResult(background))
@@ -763,6 +750,39 @@ class HarmonyPracticeScoreHost(
             }
         }
     }
+
+    /**
+     * Runs one background solve and turns a crash into the shared failure channel.
+     *
+     * Letting the exception escape the coroutine would leave the request active in the session:
+     * the workbench would stay in [PracticeWritingPhase.RUNNING] with the uncommitted workspace
+     * showing and no way back. The session owns the rollback; this only has to report the crash.
+     */
+    private suspend fun solveInBackground(
+        request: PracticeBackgroundRequest,
+        generation: Long,
+    ): PracticeBackgroundResult? = try {
+        withContext(Dispatchers.Default) {
+            FreePracticeBackgroundExecutor.execute(
+                request,
+                SearchCancellation { generation != writingGeneration.get() },
+            )
+        }
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (error: Throwable) {
+        editMutex.withLock {
+            publishWritingFrame(
+                freePracticeSession.applyBackgroundFailure(
+                    PracticeBackgroundFailure(request.requestId, error.describeForUser()),
+                )
+            )
+        }
+        null
+    }
+
+    private fun Throwable.describeForUser(): String =
+        message?.takeIf { it.isNotBlank() } ?: this::class.simpleName ?: "未知错误"
 
     private fun publishWritingFrame(result: FreePracticeDispatchResult) {
         val status = result.frame.writing
@@ -787,8 +807,23 @@ class HarmonyPracticeScoreHost(
     private fun launchTeachingCatalog(requests: List<PracticeTeachingCatalogRequest>) {
         requests.lastOrNull()?.let { request ->
             scope.launch {
-                val catalog = withContext(Dispatchers.Default) {
-                    PracticeTeachingCatalogExecutor.execute(request)
+                val catalog = try {
+                    withContext(Dispatchers.Default) {
+                        PracticeTeachingCatalogExecutor.execute(request)
+                    }
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (error: Throwable) {
+                    // Without this the catalog view stays `loading` forever: the pending request
+                    // is exactly what suppresses the next one for the same fingerprint.
+                    editMutex.withLock {
+                        publishWritingFrame(
+                            freePracticeSession.applyTeachingCatalogFailure(
+                                PracticeBackgroundFailure(request.requestId, error.describeForUser()),
+                            )
+                        )
+                    }
+                    return@launch
                 }
                 editMutex.withLock {
                     publishWritingFrame(freePracticeSession.applyTeachingCatalogResult(catalog))
@@ -801,11 +836,26 @@ class HarmonyPracticeScoreHost(
         requests.lastOrNull()?.let { request ->
             val generation = findingGeneration.incrementAndGet()
             scope.launch {
-                val result = withContext(Dispatchers.Default) {
-                    PracticeFindingExecutor.execute(
-                        request,
-                        SearchCancellation { generation != findingGeneration.get() },
-                    )
+                val result = try {
+                    withContext(Dispatchers.Default) {
+                        PracticeFindingExecutor.execute(
+                            request,
+                            SearchCancellation { generation != findingGeneration.get() },
+                        )
+                    }
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (error: Throwable) {
+                    editMutex.withLock {
+                        if (generation == findingGeneration.get()) {
+                            publishWritingFrame(
+                                freePracticeSession.applyFindingFailure(
+                                    PracticeBackgroundFailure(request.requestId, error.describeForUser()),
+                                )
+                            )
+                        }
+                    }
+                    return@launch
                 }
                 editMutex.withLock {
                     if (generation == findingGeneration.get()) {
@@ -825,6 +875,8 @@ class HarmonyPracticeScoreHost(
         PracticeWritingOutcome.BudgetExhausted -> "搜索预算已耗尽，原音符未改动。"
         PracticeWritingOutcome.Cancelled -> "写作已取消。"
         is PracticeWritingOutcome.Invalid -> "写作请求无效，原音符未改动。"
+        is PracticeWritingOutcome.Failed ->
+            "自动写作出错，已回退到上一个正常状态：${outcome.reason}"
         null -> if (effect == FreePracticeEffectKind.WRITING_REQUESTED) "正在自动写作…" else null
     }
 

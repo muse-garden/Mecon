@@ -13,7 +13,13 @@ kotlin {
     }
     js(IR) {
         browser()
-        nodejs()
+        nodejs {
+            // 求解器的穷举对照测试在 JS 上远慢于 JVM，Mocha 默认 2s 会把它们全判成超时，
+            // 让 Kotlin/JS-only 缺陷（例如活 `Map.Entry`）失去守卫。
+            testTask {
+                useMocha { timeout = "120s" }
+            }
+        }
         compilerOptions {
             moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_ES)
         }

@@ -52,6 +52,8 @@
     { "kind": "timelineEdit", "edit": "moveBoundaryWithFollowing", "leftSlotIndex": 0, "boundary": "1/4", "expectedRevision": 42, "revision": 43, "effect": "APPLIED", "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"], "layouts": ["0/1+null", "0/1+3/8"] },
     { "kind": "timelineEdit", "edit": "setTonalLayoutBounds", "layoutIndex": 0, "start": "0/1", "end": "1/2", "expectedRevision": 43, "revision": 44, "effect": "APPLIED", "layouts": ["0/1+1/2", "0/1+3/8"] },
     { "kind": "undo", "expectedRevision": 44, "revision": 45, "effect": "UNDONE", "layouts": ["0/1+null", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] },
-    { "kind": "redo", "expectedRevision": 45, "revision": 46, "effect": "REDONE", "layouts": ["0/1+1/2", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] }
+    { "kind": "redo", "expectedRevision": 45, "revision": 46, "effect": "REDONE", "layouts": ["0/1+1/2", "0/1+3/8"], "slots": ["0/1+1/4", "1/4+3/8", "5/8+1/8"] },
+    { "kind": "runWriting", "expectedRevision": 46, "revision": 47, "effect": "WRITING_REQUESTED" },
+    { "kind": "backgroundFailure", "reason": "trace engine crash", "revision": 48, "effect": "INVALID", "outcome": "failed" }
   ]
 }
