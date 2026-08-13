@@ -190,6 +190,9 @@ export function useScoreEditorInputState() {
   const [restMode, setRestMode] = useState(false);
   const [customTupletText, setCustomTupletText] = useState("");
   const [insertionBeaming, setInsertionBeaming] = useState(null);
+  const [accidental, setAccidental] = useState(null);
+  const [tieMode, setTieMode] = useState(false);
+  const [articulations, setArticulations] = useState([]);
   return {
     insertMeasure, setInsertMeasure, insertBeat, setInsertBeat, insertPitch, setInsertPitch,
     insertChordPitches, setInsertChordPitches, insertDuration, setInsertDuration,
@@ -203,6 +206,7 @@ export function useScoreEditorInputState() {
     uncommonDurationsExpanded, setUncommonDurationsExpanded,
     articulationsExpanded, setArticulationsExpanded, restMode, setRestMode,
     customTupletText, setCustomTupletText, insertionBeaming, setInsertionBeaming,
+    accidental, setAccidental, tieMode, setTieMode, articulations, setArticulations,
   };
 }
 
@@ -291,6 +295,11 @@ export function useScoreEditorController({
     expression,
     destinations,
     dispatch,
+    onInsertionDispatched: () => {
+      input.setAccidental(null);
+      const beam = input.insertionBeaming;
+      if (beam && beam.beamLeft !== beam.beamRight) input.setInsertionBeaming(null);
+    },
   });
   const noteInsertion = {
     duration: { base: input.insertDuration, dots: Number(input.insertDots) || 0 },
@@ -305,6 +314,8 @@ export function useScoreEditorController({
         },
       } : {}),
       ...(input.insertionBeaming ? { beaming: input.insertionBeaming } : {}),
+      ...(input.tieMode ? { trailingTie: true } : {}),
+      ...(input.articulations.length ? { articulations: input.articulations } : {}),
     },
   };
   const noteInputRequest = (point) => ({
@@ -314,6 +325,7 @@ export function useScoreEditorController({
     voiceNumber: destinations.find((item) => item.value === input.moveDestination)?.voiceNumber ?? 1,
     ...(Number(input.tupletCount) > 1 ? { tupletCount: Number(input.tupletCount) } : {}),
     graceMode: input.graceMode,
+    accidental: input.accidental,
   });
   notePreviewContextRef.current = { requestNoteInputTarget, noteInputRequest };
 
@@ -397,7 +409,7 @@ export function useScoreEditorController({
   useEffect(() => {
     clearNotePreview();
   }, [frame, surfaceIndex, input.editorTool, input.insertDuration, input.insertDots,
-    input.restMode, input.moveDestination, input.tupletCount, input.graceMode]);
+    input.restMode, input.moveDestination, input.tupletCount, input.graceMode, input.accidental]);
 
   return {
     frame,
@@ -791,10 +803,13 @@ export function createScoreEditorToolbarControls({
     uncommonDurationsExpanded, setUncommonDurationsExpanded,
     articulationsExpanded, setArticulationsExpanded, restMode, setRestMode,
     customTupletText, setCustomTupletText, insertionBeaming, setInsertionBeaming,
+    accidental, setAccidental, tieMode, setTieMode, articulations, setArticulations,
   } = input;
   const hasSelection = Boolean(frame?.update.selection.length);
   const hasEventTargets = commands.eventTargets().length > 0;
-  const editingSelection = editorTool !== "note" && hasEventTargets;
+  const reflectSelection = editorTool !== "note";
+  const selectionInfo = frame?.paletteSelection ?? {};
+  const editingSelection = reflectSelection && selectionInfo.editable === true;
   const selectedInputDuration = DURATION_GLYPHS.find(({ value }) => value === insertDuration) ?? DURATION_GLYPHS[2];
   const applySelectionDuration = (base, dots = Number(editDots) || 0) => {
     setEditDuration(base);
@@ -804,29 +819,52 @@ export function createScoreEditorToolbarControls({
     }));
   };
   const chooseDuration = (base) => {
+    if (editingSelection) {
+      applySelectionDuration(base, Number(selectionInfo.dots) || 0);
+      return;
+    }
     if (base !== insertDuration) setInsertDots(0);
     setInsertDuration(base);
     setEditorTool("note");
   };
   const chooseDots = (dots) => {
-    setInsertDots(dots);
+    if (editingSelection) {
+      applySelectionDuration(
+        selectionInfo.durationBase ?? editDuration,
+        Number(selectionInfo.dots) === dots ? 0 : dots,
+      );
+      return;
+    }
+    setInsertDots(Number(insertDots) === dots ? 0 : dots);
     setEditorTool("note");
   };
   const durationControl = (base, label, glyph) => <MusicGlyphButton
     glyph={glyph} label={label} className="duration-glyph"
-    active={editorTool === "note" && insertDuration === base}
-    aria-pressed={editorTool === "note" && insertDuration === base}
+    active={reflectSelection ? selectionInfo.durationBase === base : insertDuration === base}
+    aria-pressed={reflectSelection ? selectionInfo.durationBase === base : insertDuration === base}
     onClick={() => chooseDuration(base)} />;
   const accidentalControl = (accidental, label, glyph) => <MusicGlyphButton
-    glyph={glyph} label={label} active={false}
-    onClick={() => hasSelection && commands.editSelection(
-      "setAccidentals", {}, (target) => ({ ...target, accidental }),
-    )} />;
+    glyph={glyph} label={label}
+    active={reflectSelection ? selectionInfo.accidental === accidental : input.accidental === accidental}
+    aria-pressed={reflectSelection ? selectionInfo.accidental === accidental : input.accidental === accidental}
+    onClick={() => {
+      if (editingSelection) {
+        commands.editSelection("setAccidentals", {}, (target) => ({
+          ...target,
+          accidental: selectionInfo.accidental === accidental ? null : accidental,
+        }));
+      } else {
+        setAccidental(input.accidental === accidental ? null : accidental);
+        setEditorTool("note");
+      }
+    }} />;
   const voiceControl = (voiceNumber) => {
     const destination = destinations.find((item) => item.voiceNumber === voiceNumber);
     return <button type="button" disabled={!destination} aria-label={`声部 ${voiceNumber}`}
       title={`声部 ${voiceNumber}`}
-      className={`voice-button${moveDestination === destination?.value ? " active" : ""}`}
+      className={`voice-button${(reflectSelection
+        ? selectionInfo.voiceNumber === voiceNumber
+        : moveDestination === destination?.value) ? " active" : ""}`}
       onClick={() => {
         if (!destination) return;
         setMoveDestination(destination.value);
@@ -838,19 +876,33 @@ export function createScoreEditorToolbarControls({
       <span className={`voice-color-bar voice-${voiceNumber}`} aria-hidden="true" /></button>;
   };
   const applyTuplet = (count) => {
-    if (hasSelection) {
+    if (editingSelection) {
       const targets = commands.groupedEventTargets(count);
       if (targets.length) dispatch({ type: "applyTuplets", targets });
-    } else setTupletCount(count);
+    } else {
+      setTupletCount(Number(tupletCount) === count ? 0 : count);
+      setEditorTool("note");
+    }
   };
-  const suggestedTuplets = Number(hasSelection ? editDots : insertDots) > 0 ? [2, 4, 3] : [3, 5, 6];
+  const suggestedTuplets = Number(reflectSelection ? selectionInfo.dots : insertDots) > 0
+    ? [2, 4, 3] : [3, 5, 6];
   const defaultTupletCount = Math.min(...suggestedTuplets);
   const beamControl = (label, beaming) => <BeamPatternButton label={label}
     beamLeft={beaming.beamLeft} beamRight={beaming.beamRight}
-    active={!hasSelection && JSON.stringify(insertionBeaming) === JSON.stringify(beaming)}
+    active={reflectSelection
+      ? selectionInfo.effectiveBeamLeft === beaming.beamLeft &&
+        selectionInfo.effectiveBeamRight === beaming.beamRight
+      : JSON.stringify(insertionBeaming) === JSON.stringify(beaming)}
     onClick={() => {
-      if (hasSelection) commands.editSelection("setBeaming", {}, (target) => ({ ...target, beaming }));
-      else setInsertionBeaming(beaming);
+      if (editingSelection) commands.editSelection("setBeaming", {}, (target) => ({
+        ...target,
+        beaming: selectionInfo.effectiveBeamLeft === beaming.beamLeft &&
+          selectionInfo.effectiveBeamRight === beaming.beamRight ? null : beaming,
+      }));
+      else {
+        setInsertionBeaming(JSON.stringify(insertionBeaming) === JSON.stringify(beaming) ? null : beaming);
+        setEditorTool("note");
+      }
     }} />;
   const groupSelectionBeam = () => {
     const grouped = new Map();
@@ -884,10 +936,17 @@ export function createScoreEditorToolbarControls({
     FERMATA: "延长记号",
   };
   const articulationControl = (value) => <MusicGlyphButton glyph={articulationGlyphs[value]}
-    label={articulationLabels[value]} active={articulation === value} disabled={!hasEventTargets}
+    label={articulationLabels[value]}
+    active={editingSelection ? selectionInfo.articulations?.includes(value) : articulations.includes(value)}
     onClick={() => {
       setArticulation(value);
-      commands.editSelection("toggleArticulation", { articulation: value });
+      if (editingSelection) commands.editSelection("toggleArticulation", { articulation: value });
+      else {
+        setArticulations(articulations.includes(value)
+          ? articulations.filter((item) => item !== value)
+          : [...articulations, value]);
+        setEditorTool("note");
+      }
     }} />;
   return {
     "history.undo": <EditorIconButton icon={Undo2} label="撤销" active={false}
@@ -913,16 +972,17 @@ export function createScoreEditorToolbarControls({
     "duration.32nd": paletteExpanded ? durationControl("THIRTY_SECOND", "三十二分音符", SMUFL_GLYPHS.note32ndUp) : null,
     "duration.rest": paletteExpanded ? <MusicGlyphButton glyph={selectedInputDuration.rest} label="休止符模式"
       className="duration-rest"
-      active={editorTool === "note" && restMode} onClick={() => {
+      active={!reflectSelection && restMode} onClick={() => {
         setRestMode(!restMode);
         setEditorTool("note");
       }} /> : null,
     "duration.dot.1": paletteExpanded ? <MusicGlyphButton glyph={SMUFL_GLYPHS.augmentationDot}
-      label="单附点" active={editorTool === "note" && Number(insertDots) === 1}
+      label="单附点" active={reflectSelection ? Number(selectionInfo.dots) === 1 : Number(insertDots) === 1}
       onClick={() => chooseDots(1)} /> : null,
     "duration.dot.2": paletteExpanded ? <MusicGlyphButton glyph={SMUFL_GLYPHS.augmentationDot.repeat(2)}
       className="augmentation-dots double" label="双附点"
-      active={editorTool === "note" && Number(insertDots) === 2} onClick={() => chooseDots(2)} /> : null,
+      active={reflectSelection ? Number(selectionInfo.dots) === 2 : Number(insertDots) === 2}
+      onClick={() => chooseDots(2)} /> : null,
     "duration.uncommon-toggle": paletteExpanded ? <button type="button" aria-expanded={uncommonDurationsExpanded}
       aria-label={uncommonDurationsExpanded ? "收起更多时值" : "展开更多时值"}
       title={uncommonDurationsExpanded ? "收起更多时值" : "展开更多时值"}
@@ -945,18 +1005,41 @@ export function createScoreEditorToolbarControls({
     "accidental.natural": paletteExpanded ? accidentalControl("NATURAL", "还原号", SMUFL_GLYPHS.accidentalNatural) : null,
     "accidental.double-sharp": paletteExpanded ? accidentalControl("DOUBLE_SHARP", "重升", SMUFL_GLYPHS.accidentalDoubleSharp) : null,
     "accidental.double-flat": paletteExpanded ? accidentalControl("DOUBLE_FLAT", "重降", SMUFL_GLYPHS.accidentalDoubleFlat) : null,
-    "curve.tie": paletteExpanded ? <CurveNotePairButton samePitch label="连音线" disabled={!hasSelection}
-      onClick={() => commands.editSelection("setTies", {}, (target) => ({ ...target, tieOut: true }))} /> : null,
+    "curve.tie": paletteExpanded ? <CurveNotePairButton samePitch label="连音线"
+      active={reflectSelection ? selectionInfo.tieOut === true : tieMode}
+      onClick={() => {
+        if (editingSelection) commands.editSelection("setTies", {}, (target) => ({
+          ...target, tieOut: selectionInfo.tieOut !== true,
+        }));
+        else {
+          setTieMode(!tieMode);
+          setEditorTool("note");
+        }
+      }} /> : null,
     "curve.slur": paletteExpanded ? <CurveNotePairButton samePitch={false} label="圆滑线"
       disabled={commands.eventTargets().length !== 2} onClick={commands.addSlurFromSelection} /> : null,
     "grace.appoggiatura": paletteExpanded ? <MusicGlyphButton glyph={SMUFL_GLYPHS.graceAppoggiatura}
-      label="倚音" active={graceMode && input.graceNoteType === "APPOGGIATURA"}
-      onClick={() => { input.setGraceNoteType("APPOGGIATURA"); setGraceMode(!(graceMode && input.graceNoteType === "APPOGGIATURA")); }} /> : null,
+      label="倚音" active={!reflectSelection && graceMode && input.graceNoteType === "APPOGGIATURA"}
+      onClick={() => {
+        if (editingSelection) return;
+        input.setGraceNoteType("APPOGGIATURA");
+        setGraceMode(!(graceMode && input.graceNoteType === "APPOGGIATURA"));
+        setRestMode(false);
+        setTupletCount(0);
+        setEditorTool("note");
+      }} /> : null,
     "grace.acciaccatura": paletteExpanded ? <MusicGlyphButton glyph={SMUFL_GLYPHS.graceAcciaccatura}
-      label="短倚音" active={graceMode && input.graceNoteType === "ACCIACCATURA"}
-      onClick={() => { input.setGraceNoteType("ACCIACCATURA"); setGraceMode(!(graceMode && input.graceNoteType === "ACCIACCATURA")); }} /> : null,
+      label="短倚音" active={!reflectSelection && graceMode && input.graceNoteType === "ACCIACCATURA"}
+      onClick={() => {
+        if (editingSelection) return;
+        input.setGraceNoteType("ACCIACCATURA");
+        setGraceMode(!(graceMode && input.graceNoteType === "ACCIACCATURA"));
+        setRestMode(false);
+        setTupletCount(0);
+        setEditorTool("note");
+      }} /> : null,
     "grace.small-note": paletteExpanded ? <button type="button" className="music-glyph-button grace-small-note"
-      aria-label="小音符" title="小音符" disabled={!hasEventTargets}
+      aria-label="小音符" title="小音符" disabled={!editingSelection || !selectionInfo.allRests}
       onClick={() => dispatch({ type: "createSmallNoteRegions", targets: commands.groupedEventTargets() })}>小</button> : null,
     ...Object.fromEntries([...Array(8)].map((_, index) => {
       const count = index + 2;
@@ -967,7 +1050,10 @@ export function createScoreEditorToolbarControls({
       onChange={(event) => {
         const count = Number(event.target.value);
         setCustomTupletText(String(count));
-        setTupletCount(count);
+        if (!editingSelection) {
+          setTupletCount(count);
+          setEditorTool("note");
+        }
       }}>
       {Array.from({ length: 8 }, (_, index) => index + 2).map((count) =>
         <option key={count} value={count}>{count}</option>)}
@@ -977,17 +1063,26 @@ export function createScoreEditorToolbarControls({
       onClick={() => applyTuplet(Number(tupletCount) > 1 ? Number(tupletCount) : defaultTupletCount)}>连音</button> : null,
     "tuplet.clear": null,
     "beam.independent": paletteExpanded ? <MusicGlyphButton glyph={SMUFL_GLYPHS.noteEighthUp}
-      label="独立音符，无符杠" active={!hasSelection && JSON.stringify(insertionBeaming) === JSON.stringify({ beamLeft: false, beamRight: false })}
+      label="独立音符，无符杠" active={reflectSelection
+        ? selectionInfo.effectiveBeamLeft === false && selectionInfo.effectiveBeamRight === false
+        : JSON.stringify(insertionBeaming) === JSON.stringify({ beamLeft: false, beamRight: false })}
       onClick={() => {
         const beaming = { beamLeft: false, beamRight: false };
-        if (hasSelection) commands.editSelection("setBeaming", {}, (target) => ({ ...target, beaming }));
-        else setInsertionBeaming(beaming);
+        if (editingSelection) commands.editSelection("setBeaming", {}, (target) => ({
+          ...target,
+          beaming: selectionInfo.effectiveBeamLeft === false &&
+            selectionInfo.effectiveBeamRight === false ? null : beaming,
+        }));
+        else {
+          setInsertionBeaming(JSON.stringify(insertionBeaming) === JSON.stringify(beaming) ? null : beaming);
+          setEditorTool("note");
+        }
       }} /> : null,
     "beam.both": paletteExpanded ? beamControl("左右都连符杠", { beamLeft: true, beamRight: true }) : null,
     "beam.right": paletteExpanded ? beamControl("符杠仅连右", { beamLeft: false, beamRight: true }) : null,
     "beam.left": paletteExpanded ? beamControl("符杠仅连左", { beamLeft: true, beamRight: false }) : null,
     "beam.group": paletteExpanded ? <BeamPatternButton label="将选中音符组成符杠组" isGroup
-      disabled={commands.eventTargets().length < 2} onClick={groupSelectionBeam} /> : null,
+      disabled={!editingSelection || commands.eventTargets().length < 2} onClick={groupSelectionBeam} /> : null,
     "articulation.toggle": paletteExpanded ? <button type="button" aria-expanded={articulationsExpanded}
       className="editor-icon-button articulation-toggle"
       aria-label={articulationsExpanded ? "收起演奏法" : "展开演奏法"}

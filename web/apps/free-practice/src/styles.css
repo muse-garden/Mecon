@@ -27,6 +27,7 @@ button:disabled { cursor: default; opacity: .45; }
 .workbench-tabs[hidden] { display: block; height: 0; overflow: hidden; }
 .toolbar {
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;

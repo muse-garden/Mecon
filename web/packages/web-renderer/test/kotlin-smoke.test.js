@@ -122,11 +122,19 @@ test("generated Kotlin/JS engine returns a complete engraved transpose preview",
     voiceTrackId: "voice",
     start: { measure: 1, beat: { numerator: 0, denominator: 1 } },
     duration: { base: "QUARTER" },
-    pitch: { diatonicSteps: 0 },
+    pitch: { diatonicSteps: 0, chromaticOffset: 1 },
   })));
   const eventId = inserted.selection[0].eventId;
   const engine = new MeconWebEngine("{}", "{}", "preview-test");
   const renderedFrame = JSON.parse(engine.renderScoreFrameJson(JSON.stringify(inserted.score)));
+  assert.deepEqual(
+    JSON.parse(engine.applyAccidentalToPitchJson(JSON.stringify({ diatonicSteps: 4 }), "DOUBLE_FLAT")),
+    { diatonicSteps: 4, chromaticOffset: -2 },
+  );
+  const paletteSelection = JSON.parse(engine.paletteSelectionInfoJson(JSON.stringify(inserted.selection)));
+  assert.equal(paletteSelection.accidental, "SHARP");
+  assert.equal(paletteSelection.durationBase, "QUARTER");
+  assert.equal(paletteSelection.voiceNumber, 1);
   const staff = renderedFrame.bundle.surfaces[0].elements.find((element) => element.type === "STAFF");
   const staffLines = staff.commands.filter((command) => command.type.split(".").at(-1) === "DrawLine")
     .map((command) => Number(command.start.y?.value ?? command.start.y));
@@ -135,13 +143,16 @@ test("generated Kotlin/JS engine returns a complete engraved transpose preview",
     x: Number(timePosition.x?.value ?? timePosition.x),
     y: staffLines.reduce((sum, y) => sum + y, 0) / staffLines.length,
     duration: { base: "EIGHTH" },
+    accidental: "FLAT",
   })));
   assert.equal(noteTarget.voiceTrackId, "voice");
   assert.equal(noteTarget.staffTrackId, "staff");
   assert.equal(noteTarget.start.measure, 1);
   assert.ok(Number.isInteger(noteTarget.pitch.diatonicSteps));
+  assert.equal(noteTarget.pitch.chromaticOffset, -1);
   assert.ok(noteTarget.commands.length > 0);
   assert.ok(noteTarget.commands.some((command) => command.type.split(".").at(-1) === "DrawGlyph"));
+  assert.ok(noteTarget.commands.some((command) => command.glyph?.codepoint === "\uE260"));
   const preview = JSON.parse(engine.transposePreviewJson(JSON.stringify([{ eventId }]), 2));
   const commandKinds = preview.movedCommands.map((command) => command.type.split(".").at(-1));
   assert.ok(commandKinds.includes("DrawGlyph"));

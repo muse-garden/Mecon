@@ -16,6 +16,7 @@ export function createScoreEditorCommandController({
   expression = {},
   destinations = [],
   dispatch,
+  onInsertionDispatched = () => {},
 }) {
   const eventTargets = () => resolveEventTargets(update);
 
@@ -70,6 +71,8 @@ export function createScoreEditorCommandController({
         },
       } : {}),
       ...(input.insertionBeaming ? { beaming: input.insertionBeaming } : {}),
+      ...(input.tieMode ? { trailingTie: true } : {}),
+      ...(input.articulations?.length ? { articulations: input.articulations } : {}),
     };
   }
 
@@ -77,17 +80,21 @@ export function createScoreEditorCommandController({
   function insertEvent(isRest, pitchFields = null) {
     const voiceTrackId = Object.keys(update?.score.voiceTracks ?? {})[0];
     if (!voiceTrackId) return false;
+    const resolvedPitchFields = isRest ? { pitch: null } : pitchFields ?? {
+      pitch: { diatonicSteps: Number(input.insertPitch) || 0 },
+    };
     dispatch({
       type: "insertNote",
       voiceTrackId,
       start: insertionStart(),
       duration: { base: input.insertDuration, dots: Number(input.insertDots) || 0 },
-      ...(isRest ? { pitch: null } : pitchFields ?? {
-        pitch: { diatonicSteps: Number(input.insertPitch) || 0 },
-      }),
+      ...resolvedPitchFields,
+      ...(!isRest && resolvedPitchFields.pitch && input.accidental
+        ? { inputAccidental: input.accidental } : {}),
       isRest,
       ...insertionDecoration(),
     });
+    onInsertionDispatched();
     return true;
   }
 
@@ -106,6 +113,7 @@ export function createScoreEditorCommandController({
         ? { smallNoteAppendStartEventId: target.smallNoteAppendStartEventId } : {}),
       ...insertion.decoration,
     });
+    onInsertionDispatched();
     return true;
   }
 

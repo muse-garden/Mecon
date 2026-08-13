@@ -4,12 +4,14 @@ package com.mecon.web
 
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.ScoreTimeMap
-import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Accidental
 import com.mecon.api.primitive.Duration
+import com.mecon.api.primitive.DurationBase
 import com.mecon.api.primitive.EventId
+import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeCode
+import com.mecon.api.storage.Articulation
 import com.mecon.api.storage.ScoreGeometry
 import com.mecon.audio.converter.ScoreToMidiConverter
 import com.mecon.core.serializer.ScoreSerializer
@@ -31,6 +33,7 @@ import com.mecon.renderer.smufl.BravuraFont
 import com.mecon.features.freepractice.PracticeTimelineView
 import com.mecon.features.freepractice.PracticeChordDetailConstructionView
 import com.mecon.features.freepractice.toPreviewScore
+import com.mecon.features.scoreediting.ScoreSelectionTarget
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -117,6 +120,22 @@ private data class WebNoteInputTarget(
     val pitch: Pitch,
     val smallNoteAppendStartEventId: String? = null,
     val commands: List<RenderCommand>,
+)
+
+/** Selection-derived note palette state, projected from the same computed frame Web displays. */
+@Serializable
+private data class WebPaletteSelectionInfo(
+    val editable: Boolean = false,
+    val durationBase: DurationBase? = null,
+    val dots: Int? = null,
+    val accidental: Accidental? = null,
+    val tieOut: Boolean? = null,
+    val voiceNumber: Int? = null,
+    val allRests: Boolean = false,
+    val tupletCount: Int? = null,
+    val effectiveBeamLeft: Boolean? = null,
+    val effectiveBeamRight: Boolean? = null,
+    val articulations: Set<Articulation> = emptySet(),
 )
 
 /**
@@ -259,6 +278,76 @@ class MeconWebEngine(
                 pitch = ghost.pitch,
                 smallNoteAppendStartEventId = ghost.smallNoteAppendStartEventId?.value,
                 commands = ghost.commands,
+            )
+        )
+    }
+
+    /** Apply the shared accidental enum mapping to non-pointer step/manual note input. */
+    fun applyAccidentalToPitchJson(pitchJson: String, accidentalName: String): String {
+        val pitch = json.decodeFromString<Pitch>(pitchJson)
+        val accidental = enumValueOf<Accidental>(accidentalName)
+        return json.encodeToString(pitch.copy(chromaticOffset = accidental.offset))
+    }
+
+    /**
+     * Project the shared selection into note-palette highlights without duplicating accidental,
+     * tuplet, tie, or effective-beam interpretation in React.
+     */
+    fun paletteSelectionInfoJson(selectionJson: String): String {
+        val runtime = latestRuntime
+        val computed = latestRenderer?.lastRenderedComputed()
+        if (runtime == null || computed == null) {
+            return json.encodeToString(WebPaletteSelectionInfo())
+        }
+        val targets = json.decodeFromString<List<ScoreSelectionTarget>>(selectionJson)
+            .filterIsInstance<ScoreSelectionTarget.Event>()
+        val selections = linkedMapOf<EventId, Pair<Boolean, MutableSet<Int>>>()
+        for (target in targets) {
+            val current = selections[target.eventId]
+            val whole = current?.first == true || target.pitchIndices == null
+            val indices = current?.second ?: linkedSetOf()
+            target.pitchIndices?.let(indices::addAll)
+            selections[target.eventId] = whole to indices
+        }
+        val resolved = selections.mapNotNull { (eventId, selection) ->
+            computed.getComputedEvent(eventId)?.let { event ->
+                val selectedPitches = if (selection.first) {
+                    event.pitchData
+                } else {
+                    selection.second.mapNotNull(event.pitchData::getOrNull)
+                }
+                Triple(event, selectedPitches, targets.firstOrNull { it.eventId == eventId })
+            }
+        }
+        if (resolved.isEmpty()) return json.encodeToString(WebPaletteSelectionInfo())
+
+        fun <T> common(values: List<T>): T? = values.distinct().singleOrNull()
+        val events = resolved.map { it.first }
+        val notePitches = resolved.filterNot { it.first.isRest }.flatMap { it.second }
+        val voiceNumbers = resolved.mapNotNull { (event, _, target) ->
+            val voiceId = target?.voiceTrackId ?: event.originVoiceTrackId
+            voiceId?.let(runtime::getVoiceTrack)?.voiceNumber
+                ?: runtime.voiceTracks.values.firstOrNull { voice ->
+                    voice.events.toList().any { it.id == event.id }
+                }?.voiceNumber
+        }
+        return json.encodeToString(
+            WebPaletteSelectionInfo(
+                editable = true,
+                durationBase = common(events.map { it.duration.base }),
+                dots = common(events.map { it.duration.dots }),
+                accidental = if (notePitches.isEmpty()) null
+                    else common(notePitches.map { it.effectiveAccidental }),
+                tieOut = if (notePitches.isEmpty()) null
+                    else common(notePitches.map { it.tieTarget != null }),
+                voiceNumber = common(voiceNumbers),
+                allRests = events.all { it.isRest },
+                tupletCount = common(events.map { it.duration.tuplet?.actual }),
+                effectiveBeamLeft = common(events.map { it.beamInfo?.let { beam -> beam.beamsLeft > 0 } ?: false }),
+                effectiveBeamRight = common(events.map { it.beamInfo?.let { beam -> beam.beamsRight > 0 } ?: false }),
+                articulations = events.map { it.articulations.toSet() }
+                    .reduceOrNull { shared, next -> shared intersect next }
+                    .orEmpty(),
             )
         )
     }

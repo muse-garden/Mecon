@@ -8,6 +8,8 @@ export interface EngineModule {
     transposePreviewJson?(targetsJson: string, stepDelta: number): string;
     restMovePreviewJson?(targetsJson: string): string;
     noteInputTargetJson?(requestJson: string): string;
+    paletteSelectionInfoJson?(selectionJson: string): string;
+    applyAccidentalToPitchJson?(pitchJson: string, accidentalName: string): string;
   } } } };
   MeconWebEngine?: new (metadata: string, glyphNames: string, version?: string) => {
     renderScoreJson(scoreJson: string): string;
@@ -17,6 +19,8 @@ export interface EngineModule {
     transposePreviewJson?(targetsJson: string, stepDelta: number): string;
     restMovePreviewJson?(targetsJson: string): string;
     noteInputTargetJson?(requestJson: string): string;
+    paletteSelectionInfoJson?(selectionJson: string): string;
+    applyAccidentalToPitchJson?(pitchJson: string, accidentalName: string): string;
   };
   MeconScoreEditor?: new (scoreJson: string) => KotlinScoreEditor;
   MeconFreePractice?: new (documentJson: string, scoreJson: string) => KotlinFreePractice;
@@ -74,6 +78,8 @@ export class MeconRenderer {
   } | null;
   transposePreview(targets: object[], stepDelta: number): any;
   noteInputTarget(request: object): any;
+  paletteSelectionInfo(selection: object[]): any;
+  applyAccidentalToPitch(pitch: object, accidental: string): any;
   restMovePreview(targets: object[]): any;
   renderCanvas(canvas: HTMLCanvasElement, score: string | object, options?: RenderOptions): FrozenScoreBundle;
   renderSvg(score: string | object, options?: RenderOptions): { bundle: FrozenScoreBundle; svg: string };

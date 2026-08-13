@@ -1,6 +1,6 @@
 # 自由练习 Web 五线谱编辑能力矩阵
 
-> 基线：2026-08-05；更新：2026-08-12。共享五线谱编辑、自由练习 session、时间轴 raw
+> 基线：2026-08-05；更新：2026-08-13。共享五线谱编辑、自由练习 session、时间轴 raw
 > geometry/interaction、谱面 origin/extent 与两层工具栏桌面等价门禁均已完成。
 > 钢琴卷轴按产品边界保留桌面实现。实施证据见
 > [完整工作台 Web 化记录](free-practice-web-workbench-completion-plan.md)，后续改动见
@@ -24,7 +24,7 @@ raw input 与 Kotlin/JS facade；浏览器动态导出的 `.mecon` 由桌面 `Me
 | 单音、休止、和弦与跨小节插入 | `NoteEditEngine.insert/insertChord` | ✅ | ✅ 原子和弦、跨小节拆分 |
 | 删除、音高拖动与移调 | `NoteEditEngine.delete/transpose` + renderer `TransposePreviewComputer` | ✅ | ✅ 音符 preview 由 Kotlin renderer 重刻完整符头/符杆/符尾/加线，Web 只重放命令并提交 shared intent；休止 preview + commit |
 | 时值、附点、连音组、小音符 | `editDurations/applyTuplets/createSmallNoteRegions` | ✅ | ✅ 设置与更新 |
-| 临时记号、延音线、符杠、发音法 | `editAccidentals/editTies/editBeaming` | ✅ | ✅ 设置/自动、端点与单奏法偏移 |
+| 临时记号、延音线、符杠、发音法 | `editAccidentals/editTies/editBeaming` | ✅ | ✅ 选择模式反映并编辑所选音符；录入模式保持下一音符的默认值，Canvas ghost、pointer 与键盘/手工步进共用该值；临时记号落音后清除 |
 | 倚音组 | `GraceNoteEditing` / `editGraceGroups` | ✅ | ✅ 插入与属性更新 |
 | 复制、剪切、粘贴 | `NoteCopyPaste`、`SelectionClipboard` | ✅ | ✅ 按钮状态与快捷键 |
 | 跨声部/谱表移动 | `VoiceMoveEngine` | ✅ | ✅ 跨谱表移动与选择恢复 |
@@ -78,8 +78,8 @@ Web，须单独完成禁忌表平台无关索引与 JVM/JS key 集合等价门�
 | 能力族 | 当前状态 | 完成门禁 |
 |---|---:|---|
 | 受控的公共完整乐谱编辑 React 组件 | ✅ | `ScoreEditor` + `useScoreEditorController` 统一承载 surface、toolbar、domain hooks、command/click/drag controller 与 inspector；完整 fixture/自由练习共用同一 host，应用架构测试禁止低层重复拼装 |
-| 工作台顶栏与谱面工具栏 | ✅ | Desktop/Web 消费同一 `FreePracticeToolbarSpec` stable-id 分组与 64/28dp token；control-id 快照和 Web 金标准通过 |
-| 谱面 Bravura 音乐按钮 | ✅ | 命名 SMuFL 码位集中于 `music-glyphs.js`；工具模式、时值、倚音、连音组、符杠和奏法展开按桌面 palette 顺序接入 |
+| 工作台顶栏与谱面工具栏 | ✅ | Desktop/Web 消费同一 `FreePracticeToolbarSpec` stable-id 分组与 64/28dp token；control-id 快照和 Web 金标准通过；完整工具栏按内容占高，不会在较矮窗口被压入时间轴命中层 |
+| 谱面 Bravura 音乐按钮 | ✅ | 命名 SMuFL 码位集中于 `music-glyphs.js`；工具模式、时值、倚音、连音组、符杠和奏法展开按桌面 palette 顺序接入。Web 与 Desktop 共用 `reflectSelection/editingSelection` 语义：SELECT/MARQUEE 反映并编辑公共选区属性，NOTE 维护录入默认值；临时记号、时值/附点、声部、延音线、连音组、符杠、倚音与发音法不再误改 NOTE 模式留下的上一选区 |
 | 时值调板 pointer 录入 | ✅ | 点击时值始终选择 NOTE 输入工具（已有选区的时值编辑由属性控件负责），按钮用高亮背景展示选中态；Canvas hover 以桌面同款半透明灰色绘制 Kotlin renderer 的 ghost commands。自由练习的 ghost 与正式音符共同应用 aligned time axis 的 `notationContentStartGap`，Web 不维护像素补偿；合流请求按 pointer 版本丢弃过期响应且保留上一幅预览直至最新结果到达，避免坐标拖尾与闪烁。点击再把同一路径解析出的稳定声部、时码与音高以普通 `ScoreEditIntent.InsertNote` 送入共享会话。连音组首个 ghost 的音符按组内单元时值绘制（如四分三连音显示八分音符），并显示待开启的括号与数字；该换算由 Kotlin ghost 管线统一完成。首音成功后 Desktop/Web 都应用 session 的 `noteInputTransition`，切换为组内成员时值并清除启动计数，后续 ghost 依已有组内休止定位且不重复开启连音组。Esc 返回 SELECT、清除 ghost 与谱面选区。谱面工具栏固定单行横向滚动，避免换行控件命中区重叠；Kotlin/JS 坐标测试直接比较 ghost 与提交后 NOTEHEAD 的 X，真实 Playwright pointer 路径覆盖选中态、ghost、Esc、连音首音迁移与所选时值落音 |
 | 复合 score update/effect/revision 正确透传 | ✅ | inner no-op/selection/effect、`scoreChanged`、stale revision 与普通音符 incremental render hint 已进入同一 JVM/JS practice trace |
 | slot/layout/idiom/score 统一 selection | ✅ | 独立 intent 在 Web/桌面都经 session；frame 投影稳定 ID 与 score targets，revision 36 JVM/JS trace 验证 layout/idiom 选择、手工记谱来源及 undo/redo 恢复 |

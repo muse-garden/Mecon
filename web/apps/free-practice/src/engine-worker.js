@@ -73,6 +73,15 @@ function enqueue(message) {
   });
 }
 
+function resolvePaletteInput(intent) {
+  if (intent?.type !== "insertNote" || !intent.inputAccidental || !intent.pitch) return intent;
+  const { inputAccidental, ...resolved } = intent;
+  return {
+    ...resolved,
+    pitch: renderer.applyAccidentalToPitch(intent.pitch, inputAccidental),
+  };
+}
+
 async function handle(message) {
   switch (message.type) {
     case "new": {
@@ -125,8 +134,9 @@ async function handle(message) {
     }
     case "dispatch":
       requireOpen();
-      if (freePractice) publishFreePractice(freePractice.dispatch(message.intent), message.clientRequestId);
-      else publish(editor.dispatch(message.intent));
+      if (freePractice) {
+        publishFreePractice(freePractice.dispatch(resolvePaletteInput(message.intent)), message.clientRequestId);
+      } else publish(editor.dispatch(resolvePaletteInput(message.intent)));
       break;
     case "resize":
       if (freePractice && latestFreePracticeUpdate && Math.abs(viewportWidth - message.width) >= 2) {
@@ -244,6 +254,7 @@ function publishFreePractice(
     geometry: rendered.geometry,
     timeAxis: rendered.timeAxis,
     playbackAnchors: rendered.playbackAnchors,
+    paletteSelection: renderer.paletteSelectionInfo(scoreUpdate.selection),
     clientRequestId,
     newDocument,
     documentRequestId,
@@ -431,7 +442,8 @@ function publish(update, documentRequestId = null) {
     rendered = renderer.layoutFrame(update.score);
   }
   self.postMessage({
-    type: "frame", update, bundle: rendered.bundle, geometry: rendered.geometry, documentRequestId,
+    type: "frame", update, bundle: rendered.bundle, geometry: rendered.geometry,
+    paletteSelection: renderer.paletteSelectionInfo(update.selection), documentRequestId,
   });
 }
 

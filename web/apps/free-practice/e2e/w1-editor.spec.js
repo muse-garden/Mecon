@@ -10,15 +10,17 @@ const practiceFixture = resolve(here, "../../../build/e2e/free-practice-f1.mecon
 
 async function openFixture(page) {
   await page.goto("/");
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
   await page.getByLabel("打开 .mecon").setInputFiles(fixture);
-  await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+  await expect(page.locator(".status")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.locator("canvas")).toBeVisible();
 }
 
 async function openPracticeFixture(page) {
   await page.goto("/");
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
   await page.getByLabel("打开 .mecon").setInputFiles(practiceFixture);
-  await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+  await expect(page.locator(".practice-revision-announcer")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.locator(".score-pane > .score-editor-toolbar")).toBeVisible();
 }
 
@@ -357,7 +359,8 @@ test("W1 triplet pointer input switches to the shared continuation and renders a
   );
   await quarterButton.click();
   await page.getByLabel("连音数").selectOption("3");
-  await page.getByRole("button", { name: "连音", exact: true }).click();
+  await expect(page.getByRole("button", { name: "连音", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => page.evaluate(() => {
     const input = window.__MECON_E2E__.editorInput();
     return { duration: input.insertDuration, dots: Number(input.insertDots), tuplet: Number(input.tupletCount) };
@@ -402,6 +405,66 @@ test("W1 triplet pointer input switches to the shared continuation and renders a
     };
   });
   expect(tuplets).toEqual({ spans: 1, notes: 2 });
+});
+
+test("W1 accidental palette arms the next pointer note, its ghost, and selected-note highlight", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openPracticeFixture(page);
+  await page.keyboard.press("Escape");
+  const sharpButton = page.locator(
+    '.score-pane > .score-editor-toolbar [data-control-id="accidental.sharp"] button',
+  );
+  await expect(page.getByRole("region", { name: "和声时间轴" })).not.toContainText("正在生成时间轴");
+  await page.waitForTimeout(500);
+  const sharpTarget = await sharpButton.evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    const center = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    return {
+      center,
+      hitLabel: document.elementFromPoint(center.x, center.y)?.closest("button")?.ariaLabel,
+    };
+  });
+  expect(sharpTarget.hitLabel).toBe("升号");
+  await page.mouse.click(sharpTarget.center.x, sharpTarget.center.y);
+  await expect(sharpButton).toHaveClass(/active/);
+  await expect(sharpButton).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => page.evaluate(() => ({
+    accidental: window.__MECON_E2E__.editorInput().accidental,
+    tool: window.__MECON_E2E__.editorInput().editorTool,
+  }))).toEqual({ accidental: "SHARP", tool: "note" });
+
+  const canvas = page.locator("canvas");
+  const point = await noteInputPoint(page, {
+    measure: 1, beat: { numerator: 0, denominator: 1 },
+  });
+  await canvas.hover({ position: point });
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.noteInputPreview()?.commands
+    ?.some((command) => command.glyph?.codepoint === "\uE262") ?? false)).toBe(true);
+
+  await act(page, () => canvas.click({ position: point }));
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.editorInput().accidental))
+    .toBeNull();
+  await expect(sharpButton).not.toHaveClass(/active/);
+  const insertedNote = await page.evaluate(() => {
+    const selection = window.__MECON_E2E__.snapshot().update.selection;
+    const selectedEventId = selection.find((target) => target.type === "event")?.eventId ?? null;
+    const score = window.__MECON_E2E__.snapshot().update.score;
+    const selectedEvent = Object.values(score.voiceTracks).flatMap((voice) => voice.events)
+      .find((event) => event.id === selectedEventId);
+    const pitchEvent = Object.values(score.pitchTracks).flatMap((track) => track.events)
+      .find((event) => event.id === selectedEvent?.pitchEventId);
+    return {
+      eventId: selectedEventId,
+      chromaticOffsets: pitchEvent?.pitches.map((pitch) => pitch.chromaticOffset) ?? [],
+    };
+  });
+  expect(insertedNote.eventId).not.toBeNull();
+  expect(insertedNote.chromaticOffsets).toContain(1);
+
+  await page.keyboard.press("Escape");
+  await act(page, () => clickEventElement(page, "NOTEHEAD", insertedNote.eventId));
+  await expect(sharpButton).toHaveClass(/active/);
+  await expect(sharpButton).toHaveAttribute("aria-pressed", "true");
 });
 
 test("W1 structure, layout, expressions and mecon export run through Web UI", async ({ page }) => {

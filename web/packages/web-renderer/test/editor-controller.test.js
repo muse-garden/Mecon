@@ -43,6 +43,9 @@ const input = {
   graceDuration: "SIXTEENTH",
   graceTimeSource: "PRINCIPAL",
   graceNoteType: "APPOGGIATURA",
+  accidental: "SHARP",
+  tieMode: true,
+  articulations: ["STACCATO"],
 };
 
 function setup(overrides = {}) {
@@ -80,6 +83,7 @@ test("editor controller builds note and chord intents for the shared session", (
     start: { measure: 3, beat: { numerator: 3, denominator: 8 } },
     duration: { base: "EIGHTH", dots: 1 },
     pitch: { diatonicSteps: 2 },
+    inputAccidental: "SHARP",
     isRest: false,
     tupletCount: 3,
     grace: {
@@ -87,6 +91,8 @@ test("editor controller builds note and chord intents for the shared session", (
       stealFrom: "PRINCIPAL",
       noteType: "APPOGGIATURA",
     },
+    trailingTie: true,
+    articulations: ["STACCATO"],
   });
   assert.deepEqual(intents[1].pitches, [0, 2, 4].map((diatonicSteps) => ({ diatonicSteps })));
 });

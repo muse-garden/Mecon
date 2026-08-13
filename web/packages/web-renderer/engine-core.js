@@ -252,6 +252,15 @@ export class EngineFacade {
     return JSON.parse(this.engine.noteInputTargetJson(asJson(request)));
   }
 
+  paletteSelectionInfo(selection) {
+    if (typeof this.engine.paletteSelectionInfoJson !== "function") return null;
+    return JSON.parse(this.engine.paletteSelectionInfoJson(asJson(selection ?? [])));
+  }
+
+  applyAccidentalToPitch(pitch, accidental) {
+    return JSON.parse(this.engine.applyAccidentalToPitchJson(asJson(pitch), accidental));
+  }
+
   renderCanvas(canvas, score, options) {
     if (!this.viewerApi) throw new Error("Canvas rendering is unavailable without the viewer API");
     const bundle = this.layout(score);
