@@ -772,6 +772,64 @@ class ConstraintLayeredDynamicProgrammingSolverTest {
         )
     }
 
+    @Test
+    fun fixedVoiceEndpointsKeepDpBoundedWhileConnectingTheMiddle() {
+        val slotCount = 8
+        val base = freeProgram(slotCount = slotCount).withoutTerminalGlobalRules().copy(
+            searchConfig = SearchConfig(
+                maxResults = 1,
+                beamWidth = 24,
+                backend = SearchBackend.LAYERED_DP,
+                dynamicProgramming = DynamicProgrammingSearchConfig(
+                    maxCandidatesPerTarget = 96,
+                    maxFrontierStates = 2_048,
+                    maxTransitionEvaluations = 100_000,
+                ),
+            ),
+        )
+        val voices = base.resolvedVoicePlan.orderedHighToLow
+        val unconstrained = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(base),
+        )
+        val reference = unconstrained.solutions.single().voicings
+        val constrained = base.copy(
+            pitchPins = listOf(
+                VoicePitchPin(0, voices.first().id, reference.first().pitchesByVoiceId.getValue(voices.first().id)),
+                VoicePitchPin(
+                    slotCount - 1,
+                    voices.first().id,
+                    reference.last().pitchesByVoiceId.getValue(voices.first().id),
+                ),
+                VoicePitchPin(0, voices.last().id, reference.first().pitchesByVoiceId.getValue(voices.last().id)),
+                VoicePitchPin(
+                    slotCount - 1,
+                    voices.last().id,
+                    reference.last().pitchesByVoiceId.getValue(voices.last().id),
+                ),
+            ),
+        )
+        val connected = assertIs<ConstraintSolveOutcome.Solved>(
+            ConstraintProgramSolver.solvePolyphonicOutcome(constrained),
+        )
+
+        assertEquals(SearchBackend.LAYERED_DP, connected.trace.backend)
+        assertTrue(!connected.trace.exhaustedBudget)
+        assertTrue(
+            connected.trace.visitedNodes <= unconstrained.trace.visitedNodes,
+            "endpoint pins should prune the layered search instead of expanding it: " +
+                "${connected.trace.visitedNodes} > ${unconstrained.trace.visitedNodes}",
+        )
+        val solution = connected.solutions.single().voicings
+        assertEquals(
+            reference.first().pitchesByVoiceId.getValue(voices.first().id),
+            solution.first().pitchesByVoiceId.getValue(voices.first().id),
+        )
+        assertEquals(
+            reference.last().pitchesByVoiceId.getValue(voices.first().id),
+            solution.last().pitchesByVoiceId.getValue(voices.first().id),
+        )
+    }
+
     private fun freeProgram(
         slotCount: Int,
         requestedVoicePlan: VoicePlan = voicePlan,

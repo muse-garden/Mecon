@@ -427,6 +427,15 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     if (step.idiomRoleFilter !== undefined) {
       assert.equal(update.noteConstraints.idiomCatalogFilterEnabled, step.idiomRoleFilter, step.kind);
     }
+    if (step.planChordSoundsMatchCatalog !== undefined) {
+      const sounds = new Set(update.catalog.chordChoices.map((item) =>
+        [...item.choice.pitchClasses].sort((a, b) => a - b).join(",")));
+      const matches = update.plan.chordCatalogFilters
+        .flatMap((filter) => filter.chordGroups)
+        .flatMap((group) => group.choices)
+        .every((item) => sounds.has([...item.choice.pitchClasses].sort((a, b) => a - b).join(",")));
+      assert.equal(matches, step.planChordSoundsMatchCatalog, step.kind);
+    }
     if (step.lockedVoiceCount !== undefined) {
       assert.equal(update.document.noteConstraints.lockedVoiceTrackIds.length,
         step.lockedVoiceCount, step.kind);

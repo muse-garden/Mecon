@@ -3,6 +3,7 @@ package com.mecon.features.freepractice
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.KeySignature
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.api.runtime.toStorage
 import com.mecon.api.state.ScoreStateManager
 import com.mecon.api.state.EditorStateController
@@ -266,8 +267,11 @@ class FreePracticeSession private constructor(
             nextWorkspace,
         )
         val projection = FreePracticeMaterialProjector.project(nextWorkspace, synchronized)
+        val completionEligible = completionEligibleSlotIds(nextWorkspace, synchronized, projection)
         val scope = if (requiredSlotIds != null) {
-            PracticeWritingScopePlanner.idiom(nextWorkspace, requiredSlotIds, projection)
+            PracticeWritingScopePlanner.idiom(
+                nextWorkspace, requiredSlotIds, projection, completionEligible,
+            )
                 ?: return invalidScope(baseRevision)
         } else {
             // A slot without a chord has nothing to realize, but the workspace edit that reached
@@ -278,6 +282,7 @@ class FreePracticeSession private constructor(
                 projection,
                 triggerSlotId,
                 configuredBacktrack,
+                completionEligible,
             ) ?: return commitPreparedWorkspace(baseRevision, nextWorkspace)
         }
         candidates = emptyList()
@@ -482,6 +487,16 @@ class FreePracticeSession private constructor(
             com.mecon.exploration.PracticeHarmonicRoleMark(notehead, role)
         })
         if (next == noteConstraints) return noOp(baseRevision)
+        val runtime = manager.currentState.runtimeScore
+        val timeMap = ScoreTimeMap.from(runtime)
+        val eventById = runtime.getAllVoiceEvents().associateBy { it.id }
+        val markedSlots = intent.noteheads.mapNotNullTo(linkedSetOf()) { notehead ->
+            eventById[notehead.eventId]?.let { event ->
+                val onset = timeMap.absolute(event.onset)
+                workspace.slots.firstOrNull { onset >= it.onset && onset < it.onset + it.duration }?.id
+            }
+        }
+        if (markedSlots.size == 1) selectedSlotId = markedSlots.single()
         return commitNoteConstraints(baseRevision, next)
     }
 
@@ -1390,13 +1405,18 @@ class FreePracticeSession private constructor(
         requiredSlotIds: List<WorkspaceSlotId>?,
     ): FreePracticeDispatchResult {
         if (workspace.slots.none { it.id == triggerSlotId }) return staleTarget(baseRevision, triggerSlotId)
-        val projection = FreePracticeMaterialProjector.project(workspace, manager.currentState.runtimeScore)
-        val scope = requiredSlotIds?.let { PracticeWritingScopePlanner.idiom(workspace, it, projection) }
+        val runtime = manager.currentState.runtimeScore
+        val projection = FreePracticeMaterialProjector.project(workspace, runtime)
+        val completionEligible = completionEligibleSlotIds(workspace, runtime, projection)
+        val scope = requiredSlotIds?.let {
+            PracticeWritingScopePlanner.idiom(workspace, it, projection, completionEligible)
+        }
             ?: PracticeWritingScopePlanner.automatic(
                 workspace,
                 projection,
                 triggerSlotId,
                 settings.writing.backtrackChordCount,
+                completionEligible,
             )
             ?: return invalidScope(baseRevision)
         return startWriting(baseRevision, scope)
@@ -1415,6 +1435,45 @@ class FreePracticeSession private constructor(
             FreePracticeMaterialProjector.project(workspace, manager.currentState.runtimeScore),
         ) ?: return invalidScope(baseRevision)
         return startWriting(baseRevision, scope)
+    }
+
+    /**
+     * A preceding slot containing only protected melody is incomplete harmony, not an already
+     * realized chord. It may be absorbed when a later chord starts auto-writing, while arbitrary
+     * unprotected partial material keeps the existing no-silent-overwrite behavior.
+     */
+    private fun completionEligibleSlotIds(
+        workspace: HarmonyWorkspaceState,
+        score: RuntimeScore,
+        projection: com.mecon.theory.freepractice.WorkspaceMaterialProjection,
+    ): Set<WorkspaceSlotId> {
+        val timeMap = ScoreTimeMap.from(score)
+        val staffLockedVoiceIds = score.staffTracks.values
+            .filter { it.id in noteConstraints.lockedStaffTrackIds }
+            .flatMapTo(linkedSetOf()) { staff -> staff.voiceTracks.map { it.id } }
+        val lockedVoiceIds = noteConstraints.lockedVoiceTrackIds + staffLockedVoiceIds
+        return workspace.slots.mapNotNullTo(linkedSetOf()) { slot ->
+            if (projection.stateBySlotId[slot.id] !=
+                com.mecon.theory.freepractice.WorkspaceSlotMaterialState.PARTIAL_OR_COMPLEX
+            ) return@mapNotNullTo null
+            val end = slot.onset + slot.duration
+            val sounding = score.voiceTracks.values.flatMap { voice ->
+                voice.events.toList().filterNot { it.isGrace || it.isRest }.flatMap { event ->
+                    val onset = timeMap.absolute(event.onset)
+                    val eventEnd = onset + event.duration.toFraction()
+                    if (onset >= end || eventEnd <= slot.onset) emptyList() else {
+                        event.pitches.indices.map { pitchIndex ->
+                            voice.id to com.mecon.exploration.PracticeNoteheadRef(event.id, pitchIndex)
+                        }
+                    }
+                }
+            }
+            slot.id.takeIf {
+                sounding.isNotEmpty() && sounding.all { (voiceId, notehead) ->
+                    voiceId in lockedVoiceIds || notehead in noteConstraints.lockedNoteheads
+                }
+            }
+        }
     }
 
     private fun startWriting(

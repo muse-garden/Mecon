@@ -65,14 +65,22 @@ object FreePracticeVoicingMaterializer {
             },
             voiceIds = voiceIds,
         )
-        val notes = eventPlan.map { cell ->
-            NoteEditEngine.RangeNote(
-                voiceTrackId = cell.voiceId,
-                start = cell.onset,
-                duration = cell.duration,
-                pitch = cell.pitch,
-            )
-        }
+        // Locked melody notes can split one harmonic slot into several solver segments. Those
+        // segments are analysis resolution, not a request to re-articulate every accompaniment
+        // voice for every melody note. Materialize one sustained generated tone per workspace
+        // slot/voice; locked intervals below still preserve the user's denser melody verbatim.
+        val notes = eventPlan
+            .groupBy { cell -> candidate.frames[cell.frameIndex].slotId to cell.voiceId }
+            .map { (_, cells) ->
+                val first = cells.minBy { timeMap.absolute(it.onset) }
+                val slot = slotsById.getValue(candidate.frames[first.frameIndex].slotId)
+                NoteEditEngine.RangeNote(
+                    voiceTrackId = first.voiceId,
+                    start = timeMap.timeCodeAt(slot.onset),
+                    duration = slot.duration,
+                    pitch = first.pitch,
+                )
+            }
         val startAbsolute = candidate.frames.first().onset ?: slots.first().onset
         val endAbsolute = candidate.frames.last().let { frame ->
             (frame.onset ?: slots.last().onset) + (frame.duration ?: slots.last().duration)

@@ -57,14 +57,32 @@ test("marks a selected note and enables shared harmonic-role filters", async ({ 
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.document.noteConstraints.lockedStaffTrackIds.length
   ))).toBe(1);
+  const chordChoiceCountBefore = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.plan.chordCatalogFilters
+      .flatMap((filter) => filter.chordGroups)
+      .flatMap((group) => group.choices).length
+  ));
   await page.getByLabel("筛选和弦").click();
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.noteConstraints.chordCatalogFilterEnabled
   ))).toBe(true);
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.plan.chordCatalogFilters
+      .flatMap((filter) => filter.chordGroups)
+      .flatMap((group) => group.choices).length
+  ))).toBeLessThan(chordChoiceCountBefore);
+  const idiomVariantsBefore = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.plan.idiomCatalog.definitions
+      .flatMap((definition) => definition.variants).map((variant) => variant.id).sort()
+  ));
   await page.getByLabel("筛选惯用进行").click();
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.noteConstraints
   ))).toMatchObject({ chordCatalogFilterEnabled: true, idiomCatalogFilterEnabled: true });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.plan.idiomCatalog.definitions
+      .flatMap((definition) => definition.variants).map((variant) => variant.id).sort()
+  )), { timeout: 30_000 }).not.toEqual(idiomVariantsBefore);
 });
 
 async function marqueeFirstTwoScoreOnsets(page) {

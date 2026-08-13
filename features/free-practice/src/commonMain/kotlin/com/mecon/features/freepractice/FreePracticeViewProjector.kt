@@ -159,8 +159,23 @@ object FreePracticeViewProjector {
             ?: activeLayouts.singleOrNull()
             ?: slot?.let(workspace::selectedTonalLayout)
             ?: activeLayouts.lastOrNull()
+        val allowedSounds: Set<Set<Int>> = catalog.chordChoices
+            .mapTo(linkedSetOf()) { it.choice.pitchClasses.toSet() }
         val keyedCatalogs = activeLayouts.distinctBy { it.key }.map { layout ->
-            layout to projectPracticeCatalog(layout.key)
+            val keyedCatalog = projectPracticeCatalog(layout.key)
+            val filtered = if (!catalog.harmonicRoleFilterEnabled) keyedCatalog else {
+                val groups = keyedCatalog.chordGroups.map { group ->
+                    group.copy(choices = group.choices.filter {
+                        it.choice.pitchClasses.toSet() in allowedSounds
+                    })
+                }.filter { it.choices.isNotEmpty() }
+                keyedCatalog.copy(
+                    chordChoices = groups.flatMap { it.choices },
+                    chordGroups = groups,
+                    harmonicRoleFilterEnabled = true,
+                )
+            }
+            layout to filtered
         }
         val catalogChoicesBySound = keyedCatalogs.associate { (layout, keyedCatalog) ->
             layout.key to keyedCatalog.chordChoices.associateBy { it.choice.pitchClasses.toSet() }

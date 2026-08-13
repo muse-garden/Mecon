@@ -138,6 +138,7 @@ object PracticeWritingScopePlanner {
         projection: WorkspaceMaterialProjection,
         triggerSlotId: WorkspaceSlotId,
         configuredBacktrack: Int,
+        completionEligibleSlotIds: Set<WorkspaceSlotId> = emptySet(),
     ): PracticeWritingScope? {
         require(configuredBacktrack >= 0)
         val triggerIndex = workspace.slots.indexOfFirst { it.id == triggerSlotId }
@@ -148,7 +149,9 @@ object PracticeWritingScopePlanner {
             if (previous?.chordChoice == null) return@repeat
             start--
         }
-        start = includeEmptySelectedPredecessors(workspace, projection, start)
+        start = includeIncompleteSelectedPredecessors(
+            workspace, projection, start, completionEligibleSlotIds,
+        )
         val boundaryIndex = start - 1
         val boundarySlot = workspace.slots.getOrNull(boundaryIndex)
         val boundaryId = boundarySlot?.id?.takeIf {
@@ -190,6 +193,7 @@ object PracticeWritingScopePlanner {
         workspace: HarmonyWorkspaceState,
         slotIds: List<WorkspaceSlotId>,
         projection: WorkspaceMaterialProjection,
+        completionEligibleSlotIds: Set<WorkspaceSlotId> = emptySet(),
     ): PracticeWritingScope? {
         if (slotIds.isEmpty() || slotIds.distinct().size != slotIds.size) return null
         val requested = slotIds.toSet()
@@ -200,7 +204,9 @@ object PracticeWritingScopePlanner {
         if (indices != (start..end).toList()) return null
         val requestedSlots = workspace.slots.subList(start, end + 1)
         if (requestedSlots.any { it.chordChoice == null }) return null
-        start = includeEmptySelectedPredecessors(workspace, projection, start)
+        start = includeIncompleteSelectedPredecessors(
+            workspace, projection, start, completionEligibleSlotIds,
+        )
         val slots = workspace.slots.subList(start, end + 1)
         val boundaryId = workspace.slots.getOrNull(start - 1)?.id?.takeIf {
             projection.stateBySlotId[it] == WorkspaceSlotMaterialState.BOUNDARY_READY
@@ -213,16 +219,18 @@ object PracticeWritingScopePlanner {
         )
     }
 
-    private fun includeEmptySelectedPredecessors(
+    private fun includeIncompleteSelectedPredecessors(
         workspace: HarmonyWorkspaceState,
         projection: WorkspaceMaterialProjection,
         initialStart: Int,
+        completionEligibleSlotIds: Set<WorkspaceSlotId>,
     ): Int {
         var start = initialStart
         while (start > 0) {
             val previous = workspace.slots[start - 1]
+            val state = projection.stateBySlotId[previous.id]
             if (previous.chordChoice == null ||
-                projection.stateBySlotId[previous.id] != WorkspaceSlotMaterialState.EMPTY
+                (state != WorkspaceSlotMaterialState.EMPTY && previous.id !in completionEligibleSlotIds)
             ) break
             start--
         }

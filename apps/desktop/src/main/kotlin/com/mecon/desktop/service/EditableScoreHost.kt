@@ -815,7 +815,11 @@ class HarmonyPracticeScoreHost(
         val status = result.frame.writing
         practiceWritingState = PracticeWritingState(
             running = status.phase == PracticeWritingPhase.RUNNING,
-            message = localizedWritingMessage(status.outcome, result.effect.kind),
+            message = localizedWritingMessage(
+                status.outcome,
+                result.effect.kind,
+                result.effect.messageKey,
+            ),
             outcome = status.outcome,
             canAlternate = status.canAlternate,
             lastScope = status.lastScope,
@@ -897,6 +901,7 @@ class HarmonyPracticeScoreHost(
     private fun localizedWritingMessage(
         outcome: PracticeWritingOutcome?,
         effect: FreePracticeEffectKind,
+        messageKey: String? = null,
     ): String? = when (outcome) {
         is PracticeWritingOutcome.Solved -> "自动写作完成"
         PracticeWritingOutcome.NoSolution -> "当前范围没有可用写法，原音符未改动。"
@@ -905,7 +910,13 @@ class HarmonyPracticeScoreHost(
         is PracticeWritingOutcome.Invalid -> "写作请求无效，原音符未改动。"
         is PracticeWritingOutcome.Failed ->
             "自动写作出错，已回退到上一个正常状态：${outcome.reason}"
-        null -> if (effect == FreePracticeEffectKind.WRITING_REQUESTED) "正在自动写作…" else null
+        null -> when {
+            effect == FreePracticeEffectKind.WRITING_REQUESTED -> "正在自动写作…"
+            messageKey == "freePractice.harmonicRole.conflict" ->
+                "所选和弦不符合已标记的和弦内音/和弦外音，请更换和弦或调整音符标记。"
+            effect == FreePracticeEffectKind.INVALID -> "当前操作不符合自由练习约束。"
+            else -> null
+        }
     }
 
     fun close() {

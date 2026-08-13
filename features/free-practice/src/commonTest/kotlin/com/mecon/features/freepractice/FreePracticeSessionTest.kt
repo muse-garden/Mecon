@@ -57,8 +57,23 @@ class FreePracticeSessionTest {
             idiomCatalogEnabled = false,
         ))
         assertTrue(filtered.frame.catalog.chordChoices.all { 0 in it.choice.pitchClasses })
+        assertTrue(filtered.frame.plan.chordCatalogFilters
+            .flatMap { it.chordGroups }
+            .flatMap { it.choices }
+            .all { 0 in it.choice.pitchClasses })
 
-        val undone = session.dispatch(FreePracticeIntent.Undo(filtered.frame.revision))
+        val bothFilters = session.dispatch(FreePracticeIntent.SetHarmonicRoleFilters(
+            filtered.frame.revision,
+            chordCatalogEnabled = true,
+            idiomCatalogEnabled = true,
+        ))
+        val catalogResult = PracticeTeachingCatalogExecutor.execute(bothFilters.catalogRequests.single())
+        val appliedCatalog = session.applyTeachingCatalogResult(catalogResult)
+        assertTrue(appliedCatalog.frame.plan.idiomCatalog.definitions
+            .flatMap { it.variants }
+            .all { variant -> 0 in variant.chordChoices[variant.anchorStepIndex].pitchClasses })
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(appliedCatalog.frame.revision))
         assertEquals(null, undone.frame.document.noteConstraints.harmonicRole(ref))
     }
 
@@ -106,6 +121,90 @@ class FreePracticeSessionTest {
         val preserved = applied.frame.score.runtimeScore.voiceTracks.getValue(voiceId).events
             .filterNot { it.isRest }.map { it.id to it.pitches }.toList()
         assertEquals(originalEvents, preserved)
+        locked.frame.document.workspace.voices.drop(1).forEach { accompaniment ->
+            val events = applied.frame.score.runtimeScore.voiceTracks.getValue(accompaniment.id)
+                .events.filterNot { it.isRest }.toList()
+            assertEquals(1, events.size, "one accompaniment attack per chord slot")
+            assertEquals(Duration.QUARTER, events.single().duration)
+        }
+    }
+
+    @Test
+    fun nativeSopranoLaneDoesNotProduceFalseA4RangeFinding() {
+        val session = session()
+        val before = session.frame()
+        val inserted = session.dispatch(FreePracticeIntent.Score(
+            before.revision,
+            ScoreEditIntent.InsertNote(
+                before.score.revision,
+                before.document.workspace.voices.first().id,
+                TimeCode.of(1, Fraction.ZERO),
+                Duration.QUARTER,
+                Pitch.fromName("A4"),
+            ),
+        ))
+
+        val findings = PracticeFindingComputer.compute(
+            inserted.frame.document.workspace,
+            inserted.frame.score.runtimeScore,
+            PracticeFindingComputer.fallbackKey(inserted.frame.document),
+        )
+
+        assertTrue(findings.none { it.messageKey == "freePractice.finding.voiceRange" })
+    }
+
+    @Test
+    fun selectingSecondChordCompletesLockedMelodyInOpeningTonicSlot() {
+        val preset = FreePracticePreset.document()
+        val opening = preset.workspace.slots.single()
+        val second = opening.copy(
+            id = com.mecon.theory.freepractice.WorkspaceSlotId("slot-1"),
+            onset = Fraction.QUARTER,
+            chordChoice = null,
+        )
+        val session = session(preset.copy(workspace = preset.workspace.copy(slots = listOf(opening, second))))
+        val before = session.frame()
+        val inserted = session.dispatch(FreePracticeIntent.Score(
+            before.revision,
+            ScoreEditIntent.InsertNote(
+                before.score.revision,
+                before.document.workspace.voices.first().id,
+                TimeCode.of(1, Fraction.ZERO),
+                Duration.EIGHTH,
+                Pitch.fromName("C5"),
+            ),
+        ))
+        val locked = session.dispatch(FreePracticeIntent.SetVoiceLock(
+            inserted.frame.revision,
+            inserted.frame.document.workspace.voices.first().id,
+            true,
+        ))
+        val dominant = com.mecon.theory.harmony.ChordSelectionCatalog
+            .choices(ModulationKey(0, KeySignatureMode.MAJOR))
+            .first { it.functionalSymbol == "V" }
+        val selected = session.dispatch(FreePracticeIntent.ReplaceChord(
+            locked.frame.revision,
+            second.id,
+            WorkspaceChordChoice.of(
+                dominant.pitchClasses,
+                dominant.origin,
+                requireNotNull(dominant.confirmedInterpretationRef),
+                dominant.rootPitchClass,
+            ),
+        ))
+
+        val request = selected.requests.single()
+        assertEquals(listOf(opening.id, second.id), request.scopeSlotIds)
+        val solved = FreePracticeBackgroundExecutor.execute(request)
+        assertIs<PracticeWritingOutcome.Solved>(solved.outcome)
+        val applied = session.applyBackgroundResult(solved)
+        val accompanimentIds = applied.frame.document.workspace.voices.drop(1).map { it.id }.toSet()
+        val openingAccompaniment = applied.frame.score.runtimeScore.voiceTracks.values
+            .filter { it.id in accompanimentIds }
+            .flatMap { it.events.toList() }
+            .filterNot { it.isRest }
+            .filter { it.onset == TimeCode.of(1, Fraction.ZERO) }
+        assertEquals(accompanimentIds.size, openingAccompaniment.size)
     }
 
     @Test

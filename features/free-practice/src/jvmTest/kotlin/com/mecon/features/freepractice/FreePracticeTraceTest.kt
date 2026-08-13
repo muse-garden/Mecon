@@ -417,6 +417,16 @@ class FreePracticeTraceTest {
             step["idiomRoleFilter"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.noteConstraints.idiomCatalogFilterEnabled)
             }
+            step["planChordSoundsMatchCatalog"]?.jsonPrimitive?.boolean?.let { expected ->
+                val catalogSounds = update.catalog.chordChoices.mapTo(hashSetOf()) {
+                    it.choice.pitchClasses.toSet()
+                }
+                val planMatches = update.plan.chordCatalogFilters
+                    .flatMap { it.chordGroups }
+                    .flatMap { it.choices }
+                    .all { it.choice.pitchClasses.toSet() in catalogSounds }
+                assertEquals(expected, planMatches)
+            }
             step["lockedVoiceCount"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(expected, update.document.noteConstraints.lockedVoiceTrackIds.size)
             }

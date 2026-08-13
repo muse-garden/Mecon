@@ -30,11 +30,19 @@ object PracticeFindingComputer {
         val notes = analyticalNotes(score)
         val separation = AnalyticalVoiceSeparator.separate(notes, workspace.voices.size)
         val voices = workspace.voices.sortedBy { it.order }
-        val notesById = notes.associateBy { it.source }
-        val outOfRange = separation.voiceByNotehead.entries.firstNotNullOfOrNull { (noteId, voice) ->
-            val note = notesById[noteId] ?: return@firstNotNullOfOrNull null
-            val range = voices.getOrNull(voice) ?: return@firstNotNullOfOrNull null
-            note.pitch.takeIf { it < range.lowest || it > range.highest }
+        val configuredVoiceById = workspace.voices.associateBy { it.id }
+        val sourceVoiceByEventId = score.voiceTracks.values.flatMap { voice ->
+            voice.events.toList().map { event -> event.id to voice.id }
+        }.toMap()
+        val outOfRange = notes.firstNotNullOfOrNull { note ->
+            // Preserve the stable notation lane when this is a native free-practice score.
+            // Re-separating sparse melody notes can otherwise assign a later soprano note to an
+            // arbitrary lower analysis path and report a false range violation.
+            val configured = sourceVoiceByEventId[note.source.eventId]
+                ?.let(configuredVoiceById::get)
+                ?: separation.voiceByNotehead[note.source]?.let(voices::getOrNull)
+                ?: return@firstNotNullOfOrNull null
+            note.pitch.takeIf { it < configured.lowest || it > configured.highest }
         }
         if (outOfRange != null) {
             add(

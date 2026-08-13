@@ -1,7 +1,7 @@
 # 自由练习窗口写作与 refine 基础
 
-> 状态：✅ 2026-08-03 runtime 窗口写作与勋伯格章节软规则投影已实施；公开
-> `SolverApi.refine` 与右端/锁定能力仍按 §8–9 留待后续。配套交互见
+> 状态：✅ 2026-08-12 runtime 窗口写作、锁定旋律与勋伯格章节软规则投影已实施；公开
+> `SolverApi.refine` 与窗口外右端边界仍按 §8–9 留待后续。配套交互见
 > [自由练习自动写作改造](../exploration/free-practice-auto-writing.md)。
 > 本文描述本次应新增的求解原语，并界定公开 `SolverApi.refine` 的后续工作。
 
@@ -18,7 +18,7 @@
 | seeded Top-K 多样化搜索 | ✅ | 首解后缓存多候选，供“换一个” |
 | 节点预算、trace 与协作取消 | ✅ runtime | 区分耗尽、无解与取消 |
 | baseline 精确音高相似度 | ✅ runtime | 合成 SOFT rule provider |
-| 左/右固定边界帧 | ◐ | 左边界已接入，右边界后续实现 |
+| 左/右固定边界帧 | ◐ | 左边界已接入；窗口内首尾 `VoicePitchPin` 可由 DP 连接，窗口外右边界后续实现 |
 | 公开 `RefineRequest` | 🚧 占位 | 后续升级协议 |
 | `addedConstraints` 合并、完整 pin spec | ❌ | 后续公开 refine |
 | 输出候选的 solver snapshot | ❌ | 本次 runtime 候选先带，后续协议化 |
@@ -260,6 +260,10 @@ data class PracticeVoicingMaterialization(
    每稳定 voice id 一个不可变 event cell；各物化器只负责把 cell 写入 Storage 或 Runtime 范围。
 6. 运行 polyphony validator，生成 bounded `RenderHint`；不能证明 splice 等价时显式全量 compute。
 
+锁定旋律可把一个工作区和弦槽细分为多个 solver segment，但物化时未锁定声部按原工作区槽合并，
+每槽只落一个持续和弦音。这样 DP 仍能观察首尾固定音及中间旋律约束，记谱层不会把 segment 数量
+误当成伴奏重击次数。
+
 本轮选段重写即替换范围内所有骨架，不保存自动生成来源。未来 lock 通过 pins/texture 明确保留材料，
 而不是靠猜“手工音符”绕过替换。
 
@@ -309,6 +313,8 @@ data class RefineRequest(
 - baseline 精确相同零成本，改变逐 cell 产生 finding；pin 永不改变。
 - `NoSolution`、`BudgetExhausted`、`Cancelled`、`Invalid` 可区分且节点计数稳定。
 - 同 seed 候选与顺序复现；排除 key 后不返回旧候选；`maxResults=1` 不作为换 seed 方案。
+- Layered DP 在同一声部首尾 `VoicePitchPin` 固定、中间槽待定时仍返回连接结果；增加端点 pin 应
+  缩小而不是放大访问节点数，并保持在显式 transition/frontier 预算内。
 - 范围外 Runtime 引用复用；跨边界声音保持；范围内引用无悬空；3–6 声部可物化。
 - 将来公开 refine 的契约测试须覆盖 added constraint、过期 fingerprint、逐音/整声部 pin 和
   baseline finding，替换当前仅验证 `refine-not-available` 的占位测试。
