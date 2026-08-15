@@ -65,6 +65,11 @@ Future mobile adapter ─────────┘       ├─ HarmonyWorkspa
 
 ## 4. 调整已有纯 UI
 
+谱面音符选择与和声焦点也属于共享投影契约：`FreePracticeSession` 在处理内层
+`ScoreEditIntent.SetSelection` 后，按音符起始时间选择覆盖该位置且已填写和弦的槽位；同一选择跨越多个
+槽位、只包含休止符或对应槽位尚未填写和弦时，不改变当前和弦选择。Desktop/Web 只回放 frame 中的
+`selection.slotId`，不得各自按像素或数组下标推导对应和弦框。
+
 如果 frame 已提供完整信息且操作不持久化，可只改平台层。例如面板宽度、tab、展开状态和 label mode
 都不进入 document，也不进 undo 历史。谱面拖动 ghost 虽是瞬时状态，其乐谱元素命令仍须由共享
 renderer preview computer 生成；JS 只重放命令，不自行拼装或平移乐谱元素作为降级实现。

@@ -364,6 +364,21 @@ class FreePracticeTraceTest {
                         ),
                     ))
                 }
+                "selectScoreNote" -> session.frame().let { before ->
+                    val event = before.score.runtimeScore.getAllVoiceEvents().first { !it.isRest }
+                    val voiceId = before.score.runtimeScore.voiceTracks.entries
+                        .first { (_, voice) -> voice.events.any { it.id == event.id } }.key
+                    session.dispatch(FreePracticeIntent.Score(
+                        expectedRevision = expectedRevision!!.toLong(),
+                        inner = ScoreEditIntent.SetSelection(
+                            expectedRevision = before.score.revision,
+                            targets = listOf(com.mecon.features.scoreediting.ScoreSelectionTarget.Event(
+                                event.id,
+                                voiceId,
+                            )),
+                        ),
+                    ))
+                }
                 "setStaffLock" -> session.frame().let { before ->
                     val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
                     val staffId = before.score.runtimeScore.staffTracks.entries
@@ -438,6 +453,9 @@ class FreePracticeTraceTest {
             }
             step["scoreChanged"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.score.scoreChanged)
+            }
+            step["selectionSlotIndex"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(update.timeline.slots[expected].id, update.selection.slotId)
             }
             step["renderFirstMeasure"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(expected, update.score.renderHint?.firstMeasure)

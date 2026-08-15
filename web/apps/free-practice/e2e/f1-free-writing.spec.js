@@ -532,6 +532,39 @@ test("score note selection consumes shared edit audition playback", async ({ pag
   await expect(page.locator(".score-playhead")).toHaveCount(0);
 });
 
+test("score note selection focuses its filled harmony slot", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision
+  )), { timeout: 60_000 }).toBe(0);
+
+  const distantSlot = page.locator("[data-slot-id]").last();
+  const distantSlotId = await distantSlot.getAttribute("data-slot-id");
+  await distantSlot.getByRole("button").first().click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.selection.slotId
+  ))).toBe(distantSlotId);
+
+  await clickScoreNote(page, 0);
+  await expect.poll(() => page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot();
+    const update = snapshot.practiceUpdate;
+    const target = update.selection.scoreTargets.find((item) => item.type === "event");
+    if (!target) return false;
+    const event = update.score.score.voiceTracks[target.voiceTrackId].events
+      .find((item) => item.id === target.eventId);
+    const value = (fraction) => Number(fraction.numerator) / Number(fraction.denominator);
+    const anchor = snapshot.timeAxis.anchors.find((item) => item.scoreTime.measure === event.onset.measure
+      && value(item.scoreTime.beat) === value(event.onset.beat));
+    const slot = update.timeline.slots.find((item) => {
+      const start = value(item.onset);
+      return value(anchor.time) >= start && value(anchor.time) < start + value(item.duration);
+    });
+    return update.selection.slotId === slot?.id;
+  })).toBe(true);
+});
+
 test("marquee rewrite and alternate keep the selected score time range", async ({ page }) => {
   await page.goto("/");
   await page.locator('input[type="file"]').setInputFiles(longFixture);

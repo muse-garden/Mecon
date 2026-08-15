@@ -10,6 +10,7 @@ import com.mecon.exploration.PracticeHarmonicRole
 import com.mecon.exploration.PracticeNoteheadRef
 import com.mecon.features.scoreediting.ScoreEditEffectKind
 import com.mecon.features.scoreediting.ScoreEditIntent
+import com.mecon.features.scoreediting.ScoreSelectionTarget
 import com.mecon.features.scoreediting.eventIdOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -20,6 +21,7 @@ import kotlin.test.assertTrue
 import com.mecon.theory.freepractice.WorkspaceChordChoice
 import com.mecon.theory.freepractice.WorkspaceIdiomInstance
 import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
+import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
 import com.mecon.theory.freepractice.VoiceAssignmentSource
 import com.mecon.theory.KeySignatureMode
@@ -816,6 +818,54 @@ class FreePracticeSessionTest {
         assertFalse(update.score.scoreChanged)
         assertEquals(initial.score.revision, update.score.baseRevision)
         assertEquals(update.score.selection, update.selection.scoreTargets)
+    }
+
+    @Test
+    fun scoreNoteSelectionFocusesOnlyTheFilledChordAtItsOnset() {
+        fun selectSecondSlot(secondHasChord: Boolean): Pair<FreePracticeDispatchResult, WorkspaceSlotId> {
+            val preset = FreePracticePreset.document()
+            val opening = preset.workspace.slots.single()
+            val second = opening.copy(
+                id = WorkspaceSlotId("slot-1"),
+                onset = Fraction.QUARTER,
+                chordChoice = opening.chordChoice.takeIf { secondHasChord },
+            )
+            val session = session(preset.copy(workspace = preset.workspace.copy(slots = listOf(opening, second))))
+            val initial = session.frame()
+            val inserted = session.dispatch(FreePracticeIntent.Score(
+                initial.revision,
+                ScoreEditIntent.InsertNote(
+                    initial.score.revision,
+                    initial.document.workspace.voices.first().id,
+                    TimeCode.of(1, Fraction.QUARTER),
+                    Duration.EIGHTH,
+                    Pitch.C5,
+                ),
+            ))
+            val target = ScoreSelectionTarget.Event(
+                requireNotNull(inserted.frame.score.selection.single().eventIdOrNull),
+                initial.document.workspace.voices.first().id,
+            )
+            val cleared = session.dispatch(FreePracticeIntent.Score(
+                inserted.frame.revision,
+                ScoreEditIntent.SetSelection(inserted.frame.score.revision, emptyList()),
+            ))
+            return session.dispatch(FreePracticeIntent.Score(
+                cleared.frame.revision,
+                ScoreEditIntent.SetSelection(cleared.frame.score.revision, listOf(target)),
+            )) to opening.id
+        }
+
+        val (filled, openingId) = selectSecondSlot(secondHasChord = true)
+        assertEquals(WorkspaceSlotId("slot-1"), filled.frame.selection.slotId)
+        assertEquals(FreePracticeEffectKind.SELECTION_CHANGED, filled.effect.kind)
+        assertFalse(filled.frame.score.scoreChanged)
+
+        val (empty, emptyOpeningId) = selectSecondSlot(secondHasChord = false)
+        assertEquals(emptyOpeningId, empty.frame.selection.slotId)
+        assertEquals(openingId, emptyOpeningId)
+        assertEquals(FreePracticeEffectKind.SELECTION_CHANGED, empty.effect.kind)
+        assertFalse(empty.frame.score.scoreChanged)
     }
 
     @Test

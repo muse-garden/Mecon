@@ -378,6 +378,21 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
           pitch: { diatonicSteps: 8 },
         },
       });
+    } else if (step.kind === "selectScoreNote") {
+      const before = session.initialUpdate();
+      const event = Object.values(before.score.score.voiceTracks)
+        .flatMap((voice) => voice.events).find((candidate) => !candidate.isRest);
+      const voice = Object.values(before.score.score.voiceTracks)
+        .find((candidate) => candidate.events.some((item) => item.id === event.id));
+      update = session.dispatch({
+        type: "score",
+        expectedRevision: step.expectedRevision,
+        inner: {
+          type: "setSelection",
+          expectedRevision: before.score.revision,
+          targets: [{ type: "event", eventId: event.id, voiceTrackId: voice.id }],
+        },
+      });
     } else if (step.kind === "setStaffLock") {
       const before = session.initialUpdate();
       const voiceId = before.document.noteConstraints.lockedVoiceTrackIds[0];
@@ -450,6 +465,9 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (step.scoreChanged !== undefined) {
       assert.equal(update.score.scoreChanged, step.scoreChanged, step.kind);
+    }
+    if (step.selectionSlotIndex !== undefined) {
+      assert.equal(update.selection.slotId, update.timeline.slots[step.selectionSlotIndex].id, step.kind);
     }
     if (step.renderFirstMeasure !== undefined) {
       assert.equal(update.score.renderHint?.firstMeasure, step.renderFirstMeasure, step.kind);

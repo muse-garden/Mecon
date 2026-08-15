@@ -954,7 +954,9 @@ class FreePracticeSession private constructor(
                 scoreUpdate = innerUpdate,
             )
         }
-        if (inner.effect.kind == ScoreEditEffectKind.NO_OP) {
+        val harmonySelectionChanged = intent.inner is ScoreEditIntent.SetSelection &&
+            selectFilledChordAtScoreSelection(inner.frame.selection)
+        if (inner.effect.kind == ScoreEditEffectKind.NO_OP && !harmonySelectionChanged) {
             return result(
                 baseRevision,
                 FreePracticeEffect(FreePracticeEffectKind.NO_OP, inner.effect.messageKey),
@@ -964,7 +966,9 @@ class FreePracticeSession private constructor(
         }
         revision++
         if (inner.frame.scoreChanged) cancelPending(PracticeWritingOutcome.Cancelled)
-        val effectKind = if (inner.effect.kind == ScoreEditEffectKind.SELECTION_CHANGED) {
+        val effectKind = if (inner.effect.kind == ScoreEditEffectKind.SELECTION_CHANGED ||
+            harmonySelectionChanged
+        ) {
             FreePracticeEffectKind.SELECTION_CHANGED
         } else {
             FreePracticeEffectKind.APPLIED
@@ -976,6 +980,29 @@ class FreePracticeSession private constructor(
             editPlayback = audition,
         )
     }
+
+    /** Keep the harmony focus aligned with a score-note selection without inventing empty chords. */
+    private fun selectFilledChordAtScoreSelection(selection: List<ScoreSelectionTarget>): Boolean {
+        val eventIds = selection.filterIsInstance<ScoreSelectionTarget.Event>()
+            .map { it.eventId }
+            .distinct()
+        if (eventIds.isEmpty()) return false
+        val eventsById = manager.currentState.runtimeScore.getAllVoiceEvents().associateBy { it.id }
+        val selectedEvents = eventIds.mapNotNull(eventsById::get)
+        if (selectedEvents.size != eventIds.size || selectedEvents.any { it.isRest }) return false
+        val timeMap = ScoreTimeMap.from(manager.currentState.runtimeScore)
+        val matchingSlots = selectedEvents.mapNotNullTo(linkedSetOf()) { event ->
+            val onset = timeMap.absolute(event.onset)
+            workspace.slots.firstOrNull { slot ->
+                onset >= slot.onset && onset < slot.onset + slot.duration && slot.hasChord()
+            }
+        }
+        val slot = matchingSlots.singleOrNull() ?: return false
+        return selectSlotState(slot)
+    }
+
+    private fun com.mecon.theory.freepractice.WorkspaceHarmonySlot.hasChord(): Boolean =
+        chordChoice != null || chordInterpretationRef != null || chordIdentity != null
 
     private fun scoreAudition(selection: List<ScoreSelectionTarget>): PracticeEditPlayback.Audition? {
         val eventId = selection.mapNotNull { it.eventIdOrNull }.distinct().singleOrNull() ?: return null
@@ -994,19 +1021,26 @@ class FreePracticeSession private constructor(
     ): FreePracticeDispatchResult {
         if (workspace.slots.none { it.id == intent.slotId }) return staleTarget(baseRevision, intent.slotId)
         val slot = workspace.slots.first { it.id == intent.slotId }
+        if (!selectSlotState(slot)) return noOp(baseRevision)
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
+    }
+
+    private fun selectSlotState(
+        slot: com.mecon.theory.freepractice.WorkspaceHarmonySlot,
+    ): Boolean {
         val tonalLayoutId = workspace.selectedTonalLayout(slot)?.id
         // A slot may be both the tail of one customary progression and the start of another.
         // Only the first chord carries implicit progression selection; middle/tail chords remain
         // plain chord selections so choosing a catalog item there inserts a continuation.
         val idiomInstanceId = workspace.idiomInstanceStartingAt(slot.id)?.id
-        if (selectedSlotId == intent.slotId && selectedTonalLayoutId == tonalLayoutId &&
+        if (selectedSlotId == slot.id && selectedTonalLayoutId == tonalLayoutId &&
             selectedIdiomInstanceId == idiomInstanceId
-        ) return noOp(baseRevision)
-        selectedSlotId = intent.slotId
+        ) return false
+        selectedSlotId = slot.id
         selectedTonalLayoutId = tonalLayoutId
         selectedIdiomInstanceId = idiomInstanceId
-        revision++
-        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.SELECTION_CHANGED))
+        return true
     }
 
     private fun selectTonalLayout(

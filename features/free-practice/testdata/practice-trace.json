@@ -61,6 +61,7 @@
     { "kind": "setStaffLock", "expectedRevision": 51, "revision": 52, "effect": "APPLIED", "lockedStaffCount": 1, "lockedNoteCount": 2 },
     { "kind": "undo", "expectedRevision": 52, "revision": 53, "effect": "UNDONE", "lockedVoiceCount": 1, "lockedStaffCount": 0, "lockedNoteCount": 2 },
     { "kind": "runWriting", "expectedRevision": 53, "revision": 54, "effect": "WRITING_REQUESTED" },
-    { "kind": "backgroundFailure", "reason": "trace engine crash", "revision": 55, "effect": "INVALID", "outcome": "failed" }
+    { "kind": "backgroundFailure", "reason": "trace engine crash", "revision": 55, "effect": "INVALID", "outcome": "failed" },
+    { "kind": "selectScoreNote", "expectedRevision": 55, "revision": 56, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0, "scoreChanged": false }
   ]
 }
