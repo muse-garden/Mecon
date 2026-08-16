@@ -35,6 +35,7 @@ import com.mecon.features.freepractice.FreePracticeBackgroundExecutor
 import com.mecon.features.freepractice.FreePracticeDispatchResult
 import com.mecon.features.freepractice.FreePracticeEffectKind
 import com.mecon.features.freepractice.FreePracticeIntent
+import com.mecon.api.primitive.TimeSignature
 import com.mecon.features.freepractice.FreePracticeSession
 import com.mecon.features.freepractice.FreePracticeSelection
 import com.mecon.features.freepractice.PracticeBackgroundFailure
@@ -51,8 +52,10 @@ import com.mecon.features.freepractice.PracticePlanView
 import com.mecon.features.freepractice.PracticeTeachingCatalogExecutor
 import com.mecon.features.freepractice.PracticeTeachingCatalogRequest
 import com.mecon.features.freepractice.PracticeTimelineEdit
+import com.mecon.features.freepractice.PracticeTimelineView
 import com.mecon.features.freepractice.PracticeTimelinePreviewRequest
 import com.mecon.features.freepractice.PracticeTimelinePreviewResult
+import com.mecon.features.freepractice.PracticeStructureView
 import com.mecon.features.freepractice.autoWritingTriggerSlotId
 import com.mecon.features.scoreediting.ScoreEditEffectKind
 import com.mecon.features.scoreediting.ScoreEditIntent
@@ -287,6 +290,10 @@ class HarmonyPracticeScoreHost(
     var practicePlan: PracticePlanView by mutableStateOf(freePracticeSession.frame().plan)
         private set
     var practiceSelection: FreePracticeSelection by mutableStateOf(freePracticeSession.frame().selection)
+        private set
+    var practiceStructure: PracticeStructureView by mutableStateOf(freePracticeSession.frame().structure)
+        private set
+    var practiceTimeline: PracticeTimelineView by mutableStateOf(freePracticeSession.frame().timeline)
         private set
     var practiceNoteConstraints: com.mecon.features.freepractice.PracticeNoteConstraintView by mutableStateOf(
         freePracticeSession.frame().noteConstraints
@@ -543,6 +550,48 @@ class HarmonyPracticeScoreHost(
 
     fun removeChordRange(slotId: WorkspaceSlotId): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.RemoveChordRange(revision, slotId) }
+
+    fun setDefaultChordDuration(duration: Fraction): Boolean = dispatchImmediate { revision ->
+        FreePracticeIntent.SetDefaultChordDuration(revision, duration)
+    }
+
+    fun setPracticeTimeSignature(timeSignature: TimeSignature): Boolean =
+        dispatchImmediate { revision ->
+            FreePracticeIntent.SetPracticeTimeSignature(revision, timeSignature)
+        }
+
+    /** Main-editor time-signature pen path: a clicked measure becomes an inner score intent. */
+    fun applyPracticeTimeSignatureEdit(
+        measureNumber: Int,
+        timeSignature: TimeSignature,
+        onAfter: (Set<EventSection>) -> Unit = {},
+    ) {
+        dispatchScoreEdit(
+            intent = { revision ->
+                ScoreEditIntent.SetTimeSignature(revision, measureNumber, timeSignature)
+            },
+        ) { result ->
+            if (result.effect.kind == FreePracticeEffectKind.APPLIED) {
+                val score = result.frame.score
+                val targets = score.selection.filterIsInstance<ScoreSelectionTarget.TimeSignature>()
+                onAfter(score.computedScore.timeSignatures.filter { signature ->
+                    targets.any { target ->
+                        target.staffTrackId == signature.staffTrackId && target.onset == signature.time
+                    }
+                }.mapTo(linkedSetOf()) { signature ->
+                    com.mecon.api.interaction.TimeSignatureSection(signature)
+                })
+            }
+        }
+    }
+
+    fun insertPracticeMeasures(
+        position: FreePracticeIntent.MeasureInsertionPosition,
+        count: Int,
+        chordDuration: Fraction,
+    ): Boolean = dispatchImmediate { revision ->
+        FreePracticeIntent.InsertPracticeMeasures(revision, position, count, chordDuration)
+    }
 
     /**
      * Returns whether the session accepted the edit. Callers showing a gesture preview keep it on
@@ -827,6 +876,8 @@ class HarmonyPracticeScoreHost(
         practiceIdiomCatalog = result.frame.plan.idiomCatalog
         practicePlan = result.frame.plan
         practiceSelection = result.frame.selection
+        practiceStructure = result.frame.structure
+        practiceTimeline = result.frame.timeline
         practiceNoteConstraints = result.frame.noteConstraints
         result.editPlayback?.let { playback ->
             practicePlaybackCommand = PracticePlaybackCommand(++practicePlaybackGeneration, playback)
@@ -1549,6 +1600,8 @@ class HarmonyPracticeScoreHost(
         practiceFindings = frame.findings.items
         practicePlan = frame.plan
         practiceSelection = frame.selection
+        practiceStructure = frame.structure
+        practiceTimeline = frame.timeline
         practiceNoteConstraints = frame.noteConstraints
         practiceIdiomCatalog = frame.plan.idiomCatalog
         practiceWorkspace = frame.document.workspace

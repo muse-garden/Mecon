@@ -42,6 +42,9 @@ object FreePracticeViewProjector {
     fun timeline(
         workspace: HarmonyWorkspaceState,
         idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
+        scoreEnd: com.mecon.api.primitive.Fraction? = null,
+        measureBoundaries: List<com.mecon.api.primitive.Fraction> = emptyList(),
+        defaultChordDuration: com.mecon.api.primitive.Fraction? = null,
     ): PracticeTimelineView {
         val lockedSlots = workspace.idiomInstances.flatMapTo(hashSetOf()) { instance ->
             instance.inversionLockedSlotIds.orEmpty()
@@ -54,8 +57,24 @@ object FreePracticeViewProjector {
                 .distinct()
                 .forEach { key -> put(key, ChordSelectionCatalog.choices(key)) }
         }
+        val workspaceEnd = workspace.slots.maxOf { it.onset + it.duration }
+        val timelineEnd = maxOf(workspaceEnd, scoreEnd ?: com.mecon.api.primitive.Fraction.ZERO)
+        // This is one passive background filler, not a sequence of prospective chord slots. Real
+        // insertion still uses defaultChordDuration, while the filler remains visually continuous
+        // across beat and measure boundaries until the closing barline.
+        val emptySlots = if (defaultChordDuration != null && workspaceEnd < timelineEnd) {
+            listOf(
+                PracticeTimelineEmptySlotView(
+                    id = "empty:${workspaceEnd.numerator}:${workspaceEnd.denominator}",
+                    onset = workspaceEnd,
+                    duration = timelineEnd - workspaceEnd,
+                )
+            )
+        } else {
+            emptyList()
+        }
         return PracticeTimelineView(
-            end = workspace.slots.maxOf { it.onset + it.duration },
+            end = timelineEnd,
             slots = workspace.slots.map { slot ->
                 val tonalReadings = slot.tonality?.readings
                 val displayTonalReadings = tonalReadings?.let {
@@ -130,6 +149,7 @@ object FreePracticeViewProjector {
                     end = memberSlots.maxOfOrNull { it.onset + it.duration },
                 )
             },
+            emptySlots = emptySlots,
         )
     }
 

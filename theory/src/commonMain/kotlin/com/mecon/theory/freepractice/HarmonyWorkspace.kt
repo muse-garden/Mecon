@@ -531,6 +531,13 @@ sealed interface HarmonyWorkspaceCommand {
         val duration: Fraction,
     ) : HarmonyWorkspaceCommand
 
+    /** Opens measure-sized space and fills each new measure without crossing its barline. */
+    data class InsertMeasureSpace(
+        val onset: Fraction,
+        val measureDurations: List<Fraction>,
+        val chordDuration: Fraction,
+    ) : HarmonyWorkspaceCommand
+
     data class MoveSharedBoundary(
         val leftIndex: Int,
         val boundary: Fraction,
@@ -713,6 +720,7 @@ object HarmonyWorkspaceEditor {
             }
             is HarmonyWorkspaceCommand.SetChordBass -> setChordBass(state, command)
             is HarmonyWorkspaceCommand.InsertChordRange -> insertRange(state, command)
+            is HarmonyWorkspaceCommand.InsertMeasureSpace -> insertMeasureSpace(state, command)
             is HarmonyWorkspaceCommand.PlaceChordRange -> placeRange(state, command)
             is HarmonyWorkspaceCommand.MoveSharedBoundary -> moveSharedBoundary(state, command)
             is HarmonyWorkspaceCommand.TranslateChordRange -> translateRange(state, command)
@@ -932,6 +940,58 @@ object HarmonyWorkspaceEditor {
             ),
         )
         return state.copy(slots = (state.slots + inserted).sortedBy(WorkspaceHarmonySlot::onset))
+    }
+
+    private fun insertMeasureSpace(
+        state: HarmonyWorkspaceState,
+        command: HarmonyWorkspaceCommand.InsertMeasureSpace,
+    ): HarmonyWorkspaceState {
+        require(!command.onset.isNegative) { "Inserted measure space cannot start before the score" }
+        require(command.measureDurations.isNotEmpty()) { "At least one measure must be inserted" }
+        require(command.measureDurations.all { it.isPositive }) {
+            "Inserted measures must have positive durations"
+        }
+        require(command.chordDuration.isPositive) { "The generated chord duration must be positive" }
+        val insertedDuration = command.measureDurations.fold(Fraction.ZERO) { total, value -> total + value }
+        fun shiftStart(value: Fraction): Fraction =
+            if (value >= command.onset) value + insertedDuration else value
+
+        var expanded = state.copy(
+            slots = state.slots.map { slot ->
+                if (slot.onset >= command.onset) slot.copy(onset = slot.onset + insertedDuration) else slot
+            },
+            notes = state.notes.map { note ->
+                if (note.onset >= command.onset) note.copy(onset = note.onset + insertedDuration) else note
+            },
+            tonalLayouts = state.tonalLayouts.map { layout ->
+                layout.copy(
+                    start = shiftStart(layout.start),
+                    end = layout.end?.let { end ->
+                        if (end > command.onset) end + insertedDuration else end
+                    },
+                )
+            },
+        )
+        var measureStart = command.onset
+        command.measureDurations.forEach { measureDuration ->
+            val measureEnd = measureStart + measureDuration
+            var cursor = measureStart
+            while (cursor + command.chordDuration <= measureEnd) {
+                val occupied = expanded.slots.any { slot ->
+                    slot.onset < cursor + command.chordDuration &&
+                        cursor < slot.onset + slot.duration
+                }
+                if (!occupied) {
+                    expanded = insertRange(
+                        expanded,
+                        HarmonyWorkspaceCommand.InsertChordRange(cursor, command.chordDuration),
+                    )
+                }
+                cursor += command.chordDuration
+            }
+            measureStart = measureEnd
+        }
+        return expanded
     }
 
     private fun placeRange(

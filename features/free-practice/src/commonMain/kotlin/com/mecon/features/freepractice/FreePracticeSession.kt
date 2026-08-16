@@ -9,8 +9,11 @@ import com.mecon.api.state.ScoreStateManager
 import com.mecon.api.state.EditorStateController
 import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.edit.PolyphonyLimitValidator
+import com.mecon.core.engine.edit.MeasureEditEngine
+import com.mecon.core.engine.edit.TimeSignatureEditEngine
 import com.mecon.exploration.FreePracticeDocument
 import com.mecon.exploration.FreePracticeSettings
+import com.mecon.exploration.KeyModeSpec
 import com.mecon.exploration.PracticeNoteConstraintState
 import com.mecon.exploration.VoicePlanScoreAssembler
 import com.mecon.features.scoreediting.ScoreEditEffectKind
@@ -174,7 +177,13 @@ class FreePracticeSession private constructor(
             idiomInstanceId = validIdiomInstanceId,
             scoreTargets = scoreFrame.selection,
         )
-        val currentTimeline = FreePracticeViewProjector.timeline(currentDocument.workspace, teachingCatalog)
+        val currentTimeline = FreePracticeViewProjector.timeline(
+            currentDocument.workspace,
+            teachingCatalog,
+            VoicePlanScoreAssembler.scoreDuration(manager.currentState.runtimeScore),
+            measureBoundaries(manager.currentState.runtimeScore),
+            currentDocument.settings.defaultChordDuration,
+        )
         val currentPlan = FreePracticeViewProjector.plan(
             currentDocument.workspace,
             selectedSlotId,
@@ -193,6 +202,7 @@ class FreePracticeSession private constructor(
         catalog = currentCatalog,
         noteConstraints = currentNoteConstraints,
         timeline = currentTimeline,
+        structure = structureView(scoreFrame.selection),
         plan = currentPlan,
         writing = writing,
     )
@@ -258,13 +268,15 @@ class FreePracticeSession private constructor(
         triggerSlotId: WorkspaceSlotId,
         configuredBacktrack: Int,
         requiredSlotIds: List<WorkspaceSlotId>? = null,
+        trimEmptyTail: Boolean = false,
     ): FreePracticeDispatchResult {
         beginOperation()
         val baseRevision = revision
         if (nextWorkspace.slots.none { it.id == triggerSlotId }) return staleTarget(baseRevision, triggerSlotId)
-        val synchronized = VoicePlanScoreAssembler.ensureTimelineMeasures(
+        val synchronized = synchronizedTimelineScore(
             manager.currentState.runtimeScore,
             nextWorkspace,
+            trimEmptyTail,
         )
         val projection = FreePracticeMaterialProjector.project(nextWorkspace, synchronized)
         val completionEligible = completionEligibleSlotIds(nextWorkspace, synchronized, projection)
@@ -283,7 +295,11 @@ class FreePracticeSession private constructor(
                 triggerSlotId,
                 configuredBacktrack,
                 completionEligible,
-            ) ?: return commitPreparedWorkspace(baseRevision, nextWorkspace)
+            ) ?: return commitPreparedWorkspace(
+                baseRevision,
+                nextWorkspace,
+                trimEmptyTail = trimEmptyTail,
+            )
         }
         candidates = emptyList()
         nextCandidateIndex = 1
@@ -415,6 +431,12 @@ class FreePracticeSession private constructor(
                     before.slots.none { it.id == candidate.id }
                     }?.id ?: selectedSlotId
                 }
+            is FreePracticeIntent.SetDefaultChordDuration ->
+                setDefaultChordDuration(intent, baseRevision)
+            is FreePracticeIntent.SetPracticeTimeSignature ->
+                setPracticeTimeSignature(intent, baseRevision)
+            is FreePracticeIntent.InsertPracticeMeasures ->
+                insertPracticeMeasures(intent, baseRevision)
             is FreePracticeIntent.TimelineEdit -> timelineEdit(intent.edit, baseRevision)
             is FreePracticeIntent.RemoveChordRange -> workspaceCommand(
                 baseRevision,
@@ -461,6 +483,119 @@ class FreePracticeSession private constructor(
             is FreePracticeIntent.Undo -> undo(baseRevision)
             is FreePracticeIntent.Redo -> redo(baseRevision)
         }
+    }
+
+    private fun setDefaultChordDuration(
+        intent: FreePracticeIntent.SetDefaultChordDuration,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (!intent.duration.isPositive) {
+            return result(
+                baseRevision,
+                FreePracticeEffect(FreePracticeEffectKind.INVALID, "freePractice.chordDuration.invalid"),
+            )
+        }
+        if (settings.defaultChordDuration == intent.duration) return noOp(baseRevision)
+        val resizeInitial = isPristinePractice()
+        settings = settings.copy(defaultChordDuration = intent.duration)
+        if (resizeInitial) {
+            val nextWorkspace = workspace.copy(
+                slots = workspace.slots.mapIndexed { index, slot ->
+                    if (index == 0) slot.copy(duration = intent.duration) else slot
+                },
+            )
+            val runtime = VoicePlanScoreAssembler.ensureTimelineMeasures(
+                manager.currentState.runtimeScore,
+                nextWorkspace,
+            )
+            transaction.commit(runtime, computeScore(runtime), nextWorkspace)
+            scoreSession.notifyExternalCommit()
+        }
+        cancelPending(PracticeWritingOutcome.Cancelled)
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.APPLIED))
+    }
+
+    private fun setPracticeTimeSignature(
+        intent: FreePracticeIntent.SetPracticeTimeSignature,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        val current = manager.currentState.runtimeScore
+        if (!isPristinePractice()) {
+            return result(
+                baseRevision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.INVALID,
+                    "freePractice.timeSignature.scoreToolRequired",
+                ),
+            )
+        }
+        val edited = TimeSignatureEditEngine.setOverallTimeSignature(current, intent.timeSignature)
+            ?: return noOp(baseRevision)
+        transaction.commit(edited, computeScore(edited), workspace)
+        scoreSession.notifyExternalCommit()
+        cancelPending(PracticeWritingOutcome.Cancelled)
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.APPLIED))
+    }
+
+    private fun insertPracticeMeasures(
+        intent: FreePracticeIntent.InsertPracticeMeasures,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (intent.count !in 1..999 || !intent.chordDuration.isPositive) {
+            return result(
+                baseRevision,
+                FreePracticeEffect(FreePracticeEffectKind.INVALID, "freePractice.measure.invalid"),
+            )
+        }
+        val current = manager.currentState.runtimeScore
+        val structure = structureView(scoreSession.frame().selection)
+        val afterMeasure = when (intent.position) {
+            FreePracticeIntent.MeasureInsertionPosition.END -> structure.lastMeasure
+            FreePracticeIntent.MeasureInsertionPosition.AFTER_SELECTED_NOTE ->
+                structure.selectedNoteMeasure ?: return result(
+                    baseRevision,
+                    FreePracticeEffect(FreePracticeEffectKind.STALE_TARGET, "freePractice.measure.noteSelectionRequired"),
+                )
+            FreePracticeIntent.MeasureInsertionPosition.AT_SELECTED_BARLINE ->
+                structure.selectedBarlineMeasure ?: return result(
+                    baseRevision,
+                    FreePracticeEffect(FreePracticeEffectKind.STALE_TARGET, "freePractice.measure.barlineSelectionRequired"),
+                )
+        }
+        val insertionOnset = measureBoundary(current, afterMeasure)
+        val editedScore = MeasureEditEngine.insertAfter(current, afterMeasure, intent.count)
+            ?: return result(
+                baseRevision,
+                FreePracticeEffect(FreePracticeEffectKind.INVALID, "freePractice.measure.invalidTarget"),
+            )
+        val measureDurations = (afterMeasure + 1..afterMeasure + intent.count).map { measure ->
+            editedScore.getTimeSignatureAt(measure).measureDuration()
+        }
+        val workspaceEdit = HarmonyWorkspaceEditor.applyResult(
+            workspace,
+            HarmonyWorkspaceCommand.InsertMeasureSpace(
+                onset = insertionOnset,
+                measureDurations = measureDurations,
+                chordDuration = intent.chordDuration,
+            ),
+        )
+        if (!workspaceEdit.succeeded) {
+            return result(
+                baseRevision,
+                FreePracticeEffect(
+                    FreePracticeEffectKind.INVALID,
+                    "freePractice.workspace.invalid",
+                    workspaceEdit.errorMessage?.let { mapOf("reason" to it) }.orEmpty(),
+                ),
+            )
+        }
+        transaction.commit(editedScore, computeScore(editedScore), workspaceEdit.state)
+        scoreSession.notifyExternalCommit()
+        cancelPending(PracticeWritingOutcome.Cancelled)
+        revision++
+        return result(baseRevision, FreePracticeEffect(FreePracticeEffectKind.APPLIED))
     }
 
     private fun setHarmonicRole(
@@ -653,11 +788,22 @@ class FreePracticeSession private constructor(
                 reasonKey = "freePractice.workspace.invalid",
             )
         }
+        val previewScore = synchronizedTimelineScore(
+            manager.currentState.runtimeScore,
+            edit.state,
+            trimEmptyTail = true,
+        )
         return PracticeTimelinePreviewResult(
             requestId = request.requestId,
             baseRevision = request.baseRevision,
             accepted = true,
-            timeline = FreePracticeViewProjector.timeline(edit.state, teachingCatalog),
+            timeline = FreePracticeViewProjector.timeline(
+                edit.state,
+                teachingCatalog,
+                VoicePlanScoreAssembler.scoreDuration(previewScore),
+                measureBoundaries(previewScore),
+                settings.defaultChordDuration,
+            ),
         )
     }
 
@@ -1110,7 +1256,11 @@ class FreePracticeSession private constructor(
     ): FreePracticeDispatchResult {
         val index = editBase.slots.indexOfFirst { it.id == slotId }
         if (index < 0) return staleTarget(baseRevision, slotId)
-        return applyWorkspaceCommand(baseRevision, command(index), afterCommit)
+        return applyWorkspaceCommand(
+            baseRevision,
+            command(index),
+            afterCommit = afterCommit,
+        )
     }
 
     /**
@@ -1130,9 +1280,14 @@ class FreePracticeSession private constructor(
             else -> invalidScope(baseRevision)
         }
         return if (trigger == null) {
-            applyWorkspaceCommand(baseRevision, command)
+            applyWorkspaceCommand(baseRevision, command, trimEmptyTail = true)
         } else {
-            workspaceCommandWithOptionalWriting(baseRevision, trigger, command)
+            workspaceCommandWithOptionalWriting(
+                baseRevision,
+                trigger,
+                command,
+                trimEmptyTail = true,
+            )
         }
     }
 
@@ -1369,8 +1524,11 @@ class FreePracticeSession private constructor(
         baseRevision: Long,
         slotId: WorkspaceSlotId,
         command: HarmonyWorkspaceCommand,
+        trimEmptyTail: Boolean = false,
     ): FreePracticeDispatchResult {
-        if (!settings.writing.autoWritingEnabled) return applyWorkspaceCommand(baseRevision, command)
+        if (!settings.writing.autoWritingEnabled) {
+            return applyWorkspaceCommand(baseRevision, command, trimEmptyTail = trimEmptyTail)
+        }
         val base = editBase
         val edit = HarmonyWorkspaceEditor.applyResult(base, command)
         if (!edit.succeeded) {
@@ -1388,12 +1546,14 @@ class FreePracticeSession private constructor(
             nextWorkspace = edit.state,
             triggerSlotId = slotId,
             configuredBacktrack = settings.writing.backtrackChordCount,
+            trimEmptyTail = trimEmptyTail,
         )
     }
 
     private fun applyWorkspaceCommand(
         baseRevision: Long,
         command: HarmonyWorkspaceCommand,
+        trimEmptyTail: Boolean = false,
         afterCommit: (HarmonyWorkspaceState, HarmonyWorkspaceState) -> Unit = { _, _ -> },
     ): FreePracticeDispatchResult {
         val before = editBase
@@ -1409,7 +1569,7 @@ class FreePracticeSession private constructor(
             )
         }
         if (edit.state === before || edit.state == before) return noOp(baseRevision)
-        return commitPreparedWorkspace(baseRevision, edit.state) {
+        return commitPreparedWorkspace(baseRevision, edit.state, trimEmptyTail) {
             afterCommit(before, edit.state)
         }
     }
@@ -1417,9 +1577,14 @@ class FreePracticeSession private constructor(
     private fun commitPreparedWorkspace(
         baseRevision: Long,
         nextWorkspace: HarmonyWorkspaceState,
+        trimEmptyTail: Boolean = false,
         afterCommit: () -> Unit = {},
     ): FreePracticeDispatchResult {
-        val runtime = VoicePlanScoreAssembler.ensureTimelineMeasures(manager.currentState.runtimeScore, nextWorkspace)
+        val runtime = synchronizedTimelineScore(
+            manager.currentState.runtimeScore,
+            nextWorkspace,
+            trimEmptyTail,
+        )
         val computed = if (runtime === manager.currentState.runtimeScore) {
             manager.currentState.computedScore
         } else {
@@ -1720,6 +1885,112 @@ class FreePracticeSession private constructor(
      */
     private val editBase: HarmonyWorkspaceState get() = visibleWorkspace
 
+    private fun isPristinePractice(): Boolean {
+        val slot = workspace.slots.singleOrNull() ?: return false
+        if (slot.onset != Fraction.ZERO) return false
+        if (manager.currentState.runtimeScore.voiceTracks.values.any { track ->
+                track.events.any { !it.isRest }
+            }
+        ) return false
+        val key = com.mecon.theory.ModulationKey(
+            settings.initialKey.fifths,
+            if (settings.initialKey.mode == KeyModeSpec.MAJOR) {
+                com.mecon.theory.KeySignatureMode.MAJOR
+            } else {
+                com.mecon.theory.KeySignatureMode.MINOR
+            },
+        )
+        val tonicSymbol = if (key.mode == com.mecon.theory.KeySignatureMode.MAJOR) "I" else "i"
+        val tonic = ChordSelectionCatalog.choices(key).firstOrNull {
+            it.functionalSymbol == tonicSymbol
+        } ?: return false
+        return slot.chordChoice?.pitchClasses?.toSet() == tonic.pitchClasses.toSet()
+    }
+
+    private fun structureView(selection: List<ScoreSelectionTarget>): PracticeStructureView {
+        val runtime = manager.currentState.runtimeScore
+        val lastMeasure = runtime.measures.maxOfOrNull { it.value.number } ?: 1
+        val eventTarget = selection.singleOrNull() as? ScoreSelectionTarget.Event
+        val selectedNoteMeasure = eventTarget?.eventId?.let { eventId ->
+            runtime.voiceTracks.values.firstNotNullOfOrNull { track ->
+                track.events.firstOrNull { it.id == eventId }?.onset?.measure
+            }
+        }
+        val selectedBarlineMeasure = (selection.singleOrNull() as? ScoreSelectionTarget.Barline)
+            ?.boundaryMeasure
+        val selectedStructuralMeasure = when (val target = selection.singleOrNull()) {
+            is ScoreSelectionTarget.Clef -> target.onset.measure.coerceAtLeast(1)
+            is ScoreSelectionTarget.KeySignature -> target.onset.measure.coerceAtLeast(1)
+            is ScoreSelectionTarget.TimeSignature -> target.onset.measure.coerceAtLeast(1)
+            else -> null
+        }
+        val targetMeasure = selectedNoteMeasure
+            ?: selectedStructuralMeasure
+            ?: selectedBarlineMeasure?.let { boundary ->
+                (boundary + 1).coerceIn(1, lastMeasure)
+            }
+            ?: 1
+        return PracticeStructureView(
+            pristine = isPristinePractice(),
+            effectiveTimeSignature = runtime.getTimeSignatureAt(targetMeasure),
+            timeSignatureMeasure = targetMeasure,
+            lastMeasure = lastMeasure,
+            selectedNoteMeasure = selectedNoteMeasure,
+            selectedBarlineMeasure = selectedBarlineMeasure,
+        )
+    }
+
+    private fun measureBoundary(score: RuntimeScore, afterMeasure: Int): Fraction {
+        var result = Fraction.ZERO
+        for (measure in 1..afterMeasure) {
+            result += score.getTimeSignatureAt(measure).measureDuration()
+        }
+        return result
+    }
+
+    /**
+     * A timeline gesture may move the harmony end back across one or more complete trailing
+     * measures. Those measures disappear only when no real note reaches them; rests and generated
+     * empty notation do not keep an otherwise empty tail alive. The score and workspace are then
+     * committed by the caller as one history item.
+     */
+    private fun synchronizedTimelineScore(
+        score: RuntimeScore,
+        targetWorkspace: HarmonyWorkspaceState,
+        trimEmptyTail: Boolean,
+    ): RuntimeScore {
+        val base = if (trimEmptyTail) trimTrailingEmptyMeasures(score, targetWorkspace) else score
+        return VoicePlanScoreAssembler.ensureTimelineMeasures(base, targetWorkspace)
+    }
+
+    private fun trimTrailingEmptyMeasures(
+        score: RuntimeScore,
+        targetWorkspace: HarmonyWorkspaceState,
+    ): RuntimeScore {
+        val lastMeasure = score.measures.maxOfOrNull { it.value.number } ?: return score
+        if (lastMeasure <= 1) return score
+        val workspaceEnd = targetWorkspace.slots.maxOf { it.onset + it.duration }
+        val timeMap = ScoreTimeMap.from(score)
+        val lastNoteEnd = score.getAllVoiceEvents()
+            .asSequence()
+            .filter { it.pitchEvent.pitches.isNotEmpty() }
+            .maxOfOrNull { event -> timeMap.absolute(event.onset) + event.duration.toFraction() }
+        val protectedEnd = maxOf(workspaceEnd, lastNoteEnd ?: Fraction.ZERO)
+        val removable = linkedSetOf<Int>()
+        var measureStart = Fraction.ZERO
+        for (measure in 1..lastMeasure) {
+            if (measureStart >= protectedEnd) removable += measure
+            measureStart += score.getTimeSignatureAt(measure).measureDuration()
+        }
+        if (removable.isEmpty() || removable.size >= lastMeasure) return score
+        return MeasureEditEngine.delete(score, removable) ?: score
+    }
+
+    private fun measureBoundaries(score: RuntimeScore): List<Fraction> {
+        val lastMeasure = score.measures.maxOfOrNull { it.value.number } ?: 1
+        return (1..lastMeasure).map { measure -> measureBoundary(score, measure) }
+    }
+
     private fun staleTarget(baseRevision: Long, id: WorkspaceSlotId) = result(
         baseRevision,
         FreePracticeEffect(
@@ -1805,6 +2076,7 @@ class FreePracticeSession private constructor(
         catalog = current.catalog,
         noteConstraints = current.noteConstraints,
         timeline = current.timeline,
+        structure = current.structure,
         plan = current.plan,
         writing = writing,
         effect = effect,

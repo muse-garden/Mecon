@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.AvTimer
+import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +38,9 @@ import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationKey
 import com.mecon.theory.writing.GrandStaffVoiceLayout
 import com.mecon.api.primitive.Fraction
+import com.mecon.api.primitive.TimeSignature
+import com.mecon.desktop.ui.components.TimeSignaturePicker
+import com.mecon.features.freepractice.FreePracticeIntent
 
 @Composable
 internal fun ExplorationModeToolbar(controller: ExplorationToolbarController) {
@@ -126,6 +131,8 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
         }
     }
     KeySetting(controller.initialKey, controller.changeInitialKey)
+    TimeSignatureSetting(controller)
+    InsertMeasuresSetting(controller)
     controller.writingState.message?.let { message ->
         Text(
             text = message,
@@ -133,6 +140,104 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
             fontSize = 10.sp,
             modifier = Modifier.padding(start = 8.dp),
         )
+    }
+}
+
+@Composable
+private fun TimeSignatureSetting(controller: FreePracticeToolbarController) {
+    var expanded by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf(controller.structure.effectiveTimeSignature) }
+    Box {
+        ToolbarButton(
+            icon = Icons.Default.AvTimer,
+            label = if (controller.structure.pristine) "设置拍号" else "调整拍号",
+            isActive = expanded,
+            enabled = !controller.writingState.running,
+            onClick = {
+                draft = controller.structure.effectiveTimeSignature
+                expanded = true
+            },
+        )
+        MeconDropdownPanel(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.width(292.dp),
+        ) {
+            MeconDropdownPanelTitle(
+                if (controller.structure.pristine) "设置总体拍号" else
+                    "选择拍号后在谱面点击目标小节",
+            )
+            TimeSignaturePicker(
+                selected = draft,
+                onSelect = { draft = it },
+            )
+            MeconChoiceChip("应用", selected = false) {
+                expanded = false
+                controller.setTimeSignature(draft)
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsertMeasuresSetting(controller: FreePracticeToolbarController) {
+    var expanded by remember { mutableStateOf(false) }
+    var position by remember {
+        mutableStateOf(FreePracticeIntent.MeasureInsertionPosition.END)
+    }
+    var count by remember { mutableStateOf(1) }
+    var chordBeats by remember(controller.defaultChordBeats) {
+        mutableStateOf(controller.defaultChordBeats)
+    }
+    val available = buildList {
+        add(FreePracticeIntent.MeasureInsertionPosition.END to "在末尾插入")
+        if (controller.structure.selectedNoteMeasure != null) {
+            add(
+                FreePracticeIntent.MeasureInsertionPosition.AFTER_SELECTED_NOTE to
+                    "在所选音符之后的小节线插入",
+            )
+        }
+        if (controller.structure.selectedBarlineMeasure != null) {
+            add(
+                FreePracticeIntent.MeasureInsertionPosition.AT_SELECTED_BARLINE to
+                    "在所选小节线插入",
+            )
+        }
+    }
+    val effectivePosition = position.takeIf { selected -> available.any { it.first == selected } }
+        ?: FreePracticeIntent.MeasureInsertionPosition.END
+    Box {
+        ToolbarButton(
+            icon = Icons.Default.AddBox,
+            label = "插入小节",
+            isActive = expanded,
+            enabled = !controller.writingState.running,
+            onClick = {
+                chordBeats = controller.defaultChordBeats
+                expanded = true
+            },
+        )
+        MeconDropdownPanel(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.width(280.dp),
+        ) {
+            MeconDropdownPanelTitle("插入位置")
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                available.forEach { (value, label) ->
+                    MeconChoiceChip(label, effectivePosition == value) { position = value }
+                }
+            }
+            MeconDropdownPanelTitle("插入设置")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IntegerSetting("小节数量", count, 1..999) { count = it }
+                IntegerSetting("每个和弦拍数", chordBeats, 1..16) { chordBeats = it }
+            }
+            MeconChoiceChip("插入", selected = false) {
+                expanded = false
+                controller.insertMeasures(effectivePosition, count, chordBeats)
+            }
+        }
     }
 }
 

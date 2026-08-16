@@ -6,10 +6,12 @@ import {
   selectedElementIds,
   selectionIdentity,
   selectionTargetForElement,
+  nearestTimePosition,
+  staffCoreAtPointer,
   surfacePointToGlobal,
 } from "./interaction.js";
 import { FULL_SCORE_EDITOR_TOOLBAR, resolveToolbarLayout } from "./toolbar.js";
-import { DURATION_GLYPHS, SMUFL_GLYPHS } from "./music-glyphs.js";
+import { DURATION_GLYPHS, SMUFL_GLYPHS, timeSignatureGlyphParts } from "./music-glyphs.js";
 import { scorePlayheadGeometry } from "./playback.js";
 import { createControlledScrollSync } from "./scroll-sync.js";
 import {
@@ -57,6 +59,27 @@ function MusicGlyphButton({ glyph, label, active = false, className = "", ...pro
     aria-label={label} title={label} {...props}><span aria-hidden="true">{glyph}</span></button>;
 }
 
+/** A notation-sized time signature made exclusively from Bravura/SMuFL glyphs. */
+export function BravuraTimeSignatureGlyph({ timeSignature, className = "", style = {} }) {
+  const glyphs = timeSignatureGlyphParts(timeSignature);
+  return <span className={`bravura-time-signature ${className}`.trim()} aria-hidden="true" style={{
+    display: "inline-grid",
+    alignContent: "center",
+    justifyItems: "center",
+    minWidth: "1em",
+    fontFamily: '"Bravura", serif',
+    fontSize: 24,
+    fontStyle: "normal",
+    fontWeight: 400,
+    lineHeight: 0.72,
+    ...style,
+  }}>
+    {glyphs.symbol
+      ? <span style={{ gridRow: "1 / span 2", alignSelf: "center", lineHeight: 1 }}>{glyphs.symbol}</span>
+      : <><span>{glyphs.numerator}</span><span>{glyphs.denominator}</span></>}
+  </span>;
+}
+
 function EditorIconButton({ icon: Icon, label, active = false, className = "", ...props }) {
   return <button type="button" className={`editor-icon-button${active ? " active" : ""} ${className}`.trim()}
     aria-label={label} title={label} {...props}><Icon aria-hidden="true" size={17} strokeWidth={1.8} /></button>;
@@ -102,7 +125,8 @@ function BeamPatternButton({ label, beamLeft = false, beamRight = false, isGroup
 /** Stable click-selection and canvas-coordinate adapter shared by editor hosts. */
 export function createScoreEditorSelectionController({
   frame, surfaceIndex, canvasRef, suppressClickRef, dispatch, tool = "select", onNoteInput,
-  onNoteHover, onNoteHoverEnd,
+  onNoteHover, onNoteHoverEnd, onTimeSignatureInput, onTimeSignatureHover,
+  onTimeSignatureHoverEnd,
 }) {
   function canvasPoint(event) {
     const canvas = canvasRef.current;
@@ -129,6 +153,11 @@ export function createScoreEditorSelectionController({
       onNoteInput?.(surfacePointToGlobal(frame.bundle, point.surface, point.x, point.y));
       return;
     }
+    if (tool === "timeSignature") {
+      const target = timeSignatureTarget(point);
+      if (target) onTimeSignatureInput?.(target);
+      return;
+    }
     const element = hitTest(frame.bundle, surfaceIndex, point.x, point.y, {
       padding: 3,
       types: SELECTABLE_ELEMENT_TYPES,
@@ -146,6 +175,13 @@ export function createScoreEditorSelectionController({
   }
 
   function onPointerMove(event) {
+    if (tool === "timeSignature") {
+      const point = canvasPoint(event);
+      const target = point && frame ? timeSignatureTarget(point) : null;
+      if (target) onTimeSignatureHover?.(target);
+      else onTimeSignatureHoverEnd?.();
+      return;
+    }
     if (tool !== "note") return;
     const point = canvasPoint(event);
     if (!frame || !point) {
@@ -157,6 +193,28 @@ export function createScoreEditorSelectionController({
 
   function onPointerLeave() {
     if (tool === "note") onNoteHoverEnd?.();
+    if (tool === "timeSignature") onTimeSignatureHoverEnd?.();
+  }
+
+  function timeSignatureTarget(point) {
+    const staff = staffCoreAtPointer(point.surface, point.y, null, frame.bundle);
+    if (!staff) return null;
+    const downbeat = nearestTimePosition(
+      frame.bundle,
+      point.surface,
+      point.x,
+      staff.anchorY,
+      (timeCode) => Number(timeCode?.measure) >= 1 &&
+        Number(timeCode?.beat?.numerator ?? 0) === 0,
+    );
+    if (!downbeat) return null;
+    return {
+      measureNumber: Number(downbeat.timeCode.measure),
+      x: downbeat.x,
+      top: staff.top,
+      bottom: staff.bottom,
+      anchorY: staff.anchorY,
+    };
   }
 
   return { canvasPoint, onClick, onPointerMove, onPointerLeave };
@@ -184,6 +242,7 @@ export function useScoreEditorInputState() {
   const [stepInputEnabled, setStepInputEnabled] = useState(false);
   const [midiStatus, setMidiStatus] = useState("MIDI 未连接");
   const [editorTool, setEditorTool] = useState("select");
+  const [timeSignaturePen, setTimeSignaturePen] = useState(null);
   const [paletteExpanded, setPaletteExpanded] = useState(true);
   const [uncommonDurationsExpanded, setUncommonDurationsExpanded] = useState(false);
   const [articulationsExpanded, setArticulationsExpanded] = useState(false);
@@ -203,6 +262,7 @@ export function useScoreEditorInputState() {
     restStaffPosition, setRestStaffPosition, moveDestination, setMoveDestination,
     stepInputEnabled, setStepInputEnabled, midiStatus, setMidiStatus,
     editorTool, setEditorTool, paletteExpanded, setPaletteExpanded,
+    timeSignaturePen, setTimeSignaturePen,
     uncommonDurationsExpanded, setUncommonDurationsExpanded,
     articulationsExpanded, setArticulationsExpanded, restMode, setRestMode,
     customTupletText, setCustomTupletText, insertionBeaming, setInsertionBeaming,
@@ -267,6 +327,7 @@ export function useScoreEditorController({
   const suppressClickRef = useRef(false);
   const [dragPreview, setDragPreview] = useState(null);
   const [noteInputPreview, setNoteInputPreview] = useState(null);
+  const [timeSignaturePreview, setTimeSignaturePreview] = useState(null);
   const notePreviewRequestRef = useRef(0);
   const lastNoteInputTransitionRevisionRef = useRef(null);
   const notePreviewPointerVersionRef = useRef(0);
@@ -371,6 +432,16 @@ export function useScoreEditorController({
         if (target) commands.insertEventAtPointer(target, noteInsertion);
       });
     },
+    onTimeSignatureHover: setTimeSignaturePreview,
+    onTimeSignatureHoverEnd: () => setTimeSignaturePreview(null),
+    onTimeSignatureInput: (target) => {
+      if (!input.timeSignaturePen) return;
+      dispatch({
+        type: "setTimeSignature",
+        measureNumber: target.measureNumber,
+        timeSignature: input.timeSignaturePen,
+      });
+    },
   });
   const drag = createScoreEditorDragController({
     frame,
@@ -408,6 +479,7 @@ export function useScoreEditorController({
 
   useEffect(() => {
     clearNotePreview();
+    setTimeSignaturePreview(null);
   }, [frame, surfaceIndex, input.editorTool, input.insertDuration, input.insertDots,
     input.restMode, input.moveDestination, input.tupletCount, input.graceMode, input.accidental]);
 
@@ -425,6 +497,11 @@ export function useScoreEditorController({
     setSurfaceIndex,
     dragPreview,
     noteInputPreview,
+    timeSignaturePreview,
+    armTimeSignature: (timeSignature) => {
+      input.setTimeSignaturePen(timeSignature);
+      input.setEditorTool("timeSignature");
+    },
     selection,
     drag,
   };
@@ -1274,6 +1351,9 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
   onSurfaceIndexChange,
   dragPreview = null,
   noteInputPreview = null,
+  timeSignaturePreview = null,
+  timeSignaturePen = null,
+  editorTool = "select",
   background = "#fffdf8",
   emptyContent = "打开 .mecon 文件开始编辑",
   onClick,
@@ -1385,6 +1465,8 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
             height: surface?.height ?? 0,
           }}>
             <canvas ref={localCanvasRef} role="img" aria-label={canvasAriaLabel}
+              data-editor-tool={editorTool}
+              style={{ cursor: editorTool === "timeSignature" ? "crosshair" : undefined }}
               aria-describedby={summaryId} tabIndex={0} onClick={onClick} onPointerDown={onPointerDown}
               onPointerMove={onPointerMove} onPointerUp={onPointerUp}
               onPointerCancel={onPointerCancel} onPointerLeave={onPointerLeave} />
@@ -1401,6 +1483,25 @@ export const ScoreEditorSurface = forwardRef(function ScoreEditorSurface({
               boxShadow: "0 0 0 1px rgba(120, 166, 255, 0.18)",
               zIndex: 5,
             }} />}
+            {timeSignaturePreview && timeSignaturePen && <span
+              className="score-time-signature-preview" aria-hidden="true" style={{
+                position: "absolute",
+                pointerEvents: "none",
+                left: timeSignaturePreview.x,
+                top: timeSignaturePreview.top,
+                height: Math.max(1, timeSignaturePreview.bottom - timeSignaturePreview.top),
+                borderLeft: "1px solid rgba(60, 60, 60, 0.55)",
+                color: "rgba(60, 60, 60, 0.55)",
+                zIndex: 5,
+              }}>
+              <BravuraTimeSignatureGlyph timeSignature={timeSignaturePen} style={{
+                position: "absolute",
+                left: 7,
+                top: "50%",
+                transform: "translateY(-50%)",
+                fontSize: 27,
+              }} />
+            </span>}
             {playhead && <span className="score-playhead" data-playback-state={playback.state} aria-hidden="true"
               style={{
                 position: "absolute", pointerEvents: "none", left: playhead.x, top: playhead.top,
@@ -1451,6 +1552,9 @@ export function ScoreEditor({
       onSurfaceIndexChange={controller.setSurfaceIndex}
       dragPreview={controller.dragPreview}
       noteInputPreview={controller.noteInputPreview}
+      timeSignaturePreview={controller.timeSignaturePreview}
+      timeSignaturePen={controller.input.timeSignaturePen}
+      editorTool={controller.input.editorTool}
       onClick={controller.selection.onClick}
       onPointerDown={controller.drag.onPointerDown}
       onPointerMove={(event) => {

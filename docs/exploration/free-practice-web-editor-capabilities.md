@@ -1,6 +1,6 @@
 # 自由练习 Web 五线谱编辑能力矩阵
 
-> 基线：2026-08-05；更新：2026-08-13。共享五线谱编辑、自由练习 session、时间轴 raw
+> 基线：2026-08-05；更新：2026-08-16。共享五线谱编辑、自由练习 session、时间轴 raw
 > geometry/interaction、谱面 origin/extent 与两层工具栏桌面等价门禁均已完成。
 > 钢琴卷轴按产品边界保留桌面实现。实施证据见
 > [完整工作台 Web 化记录](free-practice-web-workbench-completion-plan.md)，后续改动见
@@ -28,7 +28,7 @@ raw input 与 Kotlin/JS facade；浏览器动态导出的 `.mecon` 由桌面 `Me
 | 倚音组 | `GraceNoteEditing` / `editGraceGroups` | ✅ | ✅ 插入与属性更新 |
 | 复制、剪切、粘贴 | `NoteCopyPaste`、`SelectionClipboard` | ✅ | ✅ 按钮状态与快捷键 |
 | 跨声部/谱表移动 | `VoiceMoveEngine` | ✅ | ✅ 跨谱表移动与选择恢复 |
-| 谱号、调号、拍号 | `Clef/KeySignature/TimeSignatureEditEngine` | ✅ | ✅ |
+| 谱号、调号、拍号 | `Clef/KeySignature/TimeSignatureEditEngine` | ✅ | ✅ 自由练习“调整拍号”与桌面共用拍号笔语义：Bravura 候选、悬停幽灵、点击小节后发送 `ScoreEditIntent.SetTimeSignature` |
 | 小节插删、结构重排 | `MeasureEditEngine` | ✅ | ✅ 插入、确认删除 |
 | 小节线、反复、房子、导航记号 | `Barline/RepeatStructureEditEngine` | ✅ | ✅ 房子端点、跨系统导航与删除 |
 | 速度、力度、发夹、8va、文本与演奏记号 | `Tempo/ExpressionEditEngine` | ✅ | ✅ 添加、更新、删除、整体/端点拖动 |
@@ -88,9 +88,10 @@ Web，须单独完成禁忌表平台无关索引与 JVM/JS key 集合等价门�
 | 调性布局增删改选与范围拖动 | ✅ | 稳定 layout id intent、JVM/JS trace、React 表单与 pointer 双端手柄 E2E 已过 |
 | 枢纽与惯用进行插入/替换/删除 | ✅ | 稳定 ID intent、目录 title、范围括号、lane、精简模式首和弦标注、锁定与选择均由共享 timeline scene 投影；浏览器插入/删除与导出回读通过 |
 | 完整工作台设置与显式重建 | ✅ | 声部数/初始调性用 `RebuildPractice` 原子重建；上下谱表分配用 `UpdateStaffVoices` 迁移并可撤销；React 显式确认，写作设置已 typed |
+| 自由练习拍号与插入小节 | ✅ | 顶栏 descriptor 同时提供拍号和插小节入口；未编辑时设置总体拍号，编辑后按共享选区调整目标小节。插入位置支持谱尾、所选音符后的小节线、所选小节线；谱面/workspace 单事务提交，逐小节填充空和弦槽且尾拍可留空。JVM/Kotlin-JS 共用 trace，Web Playwright 走真实顶栏点击路径 |
 | 当前调性/和声选择/详情/惯用进行面板 | ✅ | `PracticePlanView` 直接提供选中槽、前后/末尾导航、追加位置、活动调性线、typed 和弦读法、锁定能力、离调读法 payload、低音候选、覆盖的惯用进行、分类和弦目录与全部动态展示标签；静态文案统一来自 `PracticePlanStrings`。和弦详情的正文、构造线路、倾向音、来源及示例音高事件由 commonMain 的 `PracticeChordDetailProjector` 一次投影，Desktop/Web 消费同一 read model；Web Worker 再把共享构造事件交给 Kotlin renderer 生成冻结谱，只读展示且不提供线路选择或应用。React 不再从 timeline/workspace 二次查找或格式化动态文案，并与桌面保持折叠分区、平铺芯片、分类目录和调性下拉组件语义一致。Web 默认分区布局把和声选择与惯用进行置于五线谱下方的等宽双栏，支持 180–560px pointer/键盘调高；右栏保留当前调性、默认展开的和弦详情与 finding，并继续支持拖宽。经典组合分支保留，待 Web 钢琴卷轴接入后开放切换。写作、重建、播放等已在上方工具栏出现的控件不重复；finding 来自独立后台 channel，并可按稳定事件锚点聚焦共享选区 |
 | finding 与教学目录后台 generation | ✅ | writing 按 kind、catalog、findings 各用独立 newest-wins Worker；finding 结果校验 request/base revision/fingerprint，`frame()` 不再同步跑整谱检查 |
-| 和声时间轴/五线谱统一 time axis | ✅ | renderer 输出 origin/intrinsic/surface/viewport/scroll extent；共享 raw scene 使用同一 anchors，64 槽 ≤1 px、滚动与不同 viewport 门禁通过 |
+| 和声时间轴/五线谱统一 time axis | ✅ | renderer 输出 origin/intrinsic/surface/viewport/scroll extent；共享 raw scene 使用同一 anchors；尾部按 `PracticeTimelineView.emptySlots` 显示一个无文字、不可命中、不可选择且区别于真实空和弦槽的连续视觉填充，不按拍或小节分段；绿色追加按钮始终是末端小节线之后的独立单元，视觉位置不参与空位宽度，业务插入点则优先填充现有空位。时间线拖动完整空出无音符尾部小节时，共享 session 在同一历史项内裁掉该小节，音符及延音会阻止误删。2/4 新建真实路径同时断言 typed view、占位无语义按钮、“＋”与空位分离、添加后“＋”仍存在、拖短后的尾部补齐/整小节裁剪、视觉快照及与终止小节线的像素对齐；64 槽 ≤1 px、滚动与不同 viewport 门禁通过 |
 | 宽屏双栏与窄屏 tabs | ✅ | 宽屏主区+滚动右栏、窄屏四 tabs 已落地；宽屏右栏支持 240–720px pointer 拖动、键盘方向键/Home/End 和双击复位，布局状态不进 document/undo。真实浏览器辅助技术树验证 tab/tabpanel 可见性、roving focus、方向键/Home/End，以及可聚焦五线谱的动态摘要关联 |
 | 桌面全部改走共享 `FreePracticeSession` | ✅（本轮范围） | 除明确暂缓的钢琴卷轴/自动记谱 adapter 外，workbench reducer fallback 已删除，时间轴、右栏和普通五线谱编辑均走共享 intent；复音校验与手工来源更新由 session commit policy 原子执行 |
 | 修改后自由练习 `.mecon` 浏览器→桌面回读 | ✅ | 真实浏览器插入惯用进行后导出；桌面回读活动 module/workspace/score，并验证 sibling score、未知 module payload 与原始 manifest workspace 保留 |

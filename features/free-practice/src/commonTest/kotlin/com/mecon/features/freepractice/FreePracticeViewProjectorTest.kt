@@ -61,6 +61,26 @@ class FreePracticeViewProjectorTest {
     }
 
     @Test
+    fun trailingVisualFillerIsOneContinuousBlockAcrossBeatsAndMeasures() {
+        val workspace = FreePracticePreset.workspace(
+            voiceCount = 4,
+            initialKey = ModulationKey(0, KeySignatureMode.MAJOR),
+        )
+
+        val timeline = FreePracticeViewProjector.timeline(
+            workspace = workspace,
+            scoreEnd = Fraction(3, 2),
+            measureBoundaries = listOf(Fraction.HALF, Fraction.ONE, Fraction(3, 2)),
+            defaultChordDuration = Fraction.QUARTER,
+        )
+
+        assertEquals(
+            listOf(Fraction.QUARTER to Fraction(5, 4)),
+            timeline.emptySlots.map { it.onset to it.duration },
+        )
+    }
+
+    @Test
     fun planCarriesPresentationReadyRightPanelState() {
         val workspace = FreePracticePreset.workspace(
             voiceCount = 4,

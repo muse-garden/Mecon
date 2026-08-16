@@ -57,6 +57,8 @@ data class ResolvedTimeAxis(
     val contentEndX: StaffSpace,
     val revision: Long,
     private val scoreTimeMap: ScoreTimeMap,
+    /** Engraved right edge of each closing barline, keyed by its real musical boundary. */
+    val measureBoundaries: List<TimeAxisAnchor> = emptyList(),
 ) {
     init {
         require(anchors.isNotEmpty()) { "Resolved time axis requires anchors" }
@@ -168,10 +170,19 @@ internal object AlignedTimeAxisResolver {
         val ordered = timeByAbsolute.entries.sortedBy { it.key }
         val indexByAbsolute = ordered.mapIndexed { index, entry -> entry.key to index }.toMap()
         val lowerBounds = FloatArray(ordered.size) { Float.NEGATIVE_INFINITY }
+        val boundaryVisualOffsets = arrayOfNulls<Float>(ordered.size)
         val edges = Array(ordered.size) { mutableListOf<Pair<Int, Float>>() }
         intrinsic.all().forEach { slot ->
             val index = indexByAbsolute.getValue(intrinsicAbsolute(slot))
             lowerBounds[index] = maxOf(lowerBounds[index], slot.x.value)
+            slot.events.filterIsInstance<BarlineElement>()
+                .filter { it.measureNumber > 0 }
+                .forEach { barline ->
+                    val visualRight = (barline.relativeX + barline.minimumWidth).value
+                    boundaryVisualOffsets[index] = boundaryVisualOffsets[index]
+                        ?.let { maxOf(it, visualRight) }
+                        ?: visualRight
+                }
         }
         val firstRequested = request.segments.minOf { timeMap.absolute(it.start) }
         indexByAbsolute[firstRequested]?.let { index ->
@@ -213,7 +224,14 @@ internal object AlignedTimeAxisResolver {
                     (ordered[to].key - ordered[from].key).toDouble() /
                         duration.toDouble()
                     ).toFloat()
-                edges[from] += to to (segment.preferredWidth.value * share)
+                val fromOffset = boundaryVisualOffsets[from] ?: 0f
+                val toOffset = boundaryVisualOffsets[to] ?: 0f
+                // Segment widths describe visible musical boundaries. A closing barline is drawn
+                // left inside its padded unified slot, so its slot must travel farther right for
+                // the engraved rule itself to land at the requested boundary.
+                edges[from] += to to (
+                    segment.preferredWidth.value * share + fromOffset - toOffset
+                    )
             }
         }
 
@@ -265,7 +283,14 @@ internal object AlignedTimeAxisResolver {
             }
         )
         val anchors = ordered.mapIndexed { index, (absolute, time) ->
-            TimeAxisAnchor(time, absolute, StaffSpace(resolved[index]))
+            TimeAxisAnchor(
+                time,
+                absolute,
+                StaffSpace(resolved[index] + (boundaryVisualOffsets[index] ?: 0f)),
+            )
+        }
+        val measureBoundaries = anchors.filterIndexed { index, _ ->
+            boundaryVisualOffsets[index] != null
         }
         return AlignedTimeAxisProjection(
             slots = projectedSlots,
@@ -274,6 +299,7 @@ internal object AlignedTimeAxisResolver {
                 contentEndX = anchors.last().x,
                 revision = request.revision,
                 scoreTimeMap = timeMap,
+                measureBoundaries = measureBoundaries,
             ),
         )
     }

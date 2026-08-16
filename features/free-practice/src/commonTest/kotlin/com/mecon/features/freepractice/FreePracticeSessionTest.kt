@@ -4,6 +4,7 @@ import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.TimeCode
+import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.exploration.VoicePlanScoreAssembler
 import com.mecon.exploration.PracticeHarmonicRole
@@ -28,6 +29,186 @@ import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationKey
 
 class FreePracticeSessionTest {
+    @Test
+    fun meterAndMeasureEditsKeepTimelineOnBarlinesAndFillEachMeasureIndependently() {
+        val session = session()
+        val initial = session.frame()
+        assertEquals(Fraction.HALF, initial.timeline.end)
+        assertEquals(
+            listOf(Fraction.QUARTER to Fraction.QUARTER),
+            initial.timeline.emptySlots.map { it.onset to it.duration },
+        )
+        assertEquals(1, initial.document.workspace.slots.size, "display-only slots must not mutate the document")
+        assertTrue(initial.structure.pristine)
+
+        val duration = session.dispatch(
+            FreePracticeIntent.SetDefaultChordDuration(initial.revision, Fraction.HALF),
+        )
+        assertEquals(Fraction.HALF, duration.frame.document.settings.defaultChordDuration)
+        assertEquals(Fraction.HALF, duration.frame.document.workspace.slots.single().duration)
+        assertTrue(duration.frame.timeline.emptySlots.isEmpty())
+
+        val meter = session.dispatch(
+            FreePracticeIntent.SetPracticeTimeSignature(
+                duration.frame.revision,
+                TimeSignature.THREE_FOUR,
+            ),
+        )
+        assertEquals(TimeSignature.THREE_FOUR, meter.frame.score.runtimeScore.defaultTimeSignature)
+        assertEquals(Fraction(3, 4), meter.frame.timeline.end)
+        assertEquals(
+            listOf(Fraction.HALF to Fraction.QUARTER),
+            meter.frame.timeline.emptySlots.map { it.onset to it.duration },
+            "the final visual filler must reach the barline even when shorter than the default",
+        )
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertPracticeMeasures(
+                meter.frame.revision,
+                FreePracticeIntent.MeasureInsertionPosition.END,
+                count = 2,
+                chordDuration = Fraction.HALF,
+            ),
+        )
+        assertEquals(listOf(1, 2, 3), inserted.frame.score.runtimeScore.measures.map { it.value.number })
+        assertEquals(Fraction(9, 4), inserted.frame.timeline.end)
+        assertEquals(
+            listOf(Fraction.ZERO, Fraction(3, 4), Fraction(3, 2)),
+            inserted.frame.document.workspace.slots.map { it.onset },
+        )
+        assertTrue(inserted.frame.document.workspace.slots.all { slot ->
+            val end = slot.onset + slot.duration
+            listOf(Fraction(3, 4), Fraction(3, 2), Fraction(9, 4)).none { boundary ->
+                slot.onset < boundary && end > boundary
+            }
+        })
+    }
+
+    @Test
+    fun measureInsertionResolvesSelectedNoteAndBarlineInTheSharedSession() {
+        fun sessionWithTrailingMeasures(): FreePracticeSession {
+            val session = session()
+            val initial = session.frame()
+            val inserted = session.dispatch(
+                FreePracticeIntent.InsertPracticeMeasures(
+                    initial.revision,
+                    FreePracticeIntent.MeasureInsertionPosition.END,
+                    count = 2,
+                    chordDuration = Fraction.HALF,
+                ),
+            )
+            assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+            return session
+        }
+
+        val noteSession = sessionWithTrailingMeasures()
+        val beforeNote = noteSession.frame()
+        val oldSecondMeasureSlot = beforeNote.document.workspace.slots
+            .single { it.onset == Fraction.HALF }
+        val note = noteSession.dispatch(
+            FreePracticeIntent.Score(
+                beforeNote.revision,
+                ScoreEditIntent.InsertNote(
+                    beforeNote.score.revision,
+                    beforeNote.document.workspace.voices.first().id,
+                    TimeCode.of(1, Fraction.ZERO),
+                    Duration.QUARTER,
+                    Pitch.C5,
+                ),
+            ),
+        )
+        assertEquals(1, note.frame.structure.selectedNoteMeasure)
+        val afterNote = noteSession.dispatch(
+            FreePracticeIntent.InsertPracticeMeasures(
+                note.frame.revision,
+                FreePracticeIntent.MeasureInsertionPosition.AFTER_SELECTED_NOTE,
+                count = 1,
+                chordDuration = Fraction.HALF,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.APPLIED, afterNote.effect.kind)
+        assertEquals(4, afterNote.frame.structure.lastMeasure)
+        assertEquals(
+            Fraction.ONE,
+            afterNote.frame.document.workspace.slots.single { it.id == oldSecondMeasureSlot.id }.onset,
+        )
+
+        val barlineSession = sessionWithTrailingMeasures()
+        val beforeBarline = barlineSession.frame()
+        val oldBarlineFollowingSlot = beforeBarline.document.workspace.slots
+            .single { it.onset == Fraction.HALF }
+        val selected = barlineSession.dispatch(
+            FreePracticeIntent.Score(
+                beforeBarline.revision,
+                ScoreEditIntent.SetSelection(
+                    beforeBarline.score.revision,
+                    listOf(ScoreSelectionTarget.Barline(boundaryMeasure = 1)),
+                ),
+            ),
+        )
+        assertEquals(1, selected.frame.structure.selectedBarlineMeasure)
+        val afterBarline = barlineSession.dispatch(
+            FreePracticeIntent.InsertPracticeMeasures(
+                selected.frame.revision,
+                FreePracticeIntent.MeasureInsertionPosition.AT_SELECTED_BARLINE,
+                count = 1,
+                chordDuration = Fraction.HALF,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.APPLIED, afterBarline.effect.kind)
+        assertEquals(4, afterBarline.frame.structure.lastMeasure)
+        assertEquals(
+            Fraction.ONE,
+            afterBarline.frame.document.workspace.slots
+                .single { it.id == oldBarlineFollowingSlot.id }
+                .onset,
+        )
+    }
+
+    @Test
+    fun editedPracticeRequiresTheNormalScoreTimeSignatureIntent() {
+        val session = session()
+        val initial = session.frame()
+        val note = session.dispatch(
+            FreePracticeIntent.Score(
+                initial.revision,
+                ScoreEditIntent.InsertNote(
+                    initial.score.revision,
+                    initial.document.workspace.voices.first().id,
+                    TimeCode.of(1, Fraction.ZERO),
+                    Duration.QUARTER,
+                    Pitch.C5,
+                ),
+            ),
+        )
+
+        val bypass = session.dispatch(
+            FreePracticeIntent.SetPracticeTimeSignature(
+                note.frame.revision,
+                TimeSignature.THREE_FOUR,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.INVALID, bypass.effect.kind)
+        assertEquals(note.frame.revision, bypass.frame.revision)
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.Score(
+                bypass.frame.revision,
+                ScoreEditIntent.SetTimeSignature(
+                    bypass.frame.score.revision,
+                    measureNumber = 1,
+                    timeSignature = TimeSignature.THREE_FOUR,
+                ),
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+        assertEquals(TimeSignature.THREE_FOUR, inserted.frame.score.runtimeScore.getTimeSignatureAt(1))
+        assertIs<ScoreSelectionTarget.TimeSignature>(inserted.frame.score.selection.single())
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(inserted.frame.revision))
+        assertEquals(TimeSignature.TWO_FOUR, undone.frame.score.runtimeScore.getTimeSignatureAt(1))
+    }
+
     @Test
     fun harmonicRoleIsPersistentUndoableAndFiltersChordChoices() {
         val session = session()
@@ -1156,6 +1337,73 @@ class FreePracticeSessionTest {
         }
     }
 
+    @Test
+    fun timelineDragTrimsCompleteTrailingNotelessMeasureInTheSameHistoryItem() {
+        val session = trailingMeasureSession()
+        val before = session.frame()
+        val tail = before.document.workspace.slots.last()
+        val edit = PracticeTimelineEdit.PlaceChordRange(
+            tail.id,
+            tail.onset,
+            Fraction.QUARTER,
+        )
+        assertEquals(3, before.structure.lastMeasure)
+        assertEquals(Fraction(3, 2), before.timeline.end)
+
+        val preview = session.previewTimelineEdit(
+            PracticeTimelinePreviewRequest(1, before.revision, edit),
+        )
+        val committed = session.dispatch(FreePracticeIntent.TimelineEdit(before.revision, edit))
+
+        assertTrue(preview.accepted)
+        assertEquals(Fraction.ONE, preview.timeline?.end)
+        assertEquals(preview.timeline, committed.frame.timeline)
+        assertEquals(2, committed.frame.structure.lastMeasure)
+        assertTrue(committed.frame.timeline.emptySlots.isEmpty())
+        assertTrue(committed.requests.isEmpty(), "a chordless resize must commit without writing")
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(committed.frame.revision))
+        assertEquals(3, undone.frame.structure.lastMeasure)
+        assertEquals(before.timeline, undone.frame.timeline)
+    }
+
+    @Test
+    fun timelineDragKeepsATrailingMeasureReachedByARealNote() {
+        val session = trailingMeasureSession()
+        val beforeNote = session.frame()
+        val withNote = session.dispatch(
+            FreePracticeIntent.Score(
+                beforeNote.revision,
+                ScoreEditIntent.InsertNote(
+                    beforeNote.score.revision,
+                    beforeNote.document.workspace.voices.first().id,
+                    TimeCode.of(3, Fraction.ZERO),
+                    Duration.QUARTER,
+                    Pitch.C5,
+                ),
+            ),
+        )
+        val tail = withNote.frame.document.workspace.slots.last()
+
+        val committed = session.dispatch(
+            FreePracticeIntent.TimelineEdit(
+                withNote.frame.revision,
+                PracticeTimelineEdit.PlaceChordRange(
+                    tail.id,
+                    tail.onset,
+                    Fraction.QUARTER,
+                ),
+            ),
+        )
+
+        assertEquals(3, committed.frame.structure.lastMeasure)
+        assertEquals(Fraction(3, 2), committed.frame.timeline.end)
+        assertEquals(
+            listOf(Fraction.ONE to Fraction.HALF),
+            committed.frame.timeline.emptySlots.map { it.onset to it.duration },
+        )
+    }
+
     /**
      * A chord box over an empty measure has nothing to realize, but its geometry is still workspace
      * state: the gesture used to be dropped together with the writing request it could not plan.
@@ -1299,6 +1547,26 @@ class FreePracticeSessionTest {
                             duration = Fraction.QUARTER,
                         )
                     },
+                ),
+            ),
+        )
+    }
+
+    private fun trailingMeasureSession(): FreePracticeSession {
+        val preset = FreePracticePreset.document()
+        val template = preset.workspace.slots.single()
+        return session(
+            preset.copy(
+                workspace = preset.workspace.copy(
+                    slots = listOf(
+                        template,
+                        template.copy(
+                            id = WorkspaceSlotId("tail"),
+                            onset = Fraction(3, 4),
+                            duration = Fraction.HALF,
+                            chordChoice = null,
+                        ),
+                    ),
                 ),
             ),
         )

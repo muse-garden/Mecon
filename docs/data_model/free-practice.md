@@ -27,6 +27,7 @@ FreePracticeSettings(
     staffVoices: GrandStaffVoiceLayout,
     initialKey: KeySpec,
     selectedPatternIds: List<String>,
+    defaultChordDuration: Fraction,
 )
 
 GrandStaffVoiceLayout(
@@ -42,6 +43,8 @@ GrandStaffVoiceLayout(
 - `staffVoices.capacity == polyphonyLimit`；
 - `workspace.voices.size == polyphonyLimit`，其中 workspace voice 仅作为稳定的默认记谱通道
   描述与分析配置来源，不保证源事件单音。
+- `defaultChordDuration` 是顶栏“默认和弦拍数”的持久化真相，必须为正值；旧文件缺省为
+  四分音符。练习尚未出现手工和弦或音符编辑时，修改它同时调整首个默认主和弦槽。
 
 `selectedPatternIds` 只为旧文件兼容保留，新 UI 不再写入；惯用进行实体存于
 `workspace.idiomInstances`，当前选中实例属于 session 瞬态 selection。
@@ -72,6 +75,35 @@ data class FreePracticeSettings(
 - 新建练习默认开启自动写作；v1–v5 迁移默认关闭，由 factory/migrator 显式区分；
 - v1–v5 的 BPM 从关联乐谱起点有效速度取整并裁剪，读取失败回退 120；迁移后不再随谱面同步；
 - 设置变更随模块保存，但不创建撤销项；自动写出的 `RuntimeScore` 材料必须创建撤销项。
+
+### 2.2 拍号、小节与时间线边界 ✅
+
+- 实际小节列表与各小节有效拍号只存于关联 `StorageScore`，workspace 不复制拍号或小节数量；
+- `PracticeTimelineView.end` 由共享 session 按谱面全部小节的实际时长投影，因而必定落在末端
+  小节线上。共享投影同时用 `PracticeTimelineView.emptySlots` 发布一个从和声内容末端连续延伸至末端
+  小节线的纯视觉填充块；它不按默认和弦时值或小节边界分段，不显示文字、不可选择，并使用区别于
+  真实空和弦槽的背景色。
+  填充块不是绿色的末尾追加按钮，也不进入 hit-test、selection 或 accessibility action；
+  它只表示尚未占用的时间。绿色“＋”始终作为独立单元画在末端小节线之后，不与空位共享宽度，
+  也不会因新增一个空和弦槽而消失；其业务插入点仍取当前 workspace 材料末端，因此点击后优先通过
+  `InsertChordRange` 按默认时值占用并缩短小节线前的空位，填满后才向后延伸。桌面与 Web 必须直接消费 session 发布的 typed view，不得只从
+  workspace 重投影，否则会丢失 `scoreEnd` 和空位。空位的显示边缘必须与实际雕刻小节线对齐；
+- 时间线拖动提交若把一个或多个尾部小节完整空出，共享 session 会在同一事务内删除其中没有实际
+  音符到达的尾部小节；实际音符的延音末端同样会保护对应小节，undo/redo 同时恢复谱面与 workspace；
+- renderer 的对齐时间轴同时发布实际雕刻小节线的边界坐标。和声时间轴以该坐标
+  作为小节终点，不使用带小节线右侧排版留白的 unified-slot X；
+- 自由练习仍为默认状态（只有初始主和弦且没有手工音符）时，“设置拍号”替换谱面总体拍号；
+  出现编辑材料后，顶栏“调整拍号”只负责选择拍号并启用平台的通用拍号笔。用户在谱面悬停时
+  预览目标小节，点击后必须用 `FreePracticeIntent.Score(ScoreEditIntent.SetTimeSignature)` 进入
+  `ScoreEditingSession`，由 `TimeSignatureEditEngine` 完成局部拍号写入、后续重分小节、结构选择、
+  render hint 与单历史项；外层 `SetPracticeTimeSignature` 在非默认状态下必须拒绝，平台不得据当前
+  选区猜测目标小节后直接提交。Web 拍号候选和幽灵预览均使用 Bravura 的 SMuFL 拍号数字/C 拍/
+  切分拍字形，不使用普通文本数字替代；
+- 插入小节是外层 `FreePracticeIntent.InsertPracticeMeasures` 的原子操作：通用
+  `MeasureEditEngine` 移动谱面材料，workspace 同时平移插入点后的和弦/调性范围，并按
+  `defaultChordDuration` 在每个新小节内独立填充空和弦槽。单个槽不得跨越新小节线，装不下的
+  尾拍保持为空；
+- 和弦槽延伸超过现有谱尾时只追加所需小节，不再因后续槽缩短而自动删除用户显式保留的空小节。
 
 以下状态不得持久化：求解候选、最后写作范围、diversity seed、busy/诊断、乐谱选区、播放位置
 和撤销栈。最后写作范围使用稳定 `WorkspaceSlotId` 的瞬态列表，不能保存易失的 EventId 或下标。

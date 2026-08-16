@@ -145,6 +145,7 @@ class AlignedTimeAxisResolverTest {
             type = BarlineType.SINGLE,
             measureNumber = 1,
             geometryList = emptyList(),
+            relativeX = StaffSpace(-2.5f),
         )
         val intrinsic = UnifiedTimeSlotMap(
             listOf(
@@ -169,16 +170,20 @@ class AlignedTimeAxisResolverTest {
         )
 
         assertEquals(
-            projection.axis.xAt(nextMeasure),
+            projection.axis.xAt(nextMeasure) + StaffSpace(2f),
             projection.slots.atTime(syntheticBarline)?.x,
         )
         assertEquals(
-            projection.axis.xAt(nextMeasure),
+            projection.axis.xAt(nextMeasure) + StaffSpace(2f),
             projection.slots.atTime(nextMeasure)?.x,
         )
         assertEquals(
             Fraction.HALF,
             projection.axis.anchors.first { it.time == nextMeasure }.absoluteTime,
+        )
+        assertEquals(
+            projection.axis.xAt(nextMeasure),
+            projection.axis.measureBoundaries.single().x,
         )
     }
 

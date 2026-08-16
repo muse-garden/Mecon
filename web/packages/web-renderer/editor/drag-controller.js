@@ -34,7 +34,7 @@ export function createScoreEditorDragController({
 }) {
   function onPointerDown(event) {
     if (!frame || event.button !== 0) return;
-    if (tool === "note") return;
+    if (tool === "note" || tool === "timeSignature") return;
     const point = canvasPoint(event);
     if (!point) return;
     const { surface, x, y } = point;

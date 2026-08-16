@@ -101,6 +101,7 @@ import com.mecon.exploration.PracticeNoteheadRef
 import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
+import com.mecon.api.primitive.TimeSignature
 import com.mecon.desktop.buildDeletions
 import com.mecon.desktop.paletteInfoFor
 import com.mecon.core.engine.edit.NoteEditEngine
@@ -193,6 +194,12 @@ internal data class PracticeEditorState(
     val teachingContribution: SchoenbergFreePracticeContribution,
     val gridUnit: Fraction,
     val defaultChordBeats: Int,
+    val timeSignatureToolRequest: PracticeTimeSignatureToolRequest? = null,
+)
+
+internal data class PracticeTimeSignatureToolRequest(
+    val serial: Int,
+    val timeSignature: TimeSignature,
 )
 
 internal data class PracticeEditorActions(
@@ -296,6 +303,11 @@ internal fun PracticeEditorPanel(
     val playbackShowsCursor by playback.playbackShowsCursor.collectAsState()
     val displayedPlaybackState = if (playbackShowsCursor) playbackState else PlaybackState.IDLE
     val noteTool = androidx.compose.runtime.remember { NoteToolState() }
+    androidx.compose.runtime.LaunchedEffect(state.timeSignatureToolRequest?.serial) {
+        state.timeSignatureToolRequest?.let { request ->
+            noteTool.enterTimeEntry(request.timeSignature)
+        }
+    }
     val focusRequester = androidx.compose.runtime.remember { FocusRequester() }
     val notationPlan = androidx.compose.runtime.remember(
         state.workspace.voices,
@@ -503,6 +515,7 @@ internal fun PracticeEditorPanel(
         ) {
             SharedHarmonicTimeline(
                 workspace = state.workspace,
+                timeline = host?.practiceTimeline,
                 selectedSlotId = selectedSlotId,
                 selectedIdiomInstanceId = state.selectedIdiomInstanceId,
                 onSelectIdiom = actions.selectIdiom,
@@ -655,6 +668,12 @@ internal fun PracticeEditorPanel(
                                                 actions.reportError(rejection.message)
                                             },
                                         )
+                                    },
+                                    onInsertTimeSignature = { measureNumber ->
+                                        host.applyPracticeTimeSignatureEdit(
+                                            measureNumber,
+                                            noteTool.selectedTimeSignature,
+                                        ) { updated -> selection = updated }
                                     },
                                 ),
                                 eventMovement = host.noteMovementActions {
@@ -967,6 +986,7 @@ private fun CollapsedPracticePreview(title: String, onExpand: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun SharedHarmonicTimeline(
     workspace: HarmonyWorkspaceState,
+    timeline: PracticeTimelineView? = null,
     selectedSlotId: WorkspaceSlotId,
     selectedIdiomInstanceId: WorkspaceIdiomInstanceId?,
     onSelectIdiom: (WorkspaceIdiomInstanceId) -> Unit,
@@ -1015,8 +1035,8 @@ internal fun SharedHarmonicTimeline(
     var displayMode by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf(PracticeTimelineDisplayMode.FULL)
     }
-    val baseTimeline = androidx.compose.runtime.remember(workspace, idiomTitles) {
-        val projected = FreePracticeViewProjector.timeline(workspace)
+    val baseTimeline = androidx.compose.runtime.remember(timeline, workspace, idiomTitles) {
+        val projected = timeline ?: FreePracticeViewProjector.timeline(workspace)
         projected.copy(idioms = projected.idioms.map { idiom ->
             idiom.copy(title = idiomTitles[idiom.definitionId] ?: idiom.title)
         })
@@ -1106,6 +1126,12 @@ internal fun SharedHarmonicTimeline(
                 freePracticeAxisSceneUnits(anchor.x),
             )
         }.orEmpty()
+        val measureBoundaries = resolvedTimeAxis?.axis?.measureBoundaries?.map { anchor ->
+            PracticeTimelineAxisAnchor(
+                anchor.absoluteTime,
+                freePracticeAxisSceneUnits(anchor.x),
+            )
+        }.orEmpty()
         val axisEnd = resolvedTimeAxis?.let {
             freePracticeAxisSceneUnits(it.axis.contentEndX)
         } ?: 0f
@@ -1115,6 +1141,7 @@ internal fun SharedHarmonicTimeline(
             viewportWidth = viewportUnits,
             scrollLeft = with(density) { scrollState.value.toDp().value },
             axisAnchors = axisAnchors,
+            measureBoundaries = measureBoundaries,
             axisContentEndX = axisEnd,
             pixelsPerWhole = beatWidth.value * 4f,
             timeline = activeTimeline,

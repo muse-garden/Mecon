@@ -1,12 +1,12 @@
 package com.mecon.exploration
 
 import com.mecon.api.primitive.KeySignature
+import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.ScoreId
 import com.mecon.api.primitive.StaffGroupId
 import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeMeasure
 import com.mecon.api.runtime.RuntimeScore
-import com.mecon.api.runtime.toStorage
 import com.mecon.api.storage.PageLayoutConfig
 import com.mecon.api.storage.ScoreMetadata
 import com.mecon.api.storage.StorageMeasure
@@ -186,64 +186,38 @@ object VoicePlanScoreAssembler {
         score: RuntimeScore,
         workspace: HarmonyWorkspaceState,
     ): RuntimeScore {
-        val requiredCount = requiredMeasureCount(workspace)
         val existing = score.measures.map { it.value }.sortedBy(RuntimeMeasure::number)
         val currentCount = existing.lastOrNull()?.number ?: 0
-        if (currentCount == requiredCount) return score
-        if (currentCount > requiredCount) return trimTrailingMeasures(score, requiredCount)
+        val requiredEnd = workspace.slots.maxOf { it.onset + it.duration }
+        var covered = scoreDuration(score)
+        if (covered >= requiredEnd) return score
 
-        val appended = (currentCount + 1..requiredCount).map { number ->
-            RuntimeMeasure(
-                number = number,
-                timeSignature = score.getTimeSignatureAt(number),
-                keySignature = score.getKeySignatureAt(number),
-            )
+        val appended = buildList {
+            var number = currentCount + 1
+            while (covered < requiredEnd) {
+                val timeSignature = score.getTimeSignatureAt(number)
+                add(
+                    RuntimeMeasure(
+                        number = number,
+                        timeSignature = timeSignature,
+                        keySignature = score.getKeySignatureAt(number),
+                    )
+                )
+                covered += timeSignature.measureDuration()
+                number++
+            }
         }
         return score.replaceMeasures(existing + appended)
     }
 
-    /**
-     * Drops the measures the timeline no longer reaches, together with the material inside them.
-     *
-     * Free-practice notation is a projection of the chord timeline, so everything after the last
-     * slot is orphaned by construction. Keeping those measures let every shortening edit — dragging
-     * a chord back to the left, deleting chords — pile empty measures up at the end of the score.
-     * The rebuild goes through storage because dropping a voice event also has to drop the pitch
-     * event it owns and any slur that ended on it.
-     */
-    private fun trimTrailingMeasures(score: RuntimeScore, requiredCount: Int): RuntimeScore {
-        val storage = score.toStorage()
-        val voiceTracks = storage.voiceTracks.mapValues { (_, track) ->
-            val kept = track.events.filter { it.onset.measure <= requiredCount }
-            val keptIds = kept.mapTo(hashSetOf()) { it.id }
-            track.copy(
-                events = kept,
-                slurs = track.slurs.filter { it.startEventId in keptIds && it.endEventId in keptIds },
-            )
+    /** Absolute duration of all explicit score measures, including an intentionally empty tail. */
+    fun scoreDuration(score: RuntimeScore): Fraction = score.measures
+        .map { it.value.number }
+        .distinct()
+        .sorted()
+        .fold(Fraction.ZERO) { total, measure ->
+            total + score.getTimeSignatureAt(measure).measureDuration()
         }
-        val referenced = voiceTracks.values.flatMapTo(hashSetOf()) { track ->
-            track.events.map { it.pitchEventId }
-        }
-        return RuntimeScore.fromStorage(
-            storage.copy(
-                measures = storage.measures.filter { it.number <= requiredCount },
-                voiceTracks = voiceTracks,
-                pitchTracks = storage.pitchTracks.mapValues { (_, track) ->
-                    track.copy(
-                        events = track.events.filter {
-                            it.id in referenced || it.onset.measure <= requiredCount
-                        },
-                    )
-                },
-                staffTracks = storage.staffTracks.mapValues { (_, track) ->
-                    track.copy(
-                        clefChanges = track.clefChanges.filter { it.onset.measure <= requiredCount },
-                        attachments = track.attachments.filter { it.onset.measure <= requiredCount },
-                    )
-                },
-            )
-        )
-    }
 
     internal fun requiredMeasureCount(workspace: HarmonyWorkspaceState): Int {
         val totalDuration = workspace.slots.maxOf { it.onset + it.duration }

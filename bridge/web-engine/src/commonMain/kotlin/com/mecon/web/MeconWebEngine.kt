@@ -71,6 +71,7 @@ private data class WebTimeAxisAnchor(
 @Serializable
 private data class WebResolvedTimeAxis(
     val anchors: List<WebTimeAxisAnchor>,
+    val measureBoundaries: List<WebTimeAxisAnchor> = emptyList(),
     val contentOriginX: Float,
     val contentEndX: Float,
     val intrinsicContentWidth: Float,
@@ -391,6 +392,9 @@ class MeconWebEngine(
                     ).x.value - surfaceOriginX
                     WebResolvedTimeAxis(
                         anchors = axis.anchors.map { anchor ->
+                            WebTimeAxisAnchor(anchor.absoluteTime, anchor.time, pixelX(anchor.x))
+                        },
+                        measureBoundaries = axis.measureBoundaries.map { anchor ->
                             WebTimeAxisAnchor(anchor.absoluteTime, anchor.time, pixelX(anchor.x))
                         },
                         contentOriginX = 0f,

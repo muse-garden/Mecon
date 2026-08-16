@@ -4,7 +4,18 @@ import {
   createControlledScrollSync,
   createScoreEditorCommandController,
   createScoreEditorDragController,
+  timeSignatureGlyphParts,
 } from "../editor/index.js";
+
+test("time-signature controls use Bravura SMuFL glyphs", () => {
+  assert.deepEqual(timeSignatureGlyphParts({ numerator: 12, denominator: 8 }), {
+    symbol: "",
+    numerator: "\uE081\uE082",
+    denominator: "\uE088",
+  });
+  assert.equal(timeSignatureGlyphParts({ symbol: "COMMON" }).symbol, "\uE08A");
+  assert.equal(timeSignatureGlyphParts({ symbol: "CUT" }).symbol, "\uE08B");
+});
 
 test("controlled scroll sync does not pull an active native scrollbar back to a stale prop", () => {
   const sync = createControlledScrollSync();

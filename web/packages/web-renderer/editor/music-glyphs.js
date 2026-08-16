@@ -30,7 +30,49 @@ export const SMUFL_GLYPHS = Object.freeze({
   articTenuto: "\uE4A4",
   articStaccatissimo: "\uE4A6",
   articMarcato: "\uE4AC",
+  timeSig0: "\uE080",
+  timeSig1: "\uE081",
+  timeSig2: "\uE082",
+  timeSig3: "\uE083",
+  timeSig4: "\uE084",
+  timeSig5: "\uE085",
+  timeSig6: "\uE086",
+  timeSig7: "\uE087",
+  timeSig8: "\uE088",
+  timeSig9: "\uE089",
+  timeSigCommon: "\uE08A",
+  timeSigCutCommon: "\uE08B",
 });
+
+const TIME_SIGNATURE_DIGITS = Object.freeze([
+  SMUFL_GLYPHS.timeSig0,
+  SMUFL_GLYPHS.timeSig1,
+  SMUFL_GLYPHS.timeSig2,
+  SMUFL_GLYPHS.timeSig3,
+  SMUFL_GLYPHS.timeSig4,
+  SMUFL_GLYPHS.timeSig5,
+  SMUFL_GLYPHS.timeSig6,
+  SMUFL_GLYPHS.timeSig7,
+  SMUFL_GLYPHS.timeSig8,
+  SMUFL_GLYPHS.timeSig9,
+]);
+
+/** Bravura/SMuFL glyph strings for a stacked time-signature control or pointer preview. */
+export function timeSignatureGlyphParts(timeSignature) {
+  if (timeSignature?.symbol === "COMMON") {
+    return Object.freeze({ symbol: SMUFL_GLYPHS.timeSigCommon, numerator: "", denominator: "" });
+  }
+  if (timeSignature?.symbol === "CUT") {
+    return Object.freeze({ symbol: SMUFL_GLYPHS.timeSigCutCommon, numerator: "", denominator: "" });
+  }
+  const digits = (value) => String(Math.max(1, Number(value) || 1))
+    .split("").map((digit) => TIME_SIGNATURE_DIGITS[Number(digit)]).join("");
+  return Object.freeze({
+    symbol: "",
+    numerator: digits(timeSignature?.numerator),
+    denominator: digits(timeSignature?.denominator),
+  });
+}
 
 export const DURATION_GLYPHS = Object.freeze([
   Object.freeze({ value: "WHOLE", label: "全音符", note: SMUFL_GLYPHS.noteWhole, rest: SMUFL_GLYPHS.restWhole }),

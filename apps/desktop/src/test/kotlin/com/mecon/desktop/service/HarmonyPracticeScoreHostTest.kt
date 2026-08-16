@@ -34,6 +34,27 @@ import kotlin.test.assertTrue
 
 class HarmonyPracticeScoreHostTest {
     @Test
+    fun initialTimelinePublishesTheEmptyBeatBeforeTheFinalBarline() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val initial = initialWorkspace(4, ModulationKey(0, KeySignatureMode.MAJOR))
+            val runtime = RuntimeScore.fromStorage(
+                VoicePlanScoreAssembler.emptyPracticeScore(initial, KeySignature.C_MAJOR),
+            )
+            val host = HarmonyPracticeScoreHost(scope, runtime, computeScore(runtime), initial)
+
+            assertEquals(Fraction.QUARTER, host.practiceTimeline.slots.single().duration)
+            assertEquals(Fraction.HALF, host.practiceTimeline.end)
+            assertEquals(
+                listOf(Fraction.QUARTER to Fraction.QUARTER),
+                host.practiceTimeline.emptySlots.map { it.onset to it.duration },
+            )
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
     fun insertingAuthenticCadenceRewritesEveryIdiomChordInsteadOfKeepingOldTonic() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {

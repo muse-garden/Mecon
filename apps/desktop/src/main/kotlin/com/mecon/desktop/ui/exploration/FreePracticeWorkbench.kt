@@ -50,6 +50,7 @@ import com.mecon.exploration.FreePracticeSettings
 import com.mecon.exploration.FreePracticeWritingSettings
 import com.mecon.exploration.KeyModeSpec
 import com.mecon.exploration.KeySpec
+import com.mecon.features.freepractice.PracticeStructureView
 import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.withTonalLayoutBaseline
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
@@ -150,7 +151,16 @@ internal fun FreePracticeWorkbench(
         mutableStateOf(initialSettings?.writing ?: FreePracticeWritingSettings())
     }
     var gridUnit by remember { mutableStateOf(Fraction.EIGHTH) }
-    var defaultChordBeats by remember { mutableIntStateOf(1) }
+    var defaultChordBeats by remember {
+        val beats = initialSettings?.defaultChordDuration?.div(Fraction.QUARTER)
+        mutableIntStateOf(
+            beats?.takeIf { it.denominator == 1 }?.numerator?.coerceIn(1, 16) ?: 1,
+        )
+    }
+    var timeSignatureToolSerial by remember { mutableIntStateOf(0) }
+    var timeSignatureToolRequest by remember {
+        mutableStateOf<PracticeTimeSignatureToolRequest?>(null)
+    }
     var route by remember { mutableStateOf(initialTonalRoute(initialKey)) }
     var inputMode by remember { mutableStateOf(PracticeInputMode.CHORD_TONE) }
     var chordToneMode by remember { mutableStateOf(ChordToneLabelMode.RELATIVE) }
@@ -665,6 +675,7 @@ internal fun FreePracticeWorkbench(
         teachingContribution = teachingContribution ?: SchoenbergFreePracticeContribution(),
         gridUnit = gridUnit,
         defaultChordBeats = defaultChordBeats,
+        timeSignatureToolRequest = timeSignatureToolRequest,
     )
     val editorActions = PracticeEditorActions(
         selectSlot = ::selectHarmonySlot,
@@ -718,6 +729,7 @@ internal fun FreePracticeWorkbench(
                 hasSelection = scoreSelection.isNotEmpty(),
                 gridUnit = gridUnit,
                 defaultChordBeats = defaultChordBeats,
+                structure = host?.practiceStructure ?: PracticeStructureView(),
                 changeWorkbenchLayout = { workbenchLayout = it },
                 changeVoiceCount = { rebuild(it) },
                 changeStaffVoices = planActions.changeStaffVoices,
@@ -727,7 +739,30 @@ internal fun FreePracticeWorkbench(
                     currentHost.value?.updateWritingSettings(it)
                 },
                 changeGridUnit = { gridUnit = it },
-                changeDefaultChordBeats = { defaultChordBeats = it },
+                changeDefaultChordBeats = {
+                    defaultChordBeats = it
+                    currentHost.value?.setDefaultChordDuration(Fraction(it, 4).simplified())
+                },
+                setTimeSignature = { timeSignature ->
+                    currentHost.value?.let { activeHost ->
+                        if (activeHost.practiceStructure.pristine) {
+                            activeHost.setPracticeTimeSignature(timeSignature)
+                        } else {
+                            timeSignatureToolSerial += 1
+                            timeSignatureToolRequest = PracticeTimeSignatureToolRequest(
+                                timeSignatureToolSerial,
+                                timeSignature,
+                            )
+                        }
+                    }
+                },
+                insertMeasures = { position, count, chordBeats ->
+                    currentHost.value?.insertPracticeMeasures(
+                        position,
+                        count,
+                        Fraction(chordBeats, 4).simplified(),
+                    )
+                },
                 rewriteSelection = {
                     host?.rewriteSelection(rewriteSlotIds, currentInitialKey) { message ->
                         completeWritingOperation(message)

@@ -310,6 +310,7 @@ function publishTimelineScene(update, gesture, timeline = update.timeline) {
     scrollLeft: timelineRequest?.scrollLeft ?? 0,
     contentOriginX: rendered.timeAxis.contentOriginX ?? 0,
     axisAnchors: rendered.timeAxis.anchors,
+    measureBoundaries: rendered.timeAxis.measureBoundaries ?? [],
     axisContentEndX: rendered.timeAxis.contentEndX,
     axisSurfaceWidth: rendered.timeAxis.surfaceWidth,
     timeline,

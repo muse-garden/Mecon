@@ -27,6 +27,228 @@ async function clickScoreNote(page, occurrence) {
   await page.locator("canvas").click({ position: point });
 }
 
+test("2/4 practice shows a passive empty beat and a separate add button", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+  await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  // Exercise the user path. Loading a fixture that was already saved as 2/4 misses regressions in
+  // new-document construction, the pristine-meter intent, and the Worker scene refresh.
+  const toolbar = page.getByRole("toolbar", { name: "自由练习工具栏" });
+  await toolbar.getByRole("button", { name: "新建", exact: true }).click();
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+  await toolbar.getByRole("button", { name: "设置拍号", exact: true }).click();
+  const meterDialog = page.getByRole("dialog", { name: "设置拍号" });
+  await meterDialog.getByRole("button", { name: "2/4 拍", exact: true }).click();
+  await meterDialog.getByRole("button", { name: "应用", exact: true }).click();
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => {
+    const meter = window.__MECON_E2E__?.snapshot()?.practiceUpdate?.structure
+      ?.effectiveTimeSignature;
+    return meter ? { numerator: meter.numerator, denominator: meter.denominator } : null;
+  }), { timeout: 30_000 }).toEqual({ numerator: 2, denominator: 4 });
+  await expect(toolbar.getByLabel("默认和弦拍数", { exact: true })).toHaveValue("1");
+  await expect(page.locator("[data-slot-id]")).toHaveCount(1);
+
+  const state = await page.evaluate(() => {
+    const timeline = window.__MECON_E2E__.snapshot().practiceUpdate.timeline;
+    const value = (fraction) => fraction.numerator / fraction.denominator;
+    return {
+      chordEnd: value(timeline.slots[0].onset) + value(timeline.slots[0].duration),
+      timelineEnd: value(timeline.end),
+      emptySlot: {
+        onset: value(timeline.emptySlots[0].onset),
+        duration: value(timeline.emptySlots[0].duration),
+      },
+    };
+  });
+  expect(state).toEqual({
+    chordEnd: 1 / 4,
+    timelineEnd: 1 / 2,
+    emptySlot: { onset: 1 / 4, duration: 1 / 4 },
+  });
+
+  const geometry = await page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot();
+    const surface = document.querySelector(".harmony-timeline").getBoundingClientRect();
+    const chord = document.querySelector('[data-slot-id="slot-0"]').getBoundingClientRect();
+    const emptyPaint = document.querySelector('svg rect[data-object-id^="empty-slot:"]')
+      .getBoundingClientRect();
+    const append = document.querySelector('[aria-label="追加和弦槽"]').parentElement
+      .getBoundingClientRect();
+    const finalGrid = [...document.querySelectorAll('svg [data-object-id^="grid:measure:"]')]
+      .at(-1).getBoundingClientRect();
+    const finalScoreBarline = snapshot.bundle.surfaces.flatMap((item) => item.elements)
+      .filter((element) => element.type === "BARLINE")
+      .sort((left, right) => left.measureNumber - right.measureNumber).at(-1);
+    const value = (item) => Number(item?.value ?? item ?? 0);
+    const scoreOriginX = snapshot.bundle.paginated
+      ? 0 : value(snapshot.bundle.bounds?.origin?.x);
+    const scoreBarlineRightX = Math.max(...finalScoreBarline.commands.map((command) => (
+      value(command.bounds.origin.x) + value(command.bounds.width)
+    ))) - scoreOriginX;
+    return {
+      chord: { x: chord.x - surface.x, width: chord.width },
+      emptySlot: {
+        x: emptyPaint.x - surface.x - 3,
+        y: emptyPaint.y - surface.y,
+        width: emptyPaint.width + 6,
+        height: emptyPaint.height,
+      },
+      append: { x: append.x - surface.x, width: append.width },
+      finalGridX: finalGrid.x - surface.x,
+      scoreBarlineRightX,
+    };
+  });
+  const appendButton = page.getByRole("button", { name: "追加和弦槽", exact: true });
+  await expect(page.locator('[aria-label^="空和弦位"]')).toHaveCount(0);
+  await expect(page.locator('[data-object-id^="empty-slot:"][data-object-id$=":text"]')).toHaveCount(0);
+  await expect(appendButton).toBeVisible();
+  expect(Math.abs(geometry.chord.width - geometry.emptySlot.width)).toBeLessThan(1);
+  expect(Math.abs(geometry.chord.x + geometry.chord.width - geometry.emptySlot.x)).toBeLessThan(1);
+  expect(Math.abs(geometry.emptySlot.x + geometry.emptySlot.width - geometry.finalGridX)).toBeLessThan(1);
+  expect(Math.abs(geometry.finalGridX - geometry.scoreBarlineRightX)).toBeLessThan(2);
+  expect(Math.abs(geometry.append.x - geometry.finalGridX)).toBeLessThan(1);
+  expect(Math.abs(geometry.append.width - geometry.chord.width)).toBeLessThan(1);
+  await expect(page.getByLabel("和声时间轴")).toHaveScreenshot(
+    "new-2-4-empty-chord-slot.png",
+    { animations: "disabled" },
+  );
+
+  const revisionBeforePassiveClick = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision
+  ));
+  await page.locator(".harmony-timeline").click({
+    position: {
+      x: geometry.emptySlot.x + 12,
+      y: geometry.emptySlot.y + geometry.emptySlot.height / 2,
+    },
+  });
+  await expect(page.locator("[data-slot-id]")).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision
+  ))).toBe(revisionBeforePassiveClick);
+
+  await appendButton.click();
+  await expect(page.locator("[data-slot-id]")).toHaveCount(2, { timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.selection.slotId
+  ))).toBe("slot-1");
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.timeline.emptySlots.length
+  ))).toBe(0);
+  await expect(appendButton).toBeVisible();
+  const afterAddGeometry = await page.evaluate(() => {
+    const surface = document.querySelector(".harmony-timeline").getBoundingClientRect();
+    const added = document.querySelector('[data-slot-id="slot-1"]').getBoundingClientRect();
+    const append = document.querySelector('[aria-label="追加和弦槽"]').parentElement
+      .getBoundingClientRect();
+    const finalGrid = [...document.querySelectorAll('svg [data-object-id^="grid:measure:"]')]
+      .at(-1).getBoundingClientRect();
+    return {
+      addedRightX: added.right - surface.x,
+      appendX: append.x - surface.x,
+      finalGridX: finalGrid.x - surface.x,
+    };
+  });
+  expect(Math.abs(afterAddGeometry.addedRightX - afterAddGeometry.finalGridX)).toBeLessThan(1);
+  expect(Math.abs(afterAddGeometry.appendX - afterAddGeometry.finalGridX)).toBeLessThan(1);
+
+  const addedSlot = page.locator('[data-slot-id="slot-1"]');
+  const dragAddedEndBy = async (deltaX) => {
+    const endHandle = addedSlot.getByRole("button", { name: /调整.*终点/ });
+    const handle = await endHandle.boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(
+      handle.x + handle.width / 2 + deltaX,
+      handle.y + handle.height / 2,
+      { steps: 6 },
+    );
+    await page.mouse.up();
+  };
+
+  // Extend the last chord into a newly created second measure, then pull it back to the first
+  // barline. The now-completely-empty and noteless second measure must disappear atomically.
+  const oneBeatWidth = (await addedSlot.boundingBox()).width;
+  await dragAddedEndBy(oneBeatWidth);
+  await expect.poll(() => page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const value = (fraction) => fraction.numerator / fraction.denominator;
+    return {
+      duration: value(update.timeline.slots[1].duration),
+      end: value(update.timeline.end),
+      measures: update.structure.lastMeasure,
+      fillers: update.timeline.emptySlots.map((slot) => ({
+        onset: value(slot.onset), duration: value(slot.duration),
+      })),
+    };
+  })).toEqual({
+    duration: 1 / 2,
+    end: 1,
+    measures: 2,
+    fillers: [{ onset: 3 / 4, duration: 1 / 4 }],
+  });
+  await expect(page.locator('svg rect[data-object-id^="empty-slot:"]')).toHaveCount(1);
+
+  await dragAddedEndBy(-oneBeatWidth);
+  await expect.poll(() => page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const value = (fraction) => fraction.numerator / fraction.denominator;
+    return {
+      duration: value(update.timeline.slots[1].duration),
+      end: value(update.timeline.end),
+      measures: update.structure.lastMeasure,
+      fillers: update.timeline.emptySlots.length,
+    };
+  })).toEqual({ duration: 1 / 4, end: 1 / 2, measures: 1, fillers: 0 });
+
+  // Shortening the newly inserted real chordless slot used to leave a naked gap before the
+  // barline because the remainder was smaller than the default chord duration.
+  const addedBox = await addedSlot.boundingBox();
+  await dragAddedEndBy(-addedBox.width / 2);
+  await expect.poll(() => page.evaluate(() => {
+    const timeline = window.__MECON_E2E__.snapshot().practiceUpdate.timeline;
+    const value = (fraction) => fraction.numerator / fraction.denominator;
+    return {
+      addedDuration: value(timeline.slots[1].duration),
+      fillers: timeline.emptySlots.map((slot) => ({
+        onset: value(slot.onset),
+        duration: value(slot.duration),
+      })),
+    };
+  })).toEqual({
+    addedDuration: 1 / 8,
+    fillers: [{ onset: 3 / 8, duration: 1 / 8 }],
+  });
+  await expect(page.locator('[data-object-id^="empty-slot:"][data-object-id$=":text"]')).toHaveCount(0);
+  const shortenedGeometry = await page.evaluate(() => {
+    const surface = document.querySelector(".harmony-timeline").getBoundingClientRect();
+    const realEmpty = document.querySelector('svg [data-object-id="slot:slot-1"]');
+    const filler = document.querySelector('svg rect[data-object-id^="empty-slot:"]');
+    const finalGrid = [...document.querySelectorAll('svg [data-object-id^="grid:measure:"]')]
+      .at(-1).getBoundingClientRect();
+    const realBounds = realEmpty.getBoundingClientRect();
+    const fillerBounds = filler.getBoundingClientRect();
+    return {
+      realRightX: realBounds.right - surface.x + 3,
+      fillerX: fillerBounds.x - surface.x - 3,
+      fillerRightX: fillerBounds.right - surface.x + 3,
+      finalGridX: finalGrid.x - surface.x,
+      realFill: realEmpty.getAttribute("fill"),
+      fillerFill: filler.getAttribute("fill"),
+    };
+  });
+  expect(Math.abs(shortenedGeometry.realRightX - shortenedGeometry.fillerX)).toBeLessThan(1);
+  expect(Math.abs(shortenedGeometry.fillerRightX - shortenedGeometry.finalGridX)).toBeLessThan(1);
+  expect(shortenedGeometry.fillerFill).not.toBe(shortenedGeometry.realFill);
+  await expect(page.getByLabel("和声时间轴")).toHaveScreenshot(
+    "new-2-4-shortened-tail-filler.png",
+    { animations: "disabled" },
+  );
+});
+
 test("marks a selected note and enables shared harmonic-role filters", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
@@ -137,7 +359,10 @@ async function marqueeFirstTwoScoreOnsets(page) {
 test("new free practice starts from the shared preset and exports a complete container", async ({ page }) => {
   await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await page.goto("/");
-  await page.getByRole("button", { name: "新建自由练习" }).click();
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+  await page.getByRole("toolbar", { name: "自由练习工具栏" })
+    .getByRole("button", { name: "新建", exact: true }).click();
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect(page.getByRole("toolbar", { name: "自由练习工具栏" })).toBeVisible();
@@ -532,6 +757,74 @@ test("score note selection consumes shared edit audition playback", async ({ pag
   await expect(page.locator(".score-playhead")).toHaveCount(0);
 });
 
+test("top toolbar adjusts meter and inserts measure-aligned chord slots", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto("/");
+  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel("追加和弦槽").click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.structure.pristine
+  ))).toBe(false);
+
+  const toolbar = page.getByRole("toolbar", { name: "自由练习工具栏" });
+  await toolbar.getByRole("button", { name: /设置拍号|调整拍号/ }).click();
+  const meterDialog = page.getByRole("dialog", { name: /设置拍号|调整拍号/ });
+  const threeFour = meterDialog.getByRole("button", { name: "3/4 拍" });
+  const glyphStyle = await threeFour.locator(".bravura-time-signature").evaluate((element) => ({
+    fontFamily: getComputedStyle(element).fontFamily,
+    codePoints: [...element.textContent].map((character) => character.codePointAt(0)),
+  }));
+  expect(glyphStyle.fontFamily).toContain("Bravura");
+  expect(glyphStyle.codePoints).toEqual([0xE083, 0xE084]);
+  await threeFour.click();
+  await meterDialog.getByRole("button", { name: "应用", exact: true }).click();
+  const canvas = page.locator("canvas[aria-label='可编辑五线谱']");
+  await expect(canvas).toHaveAttribute("data-editor-tool", "timeSignature");
+  const measurePoint = await page.evaluate(() => {
+    const frame = window.__MECON_E2E__.snapshot();
+    const surface = frame.bundle.surfaces[0];
+    const value = (item) => Number(item?.value ?? item ?? 0);
+    const origin = frame.bundle.paginated ? { x: 0, y: value(surface.contentOffsetY) } : {
+      x: value(frame.bundle.bounds?.origin?.x), y: value(frame.bundle.bounds?.origin?.y),
+    };
+    const position = frame.bundle.timePositions.find((item) => item.timeCode?.measure === 1 &&
+      value(item.timeCode?.beat?.numerator) === 0);
+    const staff = surface.elements.find((item) => item.type === "STAFF");
+    if (!position || !staff) throw new Error("Missing first-measure downbeat or staff");
+    return {
+      x: value(position.x) - origin.x,
+      y: value(staff.hitBox.origin.y) + value(staff.hitBox.height) / 2 - origin.y,
+    };
+  });
+  await canvas.hover({ position: measurePoint });
+  await expect(page.locator(".score-time-signature-preview .bravura-time-signature")).toBeVisible();
+  await canvas.click({ position: measurePoint });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.structure.effectiveTimeSignature.numerator
+  ))).toBe(3);
+  const beforeMeasures = await page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.structure.lastMeasure
+  ));
+
+  await toolbar.getByRole("button", { name: "插入小节" }).click();
+  const insertDialog = page.getByRole("dialog", { name: "插入小节" });
+  await insertDialog.getByRole("spinbutton", { name: "每个和弦拍数" }).fill("2");
+  await insertDialog.getByRole("button", { name: "插入", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().practiceUpdate.structure.lastMeasure
+  ))).toBe(beforeMeasures + 1);
+  const insertedSlots = await page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const end = update.timeline.end.numerator / update.timeline.end.denominator;
+    return update.timeline.slots.filter((slot) => {
+      const onset = slot.onset.numerator / slot.onset.denominator;
+      return onset >= end - 3 / 4;
+    }).map((slot) => slot.duration.numerator / slot.duration.denominator);
+  });
+  expect(insertedSlots).toContain(1 / 2);
+});
+
 test("score note selection focuses its filled harmony slot", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
@@ -734,12 +1027,13 @@ test("harmony timeline commits keyboard and pointer edits through the shared ses
   const slot = page.locator('[data-slot-id="slot-0"]');
   await slot.locator("button").first().press("ArrowRight");
   await expect(page.getByRole("status")).not.toHaveText("revision 0", { timeout: 30_000 });
-  await expect(page.getByLabel("自由练习反馈")).toContainText("READY", { timeout: 60_000 });
   // Moving a slot may start automatic writing. The intent queue deliberately holds settings while
   // that session-owned job is RUNNING, so wait on the authoritative phase rather than panel text.
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
     .practiceUpdate.writing.phase), { timeout: 60_000 }).not.toBe("RUNNING");
-  await page.getByLabel("编辑后自动配声").click();
+  const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
+  await expect(autoWriting).toHaveAttribute("aria-pressed", "true");
+  await autoWriting.click();
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
     .practiceUpdate.document.settings.writing.autoWritingEnabled)).toBe(false);
   const revisionBeforeResize = await page.evaluate(() => window.__MECON_E2E__.snapshot().practiceUpdate.revision);

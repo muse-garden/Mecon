@@ -54,6 +54,189 @@ class PracticeTimelineControllerTest {
     }
 
     @Test
+    fun appendCellIsAlwaysPlacedAfterTheClosingBarline() {
+        val oneBeatChord = request().copy(
+            timeline = PracticeTimelineView(
+                end = Fraction.HALF,
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                ),
+            ),
+            selectedSlotId = first.value,
+            defaultChordDuration = Fraction.QUARTER,
+        )
+
+        val scene = PracticeTimelineSceneProjector.project(oneBeatChord)
+        val chord = scene.hitObjects.single { it.id == "slot:${first.value}" }.bounds
+        val append = scene.hitObjects.single { it.id == "append" }.bounds
+
+        assertTrue(chord.x + chord.width < scene.contentAnchors.contentEndX)
+        assertEquals(scene.contentAnchors.contentEndX, append.x)
+        assertEquals(chord.width, append.width)
+    }
+
+    @Test
+    fun projectedEmptyChordSlotIsPassiveWhileItsSeparateAppendButtonAddsAtTheExactBeat() {
+        val emptyBeat = PracticeTimelineEmptySlotView(
+            id = "empty:1:4",
+            onset = Fraction.QUARTER,
+            duration = Fraction.QUARTER,
+        )
+        val oneBeatChord = request().copy(
+            timeline = PracticeTimelineView(
+                end = Fraction.HALF,
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                ),
+                emptySlots = listOf(emptyBeat),
+            ),
+            selectedSlotId = first.value,
+            defaultChordDuration = Fraction.QUARTER,
+        )
+
+        val scene = PracticeTimelineSceneProjector.project(oneBeatChord)
+        val chord = scene.hitObjects.single { it.id == "slot:${first.value}" }.bounds
+        val emptySlot = scene.drawObjects.single { it.id == "empty-slot:${emptyBeat.id}" }
+        val append = scene.hitObjects.single { it.id == "append" }
+        val realChordlessFill = PracticeTimelineSceneProjector.project(
+            oneBeatChord.copy(
+                timeline = oneBeatChord.timeline.copy(
+                    slots = oneBeatChord.timeline.slots.map { it.copy(symbol = null) },
+                ),
+            ),
+        ).drawObjects.single { it.id == "slot:${first.value}" }.fill
+
+        assertEquals(chord.x + chord.width + 3f, emptySlot.bounds.x)
+        assertEquals(scene.contentAnchors.contentEndX - 3f, emptySlot.bounds.x + emptySlot.bounds.width)
+        assertTrue(scene.drawObjects.none { it.id == "empty-slot:${emptyBeat.id}:text" })
+        assertTrue(emptySlot.fill != realChordlessFill)
+        assertTrue(scene.hitObjects.none { it.id == "empty-slot:${emptyBeat.id}" })
+        assertTrue(scene.accessibility.none { it.id == "empty-slot:${emptyBeat.id}" })
+        assertEquals(PracticeTimelineHitKind.APPEND, append.kind)
+        assertEquals(scene.contentAnchors.contentEndX, append.bounds.x)
+        assertEquals(chord.width, append.bounds.width)
+
+        val passiveClick = FreePracticeTimelineController.handle(
+            scene,
+            oneBeatChord,
+            PracticeTimelineInput(
+                type = PracticeTimelineInputType.DOWN,
+                sceneGeneration = scene.generation,
+                pointerId = 12,
+                x = emptySlot.bounds.x + emptySlot.bounds.width / 2f,
+                y = emptySlot.bounds.y + emptySlot.bounds.height / 2f,
+            ),
+        )
+        assertFalse(passiveClick.accepted)
+        assertTrue(passiveClick.ignored)
+        assertEquals("no_target", passiveClick.reasonKey)
+
+        val activated = FreePracticeTimelineController.handle(
+            scene,
+            oneBeatChord,
+            PracticeTimelineInput(
+                type = PracticeTimelineInputType.ACTIVATE,
+                sceneGeneration = scene.generation,
+                actionTargetId = append.id,
+            ),
+        )
+        assertEquals(Fraction.QUARTER, activated.appendAt)
+        assertEquals(Fraction.QUARTER, activated.appendDuration)
+    }
+
+    @Test
+    fun appendCellRemainsAfterAddingARealChordlessSlotAtTheBarline() {
+        val filledMeasure = request().copy(
+            timeline = PracticeTimelineView(
+                end = Fraction.HALF,
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                    PracticeTimelineSlotView(second, Fraction.QUARTER, Fraction.QUARTER, null),
+                ),
+            ),
+            selectedSlotId = second.value,
+            defaultChordDuration = Fraction.QUARTER,
+        )
+
+        val scene = PracticeTimelineSceneProjector.project(filledMeasure)
+        val append = scene.hitObjects.single { it.id == "append" }
+        val activated = FreePracticeTimelineController.handle(
+            scene,
+            filledMeasure,
+            PracticeTimelineInput(
+                type = PracticeTimelineInputType.ACTIVATE,
+                sceneGeneration = scene.generation,
+                actionTargetId = append.id,
+            ),
+        )
+
+        assertEquals(scene.contentAnchors.contentEndX, append.bounds.x)
+        assertEquals(Fraction.HALF, activated.appendAt)
+        assertEquals(Fraction.QUARTER, activated.appendDuration)
+    }
+
+    @Test
+    fun appendCellStartsAtTheEngravedBarlineInsteadOfThePaddedAxisSlot() {
+        val oneBeatChord = request().copy(
+            measureBoundaries = listOf(
+                PracticeTimelineAxisAnchor(Fraction.HALF, 275f),
+            ),
+            timeline = PracticeTimelineView(
+                end = Fraction.HALF,
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.QUARTER, "I"),
+                ),
+            ),
+            selectedSlotId = first.value,
+            defaultChordDuration = Fraction.QUARTER,
+        )
+
+        val scene = PracticeTimelineSceneProjector.project(oneBeatChord)
+        val trailingSpace = scene.hitObjects.single { it.id == "append" }.bounds
+        val closingBarline = scene.drawObjects.single { it.id.startsWith("grid:measure:") && it.bounds.x > 20f }
+
+        assertEquals(295f, trailingSpace.x)
+        assertEquals(295f, closingBarline.bounds.x)
+        assertEquals(295f, scene.contentAnchors.contentEndX)
+    }
+
+    @Test
+    fun appendCellUsesTheDefaultDurationEvenWhenTheBlankRemainderIsShorter() {
+        val threeFourTail = request().copy(
+            axisAnchors = listOf(
+                PracticeTimelineAxisAnchor(Fraction.ZERO, 0f),
+                PracticeTimelineAxisAnchor(Fraction.HALF, 288f),
+                PracticeTimelineAxisAnchor(Fraction(3, 4), 432f),
+            ),
+            axisContentEndX = 432f,
+            timeline = PracticeTimelineView(
+                end = Fraction(3, 4),
+                slots = listOf(
+                    PracticeTimelineSlotView(first, Fraction.ZERO, Fraction.HALF, "I"),
+                ),
+            ),
+            selectedSlotId = first.value,
+            defaultChordDuration = Fraction.HALF,
+        )
+
+        val scene = PracticeTimelineSceneProjector.project(threeFourTail)
+        val trailingSpace = scene.hitObjects.single { it.id == "append" }.bounds
+        val activated = FreePracticeTimelineController.handle(
+            scene,
+            threeFourTail,
+            PracticeTimelineInput(
+                type = PracticeTimelineInputType.ACTIVATE,
+                sceneGeneration = scene.generation,
+                actionTargetId = "append",
+            ),
+        )
+
+        assertEquals(288f, trailingSpace.width)
+        assertEquals(scene.contentAnchors.contentEndX, trailingSpace.x)
+        assertEquals(Fraction.HALF, activated.appendDuration)
+    }
+
+    @Test
     fun appendAffordanceStaysAfterTheFinalChordWhenContentOverflows() {
         val unscrolled = PracticeTimelineSceneProjector.project(request(viewport = 220f))
         val scrolled = PracticeTimelineSceneProjector.project(request(viewport = 220f, scrollLeft = 70f))

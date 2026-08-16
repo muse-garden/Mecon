@@ -50,6 +50,8 @@ data class PracticeTimelineSceneRequest(
     val scrollLeft: Float = 0f,
     val contentOriginX: Float = 0f,
     val axisAnchors: List<PracticeTimelineAxisAnchor> = emptyList(),
+    /** Actual engraved closing-barline positions; these replace padded terminal slot anchors. */
+    val measureBoundaries: List<PracticeTimelineAxisAnchor> = emptyList(),
     val axisContentEndX: Float = 0f,
     val axisSurfaceWidth: Float = 0f,
     val pixelsPerWhole: Float = 576f,
@@ -259,7 +261,13 @@ object PracticeTimelineSceneProjector {
     fun project(request: PracticeTimelineSceneRequest): PracticeTimelineScene {
         val generation = generation(request)
         val timeScale = TimeScale(request)
-        val displayEnd = maxOf(Fraction.HALF, request.timeline.end + request.defaultChordDuration)
+        val workspaceEnd = request.timeline.slots.maxOfOrNull { it.onset + it.duration }
+            ?: Fraction.ZERO
+        val appendOnset = workspaceEnd
+        val displayEnd = maxOf(
+            Fraction.HALF,
+            request.timeline.end,
+        )
         val tonalLanes = tonalLanes(request.timeline, displayEnd)
         val tonalRows = if (request.displayMode == PracticeTimelineDisplayMode.FULL) {
             tonalLanes.laneCount.coerceAtLeast(1)
@@ -286,10 +294,15 @@ object PracticeTimelineSceneProjector {
         val height = 54f + chordHeight + tonalRowsHeight +
             IDIOM_ROW_HEIGHT * (idiomLaneCount - 1).coerceAtLeast(0)
         val intrinsicEnd = request.contentOriginX + maxOf(timeScale.x(displayEnd), request.axisContentEndX)
+        // The visible add control is always a separate cell after the closing barline. Its action
+        // still inserts at the end of the material, so an existing blank tail is consumed first.
         val appendNaturalX = request.contentOriginX + timeScale.x(request.timeline.end)
-        val appendNaturalWidth = (timeScale.x(displayEnd) - timeScale.x(request.timeline.end))
-            .coerceAtLeast(TERMINAL_INSERT_MIN_WIDTH)
-        val appendContentEnd = appendNaturalX + appendNaturalWidth
+        val appendNaturalWidth = (
+            timeScale.x(request.timeline.end + request.defaultChordDuration) -
+                timeScale.x(request.timeline.end)
+            ).coerceAtLeast(TERMINAL_INSERT_MIN_WIDTH)
+        val appendBounds = PracticeTimelineBounds(appendNaturalX, chordY, appendNaturalWidth, chordHeight)
+        val appendContentEnd = appendBounds.x + appendBounds.width
         // Chords must stay reachable even while a drag preview holds them past the settled score:
         // the notation surface has not been re-laid out yet, so its width cannot cap them. The
         // append affordance is laid out after the final chord as ordinary scrollable content.
@@ -322,11 +335,14 @@ object PracticeTimelineSceneProjector {
             stroke = palette.borderLight,
             strokeWidth = 1f,
         )
+        val measureBoundaryTimes = request.measureBoundaries.mapTo(hashSetOf()) { it.time }
+        val fallbackMeasureGrid = request.measureBoundaries.isEmpty()
         val gridCount = ceil(displayEnd.toDouble() / request.gridUnit.toDouble()).toInt()
         repeat(gridCount + 1) { step ->
             val time = request.gridUnit * step
             val x = request.contentOriginX + timeScale.x(time)
-            val atMeasure = (time / Fraction.HALF).denominator == 1
+            val atMeasure = time == Fraction.ZERO || time in measureBoundaryTimes ||
+                (fallbackMeasureGrid && (time / Fraction.HALF).denominator == 1)
             val atBeat = (time / Fraction.QUARTER).denominator == 1
             val tickHeight = if (atMeasure) 16f else if (atBeat) 11f else 6f
             if (atMeasure) draw += PracticeTimelineDrawObject(
@@ -354,9 +370,17 @@ object PracticeTimelineSceneProjector {
                 fill = alpha(palette.primaryLight, 0.72f),
             )
         }
-        val measureCount = ceil(displayEnd.toDouble() / Fraction.HALF.toDouble()).toInt()
-        repeat(measureCount) { measureIndex ->
-            val x = request.contentOriginX + timeScale.x(Fraction.HALF * measureIndex)
+        val measureStarts = if (request.measureBoundaries.isEmpty()) {
+            val measureCount = ceil(displayEnd.toDouble() / Fraction.HALF.toDouble()).toInt()
+            List(measureCount) { Fraction.HALF * it }
+        } else {
+            listOf(Fraction.ZERO) + request.measureBoundaries.map { it.time }
+                .filter { it > Fraction.ZERO && it < displayEnd }
+                .distinct()
+                .sorted()
+        }
+        measureStarts.forEachIndexed { measureIndex, measureStart ->
+            val x = request.contentOriginX + timeScale.x(measureStart)
             draw += PracticeTimelineDrawObject(
                 "measure:${measureIndex + 1}",
                 PracticeTimelineDrawKind.TEXT,
@@ -577,6 +601,29 @@ object PracticeTimelineSceneProjector {
                 actions = listOf("select") + if (slot.capabilities.canTranslate) listOf("move") else emptyList())
         }
 
+        request.timeline.emptySlots.forEach { emptySlot ->
+            val startX = request.contentOriginX + timeScale.x(emptySlot.onset)
+            val endX = request.contentOriginX + timeScale.x(emptySlot.onset + emptySlot.duration)
+            val bounds = PracticeTimelineBounds(
+                startX,
+                chordY,
+                (endX - startX).coerceAtLeast(2f),
+                chordHeight,
+            )
+            val painted = insetHorizontally(bounds, 3f)
+            val id = "empty-slot:${emptySlot.id}"
+            draw += PracticeTimelineDrawObject(
+                id,
+                PracticeTimelineDrawKind.ROUND_RECT,
+                painted,
+                20,
+                fill = alpha(palette.surfaceDark, 0.55f),
+                stroke = alpha(palette.borderLight, 0.55f),
+                strokeWidth = 1f,
+                radius = 6f,
+            )
+        }
+
         request.timeline.slots.zipWithNext().forEach { (left, right) ->
             if (left.onset + left.duration == right.onset && left.capabilities.canResizeEnd && right.capabilities.canResizeStart) {
                 val boundaryX = request.contentOriginX + timeScale.x(right.onset)
@@ -664,14 +711,13 @@ object PracticeTimelineSceneProjector {
             )
         }
 
-        val appendBounds = PracticeTimelineBounds(appendNaturalX, chordY, appendNaturalWidth, chordHeight)
         addInsertAffordance(
             draw = draw,
             hit = hit,
             hover = hover,
             a11y = a11y,
             id = "append",
-            onset = request.timeline.end,
+            onset = appendOnset,
             duration = request.defaultChordDuration,
             bounds = appendBounds,
             palette = palette,
@@ -734,7 +780,7 @@ object PracticeTimelineSceneProjector {
                 scoreOriginX = request.contentOriginX,
                 timeZeroX = request.contentOriginX + timeScale.x(Fraction.ZERO),
                 contentEndX = request.contentOriginX + timeScale.x(request.timeline.end),
-                appendX = appendNaturalX,
+                appendX = appendBounds.x,
             ),
             gestureState = request.gesture,
         )
@@ -992,7 +1038,13 @@ object PracticeTimelineSceneProjector {
          * is a degenerate anchor rather than notation spacing; drop that tail and let the
          * extrapolation below take over, which keeps [x] and [time] exact inverses there.
          */
-        private val anchors = request.axisAnchors.sortedBy { it.time }.let { sorted ->
+        private val anchors = request.axisAnchors
+            .map { anchor ->
+                request.measureBoundaries.firstOrNull { it.time == anchor.time }
+                    ?.let { boundary -> anchor.copy(x = boundary.x) }
+                    ?: anchor
+            }
+            .sortedBy { it.time }.let { sorted ->
             if (request.pixelsPerWhole <= 0f) return@let sorted
             val firstCollapsed = (1 until sorted.size).firstOrNull { index ->
                 collapsed(sorted[index - 1], sorted[index])

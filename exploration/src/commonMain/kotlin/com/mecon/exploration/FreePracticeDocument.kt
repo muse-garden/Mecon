@@ -1,6 +1,7 @@
 package com.mecon.exploration
 
 import com.mecon.api.primitive.EventId
+import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.TrackId
 import com.mecon.theory.freepractice.HarmonyWorkspaceState
 import com.mecon.theory.freepractice.WorkspaceHarmonySlot
@@ -49,6 +50,7 @@ data class FreePracticeSettings(
     val initialKey: KeySpec = KeySpec(),
     val selectedPatternIds: List<String> = emptyList(),
     val writing: FreePracticeWritingSettings = FreePracticeWritingSettings(),
+    val defaultChordDuration: Fraction = Fraction.QUARTER,
 ) {
     init {
         require(polyphonyLimit in 3..6) { "Free practice supports 3-6 simultaneous notes" }
@@ -60,6 +62,9 @@ data class FreePracticeSettings(
         }
         require(selectedPatternIds.distinct().size == selectedPatternIds.size) {
             "Free-practice pattern ids must be unique"
+        }
+        require(defaultChordDuration.isPositive) {
+            "The default free-practice chord duration must be positive"
         }
     }
 

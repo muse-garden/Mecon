@@ -234,11 +234,26 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         },
       });
     } else if (step.kind === "insertChordRange") {
-      const before = new Set(session.initialUpdate().timeline.slots.map((slot) => slot.id));
+      const slots = session.initialUpdate().timeline.slots;
+      const before = new Set(slots.map((slot) => slot.id));
+      const rawAppendOnset = slots.map((slot) => ({
+        numerator: slot.onset.numerator * slot.duration.denominator
+          + slot.duration.numerator * slot.onset.denominator,
+        denominator: slot.onset.denominator * slot.duration.denominator,
+      })).reduce((latest, value) =>
+        value.numerator * latest.denominator > latest.numerator * value.denominator
+          ? value : latest, { numerator: 0, denominator: 1 });
+      let divisor = Math.abs(rawAppendOnset.numerator);
+      let remainder = rawAppendOnset.denominator;
+      while (remainder) [divisor, remainder] = [remainder, divisor % remainder];
+      const appendOnset = {
+        numerator: rawAppendOnset.numerator / divisor,
+        denominator: rawAppendOnset.denominator / divisor,
+      };
       update = session.dispatch({
         type: "insertChordRange",
         expectedRevision: step.expectedRevision,
-        onset: session.initialUpdate().timeline.end,
+        onset: appendOnset,
         duration: { numerator: 1, denominator: 4 },
       });
       appendedSlotId = update.timeline.slots.find((slot) => !before.has(slot.id)).id;
@@ -402,6 +417,26 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         type: "setStaffLock", expectedRevision: step.expectedRevision,
         staffTrackId: staff.id, locked: true,
       });
+    } else if (step.kind === "setScoreTimeSignature") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "score",
+        expectedRevision: step.expectedRevision,
+        inner: {
+          type: "setTimeSignature",
+          expectedRevision: before.score.revision,
+          measureNumber: step.measure,
+          timeSignature: { numerator: step.numerator, denominator: step.denominator },
+        },
+      });
+    } else if (step.kind === "insertPracticeMeasures") {
+      update = session.dispatch({
+        type: "insertPracticeMeasures",
+        expectedRevision: step.expectedRevision,
+        position: step.position,
+        count: step.count,
+        chordDuration: { numerator: step.chordBeats, denominator: 4 },
+      });
     } else {
       update = session.dispatch({ type: step.kind, expectedRevision: step.expectedRevision });
     }
@@ -522,6 +557,12 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
       assert.equal(update.document.settings.writing.autoWritingEnabled, false, step.kind);
     }
     if (step.slotCount !== undefined) assert.equal(update.timeline.slots.length, step.slotCount, step.kind);
+    if (step.lastMeasure !== undefined) {
+      assert.equal(update.structure.lastMeasure, step.lastMeasure, step.kind);
+    }
+    if (step.emptySlotCount !== undefined) {
+      assert.equal(update.timeline.emptySlots.length, step.emptySlotCount, step.kind);
+    }
     if (step.includeOffKey !== undefined) {
       assert.equal(update.plan.idiomCatalog.includeOffKey, step.includeOffKey, step.kind);
       assert.equal(update.catalogRequests[0].includeOffKey, step.includeOffKey, step.kind);

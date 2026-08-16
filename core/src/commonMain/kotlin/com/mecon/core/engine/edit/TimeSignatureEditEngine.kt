@@ -43,6 +43,23 @@ object TimeSignatureEditEngine {
         val editedMeasure: Int,
     )
 
+    /** Replaces the score-wide meter for a pristine document without creating a local change. */
+    fun setOverallTimeSignature(score: RuntimeScore, ts: TimeSignature): RuntimeScore? {
+        if (score.defaultTimeSignature == ts && score.measures.all {
+                it.value.timeSignature == ts && !it.value.hasExplicitTimeSignature
+            }
+        ) return null
+        val measures = score.measures.map { entry ->
+            entry.value.copy(timeSignature = ts, hasExplicitTimeSignature = false)
+        }
+        return score.copy(
+            defaultTimeSignature = ts,
+            globalTrack = score.globalTrack.copy(
+                events = score.globalTrack.events.filterNot { it is StorageTimeSignatureChange },
+            ),
+        ).replaceMeasures(measures)
+    }
+
     fun setTimeSignature(score: RuntimeScore, measureNumber: Int, ts: TimeSignature): Result? {
         if (measureNumber < 1) return null
         val oldEffective = score.getTimeSignatureAt(measureNumber)

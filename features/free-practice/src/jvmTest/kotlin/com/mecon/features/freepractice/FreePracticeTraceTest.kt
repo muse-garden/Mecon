@@ -4,6 +4,7 @@ import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.TimeCode
+import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.exploration.VoicePlanScoreAssembler
 import com.mecon.features.scoreediting.ScoreEditIntent
@@ -216,7 +217,7 @@ class FreePracticeTraceTest {
                     session.dispatch(
                         FreePracticeIntent.InsertChordRange(
                             expectedRevision!!.toLong(),
-                            session.frame().timeline.end,
+                            session.frame().timeline.slots.maxOf { it.onset + it.duration },
                             com.mecon.api.primitive.Fraction.QUARTER,
                         )
                     ).also { result ->
@@ -387,6 +388,34 @@ class FreePracticeTraceTest {
                         expectedRevision!!.toLong(), staffId, true,
                     ))
                 }
+                "setScoreTimeSignature" -> session.frame().let { before ->
+                    session.dispatch(
+                        FreePracticeIntent.Score(
+                            expectedRevision!!.toLong(),
+                            ScoreEditIntent.SetTimeSignature(
+                                before.score.revision,
+                                step.getValue("measure").jsonPrimitive.int,
+                                TimeSignature(
+                                    step.getValue("numerator").jsonPrimitive.int,
+                                    step.getValue("denominator").jsonPrimitive.int,
+                                ),
+                            ),
+                        ),
+                    )
+                }
+                "insertPracticeMeasures" -> session.dispatch(
+                    FreePracticeIntent.InsertPracticeMeasures(
+                        expectedRevision!!.toLong(),
+                        FreePracticeIntent.MeasureInsertionPosition.valueOf(
+                            step.getValue("position").jsonPrimitive.content,
+                        ),
+                        step.getValue("count").jsonPrimitive.int,
+                        Fraction(
+                            step.getValue("chordBeats").jsonPrimitive.int,
+                            4,
+                        ).simplified(),
+                    ),
+                )
                 "undo" -> session.dispatch(FreePracticeIntent.Undo(expectedRevision!!.toLong()))
                 "redo" -> session.dispatch(FreePracticeIntent.Redo(expectedRevision!!.toLong()))
                 "cancelWriting" -> session.dispatch(FreePracticeIntent.CancelWriting(expectedRevision!!.toLong()))
@@ -532,6 +561,12 @@ class FreePracticeTraceTest {
             }
             step["slotCount"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(expected, update.timeline.slots.size)
+            }
+            step["lastMeasure"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.structure.lastMeasure)
+            }
+            step["emptySlotCount"]?.jsonPrimitive?.int?.let { expected ->
+                assertEquals(expected, update.timeline.emptySlots.size)
             }
             step["includeOffKey"]?.jsonPrimitive?.boolean?.let { expected ->
                 assertEquals(expected, update.plan.idiomCatalog.includeOffKey)

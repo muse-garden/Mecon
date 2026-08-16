@@ -59,7 +59,7 @@ data class FreePracticeToolbarStateSnapshot(
 )
 
 object FreePracticeToolbarSpec {
-    const val DESCRIPTOR_VERSION: Int = 2
+    const val DESCRIPTOR_VERSION: Int = 3
 
     val descriptor: FreePracticeToolbarDescriptor = FreePracticeToolbarDescriptor(
         version = DESCRIPTOR_VERSION,
@@ -76,6 +76,7 @@ object FreePracticeToolbarSpec {
                     "writing.voice-count", "writing.upper-voice-count", "writing.grid-unit",
                     "writing.default-chord-beats", "writing.initial-key",
                 ),
+                group("structure", "structure.time-signature", "structure.insert-measures"),
                 group(
                     "playback",
                     "playback.from-start", "playback.play-pause", "playback.from-selection",

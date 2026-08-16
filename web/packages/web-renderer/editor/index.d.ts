@@ -46,6 +46,9 @@ export const SCORE_EDITOR_CONTROL_IDS: readonly ScoreEditorControlId[];
 export const FULL_SCORE_EDITOR_TOOLBAR: Readonly<ScoreEditorToolbarConfig>;
 export const FREE_PRACTICE_SCORE_TOOLBAR: Readonly<ScoreEditorToolbarConfig>;
 export const SMUFL_GLYPHS: Readonly<Record<string, string>>;
+export function timeSignatureGlyphParts(timeSignature: any): Readonly<{
+  symbol: string; numerator: string; denominator: string;
+}>;
 export const DURATION_GLYPHS: readonly Readonly<{
   value: string; label: string; note: string; rest: string;
 }>[];

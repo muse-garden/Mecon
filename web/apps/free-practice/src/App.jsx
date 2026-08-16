@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowRightLeft,
+  Clock3,
   FilePlus2,
   FolderOpen,
   Music2,
+  ListPlus,
   Pause,
   PenLine,
   Play,
@@ -31,6 +33,7 @@ import {
   toolbarProfileFromDescriptor,
 } from "@mecon/web-renderer/editor";
 import {
+  BravuraTimeSignatureGlyph,
   ScoreEditor,
   useScoreEditorController,
 } from "@mecon/web-renderer/editor/react";
@@ -443,6 +446,13 @@ export function App() {
       displayMode: timelineDisplayMode,
     });
   }, [gridDenominator, defaultChordBeats, timelineDisplayMode]);
+
+  useEffect(() => {
+    const duration = practiceUpdate?.document?.settings?.defaultChordDuration;
+    if (!duration) return;
+    const beats = duration.numerator * 4 / duration.denominator;
+    if (Number.isInteger(beats) && beats >= 1 && beats <= 16) setDefaultChordBeats(beats);
+  }, [practiceUpdate?.document?.settings?.defaultChordDuration]);
 
   useEffect(() => {
     playbackRateRef.current = playbackRate;
@@ -1197,7 +1207,21 @@ export function App() {
           gridDenominator={gridDenominator}
           setGridDenominator={setGridDenominator}
           defaultChordBeats={defaultChordBeats}
-          setDefaultChordBeats={setDefaultChordBeats}
+          setDefaultChordBeats={(value) => {
+            setDefaultChordBeats(value);
+            dispatchPractice({
+              type: "setDefaultChordDuration",
+              duration: { numerator: value, denominator: 4 },
+            });
+          }}
+          applyTimeSignature={(timeSignature) => {
+            if (practiceUpdate.structure?.pristine !== false) {
+              dispatchPractice({ type: "setPracticeTimeSignature", timeSignature });
+            } else {
+              editor.armTimeSignature(timeSignature);
+              setMobileTab("score");
+            }
+          }}
           playbackRate={playbackRate}
           setPlaybackRate={setPlaybackRate}
           onOpenSettings={() => setAudioSettingsOpen(true)}
@@ -1338,7 +1362,8 @@ function AudioSettingsDialog({ settings, onChange, onClose }) {
 }
 
 function LoadingOverlay({ message }) {
-  return <div className="app-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+  return <div className="app-loading-overlay" role="progressbar" aria-label={message}
+    aria-live="polite" aria-busy="true">
     <span className="app-loading-spinner" aria-hidden="true" />
     <span>{message}</span>
   </div>;
@@ -1348,7 +1373,7 @@ function PracticeTopToolbar({
   descriptor, tokens, frame, update, onNew, onFile, onSave, dispatch, dispatchPractice,
   togglePlayback, requestTimelinePlayback, stopPlayback, playbackStore,
   gridDenominator, setGridDenominator, defaultChordBeats, setDefaultChordBeats,
-  playbackRate, setPlaybackRate,
+  applyTimeSignature, playbackRate, setPlaybackRate,
   onOpenSettings,
 }) {
   const [explorationMode, setExplorationMode] = useState("free");
@@ -1415,6 +1440,16 @@ function PracticeTopToolbar({
       min={1} max={16} onChange={setDefaultChordBeats} />,
     "writing.initial-key": settings && <TonalKeyDropdown value={settings.initialKey}
       choices={update?.plan?.tonalKeyChoices} onChange={rebuild} />,
+    "structure.time-signature": <PracticeMeterDropdown update={update}
+      onChange={applyTimeSignature} />,
+    "structure.insert-measures": <PracticeInsertMeasuresDropdown update={update}
+      defaultChordBeats={defaultChordBeats}
+      onInsert={(position, count, chordBeats) => dispatchPractice({
+        type: "insertPracticeMeasures",
+        position,
+        count,
+        chordDuration: { numerator: chordBeats, denominator: 4 },
+      })} />,
     "playback.from-start": <button disabled={!update?.timeline?.slots?.length}
       onClick={() => requestTimelinePlayback(false)}><ToolbarIcon icon={PlayCircle} />从头播放</button>,
     "playback.play-pause": <button disabled={!update?.timeline?.slots?.length}
@@ -1509,6 +1544,174 @@ function TonalKeyDropdown({ value, choices = [], onChange }) {
         })}
       </div>
       <small>{modeLabel}</small>
+    </div>}
+  </div>;
+}
+
+const COMMON_METERS = Object.freeze([
+  { numerator: 4, denominator: 4, symbol: "COMMON" },
+  { numerator: 3, denominator: 4 },
+  { numerator: 2, denominator: 4 },
+  { numerator: 2, denominator: 2, symbol: "CUT" },
+  { numerator: 6, denominator: 8 },
+  { numerator: 9, denominator: 8 },
+  { numerator: 12, denominator: 8 },
+]);
+
+function beatGroupCandidates(numerator) {
+  if (!(numerator > 3 && (numerator % 3 === 0 || numerator >= 5))) return [];
+  const compose = (remaining) => {
+    if (remaining === 0) return [[]];
+    if (remaining < 0) return [];
+    return [2, 3].flatMap((part) => compose(remaining - part).map((rest) => [part, ...rest]));
+  };
+  const canonical = numerator % 3 === 0
+    ? Array(numerator / 3).fill(3)
+    : numerator % 2 === 0
+      ? Array(numerator / 2).fill(2)
+      : [...Array((numerator - 3) / 2).fill(2), 3];
+  return [canonical, ...compose(numerator)].filter((groups, index, values) =>
+    values.findIndex((candidate) => candidate.join("+") === groups.join("+")) === index);
+}
+
+function useToolbarMenuPosition(expanded, rootRef, setExpanded) {
+  const [position, setPosition] = useState(null);
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const update = () => {
+      const bounds = rootRef.current?.getBoundingClientRect();
+      if (!bounds) return;
+      setPosition({
+        top: bounds.bottom + 7,
+        left: Math.max(150, Math.min(window.innerWidth - 150, bounds.left + bounds.width / 2)),
+      });
+    };
+    update();
+    const dismiss = (event) => {
+      if (!rootRef.current?.contains(event.target)) setExpanded(false);
+    };
+    const keydown = (event) => { if (event.key === "Escape") setExpanded(false); };
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", keydown);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", keydown);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [expanded, rootRef, setExpanded]);
+  return position;
+}
+
+function PracticeMeterDropdown({ update, onChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const rootRef = useRef(null);
+  const position = useToolbarMenuPosition(expanded, rootRef, setExpanded);
+  const structure = update?.structure ?? {};
+  const meter = structure.effectiveTimeSignature ?? { numerator: 4, denominator: 4 };
+  const [draft, setDraft] = useState(meter);
+  useEffect(() => {
+    if (!expanded) setDraft(meter);
+  }, [expanded, meter.numerator, meter.denominator, meter.symbol, meter.beatGroups]);
+  const groupings = beatGroupCandidates(draft.numerator);
+  const activeGrouping = draft.beatGroups ?? groupings[0] ?? [];
+  const label = structure.pristine === false ? "调整拍号" : "设置拍号";
+  return <div className="toolbar-key-setting" ref={rootRef}>
+    <button type="button" className="toolbar-key-button" aria-haspopup="dialog"
+      aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
+      <ToolbarIcon icon={Clock3} />{label}
+    </button>
+    {expanded && <div className="toolbar-key-menu toolbar-meter-menu" style={position}
+      role="dialog" aria-label={label}>
+      <strong>{structure.pristine === false
+        ? "选择拍号后在谱面点击目标小节"
+        : "设置总体拍号"}</strong>
+      <div className="toolbar-meter-options">
+        {COMMON_METERS.map((candidate) => <button type="button"
+          key={`${candidate.numerator}/${candidate.denominator}`}
+          className="toolbar-meter-chip"
+          aria-label={`${candidate.numerator}/${candidate.denominator} 拍`}
+          aria-pressed={draft.numerator === candidate.numerator
+            && draft.denominator === candidate.denominator
+            && draft.symbol === candidate.symbol}
+          onClick={() => setDraft(candidate)}>
+          <BravuraTimeSignatureGlyph timeSignature={candidate} />
+        </button>)}
+      </div>
+      <strong>自定义拍号</strong>
+      <div className="toolbar-meter-custom">
+        <select aria-label="拍号分子" value={draft.numerator}
+          onChange={(event) => setDraft({
+            numerator: Number(event.target.value), denominator: draft.denominator,
+          })}>
+          {Array.from({ length: 32 }, (_, index) => index + 1)
+            .map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
+        <span>/</span>
+        <select aria-label="拍号分母" value={draft.denominator}
+          onChange={(event) => setDraft({
+            numerator: draft.numerator, denominator: Number(event.target.value),
+          })}>
+          {[1, 2, 4, 8, 16, 32].map((value) =>
+            <option key={value} value={value}>{value}</option>)}
+        </select>
+      </div>
+      {groupings.length > 1 && <>
+        <strong>默认分组 (beam)</strong>
+        <div className="toolbar-meter-groupings">
+          {groupings.map((groups) => <button type="button" key={groups.join("+")}
+            aria-pressed={groups.join("+") === activeGrouping.join("+")}
+            onClick={() => setDraft({ ...draft, beatGroups: groups })}>{groups.join("+")}</button>)}
+        </div>
+      </>}
+      <button type="button" className="toolbar-menu-primary" onClick={() => {
+        onChange(draft);
+        setExpanded(false);
+      }}>应用</button>
+    </div>}
+  </div>;
+}
+
+function PracticeInsertMeasuresDropdown({ update, defaultChordBeats, onInsert }) {
+  const [expanded, setExpanded] = useState(false);
+  const [positionValue, setPositionValue] = useState("END");
+  const [count, setCount] = useState(1);
+  const [chordBeats, setChordBeats] = useState(defaultChordBeats);
+  const rootRef = useRef(null);
+  const menuPosition = useToolbarMenuPosition(expanded, rootRef, setExpanded);
+  const structure = update?.structure ?? {};
+  const choices = [
+    ["END", "在末尾插入"],
+    ...(structure.selectedNoteMeasure != null
+      ? [["AFTER_SELECTED_NOTE", "在所选音符之后的小节线插入"]] : []),
+    ...(structure.selectedBarlineMeasure != null
+      ? [["AT_SELECTED_BARLINE", "在所选小节线插入"]] : []),
+  ];
+  const effectivePosition = choices.some(([value]) => value === positionValue) ? positionValue : "END";
+  return <div className="toolbar-key-setting" ref={rootRef}>
+    <button type="button" className="toolbar-key-button" aria-haspopup="dialog"
+      aria-expanded={expanded} onClick={() => {
+        setChordBeats(defaultChordBeats);
+        setExpanded((value) => !value);
+      }}><ToolbarIcon icon={ListPlus} />插入小节</button>
+    {expanded && <div className="toolbar-key-menu toolbar-insert-measures-menu" style={menuPosition}
+      role="dialog" aria-label="插入小节">
+      <strong>插入位置</strong>
+      <div className="toolbar-measure-position-options">
+        {choices.map(([value, label]) => <button type="button" key={value}
+          aria-pressed={effectivePosition === value}
+          onClick={() => setPositionValue(value)}>{label}</button>)}
+      </div>
+      <div className="toolbar-measure-settings">
+        <ToolbarNumber label="小节数量" value={count} min={1} max={999} onChange={setCount} />
+        <ToolbarNumber label="每个和弦拍数" value={chordBeats} min={1} max={16} onChange={setChordBeats} />
+      </div>
+      <button type="button" className="toolbar-menu-primary" onClick={() => {
+        onInsert(effectivePosition, count, chordBeats);
+        setExpanded(false);
+      }}>插入</button>
     </div>}
   </div>;
 }

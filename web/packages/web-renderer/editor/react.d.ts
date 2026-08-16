@@ -33,6 +33,7 @@ export interface ScoreEditorInputState {
   stepInputEnabled: boolean; setStepInputEnabled: EditorSetter<boolean>;
   midiStatus: string; setMidiStatus: EditorSetter<string>;
   editorTool: string; setEditorTool: EditorSetter<string>;
+  timeSignaturePen: any; setTimeSignaturePen: EditorSetter<any>;
   paletteExpanded: boolean; setPaletteExpanded: EditorSetter<boolean>;
   uncommonDurationsExpanded: boolean; setUncommonDurationsExpanded: EditorSetter<boolean>;
   articulationsExpanded: boolean; setArticulationsExpanded: EditorSetter<boolean>;
@@ -145,6 +146,9 @@ export function createScoreEditorSelectionController(options: {
   onNoteInput?: (point: { x: number; y: number }) => void;
   onNoteHover?: (point: { x: number; y: number }) => void;
   onNoteHoverEnd?: () => void;
+  onTimeSignatureInput?: (target: any) => void;
+  onTimeSignatureHover?: (target: any) => void;
+  onTimeSignatureHoverEnd?: () => void;
 }): {
   canvasPoint(event: any): { surface: any; x: number; y: number } | null;
   onClick(event: any): void;
@@ -158,6 +162,9 @@ export interface ScoreEditorSurfaceProps {
   onSurfaceIndexChange?: (index: number) => void;
   dragPreview?: any;
   noteInputPreview?: any;
+  timeSignaturePreview?: any;
+  timeSignaturePen?: any;
+  editorTool?: string;
   background?: string;
   emptyContent?: ReactNode;
   onClick?: (event: any) => void;
@@ -197,6 +204,8 @@ export interface ScoreEditorController {
   setSurfaceIndex: EditorSetter<number>;
   dragPreview: any;
   noteInputPreview: any;
+  timeSignaturePreview: any;
+  armTimeSignature(timeSignature: any): void;
   selection: ReturnType<typeof createScoreEditorSelectionController>;
   drag: any;
 }
@@ -208,6 +217,12 @@ export function useScoreEditorController(options: {
   requestRestMovePreview?: (targets: any[], callback: (preview: any) => void) => void;
   requestNoteInputTarget?: (request: any, callback: (target: any) => void) => void;
 }): ScoreEditorController;
+
+export function BravuraTimeSignatureGlyph(props: {
+  timeSignature: any;
+  className?: string;
+  style?: Record<string, unknown>;
+}): ReactNode;
 
 export interface ScoreEditorRegions {
   toolbar: ReactNode;

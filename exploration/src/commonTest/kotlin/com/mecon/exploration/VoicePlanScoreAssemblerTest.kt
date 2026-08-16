@@ -85,7 +85,7 @@ class VoicePlanScoreAssemblerTest {
     }
 
     @Test
-    fun dropsTrailingMeasuresAndTheirMaterialWhenTheTimelineShrinks() {
+    fun preservesTrailingMeasuresAndTheirMaterialWhenTheTimelineShrinks() {
         val initial = workspace()
         val extended = HarmonyWorkspaceEditor.apply(
             initial,
@@ -121,13 +121,13 @@ class VoicePlanScoreAssemblerTest {
         val runtime = RuntimeScore.fromStorage(orphaned)
         assertEquals(listOf(1, 2), runtime.measures.map { it.key })
 
-        // Undoing the second chord leaves the timeline one measure long again.
+        // A shorter harmony timeline must not delete explicitly retained/inserted score measures.
         val shrunk = VoicePlanScoreAssembler.ensureTimelineMeasures(runtime, initial)
 
-        assertEquals(listOf(1), shrunk.measures.map { it.key })
+        assertEquals(listOf(1, 2), shrunk.measures.map { it.key })
         assertEquals(runtime.voiceTracks.keys, shrunk.voiceTracks.keys)
-        assertTrue(shrunk.getAllVoiceEvents().none { it.onset.measure > 1 })
-        assertTrue(shrunk.getAllPitchEvents().none { it.onset.measure > 1 })
+        assertTrue(shrunk.getAllVoiceEvents().any { it.onset.measure > 1 })
+        assertTrue(shrunk.getAllPitchEvents().any { it.onset.measure > 1 })
     }
 
     @Test

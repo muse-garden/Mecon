@@ -9,7 +9,7 @@ class FreePracticeToolbarSpecTest {
     fun descriptorHasStableUniqueDesktopAuthorityOrder() {
         val descriptor = FreePracticeToolbarSpec.descriptor
         assertEquals(
-            listOf("file", "history", "mode", "writing", "playback", "settings"),
+            listOf("file", "history", "mode", "writing", "structure", "playback", "settings"),
             descriptor.top.groups.map { it.id },
         )
         assertEquals(

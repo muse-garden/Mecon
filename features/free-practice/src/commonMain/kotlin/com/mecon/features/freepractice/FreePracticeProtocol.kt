@@ -5,6 +5,7 @@ package com.mecon.features.freepractice
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TrackId
+import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.storage.StorageScore
 import com.mecon.exploration.FreePracticeDocument
 import com.mecon.exploration.FreePracticeWritingSettings
@@ -171,6 +172,32 @@ sealed interface FreePracticeIntent {
         override val expectedRevision: Long,
         val onset: Fraction,
         val duration: Fraction,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setDefaultChordDuration")
+    data class SetDefaultChordDuration(
+        override val expectedRevision: Long,
+        val duration: Fraction,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setPracticeTimeSignature")
+    data class SetPracticeTimeSignature(
+        override val expectedRevision: Long,
+        val timeSignature: TimeSignature,
+    ) : FreePracticeIntent
+
+    @Serializable
+    enum class MeasureInsertionPosition { END, AFTER_SELECTED_NOTE, AT_SELECTED_BARLINE }
+
+    @Serializable
+    @SerialName("insertPracticeMeasures")
+    data class InsertPracticeMeasures(
+        override val expectedRevision: Long,
+        val position: MeasureInsertionPosition,
+        val count: Int,
+        val chordDuration: Fraction,
     ) : FreePracticeIntent
 
     /**
@@ -527,6 +554,14 @@ data class PracticeTimelineSlotView(
 )
 
 @Serializable
+data class PracticeTimelineEmptySlotView(
+    /** Stable within one projection; activating it creates a persisted workspace slot. */
+    val id: String,
+    val onset: Fraction,
+    val duration: Fraction,
+)
+
+@Serializable
 data class PracticeDerivedTonalSpanView(
     val fifths: Int,
     val mode: WorkspaceKeyMode,
@@ -566,6 +601,17 @@ data class PracticeTimelineView(
     val tonalLayouts: List<PracticeTonalLayoutView> = emptyList(),
     val derivedTonalSpans: List<PracticeDerivedTonalSpanView> = emptyList(),
     val idioms: List<PracticeIdiomView> = emptyList(),
+    val emptySlots: List<PracticeTimelineEmptySlotView> = emptyList(),
+)
+
+@Serializable
+data class PracticeStructureView(
+    val pristine: Boolean = true,
+    val effectiveTimeSignature: TimeSignature = TimeSignature.COMMON,
+    val timeSignatureMeasure: Int = 1,
+    val lastMeasure: Int = 1,
+    val selectedNoteMeasure: Int? = null,
+    val selectedBarlineMeasure: Int? = null,
 )
 
 @Serializable
@@ -999,6 +1045,7 @@ data class FreePracticeUpdate(
     val catalog: PracticeCatalogView,
     val noteConstraints: PracticeNoteConstraintView = PracticeNoteConstraintView(),
     val timeline: PracticeTimelineView = PracticeTimelineView(),
+    val structure: PracticeStructureView = PracticeStructureView(),
     val plan: PracticePlanView = PracticePlanView(),
     val writing: PracticeWritingStatus,
     val effect: FreePracticeEffect,
@@ -1019,6 +1066,7 @@ data class FreePracticeFrame(
     val catalog: PracticeCatalogView,
     val noteConstraints: PracticeNoteConstraintView,
     val timeline: PracticeTimelineView,
+    val structure: PracticeStructureView,
     val plan: PracticePlanView,
     val writing: PracticeWritingStatus,
 )
