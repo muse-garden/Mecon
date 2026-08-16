@@ -1401,7 +1401,11 @@ internal fun SharedHarmonicTimeline(
             },
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .fillMaxHeight()
+                // Keep the mode rail bounded by the timeline scene. `fillMaxHeight()` makes the
+                // BoxWithConstraints claim the whole weighted writing area on the desktop, so the
+                // rail's background stretches down through the empty preview area. The Web shell
+                // naturally sizes this grid column to the scene height; use the same contract here.
+                .height(scene.contentHeight.dp)
                 .zIndex(300f),
         )
         }
@@ -1416,8 +1420,7 @@ private fun VerticalTimelineDisplaySwitch(
 ) {
     Column(
         modifier = modifier
-            .width(36.dp)
-            .background(MeconColors.Surface),
+            .width(36.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.Top),
     ) {
