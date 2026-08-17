@@ -332,6 +332,20 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
           pitch: { diatonicSteps: 7 },
         },
       });
+    } else if (step.kind === "insertManualNoteAtBeat") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "score",
+        expectedRevision: step.expectedRevision,
+        inner: {
+          type: "insertNote",
+          expectedRevision: before.score.revision,
+          voiceTrackId: before.document.workspace.voices[0].id,
+          start: { measure: 1, beat: parseFraction(step.beat) },
+          duration: { base: "EIGHTH" },
+          pitch: { diatonicSteps: 7 },
+        },
+      });
     } else if (step.kind === "rejectPolyphonyChord") {
       const before = session.initialUpdate();
       update = session.dispatch({
@@ -415,6 +429,13 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
           expectedRevision: before.score.revision,
           targets: [{ type: "event", eventId: event.id, voiceTrackId: voice.id }],
         },
+      });
+    } else if (step.kind === "selectSlot") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "selectSlot",
+        expectedRevision: step.expectedRevision,
+        slotId: before.timeline.slots[step.slotIndex].id,
       });
     } else if (step.kind === "setStaffLock") {
       const before = session.initialUpdate();
@@ -511,6 +532,10 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (step.selectionSlotIndex !== undefined) {
       assert.equal(update.selection.slotId, update.timeline.slots[step.selectionSlotIndex].id, step.kind);
+    }
+    if (step.selectionSlotFilled !== undefined) {
+      const selectedSlot = update.timeline.slots.find((slot) => slot.id === update.selection.slotId);
+      assert.equal(selectedSlot.symbol != null, step.selectionSlotFilled, step.kind);
     }
     if (step.renderFirstMeasure !== undefined) {
       assert.equal(update.score.renderHint?.firstMeasure, step.renderFirstMeasure, step.kind);

@@ -71,6 +71,10 @@
     { "kind": "undo", "expectedRevision": 61, "revision": 62, "effect": "UNDONE", "slots": ["0/1+3/4"], "lastMeasure": 2, "emptySlotCount": 1 },
     { "kind": "redo", "expectedRevision": 62, "revision": 63, "effect": "REDONE", "slots": ["0/1+1/2"], "lastMeasure": 1, "emptySlotCount": 0 },
     { "kind": "setVoiceLocks", "expectedRevision": 63, "revision": 64, "effect": "APPLIED", "lockedVoiceCount": 2 },
-    { "kind": "undo", "expectedRevision": 64, "revision": 65, "effect": "UNDONE", "lockedVoiceCount": 0 }
+    { "kind": "undo", "expectedRevision": 64, "revision": 65, "effect": "UNDONE", "lockedVoiceCount": 0 },
+    { "kind": "insertChordRange", "expectedRevision": 65, "revision": 66, "effect": "APPLIED", "slotCount": 2 },
+    { "kind": "insertManualNoteAtBeat", "beat": "1/2", "expectedRevision": 66, "revision": 67, "effect": "APPLIED", "scoreHasNotes": true },
+    { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 67, "revision": 68, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
+    { "kind": "selectScoreNote", "expectedRevision": 68, "revision": 69, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 1, "selectionSlotFilled": false, "scoreChanged": false }
   ]
 }

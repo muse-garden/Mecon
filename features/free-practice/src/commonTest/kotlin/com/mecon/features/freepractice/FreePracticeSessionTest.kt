@@ -1079,7 +1079,7 @@ class FreePracticeSessionTest {
     }
 
     @Test
-    fun scoreNoteSelectionFocusesOnlyTheFilledChordAtItsOnset() {
+    fun scoreNoteSelectionFocusesTheHarmonySlotAtItsOnsetEvenWhenEmpty() {
         fun selectSecondSlot(secondHasChord: Boolean): Pair<FreePracticeDispatchResult, WorkspaceSlotId> {
             val preset = FreePracticePreset.document()
             val opening = preset.workspace.slots.single()
@@ -1120,7 +1120,7 @@ class FreePracticeSessionTest {
         assertFalse(filled.frame.score.scoreChanged)
 
         val (empty, emptyOpeningId) = selectSecondSlot(secondHasChord = false)
-        assertEquals(emptyOpeningId, empty.frame.selection.slotId)
+        assertEquals(WorkspaceSlotId("slot-1"), empty.frame.selection.slotId)
         assertEquals(openingId, emptyOpeningId)
         assertEquals(FreePracticeEffectKind.SELECTION_CHANGED, empty.effect.kind)
         assertFalse(empty.frame.score.scoreChanged)

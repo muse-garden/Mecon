@@ -309,6 +309,23 @@ class FreePracticeTraceTest {
                         ),
                     )
                 }
+                "insertManualNoteAtBeat" -> session.frame().let { before ->
+                    session.dispatch(
+                        FreePracticeIntent.Score(
+                            expectedRevision = expectedRevision!!.toLong(),
+                            inner = ScoreEditIntent.InsertNote(
+                                expectedRevision = before.score.revision,
+                                voiceTrackId = before.document.workspace.voices.first().id,
+                                start = TimeCode.of(
+                                    1,
+                                    parseFraction(step.getValue("beat").jsonPrimitive.content),
+                                ),
+                                duration = Duration.EIGHTH,
+                                pitch = Pitch.C5,
+                            ),
+                        ),
+                    )
+                }
                 "rejectPolyphonyChord" -> session.frame().let { before ->
                     session.dispatch(
                         FreePracticeIntent.Score(
@@ -386,6 +403,12 @@ class FreePracticeTraceTest {
                         ),
                     ))
                 }
+                "selectSlot" -> session.dispatch(
+                    FreePracticeIntent.SelectSlot(
+                        expectedRevision!!.toLong(),
+                        session.frame().timeline.slots[step.getValue("slotIndex").jsonPrimitive.int].id,
+                    ),
+                )
                 "setStaffLock" -> session.frame().let { before ->
                     val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
                     val staffId = before.score.runtimeScore.staffTracks.entries
@@ -491,6 +514,10 @@ class FreePracticeTraceTest {
             }
             step["selectionSlotIndex"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(update.timeline.slots[expected].id, update.selection.slotId)
+            }
+            step["selectionSlotFilled"]?.jsonPrimitive?.boolean?.let { expected ->
+                val selectedSlot = update.timeline.slots.single { it.id == update.selection.slotId }
+                assertEquals(expected, selectedSlot.symbol != null)
             }
             step["renderFirstMeasure"]?.jsonPrimitive?.int?.let { expected ->
                 assertEquals(expected, update.score.renderHint?.firstMeasure)
@@ -638,6 +665,11 @@ class FreePracticeTraceTest {
             )
             else -> error("Unknown timeline edit $edit")
         }
+    }
+
+    private fun parseFraction(value: String): Fraction {
+        val (numerator, denominator) = value.split("/")
+        return Fraction.of(numerator.toInt(), denominator.toInt())
     }
 
     private fun outcomeType(outcome: PracticeWritingOutcome?): String? = when (outcome) {

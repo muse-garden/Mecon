@@ -1123,7 +1123,7 @@ class FreePracticeSession private constructor(
             )
         }
         val harmonySelectionChanged = intent.inner is ScoreEditIntent.SetSelection &&
-            selectFilledChordAtScoreSelection(inner.frame.selection)
+            selectHarmonySlotAtScoreSelection(inner.frame.selection)
         if (inner.effect.kind == ScoreEditEffectKind.NO_OP && !harmonySelectionChanged) {
             return result(
                 baseRevision,
@@ -1149,8 +1149,8 @@ class FreePracticeSession private constructor(
         )
     }
 
-    /** Keep the harmony focus aligned with a score-note selection without inventing empty chords. */
-    private fun selectFilledChordAtScoreSelection(selection: List<ScoreSelectionTarget>): Boolean {
+    /** Keep the harmony focus aligned with a score-note selection, including an unfilled target slot. */
+    private fun selectHarmonySlotAtScoreSelection(selection: List<ScoreSelectionTarget>): Boolean {
         val eventIds = selection.filterIsInstance<ScoreSelectionTarget.Event>()
             .map { it.eventId }
             .distinct()
@@ -1162,15 +1162,12 @@ class FreePracticeSession private constructor(
         val matchingSlots = selectedEvents.mapNotNullTo(linkedSetOf()) { event ->
             val onset = timeMap.absolute(event.onset)
             workspace.slots.firstOrNull { slot ->
-                onset >= slot.onset && onset < slot.onset + slot.duration && slot.hasChord()
+                onset >= slot.onset && onset < slot.onset + slot.duration
             }
         }
         val slot = matchingSlots.singleOrNull() ?: return false
         return selectSlotState(slot)
     }
-
-    private fun com.mecon.theory.freepractice.WorkspaceHarmonySlot.hasChord(): Boolean =
-        chordChoice != null || chordInterpretationRef != null || chordIdentity != null
 
     private fun scoreAudition(selection: List<ScoreSelectionTarget>): PracticeEditPlayback.Audition? {
         val eventId = selection.mapNotNull { it.eventIdOrNull }.distinct().singleOrNull() ?: return null
