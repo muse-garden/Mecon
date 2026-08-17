@@ -195,6 +195,18 @@ class MeconWebEngine(
     fun renderFreePracticeFrameJson(scoreJson: String, timelineJson: String): String =
         json.encodeToString(renderFrame(scoreJson, json.decodeFromString<PracticeTimelineView>(timelineJson)))
 
+    fun renderFreePracticeFrameScaledJson(
+        scoreJson: String,
+        timelineJson: String,
+        pixelsPerWhole: Double,
+    ): String = json.encodeToString(
+        renderFrame(
+            scoreJson,
+            json.decodeFromString<PracticeTimelineView>(timelineJson),
+            pixelsPerWhole = pixelsPerWhole.toFloat(),
+        )
+    )
+
     /** Width-aware variant used by the shared Web editor surface. */
     fun renderFreePracticeFrameForWidthJson(
         scoreJson: String,
@@ -205,6 +217,20 @@ class MeconWebEngine(
             scoreJson,
             json.decodeFromString<PracticeTimelineView>(timelineJson),
             viewportWidthPx.toFloat(),
+        )
+    )
+
+    fun renderFreePracticeFrameForWidthScaledJson(
+        scoreJson: String,
+        timelineJson: String,
+        viewportWidthPx: Double,
+        pixelsPerWhole: Double,
+    ): String = json.encodeToString(
+        renderFrame(
+            scoreJson,
+            json.decodeFromString<PracticeTimelineView>(timelineJson),
+            viewportWidthPx.toFloat(),
+            pixelsPerWhole.toFloat(),
         )
     )
 
@@ -357,11 +383,12 @@ class MeconWebEngine(
         scoreJson: String,
         timeline: PracticeTimelineView? = null,
         viewportWidthPx: Float = 0f,
+        pixelsPerWhole: Float = 576f,
     ): WebRenderFrame {
         val score = ScoreSerializer.fromJson(scoreJson)
         val runtime = RuntimeScore.fromStorage(score)
         return with(font) {
-            val initialRequest = timeline?.toAlignedTimeAxis(runtime)
+            val initialRequest = timeline?.toAlignedTimeAxis(runtime, pixelsPerWhole)
             val renderer = RenderEngine(
                 RenderLayoutConfig.DEFAULT.copy(alignedTimeAxisRequest = initialRequest)
             )
@@ -411,7 +438,10 @@ class MeconWebEngine(
         }
     }
 
-    private fun PracticeTimelineView.toAlignedTimeAxis(score: RuntimeScore): AlignedTimeAxisRequest? {
+    private fun PracticeTimelineView.toAlignedTimeAxis(
+        score: RuntimeScore,
+        pixelsPerWhole: Float,
+    ): AlignedTimeAxisRequest? {
         val finish = maxOf(end, slots.maxOfOrNull { it.onset + it.duration } ?: Fraction.ZERO)
         if (finish <= Fraction.ZERO) return null
         val boundaries = buildSet {
@@ -433,9 +463,11 @@ class MeconWebEngine(
                 TimeAxisSegmentRequest(
                     start = timeMap.timeCodeAt(start),
                     end = timeMap.timeCodeAt(segmentEnd),
-                    // Bravura's Web surface uses 8 px per staff space. Eighteen spaces per
-                    // quarter therefore matches the desktop timeline's 144 dp default scale.
-                    preferredWidth = StaffSpace((segmentEnd - start).toFloat() * 72f),
+                    // Bravura's Web surface uses 8 px per staff space. The shared scale policy
+                    // chooses pixelsPerWhole so a default-duration chord keeps its standard width.
+                    preferredWidth = StaffSpace(
+                        (segmentEnd - start).toFloat() * pixelsPerWhole / 8f,
+                    ),
                 )
             },
             extraAnchors = boundaries.mapTo(linkedSetOf(), timeMap::timeCodeAt),

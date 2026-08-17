@@ -173,6 +173,7 @@ import com.mecon.features.freepractice.PracticeTimelineInput
 import com.mecon.features.freepractice.PracticeTimelineInputType
 import com.mecon.features.freepractice.PracticeTimelineSceneProjector
 import com.mecon.features.freepractice.PracticeTimelineSceneRequest
+import com.mecon.features.freepractice.PracticeTimelineScale
 import com.mecon.features.freepractice.PracticeTimelinePalette
 import com.mecon.features.freepractice.PracticeTimelineToneLabelMode
 import com.mecon.features.freepractice.PracticeTimelineView
@@ -372,9 +373,16 @@ internal fun PracticeEditorPanel(
             onTupletConflict = { actions.reportError(i18n("edit.tupletConflict")) },
         )
     }
-    var beatWidth by androidx.compose.runtime.remember {
+    var defaultChordWidth by androidx.compose.runtime.remember {
         androidx.compose.runtime.mutableStateOf(144.dp)
     }
+    val defaultChordDuration = Fraction(state.defaultChordBeats, 4).simplified()
+    val beatWidth = (
+        PracticeTimelineScale.pixelsPerWhole(
+            defaultChordDuration,
+            defaultChordWidth.value,
+        ) / 4f
+    ).dp
     val gridUnit = state.gridUnit
     val timeScrollState = rememberScrollState()
     val density = LocalDensity.current
@@ -531,10 +539,10 @@ internal fun PracticeEditorPanel(
                 onSelectIdiom = actions.selectIdiom,
                 idiomTitles = state.idiomTitles,
                 toneMode = state.chordToneMode,
-                beatWidth = beatWidth,
-                onBeatWidthChange = { beatWidth = it },
+                defaultChordWidth = defaultChordWidth,
+                onDefaultChordWidthChange = { defaultChordWidth = it },
                 gridUnit = state.gridUnit,
-                defaultChordDuration = Fraction(state.defaultChordBeats, 4).simplified(),
+                defaultChordDuration = defaultChordDuration,
                 scrollState = timeScrollState,
                 resolvedTimeAxis = activeTimeAxis,
                 onSelect = actions.selectSlot,
@@ -1000,8 +1008,8 @@ internal fun SharedHarmonicTimeline(
     onSelectIdiom: (WorkspaceIdiomInstanceId) -> Unit,
     idiomTitles: Map<String, String>,
     toneMode: ChordToneLabelMode,
-    beatWidth: androidx.compose.ui.unit.Dp,
-    onBeatWidthChange: (androidx.compose.ui.unit.Dp) -> Unit,
+    defaultChordWidth: androidx.compose.ui.unit.Dp,
+    onDefaultChordWidthChange: (androidx.compose.ui.unit.Dp) -> Unit,
     gridUnit: Fraction,
     defaultChordDuration: Fraction,
     scrollState: ScrollState,
@@ -1151,7 +1159,10 @@ internal fun SharedHarmonicTimeline(
             axisAnchors = axisAnchors,
             measureBoundaries = measureBoundaries,
             axisContentEndX = axisEnd,
-            pixelsPerWhole = beatWidth.value * 4f,
+            pixelsPerWhole = PracticeTimelineScale.pixelsPerWhole(
+                defaultChordDuration,
+                defaultChordWidth.value,
+            ),
             timeline = activeTimeline,
             selectedSlotId = selectedSlotId.value,
             selectedIdiomId = selectedIdiomInstanceId?.value,
@@ -1246,7 +1257,12 @@ internal fun SharedHarmonicTimeline(
                             if (event.type == PointerEventType.Scroll) {
                                 val delta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
                                 if (delta != 0f) {
-                                    onBeatWidthChange((beatWidth - (delta / 2f).dp).coerceIn(44.dp, 176.dp))
+                                    onDefaultChordWidthChange(
+                                        (defaultChordWidth - (delta / 2f).dp).coerceIn(
+                                            PracticeTimelineScale.MIN_CHORD_WIDTH.dp,
+                                            PracticeTimelineScale.MAX_CHORD_WIDTH.dp,
+                                        ),
+                                    )
                                     event.changes.forEach { it.consume() }
                                 }
                             }

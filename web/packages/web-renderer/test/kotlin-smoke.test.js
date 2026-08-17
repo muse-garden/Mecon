@@ -61,6 +61,10 @@ test("generated Kotlin/JS timeline replays raw pointer input through the common 
 }, async () => {
   const { MeconFreePracticeTimeline } = await import(await requireEngineModule());
   const timeline = new MeconFreePracticeTimeline();
+  assert.equal(
+    timeline.pixelsPerWholeJson(JSON.stringify({ numerator: 1, denominator: 2 }), 144),
+    288,
+  );
   const request = {
     revision: 7,
     axisRevision: 11,

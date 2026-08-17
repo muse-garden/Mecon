@@ -5,6 +5,8 @@ export interface EngineModule {
     renderChordDetailConstructionJson?(constructionJson: string): string;
     renderFreePracticeFrameJson?(scoreJson: string, timelineJson: string): string;
     renderFreePracticeFrameForWidthJson?(scoreJson: string, timelineJson: string, width: number): string;
+    renderFreePracticeFrameScaledJson?(scoreJson: string, timelineJson: string, pixelsPerWhole: number): string;
+    renderFreePracticeFrameForWidthScaledJson?(scoreJson: string, timelineJson: string, width: number, pixelsPerWhole: number): string;
     transposePreviewJson?(targetsJson: string, stepDelta: number): string;
     restMovePreviewJson?(targetsJson: string): string;
     noteInputTargetJson?(requestJson: string): string;
@@ -16,6 +18,8 @@ export interface EngineModule {
     renderChordDetailConstructionJson?(constructionJson: string): string;
     renderFreePracticeFrameJson?(scoreJson: string, timelineJson: string): string;
     renderFreePracticeFrameForWidthJson?(scoreJson: string, timelineJson: string, width: number): string;
+    renderFreePracticeFrameScaledJson?(scoreJson: string, timelineJson: string, pixelsPerWhole: number): string;
+    renderFreePracticeFrameForWidthScaledJson?(scoreJson: string, timelineJson: string, width: number, pixelsPerWhole: number): string;
     transposePreviewJson?(targetsJson: string, stepDelta: number): string;
     restMovePreviewJson?(targetsJson: string): string;
     noteInputTargetJson?(requestJson: string): string;
@@ -48,6 +52,7 @@ export interface KotlinFreePracticeExecutor {
 }
 export interface KotlinFreePracticeTimeline {
   toolbarDescriptorJson(): string;
+  pixelsPerWholeJson(defaultChordDurationJson: string, defaultChordWidth: number): number;
   projectJson(requestJson: string): string;
   handleJson(sceneJson: string, requestJson: string, inputJson: string): string;
 }
@@ -70,7 +75,7 @@ export class MeconRenderer {
   constructor(engine: { renderScoreJson(scoreJson: string): string });
   layout(score: string | object): FrozenScoreBundle;
   layoutFrame(score: string | object): any;
-  layoutFreePracticeFrame(score: string | object, timeline: string | object, viewportWidth?: number): any;
+  layoutFreePracticeFrame(score: string | object, timeline: string | object, viewportWidth?: number, pixelsPerWhole?: number): any;
   layoutChordDetailConstruction(construction: string | object): {
     bundle: FrozenScoreBundle;
     mutedElementIds: string[];
@@ -124,6 +129,7 @@ export class MeconFreePractice {
 export function createMeconFreePractice(options: CreateFreePracticeOptions): Promise<MeconFreePractice>;
 export interface MeconFreePracticeTimeline {
   toolbarDescriptor(): any;
+  pixelsPerWhole(defaultChordDuration: any, defaultChordWidth?: number): number;
   project(request: string | object): any;
   handle(scene: string | object, request: string | object, input: string | object): any;
 }

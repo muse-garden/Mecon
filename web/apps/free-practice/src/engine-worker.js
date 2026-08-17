@@ -26,6 +26,7 @@ let pendingTimelineMove = null;
 let timelineMoveFlushQueued = false;
 let timelineGridUnit = { numerator: 1, denominator: 8 };
 let timelineDefaultChordDuration = { numerator: 1, denominator: 4 };
+let timelinePixelsPerWhole = 576;
 let timelineDisplayMode = "FULL";
 
 self.onmessage = (event) => {
@@ -150,8 +151,12 @@ async function handle(message) {
     case "timelinePreferences":
       timelineGridUnit = message.gridUnit ?? timelineGridUnit;
       timelineDefaultChordDuration = message.defaultChordDuration ?? timelineDefaultChordDuration;
+      timelinePixelsPerWhole = timelineController?.pixelsPerWhole(timelineDefaultChordDuration) ?? 576;
       timelineDisplayMode = message.displayMode ?? timelineDisplayMode;
-      if (latestFreePracticeUpdate) publishTimelineScene(latestFreePracticeUpdate, timelineRequest?.gesture ?? null);
+      if (latestFreePracticeUpdate) {
+        rendered = null;
+        publishFreePractice(latestFreePracticeUpdate, null, null, false);
+      }
       break;
     case "timelineInput":
       handleTimelineInput(message.input);
@@ -239,7 +244,9 @@ function publishFreePractice(
   const scoreUpdate = update.score;
   const timelineKey = JSON.stringify(update.timeline ?? null);
   if (scoreUpdate.scoreChanged !== false || !rendered || timelineKey !== renderedTimelineKey) {
-    rendered = renderer.layoutFreePracticeFrame(scoreUpdate.score, update.timeline, viewportWidth);
+    rendered = renderer.layoutFreePracticeFrame(
+      scoreUpdate.score, update.timeline, viewportWidth, timelinePixelsPerWhole,
+    );
     renderedTimelineKey = timelineKey;
   }
   // A resize or same-revision background frame may arrive between DOWN and MOVE. Preserve the
@@ -315,6 +322,7 @@ function publishTimelineScene(update, gesture, timeline = update.timeline) {
     measureBoundaries: rendered.timeAxis.measureBoundaries ?? [],
     axisContentEndX: rendered.timeAxis.contentEndX,
     axisSurfaceWidth: rendered.timeAxis.surfaceWidth,
+    pixelsPerWhole: timelinePixelsPerWhole,
     timeline,
     selectedSlotId: update.selection?.slotId ?? update.selectedSlotId ?? null,
     selectedTonalLayoutId: update.selection?.tonalLayoutId ?? null,

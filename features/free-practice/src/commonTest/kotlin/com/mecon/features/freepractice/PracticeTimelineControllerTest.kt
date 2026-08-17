@@ -12,6 +12,17 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PracticeTimelineControllerTest {
+    @Test
+    fun defaultChordDurationAdjustsScaleToKeepTheStandardChordWidth() {
+        assertEquals(576f, PracticeTimelineScale.pixelsPerWhole(Fraction.QUARTER))
+        assertEquals(288f, PracticeTimelineScale.pixelsPerWhole(Fraction.HALF))
+        assertEquals(144f, PracticeTimelineScale.pixelsPerWhole(Fraction.ONE))
+        assertEquals(
+            PracticeTimelineScale.DEFAULT_CHORD_WIDTH,
+            PracticeTimelineScale.pixelsPerWhole(Fraction(4, 1)) * Fraction(4, 1).toFloat(),
+        )
+    }
+
     private val first = WorkspaceSlotId("slot-a")
     private val second = WorkspaceSlotId("slot-b")
 

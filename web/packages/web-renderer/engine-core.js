@@ -50,6 +50,9 @@ export async function createFreePracticeTimelineFacade(options = {}) {
     toolbarDescriptor() {
       return JSON.parse(timeline.toolbarDescriptorJson());
     },
+    pixelsPerWhole(defaultChordDuration, defaultChordWidth = 144) {
+      return timeline.pixelsPerWholeJson(asJson(defaultChordDuration), defaultChordWidth);
+    },
     project(request) {
       return JSON.parse(timeline.projectJson(asJson(request)));
     },
@@ -214,13 +217,17 @@ export class EngineFacade {
     return { bundle, geometry: null };
   }
 
-  layoutFreePracticeFrame(score, timeline, viewportWidth = 0) {
+  layoutFreePracticeFrame(score, timeline, viewportWidth = 0, pixelsPerWhole = 576) {
     const scoreJson = typeof score === "string" ? score : JSON.stringify(score);
     if (typeof this.engine.renderFreePracticeFrameJson !== "function") return this.layoutFrame(score);
     const timelineJson = typeof timeline === "string" ? timeline : JSON.stringify(timeline);
-    const frameJson = viewportWidth > 0 && typeof this.engine.renderFreePracticeFrameForWidthJson === "function"
-      ? this.engine.renderFreePracticeFrameForWidthJson(scoreJson, timelineJson, viewportWidth)
-      : this.engine.renderFreePracticeFrameJson(scoreJson, timelineJson);
+    const frameJson = viewportWidth > 0 && typeof this.engine.renderFreePracticeFrameForWidthScaledJson === "function"
+      ? this.engine.renderFreePracticeFrameForWidthScaledJson(scoreJson, timelineJson, viewportWidth, pixelsPerWhole)
+      : typeof this.engine.renderFreePracticeFrameScaledJson === "function"
+        ? this.engine.renderFreePracticeFrameScaledJson(scoreJson, timelineJson, pixelsPerWhole)
+        : viewportWidth > 0 && typeof this.engine.renderFreePracticeFrameForWidthJson === "function"
+          ? this.engine.renderFreePracticeFrameForWidthJson(scoreJson, timelineJson, viewportWidth)
+          : this.engine.renderFreePracticeFrameJson(scoreJson, timelineJson);
     const frame = JSON.parse(frameJson);
     return {
       ...frame,

@@ -8,6 +8,7 @@ import com.mecon.features.freepractice.PracticeTimelineInput
 import com.mecon.features.freepractice.PracticeTimelineScene
 import com.mecon.features.freepractice.PracticeTimelineSceneProjector
 import com.mecon.features.freepractice.PracticeTimelineSceneRequest
+import com.mecon.features.freepractice.PracticeTimelineScale
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -22,6 +23,12 @@ class MeconFreePracticeTimeline {
     )
 
     fun toolbarDescriptorJson(): String = json.encodeToString(FreePracticeToolbarSpec.descriptor)
+
+    fun pixelsPerWholeJson(defaultChordDurationJson: String, defaultChordWidth: Double): Double =
+        PracticeTimelineScale.pixelsPerWhole(
+            json.decodeFromString(defaultChordDurationJson),
+            defaultChordWidth.toFloat(),
+        ).toDouble()
 
     fun handleJson(sceneJson: String, requestJson: String, inputJson: String): String = json.encodeToString(
         FreePracticeTimelineController.handle(
