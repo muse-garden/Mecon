@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.AddBox
 import androidx.compose.material3.Text
@@ -74,7 +75,7 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
     ToolbarButton(
         icon = Icons.Default.Refresh,
         label = "重新写作",
-        enabled = !controller.writingState.running,
+        enabled = !controller.writingState.running && controller.structure.rewriteSelectionAvailable,
         onClick = controller.rewriteSelection,
     )
     ToolbarButton(
@@ -82,6 +83,12 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
         label = "换一个结果",
         enabled = !controller.writingState.running && controller.writingState.canAlternate,
         onClick = controller.alternate,
+    )
+    ToolbarButton(
+        icon = Icons.Default.Stop,
+        label = "取消写作",
+        enabled = controller.writingState.running,
+        onClick = controller.cancelWriting,
     )
     ToolbarDivider()
     ToolbarButton(

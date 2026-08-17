@@ -72,9 +72,10 @@ button:disabled { cursor: default; opacity: .45; }
 .partitioned-main > .timeline-pane { flex: none; }
 .partitioned-main > .score-pane { flex: 1 1 0; min-height: 180px; }
 .workbench-lower-shell {
-  flex: none;
+  flex: 0 1 var(--practice-lower-height, 260px);
   height: var(--practice-lower-height, 320px);
   min-height: 180px;
+  max-height: calc(100% - 280px);
   display: grid;
   grid-template-rows: 9px minmax(0, 1fr);
   background: #0f1828;
@@ -133,9 +134,9 @@ button:disabled { cursor: default; opacity: .45; }
   min-height: 0;
 }
 .harmony-workbench-pane .harmony-panel .chord-catalog-groups {
-  flex: 1 1 0;
-  height: 0;
-  min-height: 0;
+  flex: 1 0 120px;
+  height: auto;
+  min-height: 120px;
   max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
@@ -285,8 +286,7 @@ button:disabled { cursor: default; opacity: .45; }
   width: 100%;
   min-height: max(60px, var(--practice-toolbar-height, 64px));
 }
-.practice-toolbar-group { display: inline-flex; flex: 0 1 auto; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
-.practice-toolbar-group.trailing { margin-left: auto; }
+.practice-toolbar-group { display: contents; }
 .workbench-toolbar button,
 .workbench-toolbar .file-button {
   min-width: 44px;
@@ -716,7 +716,7 @@ canvas:focus-visible { outline: 3px solid #9fc5ff; outline-offset: 4px; }
   .workbench-side-resizer { display: none; }
   .workbench-main { display: block; overflow-x: auto; }
   .workbench-main.partitioned-main { display: block; }
-  .workbench-lower-shell { height: auto !important; }
+  .workbench-lower-shell { flex: none; height: auto !important; max-height: none; }
   .workbench-lower-resizer { display: none; }
   .workbench-lower { grid-template-columns: 1fr; }
   .workbench-lower-pane + .workbench-lower-pane { border-left: 0; }

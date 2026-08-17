@@ -50,7 +50,7 @@ test("the service worker caches the shell and serves a navigation while offline"
   await page.reload();
   await expect(page.getByRole("status")).toBeVisible();
   await expect(page.locator(".file-button")).toBeVisible();
-  await expect(page.getByRole("status")).toHaveText("请选择 .mecon 文件");
+  await expect(page.getByText("revision 0", { exact: true })).toBeVisible();
 
   await context.setOffline(false);
 });

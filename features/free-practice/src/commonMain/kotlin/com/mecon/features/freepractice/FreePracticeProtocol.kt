@@ -231,7 +231,6 @@ sealed interface FreePracticeIntent {
     @SerialName("rewriteSelection")
     data class RewriteSelection(
         override val expectedRevision: Long,
-        val slotIds: List<WorkspaceSlotId>,
     ) : FreePracticeIntent
 
     @Serializable
@@ -296,10 +295,26 @@ sealed interface FreePracticeIntent {
     ) : FreePracticeIntent
 
     @Serializable
+    @SerialName("setVoiceLocks")
+    data class SetVoiceLocks(
+        override val expectedRevision: Long,
+        val voiceTrackIds: Set<TrackId>,
+        val locked: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
     @SerialName("setStaffLock")
     data class SetStaffLock(
         override val expectedRevision: Long,
         val staffTrackId: TrackId,
+        val locked: Boolean,
+    ) : FreePracticeIntent
+
+    @Serializable
+    @SerialName("setStaffLocks")
+    data class SetStaffLocks(
+        override val expectedRevision: Long,
+        val staffTrackIds: Set<TrackId>,
         val locked: Boolean,
     ) : FreePracticeIntent
 
@@ -612,6 +627,7 @@ data class PracticeStructureView(
     val lastMeasure: Int = 1,
     val selectedNoteMeasure: Int? = null,
     val selectedBarlineMeasure: Int? = null,
+    val rewriteSelectionAvailable: Boolean = false,
 )
 
 @Serializable
@@ -873,6 +889,8 @@ data class PracticeIdiomVariantView(
     val parameters: Map<String, String> = emptyMap(),
     val anchorStepIndex: Int = 0,
     val fixedInversionStepIndices: Set<Int> = emptySet(),
+    val customaryBassStepIndices: Set<Int> = emptySet(),
+    val avoidSecondInversionStepIndices: Set<Int> = emptySet(),
     val displayLabel: String = "",
     val enabled: Boolean = true,
     val disabledReasonLabel: String? = null,
@@ -880,6 +898,16 @@ data class PracticeIdiomVariantView(
     val relatedToFocus: Boolean = false,
     /** The focus-independent catalog exposes this concrete variant by default. */
     val availableByDefault: Boolean = false,
+)
+
+@Serializable
+data class PracticePivotRecipeView(
+    val sourceKey: PracticeKeyView,
+    val targetKey: PracticeKeyView,
+    val pitchClasses: Set<Int>,
+    val sourceReading: String,
+    val targetReading: String,
+    val definition: String,
 )
 
 @Serializable
@@ -901,6 +929,7 @@ data class PracticeIdiomCatalogView(
     val errorKey: String? = null,
     val includeOffKey: Boolean = false,
     val definitions: List<PracticeIdiomDefinitionView> = emptyList(),
+    val pivotRecipes: List<PracticePivotRecipeView> = emptyList(),
 )
 
 @Serializable
@@ -935,6 +964,7 @@ data class PracticeTeachingCatalogResult(
     val baseRevision: Long,
     val fingerprint: String,
     val definitions: List<PracticeIdiomDefinitionView> = emptyList(),
+    val pivotRecipes: List<PracticePivotRecipeView> = emptyList(),
     val errorKey: String? = null,
 )
 
@@ -1083,7 +1113,7 @@ data class FreePracticeDispatchResult(
     val scoreUpdate: ScoreEditUpdate? = null,
 )
 
-const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 3
+const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 4
 
 object FreePracticeCodec {
     private val json = Json {

@@ -12,6 +12,9 @@ import com.mecon.features.freepractice.PracticeTimelineEdit
 import com.mecon.desktop.ui.exploration.initialWorkspace
 import com.mecon.desktop.voiceTrackIdOf
 import com.mecon.exploration.VoicePlanScoreAssembler
+import com.mecon.exploration.FreePracticeDocument
+import com.mecon.exploration.FreePracticeSettings
+import com.mecon.exploration.PracticeNoteConstraintState
 import com.mecon.theory.freepractice.HarmonyWorkspaceCommand
 import com.mecon.theory.freepractice.HarmonyWorkspaceEditor
 import com.mecon.theory.freepractice.FreePracticeMaterialProjector
@@ -33,6 +36,39 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class HarmonyPracticeScoreHostTest {
+    @Test
+    fun openingHostPreservesTheCompletePracticeDocument() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val initial = initialWorkspace(4, ModulationKey(0, KeySignatureMode.MAJOR))
+            val runtime = RuntimeScore.fromStorage(
+                VoicePlanScoreAssembler.emptyPracticeScore(initial, KeySignature.C_MAJOR),
+            )
+            val document = FreePracticeDocument(
+                settings = FreePracticeSettings(
+                    polyphonyLimit = 4,
+                    defaultChordDuration = Fraction.HALF,
+                ),
+                workspace = initial,
+                noteConstraints = PracticeNoteConstraintState(
+                    lockedVoiceTrackIds = setOf(initial.voices.first().id),
+                ),
+            )
+
+            val host = HarmonyPracticeScoreHost(
+                scope,
+                runtime,
+                computeScore(runtime),
+                initial,
+                initialDocument = document,
+            )
+
+            assertEquals(document, host.practiceDocument)
+        } finally {
+            scope.cancel()
+        }
+    }
+
     @Test
     fun initialTimelinePublishesTheEmptyBeatBeforeTheFinalBarline() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const requested = process.argv.slice(2);
 const soak = requested.includes("--soak");
+const port = process.env.MECON_E2E_PORT ?? "4173";
 const playwrightArgs = soak
   ? ["test", "apps/free-practice/e2e/resource-stability.spec.js", "--reporter=line"]
   : ["test", ...requested];
@@ -15,7 +16,7 @@ const environment = {
 };
 const server = spawn(process.execPath, [
   resolve(root, "node_modules/vite/bin/vite.js"),
-  "preview", "apps/free-practice", "--host", "127.0.0.1", "--port", "4173",
+  "preview", "apps/free-practice", "--host", "127.0.0.1", "--port", port,
 ], { cwd: root, env: environment, stdio: "inherit", windowsHide: true });
 
 async function waitForServer() {
@@ -23,7 +24,7 @@ async function waitForServer() {
   while (Date.now() < deadline) {
     if (server.exitCode != null) throw new Error(`Vite exited with code ${server.exitCode}`);
     try {
-      const response = await fetch("http://127.0.0.1:4173/");
+      const response = await fetch(`http://127.0.0.1:${port}/`);
       if (response.ok) return;
     } catch {
       // The preview server is still starting.

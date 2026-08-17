@@ -226,7 +226,7 @@ test("W1 note editing, precise selection, keyboard commands and history run in a
   await page.keyboard.press("Control+C");
   await expect(page.getByRole("button", { name: "粘贴" })).toBeEnabled();
   await page.getByLabel("四分拍").fill("3");
-  await page.getByRole("heading", { name: "反馈" }).click();
+  await page.getByLabel("自由练习反馈").click();
   await act(page, () => page.keyboard.press("Control+V"));
   const changed = await revision(page);
   await page.keyboard.press("Control+Z");
@@ -468,6 +468,7 @@ test("W1 accidental palette arms the next pointer note, its ghost, and selected-
 });
 
 test("W1 structure, layout, expressions and mecon export run through Web UI", async ({ page }) => {
+  await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await openFixture(page);
   await page.getByLabel("谱号").selectOption("BASS");
   await act(page, () => page.getByRole("button", { name: "设置谱号" }).click());
@@ -545,7 +546,9 @@ test("W1 structure, layout, expressions and mecon export run through Web UI", as
   expect(download.suggestedFilename()).toBe("free-practice.mecon");
   const exportPath = resolve(here, "../../../build/e2e/browser-export.mecon");
   await download.saveAs(exportPath);
-  await expect(page.getByRole("status")).toHaveText("已生成 free-practice.mecon");
+  await expect(page.getByRole("status")).toHaveText(
+    "已下载 free-practice.mecon；当前浏览器无法确认文件是否实际保存",
+  );
   const reopened = await loadMeconDocument(new Uint8Array(await readFile(exportPath)));
   expect(reopened.scores.get("inactive-score").metadata.title).toBe("Inactive");
   expect(reopened.modules.get("future").payload.futureField).toBe("preserved");
@@ -614,7 +617,7 @@ test("W1 keyboard and Web MIDI step input use the same insertion path", async ({
   });
   await openFixture(page);
   await page.getByLabel("键盘步进（A–J，R 休止）").check();
-  await page.getByRole("heading", { name: "反馈" }).click();
+  await page.getByLabel("自由练习反馈").click();
   await act(page, () => page.keyboard.press("a"));
   await page.getByRole("button", { name: "连接 MIDI" }).click();
   await expect(page.getByText("MIDI 已连接（1）")).toBeVisible();

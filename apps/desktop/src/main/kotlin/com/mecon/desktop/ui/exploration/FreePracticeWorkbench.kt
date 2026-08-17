@@ -45,26 +45,13 @@ import com.mecon.desktop.uikit.components.DeferredVerticalResizeHandle
 import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.desktop.ui.views.rememberIdentityKey
 import com.mecon.exploration.VoicePlanScoreAssembler
-import com.mecon.exploration.FreePracticeDocument
-import com.mecon.exploration.FreePracticeSettings
 import com.mecon.exploration.FreePracticeWritingSettings
 import com.mecon.exploration.KeyModeSpec
-import com.mecon.exploration.KeySpec
 import com.mecon.features.freepractice.PracticeStructureView
 import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.withTonalLayoutBaseline
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
-import com.mecon.theory.SearchCancellation
 import com.mecon.theory.ModulationKey
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeCatalog
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeCatalogIndex
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeChordFocus
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeContribution
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeDiscoveryRequest
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeIdiomVariant
-import com.mecon.theory.schoenberg.allFreePracticeTargetKeys
-import com.mecon.theory.schoenberg.forGermanDominantSeventhFocus
-import com.mecon.theory.schoenberg.isGermanAugmentedSixth
 import com.mecon.theory.writing.GrandStaffVoiceLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -74,47 +61,6 @@ import kotlinx.coroutines.withContext
 private data class PracticeScoreSeed(
     val runtime: RuntimeScore,
     val computed: ComputedScore,
-)
-
-internal data class LoadedTeachingCatalogIndex(
-    val request: SchoenbergFreePracticeDiscoveryRequest,
-    val index: SchoenbergFreePracticeCatalogIndex,
-)
-
-internal fun focusedTeachingCatalogRequest(
-    defaultRequest: SchoenbergFreePracticeDiscoveryRequest,
-    focus: SchoenbergFreePracticeChordFocus,
-    showOffKeyIdioms: Boolean,
-): SchoenbergFreePracticeDiscoveryRequest = if (
-    showOffKeyIdioms || focus.isGermanAugmentedSixth()
-) {
-    defaultRequest.copy(
-        catalogKey = focus.key,
-        onlyAvailableByDefault = false,
-        includeOffKey = true,
-        targetKeys = allFreePracticeTargetKeys(),
-    )
-} else {
-    defaultRequest.copy(
-        catalogKey = focus.key,
-        onlyAvailableByDefault = false,
-    )
-}
-
-internal fun LoadedTeachingCatalogIndex?.forRequest(
-    request: SchoenbergFreePracticeDiscoveryRequest?,
-): SchoenbergFreePracticeCatalogIndex? =
-    takeIf { loaded -> request != null && loaded?.request == request }?.index
-
-internal fun defaultTeachingCatalogRequest(
-    initialKey: com.mecon.theory.ModulationKey,
-    activeKeys: List<com.mecon.theory.ModulationKey>,
-    catalogKey: com.mecon.theory.ModulationKey,
-): SchoenbergFreePracticeDiscoveryRequest = SchoenbergFreePracticeDiscoveryRequest(
-    initialKey = initialKey,
-    activeKeys = activeKeys,
-    catalogKey = catalogKey,
-    onlyAvailableByDefault = true,
 )
 
 /**
@@ -198,82 +144,6 @@ internal fun FreePracticeWorkbench(
         )
     }
     val scope = rememberCoroutineScope()
-    val activeKeys = workspace.tonalLayouts.map { it.key }.distinct()
-    val selectedWorkspaceSlot = workspace.slots.getOrNull(selectedSlot)
-    val selectedChordLayout = selectedWorkspaceSlot?.let(workspace::selectedTonalLayout)
-    val teachingFocus = selectedWorkspaceSlot?.chordChoice?.let { chordChoice ->
-        selectedChordLayout?.key?.let { key -> SchoenbergFreePracticeChordFocus(key, chordChoice) }
-    }
-    val isGermanDominantFocus = remember(teachingFocus) {
-        teachingFocus?.isGermanAugmentedSixth() == true
-    }
-    val catalogKey = selectedChordLayout?.key ?: currentInitialKey
-    val defaultTeachingRequest = remember(currentInitialKey, activeKeys, catalogKey) {
-        defaultTeachingCatalogRequest(currentInitialKey, activeKeys, catalogKey)
-    }
-    val focusedIndexRequest = remember(defaultTeachingRequest, teachingFocus, showOffKeyIdioms) {
-        teachingFocus?.let { focus ->
-            focusedTeachingCatalogRequest(defaultTeachingRequest, focus, showOffKeyIdioms)
-        }
-    }
-    val teachingIndexCache = remember {
-        mutableMapOf<SchoenbergFreePracticeDiscoveryRequest, SchoenbergFreePracticeCatalogIndex>()
-    }
-    // Keep the default catalog independent from chord focus: selecting a chord must not restart
-    // the expensive chapter-wide enumeration. Results carry their request identity so a previous
-    // focus can never be rendered while the new request is still running.
-    val loadedDefaults by androidx.compose.runtime.produceState<LoadedTeachingCatalogIndex?>(
-        initialValue = null,
-        defaultTeachingRequest,
-    ) {
-        val cached = teachingIndexCache[defaultTeachingRequest]
-        value = LoadedTeachingCatalogIndex(
-            request = defaultTeachingRequest,
-            index = cached ?: withContext(Dispatchers.Default) {
-                SchoenbergFreePracticeCatalog.buildIndex(defaultTeachingRequest)
-            }.also { teachingIndexCache[defaultTeachingRequest] = it },
-        )
-    }
-    val alternateFocusedIndexRequest = focusedIndexRequest
-        ?.takeUnless { it == defaultTeachingRequest }
-    val loadedAlternateFocused by androidx.compose.runtime.produceState<LoadedTeachingCatalogIndex?>(
-        initialValue = null,
-        alternateFocusedIndexRequest,
-    ) {
-        value = alternateFocusedIndexRequest?.let { request ->
-            val cached = teachingIndexCache[request]
-            LoadedTeachingCatalogIndex(
-                request = request,
-                index = cached ?: withContext(Dispatchers.Default) {
-                    SchoenbergFreePracticeCatalog.buildIndex(request)
-                }.also { teachingIndexCache[request] = it },
-            )
-        }
-    }
-    val defaultTeachingIndex = loadedDefaults.forRequest(defaultTeachingRequest)
-    val focusedTeachingIndex = if (focusedIndexRequest == defaultTeachingRequest) {
-        defaultTeachingIndex
-    } else {
-        loadedAlternateFocused.forRequest(alternateFocusedIndexRequest)
-    }
-    val defaultTeachingContribution = defaultTeachingIndex?.discover()
-    val focusedTeachingContribution = teachingFocus?.let { focus ->
-        focusedTeachingIndex?.discover(focus)?.let { contribution ->
-            if (!showOffKeyIdioms && isGermanDominantFocus) {
-                contribution.forGermanDominantSeventhFocus(focus)
-            } else {
-                contribution
-            }
-        }
-    }
-    val teachingContribution = SchoenbergFreePracticeContribution(
-        idioms = (
-            focusedTeachingContribution?.idioms.orEmpty() +
-                defaultTeachingContribution?.idioms.orEmpty()
-            ).distinctBy { it.id },
-        pivotRecipes = defaultTeachingContribution?.pivotRecipes.orEmpty(),
-    )
-
     val scoreSeed by androidx.compose.runtime.produceState<PracticeScoreSeed?>(
         initialValue = null,
         scoreGeneration,
@@ -302,6 +172,7 @@ internal fun FreePracticeWorkbench(
                 initialKey = currentInitialKey,
                 initialWritingSettings = writingSettings,
                 initialStaffVoices = staffVoices,
+                initialDocument = initialSnapshot?.document,
             )
         }
     }
@@ -349,25 +220,7 @@ internal fun FreePracticeWorkbench(
         if (host != null && !host.hasPendingWorkspaceCommit) {
             onSnapshotChange(
                 FreePracticeFileSnapshot(
-                    document = FreePracticeDocument(
-                        settings = FreePracticeSettings(
-                            polyphonyLimit = voiceCount,
-                            staffVoices = staffVoices,
-                            initialKey = KeySpec(
-                                fifths = route.source.fifths,
-                                mode = if (
-                                    route.source.mode == com.mecon.theory.KeySignatureMode.MAJOR
-                                ) {
-                                    KeyModeSpec.MAJOR
-                                } else {
-                                    KeyModeSpec.MINOR
-                                },
-                            ),
-                            selectedPatternIds = emptyList(),
-                            writing = writingSettings,
-                        ),
-                        workspace = host.workspace,
-                    ),
+                    document = host.practiceDocument,
                     score = host.runtimeScore.toStorage(),
                     moduleId = initialSnapshot?.moduleId
                         ?: com.mecon.exploration.DEFAULT_FREE_PRACTICE_MODULE_ID,
@@ -498,12 +351,6 @@ internal fun FreePracticeWorkbench(
         showOffKeyIdioms = showOffKeyIdioms,
         selectedIdiomTargetKey = selectedIdiomTargetKey,
         insertionOnset = workspace.slots[selectedSlot].onset,
-        teachingContribution = teachingContribution,
-        defaultTeachingContribution = defaultTeachingContribution ?: SchoenbergFreePracticeContribution(),
-        focusedTeachingContribution = focusedTeachingContribution ?: SchoenbergFreePracticeContribution(),
-        discoveringDefaultTeachingMaterial = defaultTeachingContribution == null,
-        discoveringFocusedTeachingMaterial =
-            teachingFocus != null && focusedTeachingContribution == null,
     )
     val planActions = PracticePlanActions(
         changeVoiceCount = ::rebuild,
@@ -641,23 +488,6 @@ internal fun FreePracticeWorkbench(
         findings = findings,
     )
     val feedbackActions = PracticeFeedbackActions
-    val rewriteSlotIds = scoreSelection
-        .mapNotNull { section ->
-            val time = section.timeCode() ?: return@mapNotNull null
-            VoicePlanScoreAssembler.FREE_PRACTICE_METER.measureDuration() *
-                (time.measure - 1) +
-                (time.beat ?: com.mecon.api.primitive.Fraction.ZERO)
-        }
-        .takeIf { it.isNotEmpty() }
-        ?.let { positions ->
-            val start = positions.min()
-            val end = positions.max()
-            workspace.slots.filter { slot ->
-                slot.onset <= end && slot.onset + slot.duration > start
-            }.mapTo(linkedSetOf()) { it.id }
-        }
-        .orEmpty()
-        .ifEmpty { setOf(selectedSlotId) }
     var workbenchLayout by remember {
         mutableStateOf(FreePracticeWorkbenchLayout.CLASSIC)
     }
@@ -672,7 +502,9 @@ internal fun FreePracticeWorkbench(
         staffVoices = staffVoices,
         inputMode = inputMode,
         chordToneMode = chordToneMode,
-        teachingContribution = teachingContribution ?: SchoenbergFreePracticeContribution(),
+        idiomTitles = host?.practicePlan?.idiomCatalog?.definitions
+            .orEmpty()
+            .associate { it.id to it.title },
         gridUnit = gridUnit,
         defaultChordBeats = defaultChordBeats,
         timeSignatureToolRequest = timeSignatureToolRequest,
@@ -764,7 +596,7 @@ internal fun FreePracticeWorkbench(
                     )
                 },
                 rewriteSelection = {
-                    host?.rewriteSelection(rewriteSlotIds, currentInitialKey) { message ->
+                    host?.rewriteSelection { message ->
                         completeWritingOperation(message)
                     }
                 },
@@ -772,6 +604,9 @@ internal fun FreePracticeWorkbench(
                     host?.alternateLastWriting { message ->
                         completeWritingOperation(message)
                     }
+                },
+                cancelWriting = {
+                    host?.cancelWriting()
                 },
             ),
         )

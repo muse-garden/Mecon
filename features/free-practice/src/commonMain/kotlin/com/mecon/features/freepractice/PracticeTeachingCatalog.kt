@@ -6,6 +6,8 @@ import com.mecon.theory.schoenberg.SchoenbergFreePracticeCatalog
 import com.mecon.theory.schoenberg.SchoenbergFreePracticeChordFocus
 import com.mecon.theory.schoenberg.SchoenbergFreePracticeDiscoveryRequest
 import com.mecon.theory.schoenberg.allFreePracticeTargetKeys
+import com.mecon.theory.schoenberg.forGermanDominantSeventhFocus
+import com.mecon.theory.schoenberg.isGermanAugmentedSixth
 
 /** CPU-only teaching catalog executor. Platforms run it on their catalog worker/dispatcher. */
 object PracticeTeachingCatalogExecutor {
@@ -20,12 +22,19 @@ object PracticeTeachingCatalogExecutor {
         )
         val defaults = SchoenbergFreePracticeCatalog.buildIndex(defaultDiscovery).discover()
         val focused = focus?.let { selected ->
+            val includeOffKey = request.includeOffKey || selected.isGermanAugmentedSixth()
             val focusedDiscovery = defaultDiscovery.copy(
                 onlyAvailableByDefault = false,
-                includeOffKey = request.includeOffKey,
-                targetKeys = if (request.includeOffKey) allFreePracticeTargetKeys() else emptyList(),
+                includeOffKey = includeOffKey,
+                targetKeys = if (includeOffKey) allFreePracticeTargetKeys() else emptyList(),
             )
-            SchoenbergFreePracticeCatalog.buildIndex(focusedDiscovery).discover(selected)
+            SchoenbergFreePracticeCatalog.buildIndex(focusedDiscovery).discover(selected).let { result ->
+                if (!request.includeOffKey && selected.isGermanAugmentedSixth()) {
+                    result.forGermanDominantSeventhFocus(selected)
+                } else {
+                    result
+                }
+            }
         }
         val focusedDefinitions = focused?.idioms.orEmpty()
         val defaultDefinitions = defaults.idioms
@@ -62,6 +71,8 @@ object PracticeTeachingCatalogExecutor {
                             parameters = variant.parameters,
                             anchorStepIndex = variant.anchorStepIndex,
                             fixedInversionStepIndices = variant.fixedInversionStepIndices,
+                            customaryBassStepIndices = variant.customaryBassStepIndices,
+                            avoidSecondInversionStepIndices = variant.avoidSecondInversionStepIndices,
                             relatedToFocus = membership.first,
                             availableByDefault = membership.second,
                         )
@@ -75,6 +86,22 @@ object PracticeTeachingCatalogExecutor {
             baseRevision = request.baseRevision,
             fingerprint = request.fingerprint,
             definitions = definitions,
+            pivotRecipes = defaults.pivotRecipes.map { recipe ->
+                PracticePivotRecipeView(
+                    sourceKey = PracticeKeyView(
+                        recipe.sourceKey.fifths,
+                        WorkspaceKeyMode.fromTheory(recipe.sourceKey.mode),
+                    ),
+                    targetKey = PracticeKeyView(
+                        recipe.targetKey.fifths,
+                        WorkspaceKeyMode.fromTheory(recipe.targetKey.mode),
+                    ),
+                    pitchClasses = recipe.pitchClasses,
+                    sourceReading = recipe.sourceReading,
+                    targetReading = recipe.targetReading,
+                    definition = recipe.definition,
+                )
+            },
         )
     }.getOrElse {
         PracticeTeachingCatalogResult(

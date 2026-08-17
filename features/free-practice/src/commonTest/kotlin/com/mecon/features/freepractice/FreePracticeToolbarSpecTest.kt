@@ -9,7 +9,7 @@ class FreePracticeToolbarSpecTest {
     fun descriptorHasStableUniqueDesktopAuthorityOrder() {
         val descriptor = FreePracticeToolbarSpec.descriptor
         assertEquals(
-            listOf("file", "history", "mode", "writing", "structure", "playback", "settings"),
+            listOf("file", "history", "writing", "structure", "playback"),
             descriptor.top.groups.map { it.id },
         )
         assertEquals(
@@ -22,10 +22,10 @@ class FreePracticeToolbarSpecTest {
         assertEquals(FreePracticeToolbarSpec.topControlIds.distinct(), FreePracticeToolbarSpec.topControlIds)
         assertEquals(FreePracticeToolbarSpec.scoreControlIds.distinct(), FreePracticeToolbarSpec.scoreControlIds)
         assertEquals("file.new", FreePracticeToolbarSpec.topControlIds.first())
-        assertEquals("settings.application", FreePracticeToolbarSpec.topControlIds.last())
+        assertTrue("writing.cancel" in FreePracticeToolbarSpec.topControlIds)
+        assertEquals("playback.audio-settings", FreePracticeToolbarSpec.topControlIds.last())
         assertEquals("tool.select", FreePracticeToolbarSpec.scoreControlIds.first())
         assertEquals("articulation.staccatissimo", FreePracticeToolbarSpec.scoreControlIds.last())
-        assertTrue(descriptor.top.groups.last().trailing)
         assertEquals(64f, descriptor.tokens.topHeight)
         assertEquals(28f, descriptor.tokens.paletteButtonSize)
     }

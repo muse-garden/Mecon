@@ -59,7 +59,7 @@ data class FreePracticeToolbarStateSnapshot(
 )
 
 object FreePracticeToolbarSpec {
-    const val DESCRIPTOR_VERSION: Int = 3
+    const val DESCRIPTOR_VERSION: Int = 6
 
     val descriptor: FreePracticeToolbarDescriptor = FreePracticeToolbarDescriptor(
         version = DESCRIPTOR_VERSION,
@@ -68,10 +68,9 @@ object FreePracticeToolbarSpec {
             groups = listOf(
                 group("file", "file.new", "file.open", "file.save"),
                 group("history", "history.undo", "history.redo"),
-                group("mode", "mode.auto-solve", "mode.free-practice"),
                 group(
                     "writing",
-                    "writing.rewrite", "writing.alternate", "writing.auto",
+                    "writing.rewrite", "writing.alternate", "writing.cancel", "writing.auto",
                     "writing.backtrack-count", "writing.replay-count", "writing.tempo",
                     "writing.voice-count", "writing.upper-voice-count", "writing.grid-unit",
                     "writing.default-chord-beats", "writing.initial-key",
@@ -82,7 +81,6 @@ object FreePracticeToolbarSpec {
                     "playback.from-start", "playback.play-pause", "playback.from-selection",
                     "playback.speed", "playback.audio-settings",
                 ),
-                group("settings", "settings.application", trailing = true),
             ),
         ),
         score = FreePracticeToolbarLayer(

@@ -107,9 +107,7 @@ internal fun Toolbar(
         } else if (state.activeTab == i18n("menu.exploration")) {
             val groups = FreePracticeToolbarSpec.descriptor.top.groups.filter { group ->
                 when (group.id) {
-                    "mode" -> explorationController != null
                     "writing", "playback" -> freePracticeController != null
-                    "settings" -> false
                     else -> true
                 }
             }
@@ -124,7 +122,6 @@ internal fun Toolbar(
                         saveEnabled = historyHost != null,
                     )
                     "history" -> HistoryActions(session = historyHost)
-                    "mode" -> explorationController?.let { ExplorationModeToolbar(it) }
                     "writing" -> freePracticeController?.let { FreePracticeToolbar(it) }
                     "playback" -> freePracticeController?.let {
                         PlaybackControls(
@@ -173,9 +170,7 @@ internal fun Toolbar(
             state.activeTab != i18n("menu.view") &&
             (
                 state.activeTab != i18n("menu.exploration") ||
-                    FreePracticeToolbarSpec.descriptor.top.groups.any {
-                        it.id == "settings" && it.trailing
-                    }
+                    explorationController != null
                 )
         ) {
             SettingsButton(onOpenSettings = actions.document.openSettings)

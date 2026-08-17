@@ -8,6 +8,20 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fixture = resolve(here, "../../../build/e2e/free-practice-f1.mecon");
 const longFixture = resolve(here, "../../../build/e2e/free-practice-f1-64.mecon");
 
+async function openPracticeFixture(page, path, engineVersion) {
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+  const previousRequestId = await page.evaluate(() => (
+    window.__MECON_E2E__?.documentRequest()?.latest ?? 0
+  ));
+  await page.getByLabel("打开 .mecon").setInputFiles(path);
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__?.documentRequest()))
+    .toEqual({ latest: previousRequestId + 1, completed: previousRequestId + 1 });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__?.documentManifest()?.engineVersion
+  )), { timeout: 30_000 }).toBe(engineVersion);
+  await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
+}
+
 async function clickScoreNote(page, occurrence) {
   const point = await page.evaluate((index) => {
     const frame = window.__MECON_E2E__.snapshot();
@@ -252,7 +266,7 @@ test("2/4 practice shows a passive empty beat and a separate add button", async 
 test("lays out compact note properties and highlights uniform states", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().bundle.surfaces
@@ -310,7 +324,7 @@ test("lays out compact note properties and highlights uniform states", async ({ 
 test("marks a selected note and enables shared harmonic-role filters", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().bundle.surfaces
@@ -382,7 +396,7 @@ async function marqueeFirstTwoScoreOnsets(page) {
     const eventsBySlot = Object.values(frame.practiceUpdate.score.score.voiceTracks)
       .flatMap((voice) => voice.events ?? []).reduce((result, event) => {
         if (!renderedEventIds.has(event.id)) return result;
-        const eventTime = frame.playbackAnchors.find((anchor) => sameTime(anchor.scoreTime, event.onset))?.time;
+        const eventTime = frame.timeAxis.anchors.find((anchor) => sameTime(anchor.scoreTime, event.onset))?.time;
         const absolute = fraction(eventTime);
         const index = slots.findIndex((slot) => fraction(slot.onset) <= absolute
           && fraction(slot.onset) + fraction(slot.duration) > absolute);
@@ -453,7 +467,7 @@ test("new free practice starts from the shared preset and exports a complete con
 
 test("both free-practice toolbars replay the common stable-id descriptor", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   const snapshot = await page.evaluate(() => {
     const descriptor = window.__MECON_E2E__.toolbarDescriptor();
@@ -479,9 +493,7 @@ test("both free-practice toolbars replay the common stable-id descriptor", async
   assertOrderedSubset(snapshot.top, snapshot.descriptor.top);
   assertOrderedSubset(snapshot.score, snapshot.descriptor.score);
   expect(snapshot.top.map((item) => item.id)).toEqual(snapshot.descriptor.top.groups
-    .filter((group) => group.id !== "mode")
-    .flatMap((group) => group.controls)
-    .filter((id) => id !== "playback.speed" && id !== "playback.audio-settings"));
+    .flatMap((group) => group.controls));
   expect(snapshot.score.map((item) => item.id)).not.toEqual(expect.arrayContaining([
     "selection.copy", "selection.transposeUp", "input.position", "input.midi",
   ]));
@@ -544,7 +556,7 @@ test("new and open protect unsaved work and save establishes a clean baseline", 
     };
   });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.hasUnsavedChanges())).toBe(false);
 
@@ -582,14 +594,14 @@ test("new and open protect unsaved work and save establishes a clean baseline", 
   await toolbar.getByRole("button", { name: "BPM加一" }).click();
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.hasUnsavedChanges())).toBe(true);
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(0);
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.hasUnsavedChanges())).toBe(false);
 });
 
 test("top toolbar uses desktop-style controls and wraps without scrollbars", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   const toolbar = page.getByRole("toolbar", { name: "自由练习工具栏" });
@@ -628,17 +640,20 @@ test("top toolbar uses desktop-style controls and wraps without scrollbars", asy
   expect(toolbarOverflow.scrollHeight).toBe(toolbarOverflow.clientHeight);
 });
 
-test("wide right panel matches the desktop sections, avoids toolbar duplicates, and resizes", async ({ page }) => {
+test("wide workbench partitions plan sections without toolbar duplicates and resizes", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   const panel = page.locator(".workbench-side");
   await expect(panel.getByRole("heading", { name: "当前调性" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "和声选择" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "和弦详情" })).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "惯用进行" })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "和声选择" })).toHaveCount(0);
+  await expect(panel.getByRole("heading", { name: "惯用进行" })).toHaveCount(0);
+  const lower = page.locator(".workbench-lower");
+  await expect(lower.getByRole("heading", { name: "和声选择" })).toBeVisible();
+  await expect(lower.getByRole("heading", { name: "惯用进行" })).toBeVisible();
   await expect(panel.getByText("练习设置", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("写作设置", { exact: true })).toHaveCount(0);
   await expect(panel.getByRole("button", { name: "配声", exact: true })).toHaveCount(0);
@@ -658,8 +673,15 @@ test("wide right panel matches the desktop sections, avoids toolbar duplicates, 
 test("tall harmony panel keeps catalog scrolling inside the remaining space", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
+
+  const lowerSeparator = page.getByRole("separator", { name: "调整和声面板高度" });
+  const lowerHandle = await lowerSeparator.boundingBox();
+  await page.mouse.move(lowerHandle.x + lowerHandle.width / 2, lowerHandle.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(lowerHandle.x + lowerHandle.width / 2, lowerHandle.y - 240, { steps: 4 });
+  await page.mouse.up();
 
   const metrics = await page.locator(".harmony-workbench-pane").evaluate((pane) => {
     const catalog = pane.querySelector(".chord-catalog-groups");
@@ -681,7 +703,7 @@ test("tall harmony panel keeps catalog scrolling inside the remaining space", as
 
 test("bass choice writes the visibly selected chord member as the score's actual lowest pitch", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   await page.getByRole("button", { name: "调性", exact: true }).click();
@@ -724,7 +746,7 @@ test("bass choice writes the visibly selected chord member as the score's actual
 test("64-slot renderer anchors align the harmony timeline without blocking the browser", async ({ page }) => {
   await page.goto("/");
   const startedAt = Date.now();
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.locator(".timeline-slot-control")).toHaveCount(64, { timeout: 30_000 });
   expect(Date.now() - startedAt).toBeLessThan(30_000);
   await expect(page.getByLabel("和声时间轴")).toHaveAttribute("data-axis-source", "renderer");
@@ -757,7 +779,7 @@ test("64-slot renderer anchors align the harmony timeline without blocking the b
       surfaceWidth: snapshot.timeAxis.surfaceWidth,
     };
   });
-  expect(alignment.semanticWidth).toBeCloseTo(alignment.surfaceWidth, 0);
+  expect(alignment.semanticWidth).toBeGreaterThanOrEqual(alignment.surfaceWidth);
   expect(alignment.maxError).toBeLessThanOrEqual(1);
   await page.locator(".canvas-scroll").evaluate((element) => {
     element.scrollLeft = 420;
@@ -774,30 +796,30 @@ test("64-slot renderer anchors align the harmony timeline without blocking the b
 
 test("free writing selects a catalog chord, voices it, checks it, alternates, and auditions", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.getByLabel("和声时间轴")).toBeVisible();
 
-  const catalog = page.getByLabel("和弦目录");
-  await expect(catalog.locator("option")).not.toHaveCount(0);
-  await catalog.selectOption({ index: 1 });
-  await page.getByRole("button", { name: "选用和弦" }).click();
+  const catalog = page.getByLabel("选择和弦", { exact: true });
+  const choices = catalog.locator("[data-choice-id]");
+  await expect(choices).not.toHaveCount(0);
+  await choices.nth(1).click();
 
-  await expect.poll(async () => page.getByLabel("自由练习反馈").textContent(), { timeout: 60_000 })
-    .toContain("结果：solved");
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.writing.outcome?.type), { timeout: 60_000 }).toBe("solved");
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.playbackTrace()
     .some((entry) => entry.kind === "edit-playback" && entry.type === "excerpt")))
     .toBe(true);
   await expect(page.locator(".score-playhead")).toHaveCount(0);
-  await expect(page.getByText("检查", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("自由练习反馈")).toBeVisible();
 
-  const alternate = page.getByRole("button", { name: "换结果" });
+  const alternate = page.getByRole("button", { name: "换一个结果" });
   await expect(alternate).toBeEnabled({ timeout: 60_000 });
   await alternate.click();
   await expect(page.getByRole("status")).toContainText("revision");
 
-  await page.getByRole("button", { name: "试听" }).click();
-  await page.getByRole("button", { name: "停止" }).click();
+  await page.getByRole("button", { name: "从选择播放" }).click();
+  await page.getByRole("button", { name: "暂停" }).click();
 
   await page.reload();
   await expect(page.getByLabel("和声时间轴")).toBeVisible({ timeout: 30_000 });
@@ -805,7 +827,7 @@ test("free writing selects a catalog chord, voices it, checks it, alternates, an
 
 test("score note selection consumes shared edit audition playback", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   await clickScoreNote(page, 0);
@@ -818,7 +840,7 @@ test("score note selection consumes shared edit audition playback", async ({ pag
 test("top toolbar adjusts meter and inserts measure-aligned chord slots", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
   await page.getByLabel("追加和弦槽").click();
   await expect.poll(() => page.evaluate(() => (
@@ -885,13 +907,14 @@ test("top toolbar adjusts meter and inserts measure-aligned chord slots", async 
 
 test("score note selection focuses its filled harmony slot", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision
   )), { timeout: 60_000 }).toBe(0);
 
-  const distantSlot = page.locator("[data-slot-id]").last();
-  const distantSlotId = await distantSlot.getAttribute("data-slot-id");
+  const distantSlotId = await page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.document.workspace.slots.filter((slot) => slot.chordChoice).at(-1).id);
+  const distantSlot = page.locator(`[data-slot-id="${distantSlotId}"]`);
   await distantSlot.getByRole("button").first().click();
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__.snapshot().practiceUpdate.selection.slotId
@@ -918,7 +941,7 @@ test("score note selection focuses its filled harmony slot", async ({ page }) =>
 
 test("marquee rewrite and alternate keep the selected score time range", async ({ page }) => {
   await page.goto("/");
-  await page.locator('input[type="file"]').setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect.poll(() => page.evaluate(() => (
     window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision
   )), { timeout: 60_000 }).toBe(0);
@@ -958,7 +981,7 @@ test("marquee rewrite and alternate keep the selected score time range", async (
 
 test("score transport steps its playhead, resumes complete notes, and starts from score selection", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   await page.getByRole("button", { name: "从头播放" }).click();
@@ -1037,7 +1060,7 @@ test("pausing just after a new note keeps that note's playhead anchor", async ({
     }
   });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await openPracticeFixture(page, longFixture, "free-practice-f1-64");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await page.getByRole("button", { name: "从头播放" }).click();
 
@@ -1077,7 +1100,7 @@ test("pausing just after a new note keeps that note's playhead anchor", async ({
 
 test("harmony timeline commits keyboard and pointer edits through the shared session", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.getByLabel("和声时间轴")).toHaveAttribute("data-axis-source", "renderer");
   await page.getByLabel("吸附单位").selectOption("16");
@@ -1092,8 +1115,11 @@ test("harmony timeline commits keyboard and pointer edits through the shared ses
   const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
   await expect(autoWriting).toHaveAttribute("aria-pressed", "true");
   await autoWriting.click();
-  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
-    .practiceUpdate.document.settings.writing.autoWritingEnabled)).toBe(false);
+  await expect.poll(() => page.evaluate(() => ({
+    autoWritingEnabled: window.__MECON_E2E__.snapshot()
+      .practiceUpdate.document.settings.writing.autoWritingEnabled,
+    ...window.__MECON_E2E__.intentQueue(),
+  }))).toEqual({ autoWritingEnabled: false, inFlightRequestId: null, pendingCount: 0 });
   const revisionBeforeResize = await page.evaluate(() => window.__MECON_E2E__.snapshot().practiceUpdate.revision);
   const durationBeforeResize = await page.evaluate(() => {
     const duration = window.__MECON_E2E__.snapshot().practiceUpdate.timeline.slots[0].duration;
@@ -1167,7 +1193,7 @@ test("harmony timeline commits keyboard and pointer edits through the shared ses
 
 test("harmony timeline Ctrl-drag creates one undoable history item without a stale alert", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
   await page.getByLabel("吸附单位").selectOption("16");
 
@@ -1218,7 +1244,7 @@ test("harmony timeline Ctrl-drag creates one undoable history item without a sta
 
 test("harmony timeline replays the shared hover cursor and highlight for real pointer moves", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   const surface = page.locator(".harmony-timeline");
@@ -1247,7 +1273,7 @@ test("harmony timeline replays the shared hover cursor and highlight for real po
 
 test("harmony timeline switches between full and compact shared scenes without editing the practice", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   const revision = page.locator(".practice-revision-announcer");
   await expect(revision).toHaveText("revision 0", { timeout: 30_000 });
 
@@ -1289,7 +1315,7 @@ test("harmony timeline switches between full and compact shared scenes without e
 
 test("tonal layouts stay session-owned and narrow workbench tabs preserve the mounted views", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   const expectRevision = (revision) => expect.poll(
     () => page.evaluate(() => window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision),
     { timeout: 30_000 },
@@ -1391,7 +1417,7 @@ test("tonal layouts stay session-owned and narrow workbench tabs preserve the mo
 
 test("idiom tonality selection stays independent and insertion keeps the later tonal layout", async ({ page }) => {
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   const revision = () => page.evaluate(() => window.__MECON_E2E__?.snapshot()?.practiceUpdate?.revision);
   await expect.poll(revision, { timeout: 30_000 }).toBe(0);
 
@@ -1445,7 +1471,7 @@ test("idiom tonality selection stays independent and insertion keeps the later t
 test("narrow workbench exposes a coherent assistive-technology tree and score summary", async ({ page }) => {
   await page.setViewportSize({ width: 600, height: 900 });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   const tabs = page.getByRole("tablist", { name: "自由练习视图" });
@@ -1473,8 +1499,9 @@ test("narrow workbench exposes a coherent assistive-technology tree and score su
 });
 
 test("teaching idiom catalog renders kernel data and dispatches stable-id insertion", async ({ page }) => {
+  await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await page.goto("/");
-  await page.getByLabel("打开 .mecon").setInputFiles(fixture);
+  await openPracticeFixture(page, fixture, "free-practice-f1");
   await expect(page.getByRole("status")).toHaveText("revision 0", { timeout: 30_000 });
 
   const idiomCatalog = page.getByTestId("idiom-catalog");

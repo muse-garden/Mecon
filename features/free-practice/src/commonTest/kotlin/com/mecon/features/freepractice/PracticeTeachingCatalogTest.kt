@@ -20,7 +20,10 @@ class PracticeTeachingCatalogTest {
             baseRevision = 0,
             fingerprint = includeOffKey.toString(),
             initialKey = PracticeKeyView(0, WorkspaceKeyMode.MAJOR),
-            activeKeys = listOf(PracticeKeyView(0, WorkspaceKeyMode.MAJOR)),
+            activeKeys = listOf(
+                PracticeKeyView(0, WorkspaceKeyMode.MAJOR),
+                PracticeKeyView(-4, WorkspaceKeyMode.MAJOR),
+            ),
             catalogKey = PracticeKeyView(0, WorkspaceKeyMode.MAJOR),
             focus = focus,
             includeOffKey = includeOffKey,
@@ -47,5 +50,14 @@ class PracticeTeachingCatalogTest {
                 definition.availableByDefault,
             )
         }
+        assertTrue(local.pivotRecipes.isNotEmpty())
+        assertTrue(local.pivotRecipes.all { recipe ->
+            recipe.pitchClasses.isNotEmpty() && recipe.sourceReading.isNotBlank() &&
+                recipe.targetReading.isNotBlank()
+        })
+        assertTrue(local.definitions.flatMap { it.variants }.any { variant ->
+            variant.customaryBassStepIndices.isNotEmpty() ||
+                variant.avoidSecondInversionStepIndices.isNotEmpty()
+        })
     }
 }

@@ -58,9 +58,6 @@ import com.mecon.theory.freepractice.WorkspaceKeyMode
 import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.WorkspaceTonalLayout
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeContribution
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeIdiomDefinition
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeIdiomVariant
 import com.mecon.theory.writing.GrandStaffVoiceLayout
 import com.mecon.theory.harmony.ChordSelectionCatalog
 import com.mecon.theory.harmony.ChordSelectionChoice
@@ -82,11 +79,6 @@ internal data class PracticePlanState(
     val showOffKeyIdioms: Boolean,
     val selectedIdiomTargetKey: ModulationKey?,
     val insertionOnset: Fraction,
-    val teachingContribution: SchoenbergFreePracticeContribution,
-    val defaultTeachingContribution: SchoenbergFreePracticeContribution,
-    val focusedTeachingContribution: SchoenbergFreePracticeContribution,
-    val discoveringDefaultTeachingMaterial: Boolean,
-    val discoveringFocusedTeachingMaterial: Boolean,
 )
 
 internal data class PracticePlanActions(
@@ -178,11 +170,7 @@ internal fun PracticePlanPanel(
         idiomGuidanceForSlot(
             workspace = state.workspace,
             slotId = slot.id,
-            contributions = listOf(
-                state.teachingContribution,
-                state.defaultTeachingContribution,
-                state.focusedTeachingContribution,
-            ),
+            definitions = view.idiomCatalog.definitions,
         )
     } ?: IdiomGuidanceState()
     Column(
@@ -329,7 +317,7 @@ internal fun PracticePlanPanel(
                     activeLayouts = catalogLayouts,
                     selectedLayoutId = selectedChordLayout.id,
                     isPivotChord = selectedSlot.isPivotChord,
-                    pivotRecipes = state.teachingContribution.pivotRecipes,
+                    pivotRecipes = view.idiomCatalog.pivotRecipes,
                     chordLocked = state.workspace.isIdiomSlot(selectedSlot.id),
                     inversionLocked = state.workspace.isIdiomInversionLocked(selectedSlot.id),
                     customaryBassGuidance = selectedSlotGuidance.customaryBassPitchClasses,
@@ -360,7 +348,7 @@ internal fun PracticePlanPanel(
                     activeLayouts = catalogLayouts,
                     selectedLayoutId = selectedChordLayout.id,
                     isPivotChord = selectedSlot.isPivotChord,
-                    pivotRecipes = state.teachingContribution.pivotRecipes,
+                    pivotRecipes = view.idiomCatalog.pivotRecipes,
                     chordLocked = state.workspace.isIdiomSlot(selectedSlot.id),
                     inversionLocked = state.workspace.isIdiomInversionLocked(selectedSlot.id),
                     customaryBassGuidance = selectedSlotGuidance.customaryBassPitchClasses,
@@ -865,10 +853,9 @@ private data class IdiomGuidanceState(
 private fun idiomGuidanceForSlot(
     workspace: HarmonyWorkspaceState,
     slotId: WorkspaceSlotId,
-    contributions: List<SchoenbergFreePracticeContribution>,
+    definitions: List<com.mecon.features.freepractice.PracticeIdiomDefinitionView>,
 ): IdiomGuidanceState {
     val selectedSlot = workspace.slots.firstOrNull { it.id == slotId } ?: return IdiomGuidanceState()
-    val definitions = contributions.flatMap(SchoenbergFreePracticeContribution::idioms)
     val customaryBassPitchClasses = linkedSetOf<Int>()
     var cadentialDominant = false
     workspace.idiomInstancesForSlot(slotId).forEach { instance ->
@@ -895,84 +882,6 @@ private fun idiomGuidanceForSlot(
         if (stepIndex in variant.avoidSecondInversionStepIndices) cadentialDominant = true
     }
     return IdiomGuidanceState(customaryBassPitchClasses, cadentialDominant)
-}
-
-private fun List<SchoenbergFreePracticeIdiomDefinition>.withoutConcreteVariants(
-    excluded: List<SchoenbergFreePracticeIdiomDefinition>,
-): List<SchoenbergFreePracticeIdiomDefinition> {
-    val signatures = excluded.flatMap(SchoenbergFreePracticeIdiomDefinition::variants)
-        .mapTo(hashSetOf(), SchoenbergFreePracticeIdiomVariant::audibleSignature)
-    return mapNotNull { definition ->
-        definition.variants.filter { it.audibleSignature() !in signatures }
-            .takeIf { it.isNotEmpty() }
-            ?.let { definition.copy(variants = it) }
-    }
-}
-
-internal fun List<SchoenbergFreePracticeIdiomDefinition>.deduplicateConcreteVariants():
-    List<SchoenbergFreePracticeIdiomDefinition> {
-    val closest = linkedMapOf<AudibleIdiomSignature, SchoenbergFreePracticeIdiomVariant>()
-    flatMap(SchoenbergFreePracticeIdiomDefinition::variants).forEach { variant ->
-        val signature = variant.audibleSignature()
-        val previous = closest[signature]
-        if (previous == null || kotlin.math.abs(variant.targetKeyDistance) <
-            kotlin.math.abs(previous.targetKeyDistance)
-        ) {
-            closest[signature] = variant
-        }
-    }
-    return mapNotNull { definition ->
-        definition.variants.filter { variant -> closest[variant.audibleSignature()] === variant }
-            .takeIf { it.isNotEmpty() }
-            ?.let { definition.copy(variants = it) }
-    }
-}
-
-private data class AudibleIdiomSignature(
-    val chords: List<Pair<List<Int>, Int?>>,
-    val durations: List<Fraction>,
-)
-
-private fun SchoenbergFreePracticeIdiomVariant.audibleSignature(): AudibleIdiomSignature =
-    AudibleIdiomSignature(
-        chords = chordChoices.map { choice ->
-            choice.pitchClasses.sorted() to choice.bassPitchClass
-        },
-        durations = durations,
-    )
-
-internal fun idiomVariantChipLabel(
-    variant: SchoenbergFreePracticeIdiomVariant,
-    showOffKeyIdioms: Boolean,
-    reason: String? = null,
-): String = buildString {
-    append(variant.title)
-    variant.suggestedKey?.takeIf { showOffKeyIdioms }?.let { target ->
-        val distance = variant.targetKeyDistance
-        append(" · 目标 ")
-        append(target.displayName)
-        append(" · ")
-        append(
-            when {
-                distance > 0 -> "至少偏离 $distance 个升号"
-                distance < 0 -> "至少偏离 ${-distance} 个降号"
-                else -> "调号距离 0"
-            }
-        )
-    }
-    if (reason != null) append(" · $reason")
-}
-
-private fun List<SchoenbergFreePracticeIdiomDefinition>.forTargetKey(
-    targetKey: ModulationKey?,
-): List<SchoenbergFreePracticeIdiomDefinition> = if (targetKey == null) {
-    this
-} else {
-    mapNotNull { definition ->
-        definition.variants.filter { it.suggestedKey == targetKey }
-            .takeIf { it.isNotEmpty() }
-            ?.let { definition.copy(variants = it) }
-    }
 }
 
 @Composable

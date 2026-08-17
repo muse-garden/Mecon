@@ -22,10 +22,15 @@ export function createPracticeIntentQueue({ send }) {
   }
 
   function pump(update) {
-    // A running solve owns the session's revision; queued intents wait for its result frame.
-    if (!update || update.writing?.phase === "RUNNING" || inFlight != null) return;
-    const queued = pending.shift();
-    if (!queued) return;
+    if (!update || inFlight != null) return;
+    // Ordinary edits wait for the solve result so they can be stamped with its revision, but an
+    // explicit cancel must reach the session while RUNNING. Pick it out of the queue even when an
+    // earlier ordinary edit is waiting behind the background result.
+    const queuedIndex = update.writing?.phase === "RUNNING"
+      ? pending.findIndex(({ intent }) => intent.type === "cancelWriting")
+      : 0;
+    if (queuedIndex < 0 || queuedIndex >= pending.length) return;
+    const [queued] = pending.splice(queuedIndex, 1);
     inFlight = queued.clientRequestId;
     send({ clientRequestId: queued.clientRequestId, intent: stamp(queued.intent, update) });
   }
@@ -51,6 +56,9 @@ export function createPracticeIntentQueue({ send }) {
     },
     get inFlightRequestId() {
       return inFlight;
+    },
+    get pendingCount() {
+      return pending.length;
     },
   };
 }

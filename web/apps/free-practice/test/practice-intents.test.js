@@ -63,6 +63,22 @@ test("a running solve holds the channel and unsolicited frames do not release it
   assert.equal(queue.inFlightRequestId, sent[0].clientRequestId);
 });
 
+test("cancelWriting preempts ordinary intents queued behind a running solve", () => {
+  const sent = [];
+  const queue = createPracticeIntentQueue({ send: (message) => sent.push(message) });
+  const running = update(7, { writing: { phase: "RUNNING" } });
+
+  queue.push({ type: "selectSlot", slotId: "slot-1" }, running);
+  queue.push({ type: "cancelWriting" }, running);
+
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].intent, { type: "cancelWriting", expectedRevision: 7 });
+
+  queue.settle(sent[0].clientRequestId, update(8, { writing: { phase: "READY" } }));
+  assert.equal(sent.length, 2);
+  assert.deepEqual(sent[1].intent, { type: "selectSlot", slotId: "slot-1", expectedRevision: 8 });
+});
+
 test("reset drops queued work when another document is opened", () => {
   const sent = [];
   const queue = createPracticeIntentQueue({ send: (message) => sent.push(message) });

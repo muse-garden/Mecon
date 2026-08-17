@@ -50,7 +50,7 @@ Future mobile adapter ─────────┘       ├─ HarmonyWorkspa
 | Kotlin/JS 字符串 facade | `bridge/web-engine/.../MeconFreePractice.kt` |
 | 串行引擎/排版 Worker | `web/apps/free-practice/src/engine-worker.js` |
 | 可终止后台 Worker | `web/apps/free-practice/src/search-worker.js` |
-| React composition root | `web/apps/free-practice/src/App.jsx` |
+| React composition root | `web/apps/free-practice/src/App.tsx` |
 | 时间轴重放/右栏 | `HarmonyTimeline.jsx`、`PracticePlanPanel.jsx`、`PracticeFeedbackPanel.jsx` |
 | 公共乐谱编辑器 | `web/packages/web-renderer/editor/` |
 | 桌面 adapter | `FreePracticeWorkbench.kt`、`FreePracticeEditorPanel.kt`、`EditableScoreHost.kt` |
@@ -99,7 +99,7 @@ ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProject
 自由练习当前有经典布局与分区布局。桌面由顶栏切换：经典布局继续同时纵排五线谱与钢琴卷轴；
 分区布局的写作区一次只挂载一个表面，并在五线谱/钢琴卷轴之间切换，写作区下方以可调高度的
 左右等分面板展示和声选择与惯用进行，右栏保留当前调性、默认展开的和弦详情及反馈。Web 因钢琴
-卷轴仍属后置范围，默认使用只含五线谱的分区布局；`App.jsx` 保留经典组合分支，待钢琴卷轴接入后
+卷轴仍属后置范围，默认使用只含五线谱的分区布局；`App.tsx` 保留经典组合分支，待钢琴卷轴接入后
 再开放布局切换。布局、表面选择、面板高度与展开状态均为平台瞬时状态，不进入 document/undo。
 宽屏工作台的左右区域必须共同填满剩余视口高度，右栏单独纵向滚动；工作台滚动条统一使用和声
 选择目录的深色细滚动条。工具栏下方只显示真实错误/告警，不将 `revision` 作为常驻状态栏文案。
@@ -124,6 +124,8 @@ ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProject
 Desktop `Toolbar`/`HorizontalNotePalette` 与 Web `PracticeTopToolbar`/`ScoreEditorToolbar` 不再各维护一份
 顺序。时值、休止、附点和变音按钮使用 `music-glyphs.js` 的命名 SMuFL 码位。回归要求见
 [统一审计及重构计划](free-practice-web-desktop-parity-plan.md)。
+descriptor 只列跨端自由练习能力；应用设置、页面导航等平台外壳入口不伪装成共享控件。Web 顶栏
+可让单个 control 跨行换行，但 stable id 顺序仍须与 descriptor 一致。
 
 自定义配置示例：
 
@@ -146,8 +148,15 @@ const toolbar = {
 - 新核心按钮先加入 `ScoreEditorControlId`/registry，再加入适用 profile；
 - slot 只容纳宿主控件，不得替换同名核心命令的业务实现；
 - 隐藏按钮与快捷键策略分开判断，不从 DOM 是否存在反推；
-- `App.jsx` 只组合公共区域，禁止重新拆回 surface/controller/inspector 的应用内副本；
+- `App.tsx` 只组合公共区域，禁止重新拆回 surface/controller/inspector 的应用内副本；新 Web
+  组件使用 TypeScript/TSX，状态投影优先放入 typed selector 或 hook；
+- 选择重写范围由 `PracticeSelectionScopeResolver` 使用共享 `ScoreTimeMap` 推导，平台不得按固定
+  拍号换算；声部/谱表批量锁定分别 dispatch `SetVoiceLocks` / `SetStaffLocks`，保持单历史项；
+- 教学目录、Ger+6 离调特例、惯用进行低音/终止式提示和枢纽配方统一由
+  `PracticeTeachingCatalogExecutor` 输出，Desktop/Web 不得直接调用 Schoenberg catalog 重建目录；
 - 同步 `toolbar.test.js`、公共 controller 测试及 W1 Playwright。
+- Web 新建/打开须在解析 archive 前预留递增 `documentRequestId`；启动自动恢复、旧 Worker frame 与
+  用户随后选择的文件只允许最新请求替换当前 `.mecon` 容器，避免保存时丢失未知 sidecar/module。
 
 ## 6. 新增自由练习持久化操作
 

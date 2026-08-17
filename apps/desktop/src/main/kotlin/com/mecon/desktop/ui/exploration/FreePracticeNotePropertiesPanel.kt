@@ -159,16 +159,16 @@ internal fun PracticeNotePropertiesPanel(
                     state = voiceLockState,
                     enabled = selectedVoiceIds.isNotEmpty(),
                     modifier = Modifier.weight(1f),
-                    onLock = { selectedVoiceIds.forEach { host.setVoiceLock(it, true) } },
-                    onUnlock = { selectedVoiceIds.forEach { host.setVoiceLock(it, false) } },
+                    onLock = { host.setVoiceLocks(selectedVoiceIds, true) },
+                    onUnlock = { host.setVoiceLocks(selectedVoiceIds, false) },
                 )
                 LockScopeCard(
                     label = "谱表",
                     state = staffLockState,
                     enabled = selectedStaffIds.isNotEmpty(),
                     modifier = Modifier.weight(1f),
-                    onLock = { selectedStaffIds.forEach { host.setStaffLock(it, true) } },
-                    onUnlock = { selectedStaffIds.forEach { host.setStaffLock(it, false) } },
+                    onLock = { host.setStaffLocks(selectedStaffIds, true) },
+                    onUnlock = { host.setStaffLocks(selectedStaffIds, false) },
                 )
             }
             Text("锁定音符以符头中央圆点标记", color = MeconColors.TextMuted, fontSize = 10.sp)

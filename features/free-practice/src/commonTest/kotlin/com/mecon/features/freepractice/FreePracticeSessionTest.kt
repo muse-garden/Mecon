@@ -6,6 +6,7 @@ import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.exploration.VoicePlanScoreAssembler
 import com.mecon.exploration.PracticeHarmonicRole
 import com.mecon.exploration.PracticeNoteheadRef
@@ -82,6 +83,58 @@ class FreePracticeSessionTest {
                 slot.onset < boundary && end > boundary
             }
         })
+    }
+
+    @Test
+    fun rewriteSelectionResolvesItsScopeFromTheSharedScoreTimeMap() {
+        val session = session()
+        val initial = session.frame()
+        val meter = session.dispatch(
+            FreePracticeIntent.SetPracticeTimeSignature(
+                initial.revision,
+                TimeSignature.THREE_FOUR,
+            ),
+        )
+        val measures = session.dispatch(
+            FreePracticeIntent.InsertPracticeMeasures(
+                meter.frame.revision,
+                FreePracticeIntent.MeasureInsertionPosition.END,
+                count = 2,
+                chordDuration = Fraction.HALF,
+            ),
+        )
+        val selectedSlot = measures.frame.document.workspace.slots
+            .single { it.onset == Fraction(3, 2) }
+        val requestedChord = session.dispatch(
+            FreePracticeIntent.ReplaceChord(
+                measures.frame.revision,
+                selectedSlot.id,
+                requireNotNull(initial.document.workspace.slots.single().chordChoice),
+            ),
+        )
+        val written = session.applyBackgroundResult(
+            FreePracticeBackgroundExecutor.execute(requestedChord.requests.single()),
+        )
+        val timeMap = ScoreTimeMap.from(written.frame.score.runtimeScore)
+        val event = written.frame.score.runtimeScore.getAllVoiceEvents()
+            .first { !it.isRest && timeMap.absolute(it.onset) == Fraction(3, 2) }
+        val note = session.dispatch(
+            FreePracticeIntent.Score(
+                written.frame.revision,
+                ScoreEditIntent.SetSelection(
+                    written.frame.score.revision,
+                    listOf(ScoreSelectionTarget.Event(event.id)),
+                ),
+            ),
+        )
+
+        assertEquals(FreePracticeEffectKind.SELECTION_CHANGED, note.effect.kind)
+        assertEquals(3, note.frame.structure.selectedNoteMeasure)
+        assertTrue(note.frame.structure.rewriteSelectionAvailable)
+        val requested = session.dispatch(FreePracticeIntent.RewriteSelection(note.frame.revision))
+
+        assertEquals(FreePracticeEffectKind.WRITING_REQUESTED, requested.effect.kind)
+        assertEquals(listOf(selectedSlot.id), requested.requests.single().scopeSlotIds)
     }
 
     @Test
@@ -310,6 +363,30 @@ class FreePracticeSessionTest {
             assertEquals(1, events.size, "one accompaniment attack per chord slot")
             assertEquals(Duration.QUARTER, events.single().duration)
         }
+    }
+
+    @Test
+    fun voiceAndStaffLockBatchesCommitAsSingleUndoableOperations() {
+        val session = session()
+        val initial = session.frame()
+        val voiceIds = initial.document.workspace.voices.take(2).mapTo(linkedSetOf()) { it.id }
+        val voicesLocked = session.dispatch(
+            FreePracticeIntent.SetVoiceLocks(initial.revision, voiceIds, locked = true),
+        )
+
+        assertEquals(initial.revision + 1, voicesLocked.frame.revision)
+        assertEquals(voiceIds, voicesLocked.frame.document.noteConstraints.lockedVoiceTrackIds)
+        val voicesUndone = session.dispatch(FreePracticeIntent.Undo(voicesLocked.frame.revision))
+        assertTrue(voicesUndone.frame.document.noteConstraints.lockedVoiceTrackIds.isEmpty())
+
+        val staffIds = voicesUndone.frame.score.runtimeScore.staffTracks.keys.toSet()
+        val staffsLocked = session.dispatch(
+            FreePracticeIntent.SetStaffLocks(voicesUndone.frame.revision, staffIds, locked = true),
+        )
+        assertEquals(voicesUndone.frame.revision + 1, staffsLocked.frame.revision)
+        assertEquals(staffIds, staffsLocked.frame.document.noteConstraints.lockedStaffTrackIds)
+        val staffsUndone = session.dispatch(FreePracticeIntent.Undo(staffsLocked.frame.revision))
+        assertTrue(staffsUndone.frame.document.noteConstraints.lockedStaffTrackIds.isEmpty())
     }
 
     @Test

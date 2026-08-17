@@ -352,6 +352,12 @@ class FreePracticeTraceTest {
                         expectedRevision!!.toLong(), voiceId, true,
                     ))
                 }
+                "setVoiceLocks" -> session.frame().let { before ->
+                    val voiceIds = before.score.runtimeScore.voiceTracks.keys.take(2).toSet()
+                    session.dispatch(FreePracticeIntent.SetVoiceLocks(
+                        expectedRevision!!.toLong(), voiceIds, true,
+                    ))
+                }
                 "insertLockedNote" -> session.frame().let { before ->
                     val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
                     session.dispatch(FreePracticeIntent.Score(

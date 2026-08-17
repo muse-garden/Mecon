@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-const DEFAULT_HEIGHT = 560;
+const DEFAULT_HEIGHT = 260;
 const MIN_HEIGHT = 180;
 const MAX_HEIGHT = 800;
 

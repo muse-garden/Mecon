@@ -14,7 +14,7 @@ async function sourceFiles(directory) {
     const path = join(directory, entry.name);
     return entry.isDirectory() ? sourceFiles(path) : [path];
   }));
-  return nested.flat().filter((path) => [".js", ".jsx"].includes(extname(path)));
+  return nested.flat().filter((path) => [".js", ".jsx", ".ts", ".tsx"].includes(extname(path)));
 }
 
 test("free-practice React shell cannot import or copy kernel business authorities", async () => {
@@ -30,14 +30,14 @@ test("free-practice React shell cannot import or copy kernel business authoritie
       assert.equal(source.includes(token), false, `${path} must not contain ${token}`);
     }
   }
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
   const worker = await readFile(join(sourceRoot, "engine-worker.js"), "utf8");
   assert.equal(app.includes("createMeconFreePractice("), false, "React must not instantiate the kernel session");
   assert.equal(worker.includes("createMeconFreePractice("), true, "the Worker owns the kernel session");
 });
 
 test("free-practice composes the public complete ScoreEditor host", async () => {
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
   assert.match(app, /<ScoreEditor\b/);
   assert.match(app, /useScoreEditorController\(/);
   for (const privatePiece of [
@@ -91,7 +91,7 @@ test("right panel replays the shared plan projection without duplicating top-too
 });
 
 test("wide workbench side panel exposes an accessible pointer and keyboard resizer", async () => {
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
   const resizer = await readFile(join(sourceRoot, "ResizableWorkbenchSide.jsx"), "utf8");
   assert.match(app, /<ResizableWorkbenchSide>/);
   assert.match(resizer, /role="separator"/);
@@ -103,25 +103,27 @@ test("wide workbench side panel exposes an accessible pointer and keyboard resiz
 
 test("the free-practice shell exposes script and Worker loading states", async () => {
   const html = await readFile(join(sourceRoot, "../index.html"), "utf8");
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
+  const overlay = await readFile(join(sourceRoot, "AudioSettingsDialog.tsx"), "utf8");
   const worker = await readFile(join(sourceRoot, "engine-worker.js"), "utf8");
   assert.match(html, /boot-loading/,
     "the initial HTML must remain informative while the entry module downloads");
   assert.match(worker, /postMessage\(\{ type: "ready" \}\)/,
     "the shell needs an explicit signal after the Worker module has evaluated");
   assert.match(app, /data\.type === "ready"/);
-  assert.match(app, /app-loading-overlay/);
-  assert.match(app, /if \(!disposed\) createDocument\(\)/,
+  assert.match(overlay, /app-loading-overlay/);
+  assert.match(app, /documentRequestIdRef\.current !== startupDocumentRequestBase[\s\S]*createDocument\(\)/,
     "a first visit without recovery data must open a new shared practice document");
 });
 
 test("edit playback is consumed from the shared free-practice update", async () => {
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
+  const playback = await readFile(join(sourceRoot, "PracticePlaybackController.ts"), "utf8");
   const worker = await readFile(join(sourceRoot, "engine-worker.js"), "utf8");
-  assert.match(app, /requestEditPlayback\(data\.update\.editPlayback\)/);
-  assert.match(app, /trackCursor: false/,
+  assert.match(app, /playback\.requestEdit\(data\.update\.editPlayback\)/);
+  assert.match(playback, /trackCursor: false/,
     "shared edit playback must remain audible without driving the transport playhead");
-  assert.match(app, /data\.trackCursor === false \? null : data\.range/,
+  assert.match(playback, /message\.trackCursor === false \? null : message\.range/,
     "an edit excerpt must schedule audio without publishing a visible cursor range");
   assert.match(worker, /trackCursor: message\.trackCursor/,
     "the playback worker must preserve the edit playback presentation flag");
@@ -148,14 +150,14 @@ test("finding severity colors drive the whole feedback card", async () => {
 });
 
 test("partitioned workbench keeps the classic branch and exposes an accessible lower resizer", async () => {
-  const app = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
   const plan = await readFile(join(sourceRoot, "PracticePlanPanel.jsx"), "utf8");
   const resizer = await readFile(join(sourceRoot, "ResizableLowerWorkbench.jsx"), "utf8");
   assert.match(app, /DEFAULT_WEB_PRACTICE_LAYOUT = "writing-with-lower-panels"/);
   assert.match(app, /"classic-layout"/);
   assert.match(app, /renderPlanPanel\(\["harmony"\]\)/);
   assert.match(app, /renderPlanPanel\(\["idioms"\]\)/);
-  assert.match(plan, /open=\{chordDetailsInitiallyOpen \|\| undefined\}/);
+  assert.match(plan, /defaultOpen=\{chordDetailsInitiallyOpen\}/);
   assert.match(plan, /plan\.chordDetail/);
   assert.match(plan, /<FrozenScore bundle=\{construction\.bundle\}/);
   assert.equal(plan.includes("diatonicSteps"), false,
@@ -244,6 +246,9 @@ test("service worker refreshes the application shell before using its offline co
  */
 test("every search worker routes crashes into the shared session failure channel", async () => {
   const worker = await readFile(join(sourceRoot, "engine-worker.js"), "utf8");
+  const backgroundWorkers = await readFile(
+    join(sourceRoot, "PracticeBackgroundWorkers.ts"), "utf8",
+  );
   for (const failure of ["backgroundFailure", "teachingCatalogFailure", "findingFailure"]) {
     assert.ok(
       worker.includes(`case "${failure}"`),
@@ -256,13 +261,57 @@ test("every search worker routes crashes into the shared session failure channel
   );
   // Two death modes: a caught exception posted as `error`, and a worker that dies outright.
   assert.equal(
-    (worker.match(/worker\.onerror\s*=/g) ?? []).length,
+    (backgroundWorkers.match(/worker\.onerror\s*=/g) ?? []).length,
     2,
     "both the terminable solve worker and the resident search worker need an onerror",
   );
-  const shell = await readFile(join(sourceRoot, "App.jsx"), "utf8");
+  const shell = await readFile(join(sourceRoot, "App.tsx"), "utf8");
+  const toolbar = await readFile(join(sourceRoot, "PracticeTopToolbar.tsx"), "utf8");
   assert.ok(
     shell.includes("freePractice.writing.failed"),
     "the shell must surface the rollback instead of silently clearing the alert",
   );
+  assert.match(worker, /message\.intent\?\.type === "cancelWriting"\) backgroundWorkers\.cancelWriting\(\)/,
+    "an explicit cancel must terminate the non-cooperative solve worker");
+  assert.match(backgroundWorkers, /writingWorkers\.delete\(request\.kind\)/,
+    "a crashed writing worker must not remain registered as live");
+  assert.match(toolbar, /data-control-id=\{id\}/);
+  assert.match(toolbar, /type: "cancelWriting"/);
+});
+
+test("note-property bulk locks dispatch one shared atomic intent", async () => {
+  const panel = await readFile(join(sourceRoot, "PracticeNoteProperties.tsx"), "utf8");
+  assert.match(panel, /type: "setVoiceLocks"/);
+  assert.match(panel, /type: "setStaffLocks"/);
+  assert.doesNotMatch(panel, /selectedVoiceIds\.forEach|selectedStaffIds\.forEach/);
+});
+
+test("top-toolbar descriptors fail visibly when a platform control is missing", async () => {
+  const toolbar = await readFile(join(sourceRoot, "PracticeTopToolbar.tsx"), "utf8");
+  assert.match(toolbar, /Unsupported free-practice toolbar controls/);
+  assert.doesNotMatch(toolbar, /descriptor\.groups\.filter\(/,
+    "platforms must not silently omit descriptor groups");
+});
+
+test("browser playback lifecycle stays outside the React composition root", async () => {
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
+  const playback = await readFile(join(sourceRoot, "PracticePlaybackController.ts"), "utf8");
+  assert.doesNotMatch(app, /new AudioContext|createOscillator|requestAnimationFrame\(advancePlayhead/);
+  assert.match(playback, /class PracticePlaybackController/);
+  assert.match(playback, /playbackRequestId !== this\.requestId/,
+    "stale playback excerpts must be rejected by the playback owner");
+  assert.match(playback, /this\.scheduleId\+\+/,
+    "stopping playback must invalidate an in-flight asynchronous schedule");
+  assert.match(playback, /dispose\(\)/,
+    "the extracted owner must expose one lifecycle cleanup boundary");
+});
+
+test("an obsolete new/open frame cannot replace the latest archive", async () => {
+  const app = await readFile(join(sourceRoot, "App.tsx"), "utf8");
+  assert.match(app, /data\.documentRequestId !== documentRequestIdRef\.current/);
+  assert.match(app, /pendingDocumentRecoveryRef\.current\.delete\(data\.documentRequestId\)/);
+  assert.match(app, /const documentRequestId = \+\+documentRequestIdRef\.current;[\s\S]*loadMeconDocument\(source\)/,
+    "opening a file must reserve its request before asynchronous archive parsing");
+  assert.match(app, /documentRequestIdRef\.current !== startupDocumentRequestBase/,
+    "late startup recovery must not overtake an explicit document action");
 });

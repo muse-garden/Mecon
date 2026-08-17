@@ -159,7 +159,6 @@ import com.mecon.theory.ModulationKey
 import com.mecon.theory.ModulationCircleOfFifths
 import com.mecon.theory.ModulationPitchLabels
 import com.mecon.theory.KeySignatureMode
-import com.mecon.theory.schoenberg.SchoenbergFreePracticeContribution
 import com.mecon.theory.schoenberg.SchoenbergHarmonicTreatments
 import com.mecon.theory.writing.GrandStaffVoiceLayout
 import com.mecon.renderer.layout.AlignedTimeAxisRequest
@@ -183,6 +182,17 @@ import java.awt.Cursor
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
+private fun com.mecon.features.freepractice.PracticeKeyView.toModulationKey(): ModulationKey =
+    ModulationKey(
+        fifths,
+        when (mode) {
+            com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR ->
+                com.mecon.theory.KeySignatureMode.MAJOR
+            com.mecon.theory.freepractice.WorkspaceKeyMode.MINOR ->
+                com.mecon.theory.KeySignatureMode.MINOR
+        },
+    )
+
 internal data class PracticeEditorState(
     val workspace: HarmonyWorkspaceState,
     val scoreHost: HarmonyPracticeScoreHost?,
@@ -191,7 +201,7 @@ internal data class PracticeEditorState(
     val staffVoices: GrandStaffVoiceLayout,
     val inputMode: PracticeInputMode,
     val chordToneMode: ChordToneLabelMode,
-    val teachingContribution: SchoenbergFreePracticeContribution,
+    val idiomTitles: Map<String, String>,
     val gridUnit: Fraction,
     val defaultChordBeats: Int,
     val timeSignatureToolRequest: PracticeTimeSignatureToolRequest? = null,
@@ -519,9 +529,7 @@ internal fun PracticeEditorPanel(
                 selectedSlotId = selectedSlotId,
                 selectedIdiomInstanceId = state.selectedIdiomInstanceId,
                 onSelectIdiom = actions.selectIdiom,
-                idiomTitles = state.teachingContribution.idioms.associate {
-                    it.id to it.title
-                },
+                idiomTitles = state.idiomTitles,
                 toneMode = state.chordToneMode,
                 beatWidth = beatWidth,
                 onBeatWidthChange = { beatWidth = it },
@@ -1580,7 +1588,7 @@ internal fun ChordToolbar(
     activeLayouts: List<com.mecon.theory.freepractice.WorkspaceTonalLayout>,
     selectedLayoutId: WorkspaceTonalLayoutId,
     isPivotChord: Boolean,
-    pivotRecipes: List<com.mecon.theory.schoenberg.SchoenbergFreePracticePivotRecipe>,
+    pivotRecipes: List<com.mecon.features.freepractice.PracticePivotRecipeView>,
     chordLocked: Boolean,
     inversionLocked: Boolean,
     customaryBassGuidance: Set<Int>,
@@ -1634,7 +1642,10 @@ internal fun ChordToolbar(
     val activeKeys = activeLayouts.mapTo(linkedSetOf()) { it.key }
     val recommendedPivotChoices = if (activeKeys.size > 1) {
         pivotRecipes
-            .filter { recipe -> recipe.sourceKey in activeKeys && recipe.targetKey in activeKeys }
+            .filter { recipe ->
+                recipe.sourceKey.toModulationKey() in activeKeys &&
+                    recipe.targetKey.toModulationKey() in activeKeys
+            }
             .groupBy { it.pitchClasses }
             .mapNotNull { (pitchClasses, recipes) ->
                 choicesByKey[selectedKey]
@@ -1674,7 +1685,8 @@ internal fun ChordToolbar(
                 .take(4)
                 .forEach { recipe ->
                     Text(
-                        "${recipe.sourceKey.displayName} → ${recipe.targetKey.displayName}：" +
+                        "${recipe.sourceKey.toModulationKey().displayName} → " +
+                            "${recipe.targetKey.toModulationKey().displayName}：" +
                             recipe.definition,
                         color = MeconColors.TextMuted,
                         fontSize = 9.sp,
@@ -1967,7 +1979,8 @@ internal fun ChordToolbar(
             }
             applicablePivotRecipes.take(3).forEach { recipe ->
                 Text(
-                    "${recipe.sourceKey.displayName} ↔ ${recipe.targetKey.displayName}：${recipe.definition}",
+                    "${recipe.sourceKey.toModulationKey().displayName} ↔ " +
+                        "${recipe.targetKey.toModulationKey().displayName}：${recipe.definition}",
                     color = MeconColors.OrangeLight,
                     fontSize = 9.sp,
                 )

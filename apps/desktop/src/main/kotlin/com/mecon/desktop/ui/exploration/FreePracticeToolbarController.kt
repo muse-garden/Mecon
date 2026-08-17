@@ -47,4 +47,5 @@ data class FreePracticeToolbarController(
     val insertMeasures: (FreePracticeIntent.MeasureInsertionPosition, Int, Int) -> Unit,
     val rewriteSelection: () -> Unit,
     val alternate: () -> Unit,
+    val cancelWriting: () -> Unit,
 )

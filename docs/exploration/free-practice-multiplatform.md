@@ -304,13 +304,19 @@ close()
 
 - 宽屏与桌面对齐为“主写作区 + 可调宽右栏”：主区含时间轴和五线谱；窄屏改为
   tabs 或步骤视图，不能把临时三栏简单压成纵向长页；
-- `web/apps/free-practice/src/App.jsx` 已从 1617 行降到约 540 行平台装配；`ScoreEditor`、状态 hooks、
+- `web/apps/free-practice/src/App.tsx` 是 TypeScript 平台装配；顶部工具栏、音符属性状态与面板、
+  音频设置、播放控制器和后台 Worker 生命周期已拆到独立 typed 模块；`ScoreEditor`、状态 hooks、
   画布、toolbar controls、交互 helpers、命令/click-selection/drag controller 及完整 inspector 已进入
   公共包，完整 fixture 与自由练习共用同一 host；
 - 桌面时间轴提交已从 whole-workspace reducer 改为 stable-ID `PracticeTimelineEdit` → host → session
   intent；拖动 preview 仍是本地瞬时状态。普通五线谱编辑已迁到内层 `ScoreEditingSession`，其
   commit policy 在提交历史前校验复音上限，并在同一 undo 边界维护手工事件来源；本轮明确不移植的
   钢琴卷轴/自动记谱 adapter 仍保留独立桌面提交路径；
+- `PracticeStructureProjector` 与 `PracticeTimelineScoreSynchronizer` 是共享纯投影/同步边界；平台不得
+  重新推导 pristine、选区可重写性、小节边界或尾部空小节裁剪。
+- 顶栏 descriptor 只包含跨端会话能力；应用设置和探索导航仍由平台壳层拥有，不得在 Web 映射成
+  重复的音频按钮。Web 新建/打开在 archive 解析前预留请求序号，启动恢复和迟到 Worker frame 均
+  不得覆盖更新的用户文档请求或对应的未知 `.mecon` sidecar。
 - 时间轴采用 SVG 图形 + DOM 语义层；pointer 只换算稳定 ID 与音乐坐标并绘制瞬时 ghost，量化网格、
   边界裁剪、重叠裁短及权威 preview/commit 由 session 决定；
 - Web 工作台用 `clientRequestId` 串行自由练习提交；自动写作 `RUNNING` 期间继续保留后续 intent，待

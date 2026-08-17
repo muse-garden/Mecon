@@ -19,7 +19,7 @@
 
 | 能力 | `8d94ce91` 现状 | 本轮完成定义 |
 |---|---|---|
-| 完整乐谱编辑 | 能力与公共交互控制器已接通；`App.jsx` 只保留约 540 行平台/业务装配 | 可复用公共 React 组件，默认完整 profile |
+| 完整乐谱编辑 | 能力与公共交互控制器已接通；组合根迁为 `App.tsx`，属性状态与后台 Worker 已拆分 | 可复用公共 React 组件，默认完整 profile |
 | 自由练习谱面工具栏 | 与全功能编辑器混在同一顶栏/右栏 | 使用基础音符编辑 profile，可自定义布局和显隐 |
 | 和声时间轴 | 左栏只有槽位按钮 | 桌面等价的槽、边界、调性线、惯用进行交互 |
 | 右侧面板 | 只有扁平和弦下拉与 finding key | 当前调性、和声选择/详情、惯用进行、反馈完整迁移 |
@@ -108,14 +108,18 @@ npm 包，未 import editor 子路径的消费者也不会加载 React 编辑 UI
 当前落地：`ScoreEditorSurface`、`ScoreEditorToolbar`、interaction helpers、输入/结构/表情三组
 domain state hooks，以及 event/structure/expression command controller 已进入公共包。步进输入、倚音、
 连音组、布局断点与谱表可见性 inspector 也已公共化，MIDI 只由宿主 callback 注入。表情、结构、
-重复/导航与连线 inspector 仍需继续迁移，不能把现有 `App.jsx` 当成新宿主范式。
+重复/导航与连线 inspector 仍需继续迁移，不能把现有 `App.tsx` 当成新宿主范式。本轮已先把
+`PracticeTopToolbar`、`PracticeNoteProperties`、`AudioSettingsDialog` 与
+`PracticeBackgroundWorkers`、`PracticePlaybackController` 拆为 typed 模块，并由架构测试扫描
+`.ts/.tsx` 防止平台业务回流。浏览器音频图、异步 schedule generation 与播放光标动画均由后者
+独立拥有，React 组合根只转发共享播放请求和 UI 设置。
 
-1. 从 `App.jsx` 机械提取 worker 无关的 controller、画布、toolbar、inspector 和 interaction helper，
+1. 从 `App.tsx` 继续提取 worker 无关的 controller、画布、其余 inspector 和 interaction helper，
    第一阶段不改 intent 形状和交互结果；
 2. 文件打开/导出、IndexedDB、Service Worker、搜索 worker、Web Audio 留在应用层并通过 callback 注入；
 3. 把约 40 个局部表单状态按能力域拆到 hooks，避免公共组件重新形成单文件巨石；
 4. 现有 `editing-actions.js` 迁到公共包并保留纯函数测试；应用不得复制一份；
-5. `App.jsx` 最终只负责装配 `FreePracticeWorkbench`，不再包含具体乐谱命令按钮。
+5. `App.tsx` 最终只负责装配 `FreePracticeWorkbench`，不再包含具体乐谱命令按钮。
 
 ### 4.3 工具栏配置
 
@@ -294,7 +298,7 @@ F2 与 W2 可并行，但 W3/W4/W5 不得在 F2 之前用 React reducer 临时�
 
 ## 11. 完成条件
 
-- `App.jsx` 不再拥有具体乐谱编辑能力，公共组件同时服务完整编辑器与自由练习；
+- `App.tsx` 不再拥有具体乐谱编辑能力，公共组件同时服务完整编辑器与自由练习；
 - 自由练习两层工具栏由共享 descriptor 驱动，control id、顺序、分组、状态和视觉 token 与桌面一致；
 - 时间轴由共享 raw scene/controller 驱动，React/Compose 不再拥有 geometry、hit-test 或 gesture reducer；
 - 桌面与 Web 的所有持久化动作都只经共享 session，React/Compose 不再直接调用业务 reducer；

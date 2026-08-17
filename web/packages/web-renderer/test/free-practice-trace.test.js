@@ -379,6 +379,14 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         type: "setVoiceLock", expectedRevision: step.expectedRevision,
         voiceTrackId: voice.id, locked: true,
       });
+    } else if (step.kind === "setVoiceLocks") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "setVoiceLocks",
+        expectedRevision: step.expectedRevision,
+        voiceTrackIds: Object.keys(before.score.score.voiceTracks).slice(0, 2),
+        locked: true,
+      });
     } else if (step.kind === "insertLockedNote") {
       const before = session.initialUpdate();
       update = session.dispatch({
@@ -442,7 +450,7 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (update.catalogRequests.length === 1) catalogRequest = update.catalogRequests[0];
     if (update.findingRequests.length === 1) findingRequest = update.findingRequests[0];
-    assert.equal(update.schemaVersion, 3, `${step.kind} schema`);
+    assert.equal(update.schemaVersion, 4, `${step.kind} schema`);
     assert.equal(update.revision, step.revision, step.kind);
     assert.equal(update.effect.kind, step.effect, step.kind);
     if (step.editPlayback !== undefined) {

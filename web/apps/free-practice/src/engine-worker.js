@@ -5,6 +5,7 @@ import {
   createMeconRenderer,
   createMeconScoreEditor,
 } from "@mecon/web-renderer";
+import { PracticeBackgroundWorkers } from "./PracticeBackgroundWorkers.ts";
 
 // Static module imports include the Kotlin/JS engine chunk. Reaching this line means the browser
 // has downloaded and evaluated the Worker and the shell can distinguish that from document layout.
@@ -16,11 +17,6 @@ let freePractice = null;
 let timelineController = null;
 let timelineScene = null;
 let timelineRequest = null;
-const searchWorkers = new Map();
-let catalogWorker = null;
-let findingWorker = null;
-let pendingCatalogRequestId = null;
-let pendingFindingRequestId = null;
 let rendered = null;
 let renderedTimelineKey = null;
 let queue = Promise.resolve();
@@ -72,6 +68,11 @@ function enqueue(message) {
     }
   });
 }
+
+const backgroundWorkers = new PracticeBackgroundWorkers({
+  enqueue,
+  postError: (message) => self.postMessage({ type: "error", message }),
+});
 
 function resolvePaletteInput(intent) {
   if (intent?.type !== "insertNote" || !intent.inputAccidental || !intent.pitch) return intent;
@@ -135,6 +136,7 @@ async function handle(message) {
     case "dispatch":
       requireOpen();
       if (freePractice) {
+        if (message.intent?.type === "cancelWriting") backgroundWorkers.cancelWriting();
         publishFreePractice(freePractice.dispatch(resolvePaletteInput(message.intent)), message.clientRequestId);
       } else publish(editor.dispatch(resolvePaletteInput(message.intent)));
       break;
@@ -260,11 +262,11 @@ function publishFreePractice(
     documentRequestId,
   });
   if (runRequests) {
-    for (const request of update.requests ?? []) runBackground(request);
+    for (const request of update.requests ?? []) backgroundWorkers.runWriting(request);
     const catalogRequest = update.catalogRequests?.at(-1);
-    if (catalogRequest) runTeachingCatalog(catalogRequest);
+    if (catalogRequest) backgroundWorkers.runTeachingCatalog(catalogRequest);
     const findingRequest = update.findingRequests?.at(-1);
-    if (findingRequest) runFindings(findingRequest);
+    if (findingRequest) backgroundWorkers.runFindings(findingRequest);
   }
 }
 
@@ -356,84 +358,6 @@ function handleTimelineInput(input) {
 }
 
 /**
- * Findings and the teaching catalog run on one resident worker each. Terminating a worker reloads
- * the whole Kotlin/JS engine on the next request, which on a per-selection request cadence means a
- * cold engine start per click. Superseded answers are cheap to drop instead: the session validates
- * `requestId / baseRevision / fingerprint` and reports STALE_BACKGROUND_RESULT.
- */
-function residentSearchWorker(current, resultType, pendingRequestId, onDead) {
-  if (current) return current;
-  const worker = new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });
-  const fail = (reason, requestId = pendingRequestId()) => {
-    self.postMessage({ type: "error", message: reason });
-    if (requestId != null) {
-      enqueue({ type: RESULT_FAILURE_TYPES[resultType], failure: { requestId, reason } });
-    }
-  };
-  worker.onmessage = ({ data }) => {
-    if (data.type === resultType) enqueue({ type: resultType, result: data.result });
-    else if (data.type === "error") fail(data.message ?? "后台搜索失败", data.requestId ?? pendingRequestId());
-  };
-  // A resident worker that dies (engine chunk failed to load, out of memory) can never answer
-  // again. Drop the reference so the next request starts a fresh one instead of posting into a
-  // dead worker forever.
-  worker.onerror = (event) => {
-    onDead();
-    worker.terminate();
-    fail(event?.message || "后台搜索 Worker 已崩溃");
-  };
-  return worker;
-}
-
-function runFindings(request) {
-  pendingFindingRequestId = request.requestId;
-  findingWorker = residentSearchWorker(
-    findingWorker,
-    "findingResult",
-    () => pendingFindingRequestId,
-    () => { findingWorker = null; },
-  );
-  findingWorker.postMessage({ type: "executeFindings", request });
-}
-
-/**
- * Free writing is a long, non-cooperative CPU search, so terminating the worker stays the only way
- * to cancel it — the reload cost is paid once per solve rather than once per selection.
- */
-function runBackground(request) {
-  searchWorkers.get(request.kind)?.terminate();
-  const worker = new Worker(new URL("./search-worker.js", import.meta.url), { type: "module" });
-  searchWorkers.set(request.kind, worker);
-  // A crashed solve must reach the session, not just the status bar: the request stays active
-  // until it does, and the workbench stays locked in RUNNING with the pending workspace showing.
-  const fail = (reason) => {
-    self.postMessage({ type: "error", message: reason });
-    enqueue({ type: "backgroundFailure", failure: { requestId: request.requestId, reason } });
-  };
-  worker.onmessage = ({ data }) => {
-    if (data.type === "backgroundResult") {
-      self.postMessage({ type: "backgroundProgress", requestId: request.requestId });
-      enqueue({ type: "backgroundResult", result: data.result });
-    } else if (data.type === "error") {
-      fail(data.message ?? "自动写作失败");
-    }
-  };
-  worker.onerror = (event) => fail(event?.message || "自动写作 Worker 已崩溃");
-  worker.postMessage({ type: "execute", request });
-}
-
-function runTeachingCatalog(request) {
-  pendingCatalogRequestId = request.requestId;
-  catalogWorker = residentSearchWorker(
-    catalogWorker,
-    "teachingCatalogResult",
-    () => pendingCatalogRequestId,
-    () => { catalogWorker = null; },
-  );
-  catalogWorker.postMessage({ type: "executeTeachingCatalog", request });
-}
-
-/**
  * Selection changes, clipboard copies, no-ops and rejected intents leave the score byte-identical,
  * so re-laying out the whole score for them is pure waste on a large document. The session reports
  * `scoreChanged` authoritatively — never infer it from the effect kind here.
@@ -455,22 +379,14 @@ function requireOpen() {
 function closeCurrent() {
   editor?.close();
   freePractice?.close();
-  for (const worker of searchWorkers.values()) worker.terminate();
-  searchWorkers.clear();
-  catalogWorker?.terminate();
-  findingWorker?.terminate();
+  backgroundWorkers.close();
   editor = null;
   freePractice = null;
   timelineController = null;
   timelineScene = null;
   timelineRequest = null;
-  catalogWorker = null;
-  findingWorker = null;
-  pendingCatalogRequestId = null;
-  pendingFindingRequestId = null;
   renderer = null;
   latestFreePracticeUpdate = null;
-  renderedTimelineKey = null;
   rendered = null;
   renderedTimelineKey = null;
   pendingTimelineMove = null;

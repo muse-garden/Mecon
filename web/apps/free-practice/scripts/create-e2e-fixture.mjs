@@ -6,6 +6,19 @@ import {
   createMeconFreePracticePreset,
 } from "../../../packages/web-renderer/index.js";
 
+function addFractions(left, right) {
+  const numerator = left.numerator * right.denominator + right.numerator * left.denominator;
+  const denominator = left.denominator * right.denominator;
+  const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+  const divisor = gcd(numerator, denominator) || 1;
+  return { numerator: numerator / divisor, denominator: denominator / divisor };
+}
+
+function workspaceEnd(update) {
+  const slot = update.document.workspace.slots.at(-1);
+  return addFractions(slot.onset, slot.duration);
+}
+
 const output = resolve(process.argv[2] ?? "build/e2e/free-practice.mecon");
 const score = {
   id: "e2e-score",
@@ -122,7 +135,7 @@ while (longUpdate.timeline.slots.length < 3) {
   longUpdate = longSession.dispatch({
     type: "insertChordRange",
     expectedRevision: longUpdate.revision,
-    onset: longUpdate.timeline.end,
+    onset: workspaceEnd(longUpdate),
     duration: { numerator: 1, denominator: 4 },
   });
 }
@@ -153,7 +166,7 @@ while (longUpdate.timeline.slots.length < 64) {
   longUpdate = longSession.dispatch({
     type: "insertChordRange",
     expectedRevision: longUpdate.revision,
-    onset: longUpdate.timeline.end,
+    onset: workspaceEnd(longUpdate),
     duration: { numerator: 1, denominator: 4 },
   });
 }

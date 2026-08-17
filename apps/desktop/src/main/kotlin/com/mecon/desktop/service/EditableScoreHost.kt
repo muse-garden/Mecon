@@ -243,6 +243,7 @@ class HarmonyPracticeScoreHost(
     initialKey: ModulationKey = ModulationKey(0, com.mecon.theory.KeySignatureMode.MAJOR),
     initialWritingSettings: FreePracticeWritingSettings = FreePracticeWritingSettings(),
     initialStaffVoices: GrandStaffVoiceLayout = GrandStaffVoiceLayout.defaultFor(initialWorkspace.voices.size),
+    initialDocument: FreePracticeDocument? = null,
 ) : EditableNoteHost {
     /**
      * Writing, findings and catalog work run as independent jobs: a failure in one background pass
@@ -253,7 +254,7 @@ class HarmonyPracticeScoreHost(
     )
     private val manager = ScoreStateManager(initialRuntimeScore, initialComputedScore)
     private val freePracticeSession = FreePracticeSession.open(
-        FreePracticeDocument(
+        initialDocument?.copy(workspace = initialWorkspace) ?: FreePracticeDocument(
             settings = FreePracticeSettings(
                 polyphonyLimit = polyphonyLimit,
                 staffVoices = initialStaffVoices,
@@ -314,6 +315,8 @@ class HarmonyPracticeScoreHost(
      * origin, so its preview lands where the stale chord already was and the gesture looks dead.
      */
     var practiceWorkspace: HarmonyWorkspaceState by mutableStateOf(freePracticeSession.frame().document.workspace)
+        private set
+    var practiceDocument: FreePracticeDocument by mutableStateOf(freePracticeSession.frame().document)
         private set
     override var documentVersion: Long by mutableStateOf(0L)
         private set
@@ -439,15 +442,12 @@ class HarmonyPracticeScoreHost(
     }
 
     fun rewriteSelection(
-        selectedSlotIds: Set<WorkspaceSlotId>,
-        fallbackKey: ModulationKey,
         onComplete: (String?) -> Unit = {},
     ) {
         val generation = writingGeneration.incrementAndGet()
         val requested = freePracticeSession.dispatch(
             FreePracticeIntent.RewriteSelection(
                 freePracticeSession.frame().revision,
-                selectedSlotIds.toList(),
             )
         )
         publishWritingFrame(requested)
@@ -478,6 +478,15 @@ class HarmonyPracticeScoreHost(
         )
         publishWritingFrame(result)
         onComplete(practiceWritingState.message)
+    }
+
+    fun cancelWriting(): Boolean {
+        writingGeneration.incrementAndGet()
+        val result = freePracticeSession.dispatch(
+            FreePracticeIntent.CancelWriting(freePracticeSession.frame().revision)
+        )
+        publishWritingFrame(result)
+        return result.effect.kind == FreePracticeEffectKind.WRITING_CANCELLED
     }
 
     fun replaceChord(
@@ -722,8 +731,14 @@ class HarmonyPracticeScoreHost(
     fun setVoiceLock(voiceTrackId: TrackId, locked: Boolean): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SetVoiceLock(revision, voiceTrackId, locked) }
 
+    fun setVoiceLocks(voiceTrackIds: Set<TrackId>, locked: Boolean): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SetVoiceLocks(revision, voiceTrackIds, locked) }
+
     fun setStaffLock(staffTrackId: TrackId, locked: Boolean): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.SetStaffLock(revision, staffTrackId, locked) }
+
+    fun setStaffLocks(staffTrackIds: Set<TrackId>, locked: Boolean): Boolean =
+        dispatchImmediate { revision -> FreePracticeIntent.SetStaffLocks(revision, staffTrackIds, locked) }
 
     fun rebuildPractice(polyphonyLimit: Int, key: ModulationKey): Boolean {
         writingGeneration.incrementAndGet()
@@ -1605,6 +1620,7 @@ class HarmonyPracticeScoreHost(
         practiceNoteConstraints = frame.noteConstraints
         practiceIdiomCatalog = frame.plan.idiomCatalog
         practiceWorkspace = frame.document.workspace
+        practiceDocument = frame.document
         canUndo = manager.canUndo()
         canRedo = manager.canRedo()
         documentVersion += 1
