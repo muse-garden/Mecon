@@ -249,6 +249,64 @@ test("2/4 practice shows a passive empty beat and a separate add button", async 
   );
 });
 
+test("lays out compact note properties and highlights uniform states", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await page.getByLabel("打开 .mecon").setInputFiles(longFixture);
+  await expect(page.getByText("revision 0", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => (
+    window.__MECON_E2E__.snapshot().bundle.surfaces
+      .flatMap((surface) => surface.elements)
+      .filter((element) => element.type === "NOTEHEAD").length
+  )), { timeout: 30_000 }).toBeGreaterThan(0);
+  const noteProperties = page.locator("#workbench-panel-plan .practice-note-properties");
+  await clickScoreNote(page, 0);
+
+  await expect(noteProperties.locator(".practice-role-buttons > button")).toHaveCount(3);
+  await expect(noteProperties.locator(".practice-role-filters > label")).toHaveCount(2);
+  await expect(noteProperties.locator(".practice-lock-scope")).toHaveCount(3);
+  expect(await noteProperties.locator(".practice-role-buttons").evaluate((element) => (
+    getComputedStyle(element).display
+  ))).toBe("flex");
+  expect(await noteProperties.locator(".practice-lock-scopes").evaluate((element) => (
+    getComputedStyle(element).display
+  ))).toBe("flex");
+  const filterAlignment = await noteProperties.locator(".practice-role-filters label").first()
+    .evaluate((label) => {
+      const checkbox = label.querySelector("input").getBoundingClientRect();
+      const text = label.querySelector("span").getBoundingClientRect();
+      return Math.abs((checkbox.top + checkbox.bottom) / 2 - (text.top + text.bottom) / 2);
+    });
+  expect(filterAlignment).toBeLessThan(1);
+  const lockCardLayout = await noteProperties.locator(".practice-lock-scope").first()
+    .evaluate((card) => {
+      const label = card.querySelector(":scope > span").getBoundingClientRect();
+      const actions = card.querySelector(":scope > div").getBoundingClientRect();
+      return {
+        centerDifference: Math.abs((label.top + label.bottom) / 2
+          - (actions.top + actions.bottom) / 2),
+        flexWrap: getComputedStyle(card).flexWrap,
+      };
+    });
+  expect(lockCardLayout).toEqual({ centerDifference: 0, flexWrap: "wrap" });
+
+  await expect(noteProperties.getByRole("button", { name: "清除内外音标记", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect(noteProperties.getByRole("button", { name: "解锁音符", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect(noteProperties.getByRole("button", { name: "解锁声部", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await expect(noteProperties.getByRole("button", { name: "解锁谱表", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+
+  await noteProperties.getByRole("button", { name: "标记为和弦内音", exact: true }).click();
+  await expect(noteProperties.getByRole("button", { name: "标记为和弦内音", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await noteProperties.getByRole("button", { name: "锁定音符", exact: true }).click();
+  await expect(noteProperties.getByRole("button", { name: "锁定音符", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+});
+
 test("marks a selected note and enables shared harmonic-role filters", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");

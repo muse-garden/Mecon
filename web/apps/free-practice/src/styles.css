@@ -208,16 +208,62 @@ button:disabled { cursor: default; opacity: .45; }
 .practice-note-properties {
   padding-top: 12px;
 }
-.practice-note-properties > summary { margin-bottom: 12px; }
-.practice-note-properties h3 { margin: 0 0 6px; font-size: 13px; }
+.practice-note-properties > summary { margin-bottom: 8px; }
+.practice-note-properties h3 { margin: 0 0 3px; font-size: 13px; }
 .practice-note-properties p { margin: 4px 0; color: #c4cad5; font-size: 11px; }
 .practice-note-properties .practice-note-properties-summary { color: #929baa; font-size: 10px; }
-.practice-note-property-group { display: grid; gap: 7px; }
+.practice-note-property-group { display: grid; gap: 5px; }
 .practice-note-property-group + .practice-note-property-group {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 9px;
+  padding-top: 9px;
   border-top: 1px solid #353c49;
 }
+.practice-role-buttons,
+.practice-role-filters,
+.practice-lock-scopes { display: flex; min-width: 0; gap: 6px; }
+.practice-role-buttons button { flex: 1 1 0; min-width: 0; padding: 6px 4px; font-size: 11px; }
+.practice-role-buttons button[aria-pressed="true"],
+.practice-lock-button[aria-pressed="true"] {
+  border-color: #5997ff;
+  background: #1c3152;
+  color: #8fbcff;
+}
+.practice-note-properties .practice-role-filters label {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #c4cad5;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.practice-role-filters input[type="checkbox"] { flex: none; margin: 0; }
+.practice-lock-scopes { align-items: stretch; }
+.practice-lock-scope {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 6px;
+  row-gap: 2px;
+  min-width: 0;
+  padding: 5px 4px;
+  border: 1px solid #353c49;
+  border-radius: 6px;
+  background: #222732;
+  text-align: center;
+}
+.practice-lock-scope > span {
+  flex: none;
+  color: #dce1ea;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.practice-lock-scope > div { display: flex; flex: none; justify-content: center; gap: 2px; }
+.practice-lock-button { width: 28px; height: 28px; padding: 0; border-color: transparent; background: transparent; }
 .workbench-toolbar {
   position: relative;
   z-index: 6;
@@ -681,17 +727,4 @@ canvas:focus-visible { outline: 3px solid #9fc5ff; outline-offset: 4px; }
   .score-pane.active, .score-pane.active > .score-panel { min-height: 60vh; }
   .panel { border: 0; border-block: 1px solid #2c313c; }
   .status { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-}
-.practice-note-property-actions {
-  display: grid;
-  align-items: stretch;
-  gap: 0.5rem;
-}
-
-.practice-note-property-actions button { width: 100%; }
-
-.practice-note-property-actions label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
 }
