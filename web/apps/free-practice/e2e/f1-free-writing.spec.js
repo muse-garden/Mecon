@@ -649,6 +649,7 @@ test("wide workbench partitions plan sections without toolbar duplicates and res
   const panel = page.locator(".workbench-side");
   await expect(panel.getByRole("heading", { name: "当前调性" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "和弦详情" })).toBeVisible();
+  await expect(panel.locator("details.chord-details")).toHaveAttribute("open", "");
   await expect(panel.getByRole("heading", { name: "和声选择" })).toHaveCount(0);
   await expect(panel.getByRole("heading", { name: "惯用进行" })).toHaveCount(0);
   const lower = page.locator(".workbench-lower");

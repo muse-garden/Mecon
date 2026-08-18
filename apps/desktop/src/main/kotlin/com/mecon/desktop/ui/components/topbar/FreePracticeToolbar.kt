@@ -138,8 +138,6 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
         }
     }
     KeySetting(controller.initialKey, controller.changeInitialKey)
-    TimeSignatureSetting(controller)
-    InsertMeasuresSetting(controller)
     controller.writingState.message?.let { message ->
         Text(
             text = message,
@@ -147,6 +145,14 @@ internal fun FreePracticeToolbar(controller: FreePracticeToolbarController) {
             fontSize = 10.sp,
             modifier = Modifier.padding(start = 8.dp),
         )
+    }
+}
+
+@Composable
+internal fun FreePracticeStructureToolbar(controller: FreePracticeToolbarController) {
+    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        TimeSignatureSetting(controller)
+        InsertMeasuresSetting(controller)
     }
 }
 

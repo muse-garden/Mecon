@@ -11,7 +11,13 @@
     "strict": false,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@mecon/frozen-score": ["../../packages/frozen-score/index.d.ts"],
+      "@mecon/web-renderer/editor": ["../../packages/web-renderer/editor/index.d.ts"],
+      "@mecon/web-renderer/editor/react": ["../../packages/web-renderer/editor/react.d.ts"]
+    }
   },
   "include": ["src"]
 }
