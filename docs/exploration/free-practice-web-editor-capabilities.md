@@ -1,6 +1,6 @@
 # 自由练习 Web 五线谱编辑能力矩阵
 
-> 基线：2026-08-05；更新：2026-08-16。共享五线谱编辑、自由练习 session、时间轴 raw
+> 基线：2026-08-05；更新：2026-08-18。共享五线谱编辑、自由练习 session、时间轴 raw
 > geometry/interaction、谱面 origin/extent 与两层工具栏桌面等价门禁均已完成。
 > 钢琴卷轴按产品边界保留桌面实现。实施证据见
 > [完整工作台 Web 化记录](free-practice-web-workbench-completion-plan.md)，后续改动见
@@ -60,6 +60,7 @@ raw input 与 Kotlin/JS facade；浏览器动态导出的 `.mecon` 由桌面 `Me
 |---|---|---:|---:|
 | document/workspace/revision 与稳定 slot id | `FreePracticeSession` | ✅ 当前子集 | ✅ 5 步 MVP trace |
 | 和弦目录、选和弦与固定低音 | `frame.catalog` + typed intent | ✅ | ✅ React 不维护和弦白名单 |
+| 新里曼 / voice-leading 惯用进行页签 | `theory.voiceleading` + `PracticePlanView.voiceLeading` + `InsertVoiceLeadingChord` | ✅ 三/七和弦、1–3 步、有序原音路径、平五/平八风险、勋伯格根音方向 | ✅ 与勋伯格惯用进行分 tab；候选按 `6m 1-3-5 → 1-3-6` 展示并高亮两侧变动音；插入为独立和弦，不创建惯用进行线；JVM/JS trace 和真实 Playwright 插入路径 |
 | 自动配声、重写、取消与 typed outcome | background request/result | ✅ | ✅ 独立 search worker；真实 JS 求解测试 |
 | 候选优化与换结果 | serializable `PracticeVoicingCandidate` | ✅ | ✅ Playwright |
 | workspace + score 原子历史 | `HarmonyPracticeTransaction` + 显式 score-session 通知 | ✅ | ✅ trace 覆盖 undo/redo |

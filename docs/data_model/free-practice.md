@@ -1,6 +1,6 @@
 # 自由练习数据模型
 
-> ✅ 当前 schema v8。逐和弦临时调性、可听音响 + 可选锁定解释、可重叠惯用进行、双谱表、
+> ✅ 当前 schema v10。逐和弦临时调性、可听音响 + 可选锁定解释、可重叠惯用进行、双谱表、
 > 复音上限、自动写作/回放设置、手工/自动记谱来源与分析声部分离均已落地；见
 > [自由练习自动写作改造](../exploration/free-practice-auto-writing.md)。
 
@@ -19,7 +19,7 @@
 
 ## 2. 模块设置
 
-当前 schema v8 的模块设置使用：
+当前 schema v10 的模块设置使用：
 
 ```kotlin
 FreePracticeSettings(
@@ -108,7 +108,7 @@ data class FreePracticeSettings(
 以下状态不得持久化：求解候选、最后写作范围、diversity seed、busy/诊断、乐谱选区、播放位置
 和撤销栈。最后写作范围使用稳定 `WorkspaceSlotId` 的瞬态列表，不能保存易失的 EventId 或下标。
 
-当前 v8 和声槽位以 `WorkspaceHarmonySlot.chordChoice` 保存 `WorkspaceChordChoice`。
+当前 v10 和声槽位以 `WorkspaceHarmonySlot.chordChoice` 保存 `WorkspaceChordChoice`。
 `chordInterpretationRef` 只用于解码 v4，`chordIdentity` 只接收 v1–v3 旧文件中尚未解析的显示符号；
 新建、选择、惯用进行和自动写作均不得写入这两个旧字段。
 
@@ -121,6 +121,7 @@ data class WorkspaceChordChoice(
     val origin: ChordSelectionOriginRef? = null,
     val pinnedInterpretationRef: ChordInterpretationRef? = null,
     val bassPitchClass: Int? = null,
+    val preferredRootPitchClass: Int? = null,
 )
 ```
 
@@ -129,6 +130,8 @@ data class WorkspaceChordChoice(
 - `pinnedInterpretationRef` 非空表示锁定拼写、功能和规则，空值表示自由解释；
 - `bassPitchClass` 非空时固定该和弦音为低音，空值表示任一和弦音均可作低音；非空值必须包含在
   `pitchClasses` 中；
+- schema v10 的 `preferredRootPitchClass` 只保存对称音响的展示根音，不添加和声功能或写作约束；
+  voice-leading 插入用它保持后续候选的“根–3–5–7”列序，非空值必须属于 `pitchClasses`；
 - 锁定引用必须与存储的 pitch classes 同音，否则 reducer 拒绝命令；
 - 未锁定时各候选解释作为互斥搜索分支，禁止合并规则或默认取第一项。
 
@@ -163,7 +166,7 @@ data class WorkspaceChordChoice(
 5. 在槽位调性中用知识/选择目录解析旧 `chordIdentity`：仅有一个候选时升级为
    `ChordInterpretationRef`；无候选或多候选时保留旧符号并写入
    `FreePracticeMigrationDiagnostic`，不得静默选第一条；
-6. 保存时统一写出当前 schema v8。
+6. 保存时统一写出当前 schema v10。
 
 实施 v5 时，v4 的精确引用迁入 `pinnedInterpretationRef`，并在槽位调性中解析
 pitch classes。唯一门类来源可补入 `origin`；多门类时留空即可，因为 origin 不参与音乐规则。

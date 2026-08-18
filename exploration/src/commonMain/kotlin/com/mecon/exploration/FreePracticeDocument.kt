@@ -162,7 +162,7 @@ data class FreePracticeMigrationDiagnostic(
 )
 
 const val FREE_PRACTICE_MODULE_TYPE: String = "exploration.free-practice"
-const val FREE_PRACTICE_SCHEMA_VERSION: Int = 9
+const val FREE_PRACTICE_SCHEMA_VERSION: Int = 10
 const val DEFAULT_FREE_PRACTICE_MODULE_ID: String = "free-practice"
 
 @Serializable

@@ -128,6 +128,14 @@ ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProject
 3. 新交互保持键盘、焦点、ARIA 名称和活动 panel 可见性；
 4. 至少补 Node 组件/架构测试；用户路径补 Playwright。
 
+惯用进行面板中与勋伯格目录分 tab 的新里曼 / voice-leading 候选也遵守这条边界：无调性 pitch-class 变换、路径顺序、原音身份、
+平行完全音程风险与勋伯格根音方向均由 `theory/voiceleading` 和 `FreePracticeViewProjector` 输出；平台只可
+切换相对/绝对标签、按共享 `threeTonesSameDirection` 标记做瞬时过滤，并 dispatch 候选自带的
+`InsertVoiceLeadingChord`。共享 session 重新验证候选与所选最短路径后，优先替换源和弦的下一框；仅当
+源和弦为末框时才追加一框。结果仍是独立 `WorkspaceChordChoice`，不创建 `WorkspaceIdiomInstance`，
+因此时间轴没有惯用进行线。完整语义见
+[新里曼 / Voice-leading 变换](../theory/neo-riemannian-voice-leading.md)。
+
 本地化只把 `messageKey + arguments` 映射为文案，不根据文案反推 effect 或业务状态。
 
 ## 5. 调整公共乐谱编辑器或工具栏

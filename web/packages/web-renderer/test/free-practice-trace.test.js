@@ -65,7 +65,7 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
   assert.deepEqual(preset.module, {
     id: "free-practice",
     type: "exploration.free-practice",
-    schemaVersion: 9,
+    schemaVersion: 10,
   });
   const session = await createMeconFreePractice({ ...preset, engineModule });
   const preview = session.previewTimelineEdit({
@@ -446,6 +446,26 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         expectedRevision: step.expectedRevision,
         slotId: before.timeline.slots[step.slotIndex].id,
       });
+    } else if (step.kind === "inspectVoiceLeading") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "selectSlot",
+        expectedRevision: step.expectedRevision,
+        slotId: before.selection.slotId,
+      });
+    } else if (step.kind === "insertVoiceLeadingCandidate") {
+      const before = session.initialUpdate();
+      const candidate = before.plan.voiceLeading.groups
+        .flatMap((group) => group.candidates)
+        .find((item) => item.choice.pitchClasses.join(",") === step.targetPitchClasses.join(","));
+      assert.ok(candidate, "voice-leading trace candidate");
+      update = session.dispatch({
+        type: "insertVoiceLeadingChord",
+        expectedRevision: step.expectedRevision,
+        sourceSlotId: before.selection.slotId,
+        targetPitchClasses: candidate.choice.pitchClasses,
+        pathIndex: candidate.primaryPathIndex,
+      });
     } else if (step.kind === "setStaffLock") {
       const before = session.initialUpdate();
       const voiceId = before.document.noteConstraints.lockedVoiceTrackIds[0];
@@ -480,7 +500,7 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (update.catalogRequests.length === 1) catalogRequest = update.catalogRequests[0];
     if (update.findingRequests.length === 1) findingRequest = update.findingRequests[0];
-    assert.equal(update.schemaVersion, 5, `${step.kind} schema`);
+    assert.equal(update.schemaVersion, 7, `${step.kind} schema`);
     assert.equal(update.revision, step.revision, step.kind);
     assert.equal(update.effect.kind, step.effect, step.kind);
     if (step.editPlayback !== undefined) {
@@ -553,6 +573,34 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
       assert.equal(update.score.renderHint?.structureReflow, step.renderStructureReflow, step.kind);
     }
     if (step.pivot !== undefined) assert.equal(update.plan.pivotEnabled, step.pivot, step.kind);
+    if (step.voiceLeadingFamily !== undefined) {
+      assert.equal(update.plan.voiceLeading.familyId, step.voiceLeadingFamily, step.kind);
+    }
+    if (step.voiceLeadingSteps !== undefined) {
+      assert.deepEqual(update.plan.voiceLeading.groups.map((group) => group.transformationCount),
+        step.voiceLeadingSteps, step.kind);
+    }
+    if (step.voiceLeadingTargetSteps !== undefined) {
+      const candidate = update.plan.voiceLeading.groups.flatMap((group) => group.candidates)
+        .find((item) => item.choice.pitchClasses.join(",") === step.targetPitchClasses.join(","));
+      assert.equal(candidate?.transformationCount, step.voiceLeadingTargetSteps, step.kind);
+      if (step.voiceLeadingParallelFifth !== undefined) {
+        assert.equal(candidate.paths.some((path) => path.parallelRisks.includes("PARALLEL_FIFTH")),
+          step.voiceLeadingParallelFifth, step.kind);
+      }
+    }
+    if (step.selectedPitchClasses !== undefined) {
+      assert.deepEqual(update.plan.selectedSlot?.pitchClasses, step.selectedPitchClasses, step.kind);
+    }
+    if (step.selectedFallbackSymbols !== undefined) {
+      const selected = update.timeline.slots.find((slot) => slot.id === update.selection.slotId);
+      assert.equal(selected.symbol == null, step.selectedFallbackSymbols, step.kind);
+      assert.equal(Boolean(selected.absoluteSymbol), step.selectedFallbackSymbols, step.kind);
+      assert.equal(Boolean(selected.relativeSymbol), step.selectedFallbackSymbols, step.kind);
+    }
+    if (step.firstSlotPitchClasses !== undefined) {
+      assert.deepEqual(update.timeline.slots[0]?.pitchClasses, step.firstSlotPitchClasses, step.kind);
+    }
     if (step.kind === "setTonalLayoutKey") {
       assert.equal(update.plan.currentKey?.fifths, step.fifths, step.kind);
       assert.equal(update.plan.currentKey?.mode, step.mode, step.kind);

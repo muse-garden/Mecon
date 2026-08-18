@@ -233,8 +233,105 @@ class FreePracticeViewProjectorTest {
         )
         assertTrue(construction.toPreviewStorageScore().voiceTracks.values.any { it.events.isNotEmpty() })
         assertTrue(plan.tonalityChoices.any { it.id == "manual" && it.selected })
+        assertTrue(plan.voiceLeading.available)
+        assertEquals("tertian.triad", plan.voiceLeading.familyId)
+        assertEquals(listOf(1, 2), plan.voiceLeading.groups.map { it.transformationCount })
+        val parallelRisk = plan.voiceLeading.groups.flatMap { it.candidates }
+            .first { it.choice.pitchClasses == listOf(1, 4, 8) }
+        assertTrue(parallelRisk.paths.any {
+            PracticeVoiceLeadingParallelRisk.PARALLEL_FIFTH in it.parallelRisks
+        })
+        assertTrue(parallelRisk.rootConnection.hintLabel.isNotBlank())
+        val aMinor = plan.voiceLeading.groups.flatMap { it.candidates }
+            .single { it.choice.pitchClasses == listOf(0, 4, 9) }
+        assertEquals("6m", aMinor.relativeLabel)
+        assertEquals(listOf("1", "3", "5"), aMinor.sourceTones.map { it.relativeLabel })
+        assertEquals(listOf("1", "3", "6"), aMinor.targetTones.map { it.relativeLabel })
+        assertEquals(listOf("5"), aMinor.sourceTones.filter { it.changed }.map { it.relativeLabel })
+        assertEquals(listOf("6"), aMinor.targetTones.filter { it.changed }.map { it.relativeLabel })
         assertFalse(plan.chordLocked)
         assertFalse(plan.inversionLocked)
+    }
+
+    @Test
+    fun seventhChordProjectionProvidesThreeStepsAndASharedSameDirectionFilterFlag() {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val dominantSeventh = ChordSelectionCatalog.choices(key)
+            .first { it.functionalSymbol == "V7" }
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+        val workspace = initial.copy(
+            slots = listOf(
+                initial.slots.single().copy(
+                    chordChoice = WorkspaceChordChoice.of(
+                        dominantSeventh.pitchClasses,
+                        dominantSeventh.origin,
+                    ),
+                )
+            ),
+        )
+
+        val plan = FreePracticeViewProjector.plan(
+            workspace = workspace,
+            selectedSlotId = workspace.slots.single().id,
+            catalog = PracticeCatalogView(requestKey = "test", chordChoices = emptyList()),
+        )
+
+        assertEquals("tertian.seventh", plan.voiceLeading.familyId)
+        assertTrue(plan.voiceLeading.groups.any { it.transformationCount == 3 })
+        val threeStep = plan.voiceLeading.groups.single { it.transformationCount == 3 }
+        assertTrue(threeStep.candidates.any { candidate ->
+            candidate.paths.any { it.threeTonesSameDirection }
+        })
+        assertTrue(threeStep.candidates.all { candidate ->
+            candidate.paths.all { path ->
+                path.moves.map { it.sourceToneIndex }.distinct().size == path.moves.size
+            }
+        })
+    }
+
+    @Test
+    fun voiceLeadingPresentationUsesSourceRootOrderAndKeepsTargetColumnsAligned() {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+        val workspace = initial.copy(
+            slots = listOf(initial.slots.single().copy(
+                chordChoice = WorkspaceChordChoice.of(
+                    pitchClasses = listOf(3, 5, 9, 11),
+                    preferredRootPitchClass = 11,
+                ),
+            )),
+        )
+
+        val plan = FreePracticeViewProjector.plan(
+            workspace = workspace,
+            selectedSlotId = workspace.slots.single().id,
+            catalog = PracticeCatalogView(requestKey = "test", chordChoices = emptyList()),
+        )
+        val target = plan.voiceLeading.groups.flatMap { it.candidates }
+            .single { it.choice.pitchClasses == listOf(0, 3, 6, 9) }
+
+        assertEquals(listOf("7", "♯2", "4", "6"), target.sourceTones.map { it.relativeLabel })
+        assertEquals(listOf("1", "♯2", "♯4", "6"), target.targetTones.map { it.relativeLabel })
+    }
+
+    @Test
+    fun nonFunctionalVoiceLeadingChordRemainsVisibleOnTheTimeline() {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+        val workspace = initial.copy(slots = listOf(initial.slots.single().copy(
+            chordChoice = WorkspaceChordChoice.of(
+                pitchClasses = listOf(1, 4, 8),
+                preferredRootPitchClass = 1,
+            ),
+        )))
+
+        val slot = FreePracticeViewProjector.timeline(workspace).slots.single()
+
+        assertTrue(slot.absoluteSymbol?.isNotBlank() == true)
+        assertTrue(slot.relativeSymbol?.isNotBlank() == true)
+        assertEquals(listOf("C#", "E", "G#"), slot.absoluteTones)
+        assertEquals(listOf("♯1", "3", "♯5"), slot.relativeTones)
+        assertEquals(listOf(1, 4, 8), slot.pitchClasses)
     }
 
     @Test

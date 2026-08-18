@@ -27,8 +27,10 @@ import com.mecon.theory.freepractice.HarmonyWorkspaceCommand
 import com.mecon.theory.freepractice.HarmonyWorkspaceEditor
 import com.mecon.theory.freepractice.HarmonyWorkspaceState
 import com.mecon.theory.freepractice.HarmonyWorkspaceStateController
+import com.mecon.theory.freepractice.InsertChordMode
 import com.mecon.theory.freepractice.PracticeWritingScope
 import com.mecon.theory.freepractice.PracticeWritingScopePlanner
+import com.mecon.theory.freepractice.WorkspaceChordChoice
 import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
 import com.mecon.theory.freepractice.WorkspaceKeyMode
@@ -38,6 +40,8 @@ import com.mecon.theory.freepractice.idiomSourceKeyAt
 import com.mecon.theory.freepractice.resolveIdiomTonalities
 import com.mecon.theory.harmony.ChordSelectionCatalog
 import com.mecon.theory.harmony.ChordSelectionChoice
+import com.mecon.theory.voiceleading.StandardVoiceLeadingChordFamilies
+import com.mecon.theory.voiceleading.VoiceLeadingTransformations
 
 private data class FreePracticeSelectionSnapshot(
     val slotId: WorkspaceSlotId?,
@@ -422,6 +426,8 @@ class FreePracticeSession private constructor(
                 }
             }
             is FreePracticeIntent.InsertIdiom -> insertIdiom(intent, baseRevision)
+            is FreePracticeIntent.InsertVoiceLeadingChord ->
+                insertVoiceLeadingChord(intent, baseRevision)
             is FreePracticeIntent.ReplaceIdiom -> replaceIdiom(intent, baseRevision)
             is FreePracticeIntent.SetIdiomChordToneCount -> setIdiomChordToneCount(intent, baseRevision)
             is FreePracticeIntent.InsertChordRange -> applyWorkspaceCommand(
@@ -1692,6 +1698,69 @@ class FreePracticeSession private constructor(
             FreePracticeMaterialProjector.project(workspace, manager.currentState.runtimeScore),
         ) ?: return invalidScope(baseRevision)
         return startWriting(baseRevision, scope)
+    }
+
+    private fun insertVoiceLeadingChord(
+        intent: FreePracticeIntent.InsertVoiceLeadingChord,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (activeRequest != null) return invalidScope(baseRevision)
+        val sourceIndex = workspace.slots.indexOfFirst { it.id == intent.sourceSlotId }
+        if (sourceIndex < 0) return staleTarget(baseRevision, intent.sourceSlotId)
+        val source = workspace.slots[sourceIndex]
+        val sourceChoice = source.chordChoice ?: return invalidScope(baseRevision)
+        // A voice-leading insertion remains independent; inserting inside an idiom span would make
+        // an unowned chord appear under that idiom's timeline line.
+        if (workspace.idiomInstances.any { source.id in it.slotIds }) return invalidScope(baseRevision)
+        val family = StandardVoiceLeadingChordFamilies.matching(sourceChoice.pitchClasses)
+            ?: return invalidScope(baseRevision)
+        if (intent.targetPitchClasses.any { it !in 0..11 } ||
+            intent.targetPitchClasses != intent.targetPitchClasses.distinct().sorted()
+        ) return invalidScope(baseRevision)
+        val normalizedTarget = intent.targetPitchClasses
+        val candidate = VoiceLeadingTransformations.enumerate(sourceChoice.pitchClasses, family)
+            .firstOrNull { it.targetPitchClasses == normalizedTarget }
+            ?: return invalidScope(baseRevision)
+        if (intent.pathIndex !in candidate.paths.indices) return invalidScope(baseRevision)
+        val targetChoice = WorkspaceChordChoice.of(
+            candidate.targetPitchClasses,
+            preferredRootPitchClass = candidate.rootConnection.targetRootPitchClass,
+        )
+        val existingNext = workspace.slots.getOrNull(sourceIndex + 1)
+        val command = if (existingNext != null) {
+            HarmonyWorkspaceCommand.ReplaceChord(
+                index = sourceIndex + 1,
+                chordChoice = targetChoice,
+            )
+        } else {
+            HarmonyWorkspaceCommand.InsertChord(
+                index = sourceIndex + 1,
+                mode = InsertChordMode.RIPPLE,
+                duration = source.duration,
+                chordChoice = targetChoice,
+            )
+        }
+        val edit = HarmonyWorkspaceEditor.applyResult(
+            workspace,
+            command,
+        )
+        if (!edit.succeeded || edit.state == workspace) return invalidScope(baseRevision)
+        val target = existingNext?.let { next ->
+            edit.state.slots.firstOrNull { it.id == next.id }
+        } ?: edit.state.slots.firstOrNull { after ->
+            workspace.slots.none { before -> before.id == after.id }
+        } ?: return invalidScope(baseRevision)
+        selectedSlotId = target.id
+        selectedIdiomInstanceId = null
+        return if (settings.writing.autoWritingEnabled) {
+            requestWritingForWorkspace(
+                nextWorkspace = edit.state,
+                triggerSlotId = target.id,
+                configuredBacktrack = settings.writing.backtrackChordCount,
+            )
+        } else {
+            commitPreparedWorkspace(baseRevision, edit.state)
+        }
     }
 
     /**

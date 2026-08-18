@@ -75,6 +75,9 @@
     { "kind": "insertChordRange", "expectedRevision": 65, "revision": 66, "effect": "APPLIED", "slotCount": 2 },
     { "kind": "insertManualNoteAtBeat", "beat": "1/2", "expectedRevision": 66, "revision": 67, "effect": "APPLIED", "scoreHasNotes": true },
     { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 67, "revision": 68, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
-    { "kind": "selectScoreNote", "expectedRevision": 68, "revision": 69, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 1, "selectionSlotFilled": false, "scoreChanged": false }
+    { "kind": "selectScoreNote", "expectedRevision": 68, "revision": 69, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 1, "selectionSlotFilled": false, "scoreChanged": false },
+    { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 69, "revision": 70, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
+    { "kind": "inspectVoiceLeading", "expectedRevision": 70, "revision": 70, "effect": "NO_OP", "voiceLeadingFamily": "tertian.triad", "voiceLeadingSteps": [1, 2], "targetPitchClasses": [1, 4, 8], "voiceLeadingTargetSteps": 2, "voiceLeadingParallelFifth": true },
+    { "kind": "insertVoiceLeadingCandidate", "expectedRevision": 70, "revision": 71, "effect": "APPLIED", "targetPitchClasses": [1, 4, 8], "selectedPitchClasses": [1, 4, 8], "firstSlotPitchClasses": [0, 4, 7], "selectedFallbackSymbols": true, "selectionSlotIndex": 1, "slotCount": 2, "idiomCount": 0 }
   ]
 }

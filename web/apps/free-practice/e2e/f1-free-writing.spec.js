@@ -41,6 +41,74 @@ async function clickScoreNote(page, occurrence) {
   await page.locator("canvas").click({ position: point });
 }
 
+test("voice-leading tab inserts an independent chord and highlights both changed tones", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await openPracticeFixture(page, fixture, "free-practice-f1");
+  const initialRevision = await page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision);
+  const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
+  let expectedRevision = initialRevision;
+  if (await autoWriting.getAttribute("aria-pressed") === "true") {
+    await autoWriting.click();
+    expectedRevision += 1;
+    await expect.poll(() => page.evaluate(() =>
+      window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(expectedRevision);
+  }
+
+  const before = await page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot().practiceUpdate;
+    return {
+      slotCount: snapshot.timeline.slots.length,
+      idiomCount: snapshot.timeline.idioms.length,
+      source: snapshot.timeline.slots[0].pitchClasses,
+    };
+  });
+  const projectedRisk = await page.evaluate(() => {
+    const voiceLeading = window.__MECON_E2E__.snapshot().practiceUpdate.plan.voiceLeading;
+    const candidate = voiceLeading.groups.flatMap((group) => group.candidates)
+      .find((item) => item.paths.some((path) => path.parallelRisks.includes("PARALLEL_FIFTH")));
+    return {
+      familyId: voiceLeading.familyId,
+      target: candidate.choice.pitchClasses,
+      rootMotion: candidate.rootConnection.motion,
+      warning: candidate.paths.find((path) => path.parallelRisks.includes("PARALLEL_FIFTH")).warningLabel,
+    };
+  });
+  expect(projectedRisk.familyId).toBe("tertian.triad");
+  const idiomPanel = page.locator(".idiom-panel");
+  await idiomPanel.getByRole("tab", { name: "Voice leading" }).click();
+  const riskCard = page.locator(
+    `.voice-leading-candidate[data-target-pitch-classes="${projectedRisk.target.join("-")}"]`,
+  );
+  await expect(riskCard).toHaveAttribute("data-root-motion", projectedRisk.rootMotion);
+  await riskCard.getByText("条最短变换路径").click();
+  await expect(riskCard.getByText(projectedRisk.warning, { exact: true }).first()).toBeVisible();
+
+  const card = page.locator('.voice-leading-candidate[data-target-pitch-classes="0-4-9"]');
+  await expect(card.locator(".voice-leading-preview")).toContainText("6m");
+  await expect(card.locator(".voice-leading-preview")).toContainText("1-3-5");
+  await expect(card.locator(".voice-leading-preview")).toContainText("1-3-6");
+  await expect(card.locator('mark[data-changed="true"]')).toHaveCount(2);
+  await expect(card.locator('mark[data-changed="true"]').nth(0)).toHaveText("5");
+  await expect(card.locator('mark[data-changed="true"]').nth(1)).toHaveText("6");
+  await card.getByRole("button").click();
+  expectedRevision += 1;
+  await expect.poll(() => page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(expectedRevision);
+  await expect.poll(() => page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.plan.selectedSlot.pitchClasses))
+    .toEqual([0, 4, 9]);
+  await expect.poll(() => page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot().practiceUpdate;
+    return {
+      slotCount: snapshot.timeline.slots.length,
+      idiomCount: snapshot.timeline.idioms.length,
+      source: snapshot.timeline.slots[0].pitchClasses,
+    };
+  })).toEqual({ slotCount: before.slotCount + 1, idiomCount: before.idiomCount, source: before.source });
+});
+
 test("2/4 practice shows a passive empty beat and a separate add button", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");

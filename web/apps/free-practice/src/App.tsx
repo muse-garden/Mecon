@@ -798,6 +798,12 @@ export function App() {
     onInsertIdiom={(definitionId, variantId) => selectedPracticeSlotId && dispatchPractice({
       type: "insertIdiom", anchorSlotId: selectedPracticeSlotId, definitionId, variantId,
     })}
+    onInsertVoiceLeadingChord={(candidate) => selectedPracticeSlotId && dispatchPractice({
+      type: "insertVoiceLeadingChord",
+      sourceSlotId: selectedPracticeSlotId,
+      targetPitchClasses: candidate.choice.pitchClasses,
+      pathIndex: candidate.primaryPathIndex,
+    })}
     onReplaceIdiom={(idiomInstanceId, definitionId, variantId) => dispatchPractice({
       type: "replaceIdiom", idiomInstanceId, definitionId, variantId,
     })}

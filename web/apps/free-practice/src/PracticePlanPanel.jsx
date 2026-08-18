@@ -82,6 +82,63 @@ function ChoiceList({ items, toneMode, disabled = false, onChoose }) {
   </div>;
 }
 
+function VoiceLeadingToneSequence({ tones }) {
+  return <span className="voice-leading-tones">{tones.map((tone, index) => <React.Fragment key={tone.pitchClass}>
+    {index > 0 && <span aria-hidden="true">-</span>}
+    <mark data-changed={tone.changed ? "true" : "false"}>{tone.relativeLabel}</mark>
+  </React.Fragment>)}</span>;
+}
+
+function VoiceLeadingCandidates({ view, disabled, onChoose }) {
+  const [filterSameDirection, setFilterSameDirection] = useState(false);
+  if (!view?.available) return <p>{view?.emptyLabel}</p>;
+  return <section className="voice-leading-catalog" aria-label={view.titleLabel}>
+    <header>
+      <div><strong>{view.titleLabel}</strong><small>{view.descriptionLabel}</small></div>
+      {view.familyId === "tertian.seventh" && <label className="check-row">
+        <input type="checkbox" checked={filterSameDirection}
+          onChange={(event) => setFilterSameDirection(event.target.checked)} />
+        {view.filterThreeToneSameDirectionLabel}
+      </label>}
+    </header>
+    {view.groups.map((group) => {
+      const candidates = group.candidates.filter((candidate) =>
+        !filterSameDirection || candidate.availableWhenThreeToneSameDirectionFiltered);
+      if (!candidates.length) return null;
+      return <section className="voice-leading-step" key={group.transformationCount}>
+        <h4>{group.titleLabel}</h4>
+        <div className="voice-leading-candidates">{candidates.map((candidate) => {
+          const paths = candidate.paths.filter((path) =>
+            !filterSameDirection || !path.threeTonesSameDirection);
+          return <article className="voice-leading-candidate" key={candidate.id}
+            data-root-motion={candidate.rootConnection.motion}
+            data-target-pitch-classes={candidate.choice.pitchClasses.join("-")}>
+            <button type="button" disabled={disabled} onClick={() => onChoose(candidate)}>
+              <span className="voice-leading-preview">
+                <strong>{candidate.relativeLabel}</strong>
+                <VoiceLeadingToneSequence tones={candidate.sourceTones} />
+                <span aria-hidden="true">→</span>
+                <VoiceLeadingToneSequence tones={candidate.targetTones} />
+              </span>
+              <span className={`root-motion ${candidate.rootConnection.colorToken}`}>
+                {candidate.rootConnection.relativeLabel}
+              </span>
+              <small>{candidate.rootConnection.hintLabel}</small>
+            </button>
+            <details>
+              <summary>{paths.length} 条最短变换路径</summary>
+              {paths.map((path) => <div className="voice-leading-path" key={path.id}>
+                <span>{path.moves.map((move) => move.relativeLabel).join("；")}</span>
+                {path.warningLabel && <small className="voice-leading-warning">{path.warningLabel}</small>}
+              </div>)}
+            </details>
+          </article>;
+        })}</div>
+      </section>;
+    })}
+  </section>;
+}
+
 export function PracticePlanPanel({
   update,
   catalogChoiceId,
@@ -99,6 +156,7 @@ export function PracticePlanPanel({
   onSelectTonalLayout,
   onSelectIdiomTonalLayout,
   onInsertIdiom,
+  onInsertVoiceLeadingChord,
   onReplaceIdiom,
   onSetIdiomChordToneCount,
   onRemoveIdiom,
@@ -116,6 +174,7 @@ export function PracticePlanPanel({
   const [toneMode, setToneMode] = useState("RELATIVE");
   const [showDoubleTonality, setShowDoubleTonality] = useState(false);
   const [idiomTab, setIdiomTab] = useState("RELATED");
+  const [progressionTheoryTab, setProgressionTheoryTab] = useState("SCHOENBERG");
   const [targetKeyId, setTargetKeyId] = useState("all");
   const [chordToneCountFilterId, setChordToneCountFilterId] = useState("any");
 
@@ -352,6 +411,15 @@ export function PracticePlanPanel({
 
     {visibleSections.has("idioms") && <details className="plan-section workbench-panel idiom-panel" open>
       <summary><ChevronRight className="disclosure-icon" aria-hidden="true" size={17} strokeWidth={1.8} /><h2>{strings.idiomTitle}</h2></summary>
+      <div className="practice-choice-list progression-theory-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={progressionTheoryTab === "SCHOENBERG"}
+          onClick={() => setProgressionTheoryTab("SCHOENBERG")}>{strings.schoenbergProgressionsTab}</button>
+        <button type="button" role="tab" aria-selected={progressionTheoryTab === "VOICE_LEADING"}
+          onClick={() => setProgressionTheoryTab("VOICE_LEADING")}>{strings.voiceLeadingProgressionsTab}</button>
+      </div>
+      {progressionTheoryTab === "VOICE_LEADING" ?
+        <VoiceLeadingCandidates view={plan.voiceLeading} disabled={plan.chordLocked || writingLocked}
+          onChoose={onInsertVoiceLeadingChord} /> : <>
       {plan.selectedIdiomForm && <div className="idiom-form-controls">
         <strong>{strings.idiomChordForms}</strong>
         <small>{plan.selectedIdiomForm.title}</small>
@@ -417,6 +485,7 @@ export function PracticePlanPanel({
           })}</div>
         </div>)}
       </div>
+      </>}
     </details>}
   </aside>;
 }

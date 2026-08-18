@@ -1746,6 +1746,97 @@ class FreePracticeSessionTest {
         assertEquals(1, edited.findingRequests.size, "a workspace edit does change the inputs")
     }
 
+    @Test
+    fun voiceLeadingInsertionKeepsTheSourceAndCreatesNoIdiomInstance() {
+        val preset = FreePracticePreset.document()
+        val session = session(
+            preset.copy(settings = preset.settings.copy(
+                writing = preset.settings.writing.copy(autoWritingEnabled = false),
+            )),
+        )
+        val before = session.frame()
+        val source = before.document.workspace.slots.single()
+        val candidate = before.plan.voiceLeading.groups.flatMap { it.candidates }
+            .single { it.choice.pitchClasses == listOf(0, 4, 9) }
+
+        val invalidPath = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingChord(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                targetPitchClasses = candidate.choice.pitchClasses,
+                pathIndex = Int.MAX_VALUE,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.INVALID, invalidPath.effect.kind)
+        assertEquals(before.revision, invalidPath.frame.revision)
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingChord(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                targetPitchClasses = candidate.choice.pitchClasses,
+                pathIndex = candidate.primaryPathIndex,
+            ),
+        )
+
+        assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+        assertEquals(source.chordChoice, inserted.frame.document.workspace.slots.first().chordChoice)
+        assertEquals(candidate.choice.pitchClasses, inserted.frame.plan.selectedSlot?.pitchClasses)
+        assertEquals(
+            candidate.choice.preferredRootPitchClass,
+            inserted.frame.document.workspace.slots.last().chordChoice?.preferredRootPitchClass,
+        )
+        assertEquals(2, inserted.frame.document.workspace.slots.size)
+        assertTrue(inserted.frame.document.workspace.idiomInstances.isEmpty())
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(inserted.frame.revision))
+        assertEquals(1, undone.frame.document.workspace.slots.size)
+        assertEquals(source.chordChoice, undone.frame.document.workspace.slots.single().chordChoice)
+    }
+
+    @Test
+    fun voiceLeadingInsertionReplacesAnExistingNextSlotWithoutChangingItsRange() {
+        val preset = FreePracticePreset.document()
+        val source = preset.workspace.slots.single()
+        val next = source.copy(
+            id = WorkspaceSlotId("voice-leading-next"),
+            onset = source.onset + source.duration,
+            duration = Fraction.HALF,
+            chordChoice = WorkspaceChordChoice.of(listOf(2, 5, 9)),
+        )
+        val session = session(preset.copy(
+            settings = preset.settings.copy(
+                writing = preset.settings.writing.copy(autoWritingEnabled = false),
+            ),
+            workspace = preset.workspace.copy(slots = listOf(source, next)),
+        ))
+        val before = session.frame()
+        val candidate = before.plan.voiceLeading.groups.flatMap { it.candidates }
+            .single { it.choice.pitchClasses == listOf(0, 4, 9) }
+
+        val replaced = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingChord(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                targetPitchClasses = candidate.choice.pitchClasses,
+                pathIndex = candidate.primaryPathIndex,
+            ),
+        )
+
+        assertEquals(FreePracticeEffectKind.APPLIED, replaced.effect.kind)
+        assertEquals(2, replaced.frame.document.workspace.slots.size)
+        val replacedNext = replaced.frame.document.workspace.slots.last()
+        assertEquals(next.id, replacedNext.id)
+        assertEquals(next.onset, replacedNext.onset)
+        assertEquals(next.duration, replacedNext.duration)
+        assertEquals(candidate.choice.pitchClasses, replacedNext.chordChoice?.pitchClasses)
+        assertEquals(next.id, replaced.frame.selection.slotId)
+        assertTrue(replaced.frame.document.workspace.idiomInstances.isEmpty())
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(replaced.frame.revision))
+        assertEquals(next, undone.frame.document.workspace.slots.last())
+    }
+
     private fun threeSlotSession(): FreePracticeSession {
         val preset = FreePracticePreset.document()
         val template = preset.workspace.slots.single()

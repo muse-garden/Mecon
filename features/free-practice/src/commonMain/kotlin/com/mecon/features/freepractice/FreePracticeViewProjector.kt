@@ -17,6 +17,15 @@ import com.mecon.theory.harmony.HarmonyTimelineReadingProjector
 import com.mecon.theory.harmony.SoundingInterpretationQuery
 import com.mecon.theory.schoenberg.SchoenbergHarmonicTreatments
 import com.mecon.theory.freepractice.tonalityOptions
+import com.mecon.api.primitive.PitchClass
+import com.mecon.theory.Chord
+import com.mecon.theory.ChordSymbolDisplayStyle
+import com.mecon.theory.ChordSymbolFormatter
+import com.mecon.theory.ModulationPitchLabels
+import com.mecon.theory.voiceleading.SchoenbergChromaticRootMotion
+import com.mecon.theory.voiceleading.StandardVoiceLeadingChordFamilies
+import com.mecon.theory.voiceleading.VoiceLeadingParallelRisk
+import com.mecon.theory.voiceleading.VoiceLeadingTransformations
 import kotlin.math.round
 
 /** UI-neutral read models shared by Compose and React workbench adapters. */
@@ -113,6 +122,14 @@ object FreePracticeViewProjector {
                 val choice = tonalReadings?.firstOrNull()?.let { reading ->
                     choicesByKey[reading.key]?.matching(slot, reading.interpretationRef)
                 } ?: selectedLayout?.key?.let { key -> choicesByKey[key]?.matching(slot) }
+                val fallback = if (choice == null) {
+                    val fallbackKey = tonalReadings?.firstOrNull()?.key ?: selectedLayout?.key
+                    slot.chordChoice?.let { committed ->
+                        fallbackKey?.let { key -> nonFunctionalTimelineChord(committed, key) }
+                    }
+                } else {
+                    null
+                }
                 val readings = displayTonalReadings?.mapNotNull { reading ->
                     choicesByKey[reading.key]
                         ?.matching(slot, reading.interpretationRef)
@@ -129,8 +146,8 @@ object FreePracticeViewProjector {
                     onset = slot.onset,
                     duration = slot.duration,
                     symbol = choice?.functionalSymbol ?: slot.chordIdentity,
-                    absoluteTones = choice?.absoluteTones.orEmpty(),
-                    relativeTones = choice?.relativeTones.orEmpty(),
+                    absoluteTones = choice?.absoluteTones ?: fallback?.absoluteTones.orEmpty(),
+                    relativeTones = choice?.relativeTones ?: fallback?.relativeTones.orEmpty(),
                     readings = readings,
                     pitchClasses = slot.chordChoice?.pitchClasses.orEmpty(),
                     bassPitchClass = slot.chordChoice?.bassPitchClass,
@@ -142,6 +159,8 @@ object FreePracticeViewProjector {
                         canResizeEnd = slot.id !in idiomSlots,
                         canRemove = workspace.slots.size > 1 && slot.id !in idiomSlots,
                     ),
+                    absoluteSymbol = fallback?.absoluteSymbol,
+                    relativeSymbol = fallback?.relativeSymbol,
                 )
             },
             tonalLayouts = workspace.tonalLayouts.map { it.toView() },
@@ -391,6 +410,12 @@ object FreePracticeViewProjector {
                 currentTonality?.primary?.interpretationRef ?: slot.chordInterpretationRef,
             )
         } else null
+        val voiceLeading = projectVoiceLeading(
+            source = slot?.chordChoice,
+            key = effectiveKey,
+            sourceRootPitchClass = slot?.chordChoice?.preferredRootPitchClass
+                ?: detailChoice?.rootPitchClass,
+        )
         val chordDetail = if (effectiveKey != null && detailChoice != null) {
             chordDetail(
                 key = effectiveKey,
@@ -534,6 +559,7 @@ object FreePracticeViewProjector {
             editableTonalLayout = editableLayout?.toView(),
             selectedChord = selectedChord,
             chordDetail = chordDetail,
+            voiceLeading = voiceLeading,
             chordCatalogGroups = catalog.chordGroups,
             chordCatalogFilters = chordCatalogFilters,
             selectedChordReadings = chordReadings,
@@ -784,4 +810,235 @@ object FreePracticeViewProjector {
     private fun WorkspaceChordChoice.matches(other: WorkspaceChordChoice): Boolean =
         pitchClasses == other.pitchClasses &&
             (other.pinnedInterpretationRef == null || pinnedInterpretationRef == other.pinnedInterpretationRef)
+
+    private data class NonFunctionalTimelineChord(
+        val absoluteSymbol: String?,
+        val relativeSymbol: String?,
+        val absoluteTones: List<String>,
+        val relativeTones: List<String>,
+    )
+
+    /**
+     * Voice-leading targets are allowed to leave the current functional catalog. Keep their
+     * stored sonority visible instead of projecting the occupied slot as "选择和弦".
+     */
+    private fun nonFunctionalTimelineChord(
+        choice: WorkspaceChordChoice,
+        key: com.mecon.theory.ModulationKey,
+    ): NonFunctionalTimelineChord {
+        val family = StandardVoiceLeadingChordFamilies.matching(choice.pitchClasses)
+        val readings = family?.let { VoiceLeadingTransformations.recognize(choice.pitchClasses, it) }.orEmpty()
+        val reading = choice.preferredRootPitchClass?.let { preferred ->
+            readings.firstOrNull { it.rootPitchClass == preferred }
+        } ?: readings.firstOrNull()
+        val orderedPitchClasses = if (reading != null && family != null) {
+            val definition = family.definitions.first { it.id == reading.definitionId }
+            definition.members.map { member ->
+                (reading.rootPitchClass + member.semitones).mod(12)
+            }.distinct()
+        } else {
+            val root = choice.preferredRootPitchClass
+            if (root == null) choice.pitchClasses else listOf(root) + choice.pitchClasses.filterNot { it == root }
+        }
+        val chord = reading?.let { Chord(PitchClass(it.rootPitchClass), it.quality) }
+        return NonFunctionalTimelineChord(
+            absoluteSymbol = chord?.let {
+                ChordSymbolFormatter.format(it, ChordSymbolDisplayStyle.LETTER, key.keySignature)
+            },
+            relativeSymbol = chord?.let {
+                ChordSymbolFormatter.format(it, ChordSymbolDisplayStyle.SCALE_DEGREE, key.keySignature)
+            },
+            absoluteTones = orderedPitchClasses.map { pitchLabel(it, key, absolute = true) },
+            relativeTones = orderedPitchClasses.map { pitchLabel(it, key, absolute = false) },
+        )
+    }
+
+    private fun projectVoiceLeading(
+        source: WorkspaceChordChoice?,
+        key: com.mecon.theory.ModulationKey?,
+        sourceRootPitchClass: Int?,
+    ): PracticeVoiceLeadingView {
+        if (source == null || key == null) return PracticeVoiceLeadingView()
+        val family = StandardVoiceLeadingChordFamilies.matching(source.pitchClasses)
+            ?: return PracticeVoiceLeadingView()
+        val candidates = VoiceLeadingTransformations.enumerate(source.pitchClasses, family)
+        val views = candidates.map { candidate ->
+            val targetReading = candidate.readings.firstOrNull {
+                it.rootPitchClass == candidate.rootConnection.targetRootPitchClass
+            } ?: candidate.readings.first()
+            val targetChord = Chord(PitchClass(targetReading.rootPitchClass), targetReading.quality)
+            val paths = candidate.paths.mapIndexed { pathIndex, path ->
+                val risks = buildSet {
+                    if (VoiceLeadingParallelRisk.PARALLEL_FIFTH in path.parallelRisks) {
+                        add(PracticeVoiceLeadingParallelRisk.PARALLEL_FIFTH)
+                    }
+                    if (
+                        VoiceLeadingParallelRisk.PARALLEL_OCTAVE_IF_MOVED_TONE_IS_DOUBLED in
+                        path.parallelRisks
+                    ) {
+                        add(PracticeVoiceLeadingParallelRisk.PARALLEL_OCTAVE_IF_DOUBLED)
+                    }
+                }
+                PracticeVoiceLeadingPathView(
+                    id = candidate.targetPitchClasses.joinToString("-") + ":$pathIndex",
+                    moves = path.moves.map { move ->
+                        val arrow = if (move.semitones > 0) "↑" else "↓"
+                        val amount = kotlin.math.abs(move.semitones)
+                        PracticeVoiceLeadingMoveView(
+                            order = move.order,
+                            sourceToneIndex = move.sourceToneIndex,
+                            fromPitchClass = move.fromPitchClass,
+                            toPitchClass = move.toPitchClass,
+                            semitones = move.semitones,
+                            absoluteLabel = pitchLabel(move.fromPitchClass, key, absolute = true) +
+                                " → ${pitchLabel(move.toPitchClass, key, absolute = true)} ($arrow$amount)",
+                            relativeLabel = pitchLabel(move.fromPitchClass, key, absolute = false) +
+                                " → ${pitchLabel(move.toPitchClass, key, absolute = false)} ($arrow$amount)",
+                        )
+                    },
+                    parallelRisks = risks,
+                    warningLabel = when {
+                        PracticeVoiceLeadingParallelRisk.PARALLEL_FIFTH in risks ->
+                            "固定声部直连容易形成平行五度；若移动音被重复，还可能形成平行八度。"
+                        PracticeVoiceLeadingParallelRisk.PARALLEL_OCTAVE_IF_DOUBLED in risks ->
+                            "同向移动音若在实际织体中被重复，可能形成平行八度。"
+                        else -> ""
+                    },
+                    threeTonesSameDirection = path.threeTonesSameDirection,
+                )
+            }
+            val connection = candidate.rootConnection
+            val motion = PracticeVoiceLeadingRootMotion.valueOf(connection.motion.name)
+            val primaryPathIndex = 0
+            val primaryPath = candidate.paths[primaryPathIndex]
+            val sourceReadings = VoiceLeadingTransformations.recognize(source.pitchClasses, family)
+            val sourceReading = sourceRootPitchClass?.let { preferredRoot ->
+                sourceReadings.firstOrNull { it.rootPitchClass == preferredRoot }
+            } ?: sourceReadings.first { it.rootPitchClass == connection.sourceRootPitchClass }
+            val sourceDefinition = family.definitions.first { it.id == sourceReading.definitionId }
+            // The source establishes the columns: root, third, fifth, seventh (when present).
+            // The target then stays in those original-tone columns instead of being re-sorted.
+            val sourceToneOrder = sourceDefinition.members.map { member ->
+                (sourceReading.rootPitchClass + member.semitones).mod(12)
+            }.distinct()
+            val movedTargetBySource = primaryPath.moves.associate { move ->
+                move.fromPitchClass to move.toPitchClass
+            }
+            val targetToneOrder = sourceToneOrder.map { pitchClass ->
+                movedTargetBySource[pitchClass] ?: pitchClass
+            }
+            check(targetToneOrder.toSet() == candidate.targetPitchClasses.toSet()) {
+                "Aligned voice-leading target must preserve every original tone column"
+            }
+            val changedSources = primaryPath.moves.mapTo(hashSetOf()) { it.fromPitchClass }
+            val changedTargets = primaryPath.moves.mapTo(hashSetOf()) { it.toPitchClass }
+            fun tones(pitchClasses: List<Int>, changed: Set<Int>) = pitchClasses
+                .map { pitchClass ->
+                    PracticeVoiceLeadingToneView(
+                        pitchClass = pitchClass,
+                        absoluteLabel = pitchLabel(pitchClass, key, absolute = true),
+                        relativeLabel = pitchLabel(pitchClass, key, absolute = false),
+                        changed = pitchClass in changed,
+                    )
+                }
+            val sourceRootAbsolute = pitchLabel(connection.sourceRootPitchClass, key, absolute = true)
+            val targetRootAbsolute = pitchLabel(connection.targetRootPitchClass, key, absolute = true)
+            val sourceRootRelative = pitchLabel(connection.sourceRootPitchClass, key, absolute = false)
+            val targetRootRelative = pitchLabel(connection.targetRootPitchClass, key, absolute = false)
+            PracticeVoiceLeadingCandidateView(
+                id = "${family.id.value}:${candidate.targetPitchClasses.joinToString("-")}",
+                choice = WorkspaceChordChoice.of(
+                    candidate.targetPitchClasses,
+                    preferredRootPitchClass = targetReading.rootPitchClass,
+                ),
+                transformationCount = candidate.transformationCount,
+                quality = targetReading.quality.name,
+                absoluteLabel = ChordSymbolFormatter.format(
+                    targetChord,
+                    ChordSymbolDisplayStyle.LETTER,
+                    key.keySignature,
+                ),
+                relativeLabel = ChordSymbolFormatter.format(
+                    targetChord,
+                    ChordSymbolDisplayStyle.SCALE_DEGREE,
+                    key.keySignature,
+                ),
+                primaryPathIndex = primaryPathIndex,
+                sourceTones = tones(sourceToneOrder, changedSources),
+                targetTones = tones(targetToneOrder, changedTargets),
+                paths = paths,
+                availableWhenThreeToneSameDirectionFiltered = paths.any {
+                    !it.threeTonesSameDirection
+                },
+                rootConnection = PracticeVoiceLeadingRootConnectionView(
+                    sourceRootPitchClass = connection.sourceRootPitchClass,
+                    targetRootPitchClass = connection.targetRootPitchClass,
+                    motion = motion,
+                    colorToken = when (motion) {
+                        PracticeVoiceLeadingRootMotion.RISING -> "root-motion-rising"
+                        PracticeVoiceLeadingRootMotion.DESCENDING -> "root-motion-descending"
+                        PracticeVoiceLeadingRootMotion.SUPERSTRONG -> "root-motion-superstrong"
+                        PracticeVoiceLeadingRootMotion.REPEATED -> "root-motion-repeated"
+                        PracticeVoiceLeadingRootMotion.UNCLASSIFIED -> "root-motion-unclassified"
+                    },
+                    absoluteLabel = "$sourceRootAbsolute → $targetRootAbsolute",
+                    relativeLabel = "$sourceRootRelative → $targetRootRelative",
+                    hintLabel = rootMotionHint(connection.motion, connection.directedSemitones),
+                ),
+            )
+        }
+        return PracticeVoiceLeadingView(
+            available = true,
+            familyId = family.id.value,
+            groups = views.groupBy { it.transformationCount }.entries.sortedBy { it.key }.map { (count, items) ->
+                PracticeVoiceLeadingStepGroupView(
+                    transformationCount = count,
+                    titleLabel = "${count} 步变换",
+                    candidates = items,
+                )
+            },
+        )
+    }
+
+    private fun pitchLabel(
+        pitchClass: Int,
+        key: com.mecon.theory.ModulationKey,
+        absolute: Boolean,
+    ): String = if (absolute) {
+        ChordSymbolFormatter.formatPitchClass(
+            PitchClass(pitchClass),
+            ChordSymbolDisplayStyle.LETTER,
+            key.keySignature,
+        )
+    } else {
+        ModulationPitchLabels.relativePitchLabel(key, PitchClass(pitchClass))
+    }
+
+    private fun rootMotionHint(
+        motion: SchoenbergChromaticRootMotion,
+        directedSemitones: Int,
+    ): String {
+        val interval = when (directedSemitones) {
+            0 -> "同根音"
+            1 -> "根音上行小二度"
+            2 -> "根音上行大二度"
+            3 -> "根音上行小三度"
+            4 -> "根音上行大三度"
+            5 -> "根音上行纯四度"
+            6 -> "根音相隔三全音"
+            7 -> "根音下行纯四度"
+            8 -> "根音下行大三度"
+            9 -> "根音下行小三度"
+            10 -> "根音下行大二度"
+            else -> "根音下行小二度"
+        }
+        val explanation = when (motion) {
+            SchoenbergChromaticRootMotion.RISING -> "上升进行：连接较稳，可优先考虑。"
+            SchoenbergChromaticRootMotion.DESCENDING -> "下降进行：较弱，宜由后续根音方向补偿。"
+            SchoenbergChromaticRootMotion.SUPERSTRONG -> "超越进行：不保留旧根音关系，宜节省使用。"
+            SchoenbergChromaticRootMotion.REPEATED -> "同根音变化：属于和声色彩改变而非根音推进。"
+            SchoenbergChromaticRootMotion.UNCLASSIFIED -> "三全音根音关系不属于勋伯格三类调内根音进行。"
+        }
+        return "$interval；$explanation"
+    }
 }

@@ -18,6 +18,8 @@
 [交互改造](../exploration/free-practice-auto-writing.md) 和 [窗口求解](free-practice-window-voicing.md)。
 章节向通用和弦目录贡献新和弦类别的协议见
 [chord-catalog-contributions.md](chord-catalog-contributions.md)。
+无功能 pitch-class 集合上的新里曼 / voice-leading 邻接、路径身份、平行完全音程风险及自由练习接入见
+[neo-riemannian-voice-leading.md](neo-riemannian-voice-leading.md)。
 
 ## 1. 已实现
 

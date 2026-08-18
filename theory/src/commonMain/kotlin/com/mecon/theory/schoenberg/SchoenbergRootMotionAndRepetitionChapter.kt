@@ -23,6 +23,23 @@ enum class SchoenbergRootMotionDirection {
     DESCENDING,
     SUPERSTRONG,
     REPEATED,
+    ;
+
+    companion object {
+        /**
+         * Chromatic counterpart used when no diatonic degree exists (for example a
+         * pitch-class-set voice-leading graph). A tritone has no counterpart in the three
+         * diatonic direction classes and therefore returns null.
+         */
+        fun fromChromaticSemitoneDelta(directedSemitones: Int): SchoenbergRootMotionDirection? =
+            when (directedSemitones.mod(12)) {
+                5, 8, 9 -> RISING
+                3, 4, 7 -> DESCENDING
+                1, 2, 10, 11 -> SUPERSTRONG
+                0 -> REPEATED
+                else -> null
+            }
+    }
 }
 
 /**

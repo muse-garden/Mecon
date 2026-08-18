@@ -441,6 +441,21 @@ internal fun FreePracticeWorkbench(
             }
             return@insertIdiom
         },
+        insertVoiceLeadingChord = insertVoiceLeadingChord@ { candidate ->
+            val activeHost = currentHost.value ?: run {
+                reportMissingPracticeHost { operationError = it }
+                return@insertVoiceLeadingChord
+            }
+            activeHost.insertVoiceLeadingChord(
+                sourceSlotId = workspace.slots[selectedSlot].id,
+                targetPitchClasses = candidate.choice.pitchClasses,
+                pathIndex = candidate.primaryPathIndex,
+            ) { message ->
+                completeWritingOperation(message)
+                activeHost.practicePlan.selectedSlot?.id?.let { selectedSlotId = it }
+                selectedIdiomInstanceId = null
+            }
+        },
         selectIdiom = ::selectIdiom,
         replaceIdiom = replaceIdiom@ { instance, definitionId, variantId ->
             val activeHost = currentHost.value ?: run {

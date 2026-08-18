@@ -508,10 +508,12 @@ object PracticeTimelineSceneProjector {
             val id = "slot:${slot.id.value}"
             val selected = slot.id.value == effectiveSelectedSlotId
             val locked = !slot.capabilities.canTranslate
+            val displaySymbol = slot.displaySymbol(request.toneLabelMode)
+            val occupied = displaySymbol != null || slot.pitchClasses.isNotEmpty()
             val fill = when {
                 locked -> alpha(palette.orange, if (selected) 0.34f else 0.14f)
                 slot.isPivotChord -> alpha(palette.emerald, if (selected) 0.38f else 0.18f)
-                slot.symbol == null -> alpha(palette.surfaceLight, if (selected) 0.90f else 0.60f)
+                !occupied -> alpha(palette.surfaceLight, if (selected) 0.90f else 0.60f)
                 selected -> palette.selectedSurface
                 else -> alpha(palette.primaryDark, 0.32f)
             }
@@ -579,7 +581,7 @@ object PracticeTimelineSceneProjector {
                         startBounds, HOVER_Z, fill = palette.orangeLight),
                 )
                 a11y += PracticeTimelineAccessibilityObject("$id:start", "button",
-                    "调整 ${slot.symbol ?: "和弦 ${index + 1}"} 起点", startBounds, actions = listOf("resize"))
+                    "调整 ${displaySymbol ?: "和弦 ${index + 1}"} 起点", startBounds, actions = listOf("resize"))
             }
             if (slot.capabilities.canResizeEnd) {
                 val endBounds = PracticeTimelineBounds(endX - HANDLE_WIDTH, chordY, HANDLE_WIDTH, chordHeight)
@@ -592,10 +594,10 @@ object PracticeTimelineSceneProjector {
                         endBounds, HOVER_Z, fill = palette.orangeLight),
                 )
                 a11y += PracticeTimelineAccessibilityObject("$id:end", "button",
-                    "调整 ${slot.symbol ?: "和弦 ${index + 1}"} 终点", endBounds, actions = listOf("resize"))
+                    "调整 ${displaySymbol ?: "和弦 ${index + 1}"} 终点", endBounds, actions = listOf("resize"))
             }
             val accessibilityLabel = buildString {
-                append(slot.symbol ?: "和弦 ${index + 1}")
+                append(displaySymbol ?: "和弦 ${index + 1}")
                 if (slotLabels.isNotEmpty()) append("，惯用进行 ${slotLabels.joinToString("、")}")
             }
             a11y += PracticeTimelineAccessibilityObject(id, "button", accessibilityLabel, bounds,
@@ -882,7 +884,7 @@ object PracticeTimelineSceneProjector {
                 )
             }
         } else {
-            val symbol = slot.symbol ?: "选择和弦"
+            val symbol = slot.displaySymbol(toneMode) ?: "选择和弦"
             val tones = when (toneMode) {
                 PracticeTimelineToneLabelMode.RELATIVE -> slot.relativeTones
                 PracticeTimelineToneLabelMode.ABSOLUTE -> slot.absoluteTones
@@ -895,10 +897,10 @@ object PracticeTimelineSceneProjector {
                 PracticeTimelineDrawKind.TEXT,
                 PracticeTimelineBounds(content.x, symbolY, content.width, symbolHeight),
                 22,
-                fill = if (slot.symbol == null) palette.textMuted else palette.textPrimary,
+                fill = if (slot.displaySymbol(toneMode) == null) palette.textMuted else palette.textPrimary,
                 text = symbol,
                 fontFamily = "system-ui",
-                fontSize = if (slot.symbol == null) 10f else 13f,
+                fontSize = if (slot.displaySymbol(toneMode) == null) 10f else 13f,
                 fontWeight = 700,
                 textAlign = "center",
             )
@@ -926,6 +928,13 @@ object PracticeTimelineSceneProjector {
             textAlign = "center",
         )
     }
+
+    private fun PracticeTimelineSlotView.displaySymbol(
+        toneMode: PracticeTimelineToneLabelMode,
+    ): String? = when (toneMode) {
+        PracticeTimelineToneLabelMode.RELATIVE -> relativeSymbol
+        PracticeTimelineToneLabelMode.ABSOLUTE -> absoluteSymbol
+    } ?: symbol
 
     private fun addInsertAffordance(
         draw: MutableList<PracticeTimelineDrawObject>,

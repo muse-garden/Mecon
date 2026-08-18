@@ -157,6 +157,17 @@ sealed interface FreePracticeIntent {
         val variantId: String,
     ) : FreePracticeIntent
 
+    /** Replaces the next chord slot, or appends one when [sourceSlotId] is last; never creates an idiom. */
+    @Serializable
+    @SerialName("insertVoiceLeadingChord")
+    data class InsertVoiceLeadingChord(
+        override val expectedRevision: Long,
+        val sourceSlotId: WorkspaceSlotId,
+        val targetPitchClasses: List<Int>,
+        /** Index in the candidate's deterministic shortest-path list; preserves move order. */
+        val pathIndex: Int,
+    ) : FreePracticeIntent
+
     @Serializable
     @SerialName("replaceIdiom")
     data class ReplaceIdiom(
@@ -511,6 +522,96 @@ data class PracticeChordCatalogGroupView(
 )
 
 @Serializable
+enum class PracticeVoiceLeadingRootMotion {
+    RISING,
+    DESCENDING,
+    SUPERSTRONG,
+    REPEATED,
+    UNCLASSIFIED,
+}
+
+@Serializable
+enum class PracticeVoiceLeadingParallelRisk {
+    PARALLEL_FIFTH,
+    PARALLEL_OCTAVE_IF_DOUBLED,
+}
+
+@Serializable
+data class PracticeVoiceLeadingMoveView(
+    val order: Int,
+    val sourceToneIndex: Int,
+    val fromPitchClass: Int,
+    val toPitchClass: Int,
+    val semitones: Int,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+)
+
+@Serializable
+data class PracticeVoiceLeadingPathView(
+    val id: String,
+    val moves: List<PracticeVoiceLeadingMoveView>,
+    val parallelRisks: Set<PracticeVoiceLeadingParallelRisk> = emptySet(),
+    val warningLabel: String = "",
+    val threeTonesSameDirection: Boolean = false,
+)
+
+@Serializable
+data class PracticeVoiceLeadingRootConnectionView(
+    val sourceRootPitchClass: Int,
+    val targetRootPitchClass: Int,
+    val motion: PracticeVoiceLeadingRootMotion,
+    val colorToken: String,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+    val hintLabel: String,
+)
+
+@Serializable
+data class PracticeVoiceLeadingToneView(
+    val pitchClass: Int,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+    val changed: Boolean,
+)
+
+@Serializable
+data class PracticeVoiceLeadingCandidateView(
+    val id: String,
+    val choice: WorkspaceChordChoice,
+    val transformationCount: Int,
+    val quality: String,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+    /** Primary deterministic path used by the compact source → target presentation and insertion. */
+    val primaryPathIndex: Int,
+    val sourceTones: List<PracticeVoiceLeadingToneView>,
+    val targetTones: List<PracticeVoiceLeadingToneView>,
+    val paths: List<PracticeVoiceLeadingPathView>,
+    /** False when every shortest path consists of three distinct tones moving in one direction. */
+    val availableWhenThreeToneSameDirectionFiltered: Boolean,
+    val rootConnection: PracticeVoiceLeadingRootConnectionView,
+)
+
+@Serializable
+data class PracticeVoiceLeadingStepGroupView(
+    val transformationCount: Int,
+    val titleLabel: String,
+    val candidates: List<PracticeVoiceLeadingCandidateView>,
+)
+
+@Serializable
+data class PracticeVoiceLeadingView(
+    val available: Boolean = false,
+    val familyId: String? = null,
+    val titleLabel: String = "新里曼 / Voice leading",
+    val descriptionLabel: String = "每一步只移动一个原始和弦音 1–2 个半音；同一路径不重复移动同一音。",
+    val filterThreeToneSameDirectionLabel: String = "过滤三音同向变换",
+    val emptyLabel: String = "所选和弦不属于已注册的三和弦或七和弦类型。",
+    val groups: List<PracticeVoiceLeadingStepGroupView> = emptyList(),
+)
+
+@Serializable
 data class PracticeCatalogView(
     val requestKey: String,
     val chordChoices: List<PracticeChordCatalogItem>,
@@ -592,6 +693,9 @@ data class PracticeTimelineSlotView(
     val isPivotChord: Boolean = false,
     val inversionLocked: Boolean = false,
     val capabilities: PracticeTimelineSlotCapabilities = PracticeTimelineSlotCapabilities(),
+    /** Non-functional fallback labels, selected by the shared timeline's tone-label mode. */
+    val absoluteSymbol: String? = null,
+    val relativeSymbol: String? = null,
 )
 
 @Serializable
@@ -803,6 +907,8 @@ data class PracticePlanStrings(
     val harmonySelectionTitle: String = "和声选择",
     val chordDetailTitle: String = "和弦详情",
     val idiomTitle: String = "惯用进行",
+    val schoenbergProgressionsTab: String = "勋伯格",
+    val voiceLeadingProgressionsTab: String = "Voice leading",
     val insertTonalLayout: String = "＋ 插入",
     val editTonalLayoutTitle: String = "修改当前调性",
     val insertTonalLayoutTitle: String = "在当前和弦插入调性线",
@@ -868,6 +974,7 @@ data class PracticePlanView(
     val editableTonalLayout: PracticeTonalLayoutView? = null,
     val selectedChord: PracticeChordCatalogItem? = null,
     val chordDetail: PracticeChordDetailView? = null,
+    val voiceLeading: PracticeVoiceLeadingView = PracticeVoiceLeadingView(),
     val chordCatalogGroups: List<PracticeChordCatalogGroupView> = emptyList(),
     val chordCatalogFilters: List<PracticeChordCatalogFilterView> = emptyList(),
     val selectedChordReadings: List<PracticeTimelineChordReadingView> = emptyList(),
@@ -1198,7 +1305,7 @@ data class FreePracticeDispatchResult(
     val scoreUpdate: ScoreEditUpdate? = null,
 )
 
-const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 5
+const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 7
 
 object FreePracticeCodec {
     private val json = Json {

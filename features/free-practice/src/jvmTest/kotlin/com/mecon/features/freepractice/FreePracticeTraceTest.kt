@@ -417,6 +417,27 @@ class FreePracticeTraceTest {
                         session.frame().timeline.slots[step.getValue("slotIndex").jsonPrimitive.int].id,
                     ),
                 )
+                "inspectVoiceLeading" -> session.dispatch(
+                    FreePracticeIntent.SelectSlot(
+                        expectedRevision!!.toLong(),
+                        requireNotNull(session.frame().selection.slotId),
+                    ),
+                )
+                "insertVoiceLeadingCandidate" -> {
+                    val target = step.getValue("targetPitchClasses").jsonArray
+                        .map { it.jsonPrimitive.int }
+                    val candidate = session.frame().plan.voiceLeading.groups
+                        .flatMap { it.candidates }
+                        .single { it.choice.pitchClasses == target }
+                    session.dispatch(
+                        FreePracticeIntent.InsertVoiceLeadingChord(
+                            expectedRevision!!.toLong(),
+                            requireNotNull(session.frame().selection.slotId),
+                            candidate.choice.pitchClasses,
+                            candidate.primaryPathIndex,
+                        ),
+                    )
+                }
                 "setStaffLock" -> session.frame().let { before ->
                     val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
                     val staffId = before.score.runtimeScore.staffTracks.entries
@@ -542,6 +563,47 @@ class FreePracticeTraceTest {
                 assertEquals(expected, selected.absoluteTones.isNotEmpty())
                 assertEquals(expected, selected.relativeTones.isNotEmpty())
                 assertEquals(expected, selected.readings.isNotEmpty())
+            }
+            step["voiceLeadingFamily"]?.jsonPrimitive?.content?.let { expected ->
+                assertEquals(expected, update.plan.voiceLeading.familyId)
+            }
+            step["voiceLeadingSteps"]?.jsonArray?.let { expected ->
+                assertEquals(
+                    expected.map { it.jsonPrimitive.int },
+                    update.plan.voiceLeading.groups.map { it.transformationCount },
+                )
+            }
+            step["voiceLeadingTargetSteps"]?.jsonPrimitive?.int?.let { expected ->
+                val target = step.getValue("targetPitchClasses").jsonArray.map { it.jsonPrimitive.int }
+                val candidate = update.plan.voiceLeading.groups.flatMap { it.candidates }
+                    .single { it.choice.pitchClasses == target }
+                assertEquals(expected, candidate.transformationCount)
+                step["voiceLeadingParallelFifth"]?.jsonPrimitive?.boolean?.let { parallelExpected ->
+                    assertEquals(
+                        parallelExpected,
+                        candidate.paths.any {
+                            PracticeVoiceLeadingParallelRisk.PARALLEL_FIFTH in it.parallelRisks
+                        },
+                    )
+                }
+            }
+            step["selectedPitchClasses"]?.jsonArray?.let { expected ->
+                assertEquals(
+                    expected.map { it.jsonPrimitive.int },
+                    update.plan.selectedSlot?.pitchClasses,
+                )
+            }
+            step["selectedFallbackSymbols"]?.jsonPrimitive?.boolean?.let { expected ->
+                val selected = update.timeline.slots.first { it.id == update.selection.slotId }
+                assertEquals(expected, selected.symbol == null)
+                assertEquals(expected, selected.absoluteSymbol?.isNotBlank() == true)
+                assertEquals(expected, selected.relativeSymbol?.isNotBlank() == true)
+            }
+            step["firstSlotPitchClasses"]?.jsonArray?.let { expected ->
+                assertEquals(
+                    expected.map { it.jsonPrimitive.int },
+                    update.timeline.slots.first().pitchClasses,
+                )
             }
             if (step.getValue("kind").jsonPrimitive.content == "setTonalLayoutKey") {
                 assertEquals(step.getValue("fifths").jsonPrimitive.int, update.plan.currentKey?.fifths)

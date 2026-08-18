@@ -246,6 +246,8 @@ data class WorkspaceChordChoice(
     val pinnedInterpretationRef: ChordInterpretationRef? = null,
     /** Null leaves inversion open; otherwise the selected chord member must be the bass. */
     val bassPitchClass: Int? = null,
+    /** Display-only root hint for symmetric sonorities; it adds no harmonic constraint. */
+    val preferredRootPitchClass: Int? = null,
 ) {
     init {
         require(pitchClasses.isNotEmpty()) { "A workspace chord choice must contain pitch classes" }
@@ -256,6 +258,9 @@ data class WorkspaceChordChoice(
         require(bassPitchClass == null || bassPitchClass in pitchClasses) {
             "A fixed workspace bass must be a member of the chord"
         }
+        require(preferredRootPitchClass == null || preferredRootPitchClass in pitchClasses) {
+            "A preferred workspace root must be a member of the chord"
+        }
     }
 
     companion object {
@@ -264,11 +269,13 @@ data class WorkspaceChordChoice(
             origin: ChordSelectionOriginRef? = null,
             pinnedInterpretationRef: ChordInterpretationRef? = null,
             bassPitchClass: Int? = null,
+            preferredRootPitchClass: Int? = null,
         ): WorkspaceChordChoice = WorkspaceChordChoice(
             pitchClasses = pitchClasses.distinct().sorted(),
             origin = origin,
             pinnedInterpretationRef = pinnedInterpretationRef,
             bassPitchClass = bassPitchClass,
+            preferredRootPitchClass = preferredRootPitchClass,
         )
     }
 }

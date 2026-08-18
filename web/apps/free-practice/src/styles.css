@@ -591,6 +591,31 @@ button:disabled { cursor: default; opacity: .45; }
 .chord-catalog-group { display: grid; gap: 7px; }
 .chord-catalog-group p { margin: 0; color: #9facbf; font-size: 13px; }
 .chord-catalog-group p strong { color: #aeb9ca; }
+.voice-leading-catalog { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid #2d3d55; }
+.voice-leading-catalog > header { display: grid; gap: 8px; }
+.voice-leading-catalog > header > div { display: grid; gap: 3px; }
+.voice-leading-catalog > header strong { color: #d9e1ee; }
+.voice-leading-catalog > header small { color: #8493a9; line-height: 1.4; }
+.voice-leading-step { display: grid; gap: 7px; }
+.voice-leading-step h4 { margin: 0; color: #aeb9ca; font-size: 13px; }
+.voice-leading-candidates { display: grid; gap: 7px; }
+.voice-leading-candidate { display: grid; gap: 5px; padding: 8px; border: 1px solid #33445d; border-radius: 8px; background: #202d40; }
+.voice-leading-candidate > button { display: grid; grid-template-columns: auto 1fr; gap: 3px 8px; text-align: left; }
+.voice-leading-candidate > button > small { grid-column: 1 / -1; color: #8593a7; }
+.voice-leading-candidate .root-motion { justify-self: end; }
+.voice-leading-preview { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.voice-leading-tones { display: inline-flex; align-items: center; }
+.voice-leading-tones mark { padding: 1px 2px; color: #d9e1ee; background: transparent; border-radius: 3px; }
+.voice-leading-tones mark[data-changed="true"] { color: #ffd09a; background: rgb(230 173 98 / 22%); font-weight: 700; }
+.progression-theory-tabs button[aria-selected="true"] { color: #f1c27d; border-color: #b97831; background: #46341f; }
+.root-motion-rising { color: #69c995; }
+.root-motion-descending { color: #e6ad62; }
+.root-motion-superstrong { color: #a58cff; }
+.root-motion-repeated, .root-motion-unclassified { color: #8fa0b8; }
+.voice-leading-candidate details { color: #9eabc0; font-size: 12px; }
+.voice-leading-candidate summary { cursor: pointer; }
+.voice-leading-path { display: grid; gap: 3px; padding: 6px 2px 0; }
+.voice-leading-warning { color: #e6ad62; line-height: 1.4; }
 .practice-writing-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .practice-writing-settings .check-row { grid-column: 1 / -1; }
 .practice-writing-settings input[type="number"] { width: 100%; padding: 6px; color: inherit; background: #252a34; border: 1px solid #414858; border-radius: 4px; }

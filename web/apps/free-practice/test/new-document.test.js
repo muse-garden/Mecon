@@ -7,7 +7,7 @@ test("new practice container round-trips the shared preset and frozen geometry",
   const preset = {
     score: { id: "practice-score", metadata: { title: "自由练习" }, measures: [] },
     document: { settings: { polyphonyLimit: 4 }, workspace: { slots: [] } },
-    module: { id: "free-practice", type: "exploration.free-practice", schemaVersion: 9 },
+    module: { id: "free-practice", type: "exploration.free-practice", schemaVersion: 10 },
   };
   const created = createNewPracticeDocument(preset, 1234);
   const bundle = { schemaVersion: 1, surfaces: [] };

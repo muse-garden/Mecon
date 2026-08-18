@@ -682,6 +682,21 @@ class HarmonyPracticeScoreHost(
         onComplete,
     )
 
+    fun insertVoiceLeadingChord(
+        sourceSlotId: WorkspaceSlotId,
+        targetPitchClasses: List<Int>,
+        pathIndex: Int,
+        onComplete: (String?) -> Unit = {},
+    ) = dispatchWorkspaceIntent(
+        FreePracticeIntent.InsertVoiceLeadingChord(
+            expectedRevision = freePracticeSession.frame().revision,
+            sourceSlotId = sourceSlotId,
+            targetPitchClasses = targetPitchClasses,
+            pathIndex = pathIndex,
+        ),
+        onComplete,
+    )
+
     fun replaceIdiom(
         idiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId,
         definitionId: String,

@@ -65,6 +65,26 @@ class PracticeTimelineControllerTest {
     }
 
     @Test
+    fun nonFunctionalChordSymbolFollowsTheTimelineToneMode() {
+        val slot = PracticeTimelineSlotView(
+            id = first,
+            onset = Fraction.ZERO,
+            duration = Fraction.QUARTER,
+            pitchClasses = listOf(0, 4, 9),
+            absoluteSymbol = "Am",
+            relativeSymbol = "6m",
+        )
+        fun symbol(mode: PracticeTimelineToneLabelMode): String? =
+            PracticeTimelineSceneProjector.project(request().copy(
+                timeline = PracticeTimelineView(Fraction.QUARTER, slots = listOf(slot)),
+                toneLabelMode = mode,
+            )).drawObjects.firstOrNull { it.id == "slot:${first.value}:symbol" }?.text
+
+        assertEquals("6m", symbol(PracticeTimelineToneLabelMode.RELATIVE))
+        assertEquals("Am", symbol(PracticeTimelineToneLabelMode.ABSOLUTE))
+    }
+
+    @Test
     fun appendCellIsAlwaysPlacedAfterTheClosingBarline() {
         val oneBeatChord = request().copy(
             timeline = PracticeTimelineView(

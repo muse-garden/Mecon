@@ -98,6 +98,9 @@ internal data class PracticePlanActions(
     val removeTonalLayout: (WorkspaceTonalLayoutId) -> Unit,
     val insertTonalLayout: (ModulationKey, Boolean) -> Unit,
     val insertIdiom: (String, String) -> Unit,
+    val insertVoiceLeadingChord: (
+        com.mecon.features.freepractice.PracticeVoiceLeadingCandidateView,
+    ) -> Unit,
     val selectIdiom: (WorkspaceIdiomInstanceId) -> Unit,
     val replaceIdiom: (
         WorkspaceIdiomInstance,
@@ -114,6 +117,11 @@ internal data class PracticePlanActions(
 private enum class IdiomCatalogTab {
     CURRENT_CHORD,
     ALL_TEACHING,
+}
+
+private enum class ProgressionTheoryTab {
+    SCHOENBERG,
+    VOICE_LEADING,
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -393,6 +401,33 @@ internal fun PracticePlanPanel(
         }
 
         if (showIdioms) WorkbenchPanel(strings.idiomTitle) {
+            var progressionTheoryTab by remember { mutableStateOf(ProgressionTheoryTab.SCHOENBERG) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                IdiomCatalogTab(
+                    label = strings.schoenbergProgressionsTab,
+                    selected = progressionTheoryTab == ProgressionTheoryTab.SCHOENBERG,
+                    accent = MeconColors.Primary,
+                    onClick = { progressionTheoryTab = ProgressionTheoryTab.SCHOENBERG },
+                    modifier = Modifier.weight(1f),
+                )
+                IdiomCatalogTab(
+                    label = strings.voiceLeadingProgressionsTab,
+                    selected = progressionTheoryTab == ProgressionTheoryTab.VOICE_LEADING,
+                    accent = MeconColors.Orange,
+                    onClick = { progressionTheoryTab = ProgressionTheoryTab.VOICE_LEADING },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            if (progressionTheoryTab == ProgressionTheoryTab.VOICE_LEADING) {
+                VoiceLeadingCandidates(
+                    view = view.voiceLeading,
+                    chordLocked = view.chordLocked,
+                    onInsert = actions.insertVoiceLeadingChord,
+                )
+            } else {
             val hasConfiguredChord = selectedSlot?.let { slot ->
                 slot.chordChoice != null ||
                     slot.chordInterpretationRef != null ||
@@ -538,6 +573,7 @@ internal fun PracticePlanPanel(
                     }
                 }
             }
+            }
         }
 
     }
@@ -664,6 +700,141 @@ private fun OffKeyOperations(
         }
         if (view.chordLocked) {
             Text(strings.lockedTonalityHelp, color = MeconColors.TextDark, fontSize = 10.sp)
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun VoiceLeadingCandidates(
+    view: com.mecon.features.freepractice.PracticeVoiceLeadingView,
+    chordLocked: Boolean,
+    onInsert: (com.mecon.features.freepractice.PracticeVoiceLeadingCandidateView) -> Unit,
+) {
+    if (!view.available) {
+        Text(view.emptyLabel, color = MeconColors.TextDark, fontSize = 10.sp)
+        return
+    }
+    var filterSameDirection by remember(view.familyId) { mutableStateOf(false) }
+    fun motionColor(motion: com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion): Color =
+        when (motion) {
+            com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion.RISING -> MeconColors.Emerald
+            com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion.DESCENDING -> MeconColors.Orange
+            com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion.SUPERSTRONG -> Color(0xFFA58CFF)
+            com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion.REPEATED,
+            com.mecon.features.freepractice.PracticeVoiceLeadingRootMotion.UNCLASSIFIED -> MeconColors.TextMuted
+        }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(view.titleLabel, color = MeconColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(view.descriptionLabel, color = MeconColors.TextDark, fontSize = 10.sp)
+        if (view.familyId == "tertian.seventh") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(view.filterThreeToneSameDirectionLabel, color = MeconColors.TextMuted, fontSize = 10.sp)
+                MeconSwitch(
+                    checked = filterSameDirection,
+                    onCheckedChange = { filterSameDirection = it },
+                )
+            }
+        }
+        view.groups.forEach { group ->
+            val candidates = group.candidates.filter { candidate ->
+                !filterSameDirection || candidate.availableWhenThreeToneSameDirectionFiltered
+            }
+            if (candidates.isNotEmpty()) {
+                Text(group.titleLabel, color = MeconColors.TextMuted, fontSize = 10.sp)
+                Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    candidates.forEach { candidate ->
+                        val paths = candidate.paths.filter { path ->
+                            !filterSameDirection || !path.threeTonesSameDirection
+                        }
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !chordLocked) { onInsert(candidate) },
+                            color = MeconColors.Surface.copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(7.dp),
+                            border = BorderStroke(1.dp, MeconColors.Border),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    FlowRow(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                                    ) {
+                                        Text(
+                                            candidate.relativeLabel,
+                                            color = MeconColors.TextPrimary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        VoiceLeadingToneSequence(candidate.sourceTones)
+                                        Text("→", color = MeconColors.TextMuted, fontSize = 10.sp)
+                                        VoiceLeadingToneSequence(candidate.targetTones)
+                                    }
+                                    Text(
+                                        candidate.rootConnection.relativeLabel,
+                                        color = motionColor(candidate.rootConnection.motion),
+                                        fontSize = 10.sp,
+                                    )
+                                }
+                                Text(
+                                    candidate.rootConnection.hintLabel,
+                                    color = MeconColors.TextDark,
+                                    fontSize = 9.sp,
+                                )
+                                paths.forEachIndexed { index, path ->
+                                    Text(
+                                        "路径 ${index + 1}：" + path.moves.joinToString("；") { move ->
+                                            move.relativeLabel
+                                        },
+                                        color = MeconColors.TextMuted,
+                                        fontSize = 9.sp,
+                                    )
+                                    if (path.warningLabel.isNotBlank()) {
+                                        Text(path.warningLabel, color = MeconColors.Orange, fontSize = 9.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            }
+        }
+    }
+
+@Composable
+private fun VoiceLeadingToneSequence(
+    tones: List<com.mecon.features.freepractice.PracticeVoiceLeadingToneView>,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        tones.forEachIndexed { index, tone ->
+            if (index > 0) Text("-", color = MeconColors.TextMuted, fontSize = 10.sp)
+            Surface(
+                color = if (tone.changed) MeconColors.Orange.copy(alpha = 0.24f) else Color.Transparent,
+                shape = RoundedCornerShape(3.dp),
+            ) {
+                Text(
+                    tone.relativeLabel,
+                    modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp),
+                    color = if (tone.changed) MeconColors.OrangeLight else MeconColors.TextPrimary,
+                    fontSize = 10.sp,
+                    fontWeight = if (tone.changed) FontWeight.Bold else FontWeight.Normal,
+                )
+            }
         }
     }
 }

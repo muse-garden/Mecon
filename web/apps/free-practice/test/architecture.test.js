@@ -82,6 +82,13 @@ test("right panel replays the shared plan projection without duplicating top-too
   assert.match(plan, /toneCountFilters/);
   assert.match(plan, /plan\.selectedIdiomForm/);
   assert.match(plan, /onSetIdiomChordToneCount/);
+  assert.match(plan, /plan\.voiceLeading/);
+  assert.match(plan, /onChoose\(candidate\)/,
+    "voice-leading choices must dispatch the shared candidate and ordered path selection");
+  assert.match(plan, /candidate\.availableWhenThreeToneSameDirectionFiltered/,
+    "the seventh filter must consume the shared path classification");
+  assert.equal(plan.includes("pitchClasses.map"), false,
+    "the right panel must not reconstruct voice-leading candidates from pitch classes");
   assert.match(plan, /const strings = plan\?\.strings/);
   assert.equal(plan.includes("function keyLabel"), false,
     "dynamic key labels must come from PracticePlanView");
