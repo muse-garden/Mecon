@@ -7,6 +7,7 @@ import com.mecon.theory.freepractice.WorkspaceKeyMode
 import com.mecon.theory.freepractice.WorkspaceChordTonality
 import com.mecon.theory.freepractice.WorkspaceChordTonalReading
 import com.mecon.theory.freepractice.WorkspaceDerivedTonalSpan
+import com.mecon.theory.ModulationKey
 import com.mecon.theory.harmony.ChordSelectionCatalog
 import com.mecon.theory.harmony.ChordSelectionChoice
 import com.mecon.theory.harmony.ChordInterpretationRef
@@ -20,6 +21,33 @@ import kotlin.math.round
 
 /** UI-neutral read models shared by Compose and React workbench adapters. */
 object FreePracticeViewProjector {
+    /**
+     * Projects the chord-detail read model for one catalog choice in one key.
+     *
+     * Both the committed selection and the desktop chord picker's pre-commit preview must describe a
+     * chord identically; the panel used to repeat this four-call pipeline (knowledge context ->
+     * catalog snapshot -> sounding-interpretation query -> detail projection) itself, which was the
+     * only reason Desktop imported the harmony catalog internals at all. That copy also dropped the
+     * [pinnedInterpretationRef] containment guard below, so a pin belonging to a *different* choice
+     * could leak into the preview.
+     */
+    fun chordDetail(
+        key: ModulationKey,
+        choice: ChordSelectionChoice,
+        pinnedInterpretationRef: ChordInterpretationRef? = null,
+    ): PracticeChordDetailView = ChordCatalogSnapshot.create(
+        key,
+        treatmentRegistry = SchoenbergHarmonicTreatments.registry,
+    ).resolve(
+        SoundingInterpretationQuery(
+            audibleKey = choice.audibleKey,
+            selectedOrigin = choice.origin,
+            pinnedInterpretationRef = pinnedInterpretationRef
+                ?.takeIf { it in choice.interpretationRefs },
+        ),
+        ChordKnowledgeContext(key.tonalContext("free-practice-chord-detail")),
+    ).let { detail -> PracticeChordDetailProjector.map(detail, PracticeChordDetailStrings::text) }
+
     private fun presentationOrderedReadings(
         workspace: HarmonyWorkspaceState,
         slot: WorkspaceHarmonySlot,
@@ -360,21 +388,11 @@ object FreePracticeViewProjector {
             )
         } else null
         val chordDetail = if (effectiveKey != null && detailChoice != null) {
-            val context = ChordKnowledgeContext(effectiveKey.tonalContext("free-practice-chord-detail"))
-            ChordCatalogSnapshot.create(
-                effectiveKey,
-                treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-            ).resolve(
-                SoundingInterpretationQuery(
-                    audibleKey = detailChoice.audibleKey,
-                    selectedOrigin = detailChoice.origin,
-                    pinnedInterpretationRef = slot?.chordChoice?.pinnedInterpretationRef
-                        ?.takeIf { it in detailChoice.interpretationRefs },
-                ),
-                context,
-            ).let { detail ->
-                PracticeChordDetailProjector.map(detail, PracticeChordDetailStrings::text)
-            }
+            chordDetail(
+                key = effectiveKey,
+                choice = detailChoice,
+                pinnedInterpretationRef = slot?.chordChoice?.pinnedInterpretationRef,
+            )
         } else null
         val existingTonalityKeys = currentTonality?.readings.orEmpty().mapTo(hashSetOf()) { it.key }
         val primaryOption = availableTonalityOptions.firstOrNull { it.key == effectiveKey }

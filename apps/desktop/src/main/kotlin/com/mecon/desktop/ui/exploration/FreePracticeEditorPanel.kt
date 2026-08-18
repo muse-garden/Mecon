@@ -144,9 +144,6 @@ import com.mecon.theory.harmony.ChordSelectionCatalog
 import com.mecon.theory.harmony.ChordSelectionChoice
 import com.mecon.theory.harmony.ChordSelectionGroup
 import com.mecon.theory.harmony.ChordInterpretationRef
-import com.mecon.theory.harmony.ChordKnowledgeContext
-import com.mecon.theory.harmony.ChordCatalogSnapshot
-import com.mecon.theory.harmony.SoundingInterpretationQuery
 import com.mecon.theory.freepractice.HarmonyWorkspaceState
 import com.mecon.theory.freepractice.HarmonyWorkspaceEditor
 import com.mecon.theory.freepractice.VoiceAssignmentSource
@@ -159,7 +156,6 @@ import com.mecon.theory.ModulationKey
 import com.mecon.theory.ModulationCircleOfFifths
 import com.mecon.theory.ModulationPitchLabels
 import com.mecon.theory.KeySignatureMode
-import com.mecon.theory.schoenberg.SchoenbergHarmonicTreatments
 import com.mecon.theory.writing.GrandStaffVoiceLayout
 import com.mecon.renderer.layout.AlignedTimeAxisRequest
 import com.mecon.renderer.layout.ResolvedTimeAxis
@@ -1879,26 +1875,25 @@ internal fun ChordToolbar(
         if (showDetails) {
         val detailChoice = previewChoice ?: selectedChoice
         if (sharedDetail != null || detailChoice != null) {
-            val knowledgeContext = androidx.compose.runtime.remember(selectedKey) {
-                ChordKnowledgeContext(selectedKey.tonalContext("chord-selection"))
+            // The committed detail arrives already projected on the frame; a pre-commit preview of a
+            // not-yet-applied candidate asks the same shared projector rather than rebuilding the
+            // catalog pipeline here, so both describe a chord identically.
+            val previewDetail = androidx.compose.runtime.remember(
+                selectedKey,
+                detailChoice?.id,
+                selectedChordChoice?.pinnedInterpretationRef,
+            ) {
+                detailChoice?.let { choice ->
+                    FreePracticeViewProjector.chordDetail(
+                        key = selectedKey,
+                        choice = choice,
+                        pinnedInterpretationRef = selectedChordChoice?.pinnedInterpretationRef,
+                    )
+                }
             }
-            val snapshot = androidx.compose.runtime.remember(selectedKey) {
-                ChordCatalogSnapshot.create(
-                    selectedKey,
-                    treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-                )
-            }
-            val detail = detailChoice?.let { choice -> snapshot.resolve(
-                SoundingInterpretationQuery(
-                    audibleKey = choice.audibleKey,
-                    selectedOrigin = choice.origin,
-                    pinnedInterpretationRef = selectedChordChoice?.pinnedInterpretationRef,
-                ),
-                knowledgeContext,
-            ) }
+            val detail = sharedDetail ?: previewDetail
             ChordDetailPanel(
-                model = sharedDetail?.let(ChordDetailUiMapper::map)
-                    ?: ChordDetailUiMapper.map(requireNotNull(detail), ::i18n),
+                model = ChordDetailUiMapper.map(requireNotNull(detail)),
                 mode = if (sharedDetail != null) ChordDetailMode.VIEW else ChordDetailMode.PRE_COMMIT,
                 strings = ChordDetailPanelStrings(
                     routes = i18n("exploration.chordDetail.routes"),
@@ -1908,12 +1903,12 @@ internal fun ChordToolbar(
                     chooseRoute = i18n("exploration.chordDetail.chooseRoute"),
                 ),
                 selectedRouteId = selectedRouteId ?: selectedChordChoice?.pinnedInterpretationRef?.let { pinned ->
-                    detail?.explanations?.flatMap { it.routes }?.firstOrNull { it.interpretationRef == pinned }?.id?.value
+                    detail?.explanations?.flatMap { it.routes }?.firstOrNull { it.interpretationRef == pinned }?.id
                 },
                 onSelectRoute = { selectedRouteId = it },
                 onConfirmRoute = { routeId ->
                     detail?.explanations?.flatMap { it.routes }
-                        ?.firstOrNull { it.id.value == routeId }
+                        ?.firstOrNull { it.id == routeId }
                         ?.interpretationRef
                         ?.let { ref ->
                             val choice = requireNotNull(detailChoice)
