@@ -1113,7 +1113,7 @@ data class FreePracticeDispatchResult(
     val scoreUpdate: ScoreEditUpdate? = null,
 )
 
-const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 4
+const val FREE_PRACTICE_WIRE_SCHEMA_VERSION: Int = 5
 
 object FreePracticeCodec {
     private val json = Json {

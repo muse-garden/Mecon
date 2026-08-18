@@ -65,6 +65,15 @@ ComputedScore + ComputeChangeSet
 
 能否加入 splice 白名单不是性能猜测，而是一个需要“局部重生成 + 全量等价”测试证明的契约。
 
+**跨小节元素必须按区间而不是起点分区。** `TEXT_ANNOTATION` 在连续 splicer 里按
+`measureNumber` 划分 prefix / tail / 窗口，但 `AnnotationElement.Range` 的右边缘锚在 tail，
+只看起点会把“起于窗口之前、伸进窗口”的框当成 prefix 原样复用，冻结旧宽度而后续记谱已按
+δx 平移。因此 `RenderElement` 携带 `endMeasureNumber`，复用条件是 `endMeasureNumber < window.first`，
+重生成条件是 `AnnotationElement.intersectsMeasures(window)`——两者必须互补，否则元素会重复或丢失。
+分页 splicer 不受影响：区间已按系统拆片，逐片带自己的 `systemIndex`，复用键就是系统。
+新增任何带时值的渲染元素时照此处理，并补一条连续模式下的全量等价测试
+（`RenderAnnotationSpliceTest.continuousEditUnderASpanningRangeAnnotationSplicesAndMatchesFull`）。
+
 ### 3.3 分页与流式输出
 
 - 未受影响页按 `RenderPage.elements` 引用复用；受影响页重新切片并应用页内位移。

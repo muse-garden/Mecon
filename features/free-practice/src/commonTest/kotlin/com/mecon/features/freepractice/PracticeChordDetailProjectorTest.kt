@@ -1,68 +1,76 @@
-package com.mecon.desktop.ui.harmony
+package com.mecon.features.freepractice
 
 import com.mecon.api.primitive.NoteName
-import com.mecon.desktop.uikit.components.ChordDetailUiConstruction
 import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationKey
-import com.mecon.theory.harmony.ChordDetailModel
 import com.mecon.theory.harmony.ChordCatalogSnapshot
-import com.mecon.theory.harmony.SoundingInterpretationQuery
+import com.mecon.theory.harmony.ChordDetailModel
 import com.mecon.theory.harmony.ChordKnowledgeContext
 import com.mecon.theory.harmony.ChordSelectionCatalog
+import com.mecon.theory.harmony.SoundingInterpretationQuery
 import com.mecon.theory.schoenberg.SchoenbergAugmentedSixthChapter
 import com.mecon.theory.schoenberg.SchoenbergHarmonicTreatments
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class ChordDetailUiMapperTest {
+/**
+ * Formatting contract of the shared chord-detail read model.
+ *
+ * These scenarios were originally written against the desktop-only `ChordDetailUiMapper` overload
+ * that took a raw `ChordDetailModel`. Once both the committed selection and the desktop pre-commit
+ * preview started consuming [PracticeChordDetailProjector], that overload had no production caller
+ * left, so its coverage moved here — where it also runs on Kotlin/JS and therefore guards the
+ * formatting both platforms actually see.
+ */
+class PracticeChordDetailProjectorTest {
+    private val key = ModulationKey(0, KeySignatureMode.MAJOR)
+    private val context = ChordKnowledgeContext(key.tonalContext("chord-selection"))
+
+    private fun snapshot() = ChordCatalogSnapshot.create(
+        key,
+        treatmentRegistry = SchoenbergHarmonicTreatments.registry,
+    )
+
+    private fun detail(
+        choice: com.mecon.theory.harmony.ChordSelectionChoice,
+        snapshot: ChordCatalogSnapshot = snapshot(),
+    ): ChordDetailModel = snapshot.resolve(
+        SoundingInterpretationQuery(choice.audibleKey, choice.origin),
+        context,
+    )
+
     @Test
     fun mapsMultiRouteKnowledgeAndSourcesWithoutChapterSpecificUiLogic() {
-        val key = ModulationKey(0, KeySignatureMode.MAJOR)
-        val context = ChordKnowledgeContext(key.tonalContext("chord-selection"))
         val choice = ChordSelectionCatalog.groups(key)
             .single { it.category.id == "rootless-dominant-ninth" }
             .chords
             .first { it.interpretationRefs.size > 1 }
-        val detail = ChordCatalogSnapshot.create(
-            key,
-            treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-        ).resolve(
-            SoundingInterpretationQuery(choice.audibleKey, choice.origin),
-            context,
-        )
 
-        val ui = ChordDetailUiMapper.map(detail) { it }
+        val view = PracticeChordDetailProjector.map(detail(choice)) { it }
 
-        assertEquals(1, ui.explanations.size)
-        val explanation = ui.explanations.single()
+        assertEquals(1, view.explanations.size)
+        val explanation = view.explanations.single()
         assertEquals(choice.interpretationRefs.size, explanation.routes.size)
         assertTrue(explanation.commonSections.isNotEmpty())
         assertTrue(explanation.routes.all { it.sections.isNotEmpty() })
         assertTrue(explanation.sources.isNotEmpty())
+        // Every route must be dispatchable, not merely displayable — see PracticeChordDetailRouteView.
+        assertTrue(explanation.routes.all { it.interpretationRef != null })
+        assertEquals(
+            choice.interpretationRefs.toSet(),
+            explanation.routes.mapNotNull { it.interpretationRef }.toSet(),
+        )
     }
 
     @Test
     fun mapsTypedConstructionToOneSentenceAndOneNotationModel() {
-        val key = ModulationKey(0, KeySignatureMode.MAJOR)
-        val context = ChordKnowledgeContext(key.tonalContext("chord-selection"))
-        val choice = ChordSelectionCatalog.groups(key)
-            .single { it.category.id == "rootless-dominant-ninth" }
-            .chords.first { chord ->
-                chord.interpretationRefs.any { it.interpretationId.value.contains(".as-dominant.1.") }
-            }
-        val detail = ChordCatalogSnapshot.create(
-            key,
-            treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-        ).resolve(
-            SoundingInterpretationQuery(choice.audibleKey, choice.origin),
-            context,
-        )
         val localize: (String) -> String = { keyValue ->
             when (keyValue) {
-                "exploration.chordDetail.construction.omittedFromFormula" -> "{basis}{symbol} ({formula}) 省略根音 ({root})"
+                "exploration.chordDetail.construction.omittedFromFormula" ->
+                    "{basis}{symbol} ({formula}) 省略根音 ({root})"
                 "exploration.chordDetail.dominantNinth.primaryName" -> "属九和弦"
                 "exploration.chordDetail.dominantNinth.secondaryName" -> "{degree}级副属九和弦"
                 "exploration.chordDetail.degree.5" -> "五"
@@ -72,16 +80,23 @@ class ChordDetailUiMapperTest {
                 "exploration.chordDetail.route.primarySubtitle" -> "当前调性的属功能构造"
                 "exploration.chordDetail.route.secondarySubtitle" -> "临时指向{degree}级的属功能构造"
                 "exploration.chordDetail.substitution.dominant" -> "替代属和弦功能。"
-                "exploration.chordDetail.substitution.secondaryDominant" -> "替代指向第 {degree} 级的副属和弦功能。"
+                "exploration.chordDetail.substitution.secondaryDominant" ->
+                    "替代指向第 {degree} 级的副属和弦功能。"
                 else -> keyValue
             }
         }
-        val ui = ChordDetailUiMapper.map(detail, localize)
-        val route = ui.explanations
+        val primaryChoice = ChordSelectionCatalog.groups(key)
+            .single { it.category.id == "rootless-dominant-ninth" }
+            .chords.first { chord ->
+                chord.interpretationRefs.any { it.interpretationId.value.contains(".as-dominant.1.") }
+            }
+
+        val view = PracticeChordDetailProjector.map(detail(primaryChoice), localize)
+        val route = view.explanations
             .single { it.id.startsWith("schoenberg.diminished-seventh.") }
             .routes.single { candidate ->
-            candidate.sections.any { "替代属和弦功能。" in it.lines }
-        }
+                candidate.sections.any { "替代属和弦功能。" in it.lines }
+            }
         val construction = assertNotNull(route.construction)
         assertEquals("属九和弦V9 (5-7-2-4-b6) 省略根音 (5)", route.title)
         assertEquals("本调", route.badge)
@@ -93,26 +108,16 @@ class ChordDetailUiMapperTest {
         assertEquals(4, tones.first().pitch.octave)
         assertTrue(tones.drop(1).none { it.muted })
         assertTrue(tones.zipWithNext().all { (left, right) -> left.pitch < right.pitch })
+
         val secondaryChoice = ChordSelectionCatalog.groups(key)
             .single { it.category.id == "rootless-dominant-ninth" }
             .chords.first { chord ->
                 chord.interpretationRefs.any { it.interpretationId.value.contains(".as-dominant.5.") }
             }
-        val secondaryUi = ChordDetailUiMapper.map(
-            ChordCatalogSnapshot.create(
-                key,
-                treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-            ).resolve(
-                SoundingInterpretationQuery(secondaryChoice.audibleKey, secondaryChoice.origin),
-                context,
-            ),
-            localize,
-        )
-        val secondary = secondaryUi.explanations
+        val secondary = PracticeChordDetailProjector.map(detail(secondaryChoice), localize)
+            .explanations
             .single { it.id.startsWith("schoenberg.diminished-seventh.") }
-            .routes.single { candidate ->
-            candidate.title.startsWith("五级副属九和弦")
-        }
+            .routes.single { it.title.startsWith("五级副属九和弦") }
         val secondaryConstruction = assertNotNull(secondary.construction)
         assertNotEquals(route.title, secondary.title)
         assertEquals("五级副属九和弦V9/V (2-#4-6-1-b3) 省略根音 (2)", secondary.title)
@@ -124,23 +129,13 @@ class ChordDetailUiMapperTest {
 
     @Test
     fun mapsModalScaleAndMinorSubdominantRelationWithoutHostBranches() {
-        val key = ModulationKey(0, KeySignatureMode.MAJOR)
-        val context = ChordKnowledgeContext(key.tonalContext("chord-selection"))
-        val snapshot = ChordCatalogSnapshot.create(
-            key,
-            treatmentRegistry = SchoenbergHarmonicTreatments.registry,
-        )
+        val snapshot = snapshot()
         val groups = ChordSelectionCatalog.groups(key)
         val secondary = groups.single { it.category.id == "secondary-dominants" }
             .chords.single { it.functionalSymbol == "V/V" }
-        val secondaryUi = ChordDetailUiMapper.map(
-            snapshot.resolve(
-                SoundingInterpretationQuery(secondary.audibleKey, secondary.origin),
-                context,
-            )
-        ) { it }
         val modalConstruction = assertNotNull(
-            secondaryUi.explanations
+            PracticeChordDetailProjector.map(detail(secondary, snapshot)) { it }
+                .explanations
                 .single { secondary.interpretationRefs.single().interpretationId.value in it.id }
                 .routes.single().construction
         )
@@ -149,30 +144,18 @@ class ChordDetailUiMapperTest {
         assertEquals(3, modalConstruction.events.count { event -> event.tones.single().muted.not() })
         assertEquals(0, modalConstruction.keySignatureFifths)
 
-        val neapolitan = groups.single { it.category.id == "neapolitan" }
-            .chords.single()
-        val neapolitanUi = ChordDetailUiMapper.map(
-            snapshot.resolve(
-                SoundingInterpretationQuery(neapolitan.audibleKey, neapolitan.origin),
-                context,
-            )
-        ) { it }
+        val neapolitan = groups.single { it.category.id == "neapolitan" }.chords.single()
         val relation = assertNotNull(
-            neapolitanUi.explanations.single { it.id == "schoenberg.neapolitan" }
+            PracticeChordDetailProjector.map(detail(neapolitan, snapshot)) { it }
+                .explanations.single { it.id == "schoenberg.neapolitan" }
                 .routes.single().construction
         )
         assertEquals(-4, relation.keySignatureFifths)
         assertEquals(2, relation.events.size)
         assertTrue(relation.events.first().tones.all { it.muted })
         assertTrue(relation.events.last().tones.none { it.muted })
-        assertEquals(
-            listOf(0, 2, 4),
-            relation.events.first().tones.map { it.pitch.diatonicSteps },
-        )
-        assertEquals(
-            listOf(1, 3, 5),
-            relation.events.last().tones.map { it.pitch.diatonicSteps },
-        )
+        assertEquals(listOf(0, 2, 4), relation.events.first().tones.map { it.pitch.diatonicSteps })
+        assertEquals(listOf(1, 3, 5), relation.events.last().tones.map { it.pitch.diatonicSteps })
         val allPitches = relation.events.flatMap { it.tones }.map { it.pitch.diatonicSteps }
         assertTrue(allPitches.all { it in 0..11 })
         assertTrue(allPitches.max() - allPitches.min() <= 5)
@@ -180,8 +163,6 @@ class ChordDetailUiMapperTest {
 
     @Test
     fun mapsAugmentedSixthConstructionToScoreEventsWithoutFamilySpecificHostLogic() {
-        val key = ModulationKey(0, KeySignatureMode.MAJOR)
-        val context = ChordKnowledgeContext(key.tonalContext("chord-selection"))
         val snapshot = ChordCatalogSnapshot.create(
             key,
             selectionProviders = listOf(SchoenbergAugmentedSixthChapter),
@@ -199,7 +180,8 @@ class ChordDetailUiMapperTest {
                     "{kind}：{descending} 与 {ascending} 构成增六，并共同解决到 {resolution}"
                 "exploration.chordDetail.construction.augmentedSixth.german" -> "德国增六"
                 "exploration.chordDetail.construction.augmentedSixth.rootlessProcess" ->
-                    "{basis}{basisSymbol} ({basisFormula}) 省略根音 ({root})，得到{intermediateName} ({intermediateFormula})；{alteration}，得到 {resultSymbol} ({resultFormula})"
+                    "{basis}{basisSymbol} ({basisFormula}) 省略根音 ({root})，得到{intermediateName} " +
+                        "({intermediateFormula})；{alteration}，得到 {resultSymbol} ({resultFormula})"
                 "exploration.chordDetail.dominantNinth.secondaryName" -> "{degree}级副属九和弦"
                 "exploration.chordDetail.degree.5" -> "五"
                 "exploration.chordDetail.degree.7" -> "七"
@@ -209,13 +191,9 @@ class ChordDetailUiMapperTest {
             }
         }
 
-        fun construction(symbol: String): Pair<String, ChordDetailUiConstruction> {
+        fun construction(symbol: String): Pair<String, PracticeChordDetailConstructionView> {
             val choice = choices.single { it.functionalSymbol == symbol }
-            val detail = snapshot.resolve(
-                SoundingInterpretationQuery(choice.audibleKey, choice.origin),
-                context,
-            )
-            val route = ChordDetailUiMapper.map(detail, localize)
+            val route = PracticeChordDetailProjector.map(detail(choice, snapshot), localize)
                 .explanations.single().routes.single()
             return route.title to assertNotNull(route.construction)
         }
@@ -254,8 +232,7 @@ class ChordDetailUiMapperTest {
         )
         assertEquals(
             12,
-            german.events[2].tones[1].pitch.midiNumber -
-                german.events[2].tones[0].pitch.midiNumber,
+            german.events[2].tones[1].pitch.midiNumber - german.events[2].tones[0].pitch.midiNumber,
         )
 
         val italian = construction("It+6").second
@@ -291,8 +268,7 @@ class ChordDetailUiMapperTest {
         }
 
         val rootlessAugmentedSixths = choices.filter {
-            it.functionalSymbol.startsWith("It+6") ||
-                it.functionalSymbol.startsWith("Ger+6")
+            it.functionalSymbol.startsWith("It+6") || it.functionalSymbol.startsWith("Ger+6")
         }
         assertTrue(
             rootlessAugmentedSixths.map { it.functionalSymbol }.containsAll(
@@ -300,12 +276,8 @@ class ChordDetailUiMapperTest {
             )
         )
         rootlessAugmentedSixths.forEach { choice ->
-            val detail = snapshot.resolve(
-                SoundingInterpretationQuery(choice.audibleKey, choice.origin),
-                context,
-            )
             val preview = assertNotNull(
-                ChordDetailUiMapper.map(detail, localize)
+                PracticeChordDetailProjector.map(detail(choice, snapshot), localize)
                     .explanations.single().routes.single().construction
             )
             assertEquals(3, preview.events.size, choice.functionalSymbol)
@@ -342,11 +314,9 @@ class ChordDetailUiMapperTest {
 
     @Test
     fun mapsMissingKnowledgeToFallback() {
-        val ui = ChordDetailUiMapper.map(
-            ChordDetailModel(definitions = emptyList()),
-        ) { it }
+        val view = PracticeChordDetailProjector.map(ChordDetailModel(definitions = emptyList())) { it }
 
-        assertNotNull(ui.missingKnowledgeMessage)
-        assertTrue(ui.routes.isEmpty())
+        assertNotNull(view.missingKnowledgeMessage)
+        assertTrue(view.routes.isEmpty())
     }
 }

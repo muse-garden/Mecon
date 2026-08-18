@@ -41,6 +41,29 @@ sealed class AnnotationElement {
     /** Whether this element responds to pointer events (click-to-select). */
     abstract val interactive: Boolean
 
+    /**
+     * First and last (inclusive) measure this element occupies. Point annotations own a single
+     * measure; a [Range] reaches its exclusive `endTime`'s measure, so a range ending exactly on a
+     * downbeat over-approximates by one measure.
+     *
+     * Use this wherever annotations are partitioned by measure window (incremental splice reuse vs.
+     * regeneration): keying off `time.measure` alone mistakes a range that starts before a window
+     * but reaches into it for something wholly outside it, and reuses a stale rectangle. Layout
+     * decisions that must be exact (per-line vertical extents) compare `time`/`endTime` directly
+     * instead, since over-reserving a band there is visible.
+     */
+    val measureSpan: IntRange
+        get() = when (this) {
+            is Text -> time.measure..time.measure
+            is Range -> time.measure..maxOf(time.measure, endTime.measure)
+        }
+
+    /** Whether this element occupies any measure in [measures]. */
+    fun intersectsMeasures(measures: IntRange): Boolean {
+        val span = measureSpan
+        return span.first <= measures.last && span.last >= measures.first
+    }
+
     data class Text(
         override val time: TimeCode,
         override val relativeY: Float = 0f,

@@ -1911,11 +1911,22 @@ class FreePracticeSession private constructor(
         settings,
     )
 
+    /**
+     * Unlike the other projections this one reads [workspace], not [visibleWorkspace].
+     *
+     * `pristine` and `rewriteSelectionAvailable` are not descriptions of what is on screen — they
+     * predict what a command will do, and both commands run against the committed workspace:
+     * [setPracticeTimeSignature] rejects with `freePractice.timeSignature.scoreToolRequired` unless
+     * [isPristinePractice] holds, and [rewriteSelection] resolves its scope from [workspace]. Basing
+     * the prediction on the optimistic workspace of an in-flight write makes both platforms route to
+     * an intent the session then refuses, i.e. a silently dead control. The remaining fields come
+     * from the committed runtime score anyway.
+     */
     private fun structureView(selection: List<ScoreSelectionTarget>): PracticeStructureView =
         PracticeStructureProjector.project(
             selection,
             manager.currentState.runtimeScore,
-            visibleWorkspace,
+            workspace,
             settings,
         )
 

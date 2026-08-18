@@ -476,7 +476,8 @@
       "measureNumber": 3,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -598,7 +599,8 @@
       "measureNumber": 3,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -717,7 +719,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -839,7 +842,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -881,7 +885,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -1007,7 +1012,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {
@@ -1049,7 +1055,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "true"
       }
     },
     {

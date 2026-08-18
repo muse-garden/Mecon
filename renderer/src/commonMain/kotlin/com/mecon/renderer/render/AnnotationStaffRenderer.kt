@@ -169,6 +169,7 @@ internal class AnnotationStaffRenderer(
             ),
             eventId = element.sourceEventId,
             measureNumber = element.time.measure,
+            endMeasureNumber = element.measureSpan.last,
             systemIndex = placed.systemIndex,
         )
     }

@@ -3127,7 +3127,8 @@
       "measureNumber": 1,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3169,7 +3170,8 @@
       "measureNumber": 1,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3211,7 +3213,8 @@
       "measureNumber": 1,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3288,7 +3291,8 @@
       "measureNumber": 2,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3330,7 +3334,8 @@
       "measureNumber": 2,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3372,7 +3377,8 @@
       "measureNumber": 2,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3449,7 +3455,8 @@
       "measureNumber": 3,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3491,7 +3498,8 @@
       "measureNumber": 3,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3533,7 +3541,8 @@
       "measureNumber": 3,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3610,7 +3619,8 @@
       "measureNumber": 4,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3652,7 +3662,8 @@
       "measureNumber": 4,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3694,7 +3705,8 @@
       "measureNumber": 4,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3736,7 +3748,8 @@
       "measureNumber": 5,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3778,7 +3791,8 @@
       "measureNumber": 5,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3820,7 +3834,8 @@
       "measureNumber": 5,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3897,7 +3912,8 @@
       "measureNumber": 6,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -3977,7 +3993,8 @@
       "measureNumber": 6,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4019,7 +4036,8 @@
       "measureNumber": 6,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4096,7 +4114,8 @@
       "measureNumber": 7,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4176,7 +4195,8 @@
       "measureNumber": 7,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4218,7 +4238,8 @@
       "measureNumber": 7,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4295,7 +4316,8 @@
       "measureNumber": 8,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4337,7 +4359,8 @@
       "measureNumber": 8,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4379,7 +4402,8 @@
       "measureNumber": 8,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4421,7 +4445,8 @@
       "measureNumber": 8,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4463,7 +4488,8 @@
       "measureNumber": 8,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4505,7 +4531,8 @@
       "measureNumber": 9,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4547,7 +4574,8 @@
       "measureNumber": 9,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4589,7 +4617,8 @@
       "measureNumber": 9,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4631,7 +4660,8 @@
       "measureNumber": 9,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4711,7 +4741,8 @@
       "measureNumber": 9,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4826,7 +4857,8 @@
       "measureNumber": 10,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4906,7 +4938,8 @@
       "measureNumber": 10,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -4986,7 +5019,8 @@
       "measureNumber": 10,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5063,7 +5097,8 @@
       "measureNumber": 11,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5163,7 +5198,8 @@
       "measureNumber": 11,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5263,7 +5299,8 @@
       "measureNumber": 11,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5340,7 +5377,8 @@
       "measureNumber": 12,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5420,7 +5458,8 @@
       "measureNumber": 12,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5500,7 +5539,8 @@
       "measureNumber": 12,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5542,7 +5582,8 @@
       "measureNumber": 13,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5622,7 +5663,8 @@
       "measureNumber": 13,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5702,7 +5744,8 @@
       "measureNumber": 13,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5779,7 +5822,8 @@
       "measureNumber": 14,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5821,7 +5865,8 @@
       "measureNumber": 14,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5863,7 +5908,8 @@
       "measureNumber": 14,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5940,7 +5986,8 @@
       "measureNumber": 15,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -5982,7 +6029,8 @@
       "measureNumber": 15,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6024,7 +6072,8 @@
       "measureNumber": 15,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6101,7 +6150,8 @@
       "measureNumber": 16,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6143,7 +6193,8 @@
       "measureNumber": 16,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6185,7 +6236,8 @@
       "measureNumber": 16,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6227,7 +6279,8 @@
       "measureNumber": 16,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6269,7 +6322,8 @@
       "measureNumber": 16,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6311,7 +6365,8 @@
       "measureNumber": 16,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6391,7 +6446,8 @@
       "measureNumber": 17,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6433,7 +6489,8 @@
       "measureNumber": 17,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6475,7 +6532,8 @@
       "measureNumber": 17,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6555,7 +6613,8 @@
       "measureNumber": 17,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6635,7 +6694,8 @@
       "measureNumber": 17,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6677,7 +6737,8 @@
       "measureNumber": 17,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6754,7 +6815,8 @@
       "measureNumber": 18,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6834,7 +6896,8 @@
       "measureNumber": 18,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6876,7 +6939,8 @@
       "measureNumber": 18,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -6953,7 +7017,8 @@
       "measureNumber": 19,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -7053,7 +7118,8 @@
       "measureNumber": 19,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -7095,7 +7161,8 @@
       "measureNumber": 19,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -7172,7 +7239,8 @@
       "measureNumber": 20,
       "staffIndex": 0,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -7214,7 +7282,8 @@
       "measureNumber": 20,
       "staffIndex": 1,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {
@@ -7256,7 +7325,8 @@
       "measureNumber": 20,
       "staffIndex": 2,
       "metadata": {
-        "pitchIndex": "0"
+        "pitchIndex": "0",
+        "noteheadFilled": "false"
       }
     },
     {

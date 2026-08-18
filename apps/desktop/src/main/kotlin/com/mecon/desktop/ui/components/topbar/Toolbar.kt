@@ -26,16 +26,52 @@ import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.desktop.uikit.i18n.i18n
 import com.mecon.features.freepractice.FreePracticeToolbarSpec
 
+/** Groups that only make sense with a live free-practice session. */
 private val FREE_PRACTICE_ONLY_TOOLBAR_GROUPS = setOf("writing", "structure", "playback")
+
+/**
+ * Desktop-only group, injected after `history`.
+ *
+ * The exploration/free-practice mode switch is deliberately absent from `FreePracticeToolbarSpec`:
+ * Web has no such mode, and the descriptor means "what every platform must replay". Keeping it out
+ * of the descriptor and named here is the honest encoding of that asymmetry.
+ */
+private const val DESKTOP_MODE_GROUP = "mode"
+
+/** Group ids [Toolbar] has a rendering branch for. Keep in sync with its `when`. */
+private val RENDERABLE_TOOLBAR_GROUPS =
+    setOf("file", "history", "writing", "structure", "playback", DESKTOP_MODE_GROUP)
+
+/**
+ * Descriptor groups this desktop toolbar cannot draw.
+ *
+ * Pure so it can be exercised with a hypothetical descriptor: the point of the check is to catch a
+ * group added to the *shared* spec later, which by definition is not in the spec today.
+ */
+internal fun unsupportedExplorationToolbarGroups(
+    descriptorGroupIds: List<String>,
+): List<String> = descriptorGroupIds.filterNot { it in RENDERABLE_TOOLBAR_GROUPS }
 
 internal fun explorationToolbarGroupIds(
     hasExplorationController: Boolean,
     hasFreePracticeController: Boolean,
-): List<String> = buildList {
-    FreePracticeToolbarSpec.descriptor.top.groups.forEach { group ->
-        val requiresFreePractice = group.id in FREE_PRACTICE_ONLY_TOOLBAR_GROUPS
-        if (!requiresFreePractice || hasFreePracticeController) add(group.id)
-        if (group.id == "history" && hasExplorationController) add("mode")
+): List<String> {
+    // Fail visibly instead of dropping the group, mirroring the Web shell's "Unsupported
+    // free-practice toolbar controls" throw. Silently ignoring an unknown id is exactly how the
+    // 拍号 / 插入小节 controls vanished when the shared descriptor gained the "structure" group
+    // (11374e29, fixed in 74d9978c) — the old code filtered the list but the `when` had no branch.
+    val unsupported = unsupportedExplorationToolbarGroups(
+        FreePracticeToolbarSpec.descriptor.top.groups.map { it.id }
+    )
+    require(unsupported.isEmpty()) {
+        "Unsupported free-practice toolbar groups on desktop: ${unsupported.joinToString()}"
+    }
+    return buildList {
+        FreePracticeToolbarSpec.descriptor.top.groups.forEach { group ->
+            val requiresFreePractice = group.id in FREE_PRACTICE_ONLY_TOOLBAR_GROUPS
+            if (!requiresFreePractice || hasFreePracticeController) add(group.id)
+            if (group.id == "history" && hasExplorationController) add(DESKTOP_MODE_GROUP)
+        }
     }
 }
 
@@ -146,6 +182,9 @@ internal fun Toolbar(
                             onOpenAudioSettings = actions.document.openAudioSettings,
                         )
                     }
+                    // Unreachable: explorationToolbarGroupIds rejects unknown ids up front. Kept so
+                    // the branch list and RENDERABLE_TOOLBAR_GROUPS cannot drift apart unnoticed.
+                    else -> error("Unhandled exploration toolbar group: $groupId")
                 }
             }
         } else {

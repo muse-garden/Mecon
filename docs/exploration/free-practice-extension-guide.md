@@ -202,6 +202,12 @@ React 需要的数据加入 `PracticeTimelineView`、`PracticePlanView`、`Pract
 - 非 score 变化应保持 `scoreChanged=false`，避免无谓排版。复合 session 在 `scoreSession.dispatch`
   之外提交时，每个操作入口都要先调 `ScoreEditingSession.beginExternalOperation()`，否则首次提交后
   `scoreChanged` 会一直粘滞为 true；
+- **预测型字段按 committed workspace 投影，不按 `visibleWorkspace`。** 后台写作期间
+  `visibleWorkspace` 是尚未提交的乐观状态，多数投影（timeline/plan/selection）应当用它——那是用户
+  看到的东西。但 `PracticeStructureView.pristine` / `rewriteSelectionAvailable` 不是“看到什么”，
+  而是“下一条 intent 会怎样”：`SetPracticeTimeSignature` 在 `!isPristinePractice()` 时直接回
+  `freePractice.timeSignature.scoreToolRequired`，`RewriteSelection` 也从 committed `workspace`
+  解析作用域。用乐观状态投影会让两端路由到 session 随后拒绝的 intent，表现为一个静默失效的控件；
 - 是否需要落盘由 session 的 `documentChanged` 表达（谱面 / workspace / settings 任一变化），
   平台不得用 effect 名单近似——写作无解时会先提交文档再报 `INVALID`；编辑发声同理只消费 session 的
   `PracticeEditPlayback`，不得在平台按 effect/选区/惯用进行长度重算范围；编辑回放不移动播放线，长惯用进行整段回放由共享策略决定。

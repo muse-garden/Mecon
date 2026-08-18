@@ -10,6 +10,7 @@ import com.mecon.api.storage.StorageScore
 import com.mecon.api.storage.events.StoragePitchEvent
 import com.mecon.api.storage.events.StorageVoiceEvent
 import com.mecon.theory.harmony.ChordDetailModel
+import com.mecon.theory.harmony.ChordInterpretationRef
 import com.mecon.theory.harmony.ChordConstructionDetail
 import com.mecon.theory.harmony.ChordConstructionTone
 import com.mecon.theory.harmony.ChordFunctionRelation
@@ -64,6 +65,15 @@ data class PracticeChordDetailRouteView(
     val sections: List<PracticeChordDetailSectionView> = emptyList(),
     val construction: PracticeChordDetailConstructionView? = null,
     val sources: List<PracticeChordDetailSourceView> = emptyList(),
+    /**
+     * The interpretation this route would pin, ready to put straight into a `WorkspaceChordChoice`.
+     *
+     * Without it the read model can only *display* a route, so a platform offering "apply this
+     * route" had to keep resolving the raw catalog detail alongside the projection — which is what
+     * kept the desktop panel owning a second copy of the chord-detail pipeline. Carrying the ref is
+     * the "ready-to-dispatch payload" the extension guide asks projections to include.
+     */
+    val interpretationRef: ChordInterpretationRef? = null,
 )
 
 @kotlinx.serialization.Serializable
@@ -210,6 +220,7 @@ object PracticeChordDetailProjector {
                             },
                             construction = construction,
                             sources = route.sourceRefs.map { it.toUi(localize) },
+                            interpretationRef = route.interpretationRef,
                         )
                     },
                     sources = definition.sourceRefs.map { it.toUi(localize) },

@@ -114,7 +114,7 @@ class RenderAnnotationSpliceTest {
         override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> = listOf(
             AnnotationElement.Range(
                 time = TimeCode.of(1, Fraction.ZERO),
-                endTime = TimeCode.of(31, Fraction.ZERO),
+                endTime = TimeCode.of(rangeEndMeasure, Fraction.ZERO),
                 relativeY = 0f,
                 sourceEventId = EventId("range-anno"),
                 trackId = TrackId("range-anno-track"),
@@ -129,12 +129,23 @@ class RenderAnnotationSpliceTest {
         )
     }
 
+    private fun installRangeProvider() {
+        PluginRegistry.resetForTesting()
+        PluginRegistry.installAll(listOf(object : com.mecon.api.plugin.MeconPlugin {
+            override val id = "test.range-anno.plugin"
+            override fun install(ctx: com.mecon.api.plugin.PluginInstallContext) {
+                ctx.registerAnnotationStaffProvider(RangeAnnotationProvider)
+            }
+        }))
+    }
+
     @BeforeTest
     fun setUp() {
         annotationText = "Cmaj"
         annotationAlignment = AnnotationAlignment.CENTER
         annotationAnchor = StaffAnchor.BelowAllStaves
         annotationInteractive = true
+        rangeEndMeasure = 31
         PluginRegistry.resetForTesting()
         PluginRegistry.installAll(listOf(object : com.mecon.api.plugin.MeconPlugin {
             override val id = "test.anno.plugin"
@@ -387,13 +398,7 @@ class RenderAnnotationSpliceTest {
     @Test
     fun durationAnnotationSplitsAcrossSystemsAndReservesEveryLine() {
         val font = loadFont() ?: return
-        PluginRegistry.resetForTesting()
-        PluginRegistry.installAll(listOf(object : com.mecon.api.plugin.MeconPlugin {
-            override val id = "test.range-anno.plugin"
-            override fun install(ctx: com.mecon.api.plugin.PluginInstallContext) {
-                ctx.registerAnnotationStaffProvider(RangeAnnotationProvider)
-            }
-        }))
+        installRangeProvider()
 
         with(font) {
             val result = RenderEngine(RenderLayoutConfig.DEFAULT).render(
@@ -408,6 +413,76 @@ class RenderAnnotationSpliceTest {
             assertTrue(segments.mapNotNull { it.systemIndex }.distinct().size > 1)
             assertTrue(segments.all { segment -> segment.commands.any { it is DrawRect } })
             assertTrue(segments.all { segment -> segment.hitBox.width.value > 0f })
+        }
+    }
+
+    /**
+     * A duration-bearing annotation starts before the edit window and reaches past it, so the
+     * continuous splice may not treat it as a prefix element: its right edge is anchored in the
+     * tail, which translates by δx. The edit widens measure 3 (an added accidental) while keeping
+     * the staff position — and therefore deltaY — identical, so the prefix/tail reuse path is the
+     * one actually exercised rather than the deltaY≠0 regenerate-everything fallback.
+     */
+    @Test
+    fun continuousEditUnderASpanningRangeAnnotationSplicesAndMatchesFull() {
+        val font = loadFont() ?: return
+        installRangeProvider()
+        rangeEndMeasure = 5 // exclusive: the range covers the whole 4-measure score
+
+        with(font) {
+            val base = buildPaginatedBase(measures = 4, annoMeasures = emptyList())
+            // E4 -> E#4: same staff position (no vertical extent change), but an accidental is
+            // engraved, so measure 3 gets wider and everything after it shifts right.
+            val edited = base.editPitch("n_3_1", Pitch(2, 1))
+
+            val previous = computeScore(base)
+            val inc = computeScoreIncremental(previous, edited, TimeRange(tc(3, 2, 4), tc(3, 3, 4)))
+
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT)
+            engine.render(base)
+            val incRender = engine.renderIncremental(inc.computed, inc.changeSet)
+
+            assertTrue(
+                engine.lastRenderWasSpliced(),
+                "an edit under a range annotation must still engage the continuous splice",
+            )
+            val segments = incRender.elements.filter { it.eventId == EventId("range-anno") }
+            assertTrue(segments.size == 1, "expected the single continuous range segment, got ${segments.size}")
+
+            val fullRender = RenderEngine(RenderLayoutConfig.DEFAULT).render(edited)
+            assertCommandMultisetEquivalent(fullRender, incRender)
+        }
+    }
+
+    /**
+     * Paginated counterpart: the range is split per system, so unaffected systems reuse their own
+     * segment (keyed by systemIndex) while the edited system regenerates. Same-width edit, so the
+     * line breaks cannot flip and the splice must engage.
+     */
+    @Test
+    fun paginatedEditUnderASpanningRangeAnnotationSplicesAndMatchesFull() {
+        val font = loadFont() ?: return
+        installRangeProvider()
+
+        with(font) {
+            val base = buildPaginatedBase(measures = 40, annoMeasures = emptyList())
+            val edited = base.editPitch("n_20_1", Pitch.G4) // same width, mid-line
+
+            val previous = computeScore(base)
+            val inc = computeScoreIncremental(previous, edited, TimeRange(tc(20, 2, 4), tc(20, 3, 4)))
+
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT)
+            engine.render(base, pageGeometry = multiSystem)
+            val incRender = engine.renderIncremental(inc.computed, inc.changeSet, pageGeometry = multiSystem)
+
+            assertTrue(engine.lastRenderWasSpliced(), "paginated edit under a range annotation must splice")
+            assertTrue(
+                incRender.elements.count { it.eventId == EventId("range-anno") } > 1,
+                "the incremental render must keep one range segment per crossed system",
+            )
+
+            val fullRender = RenderEngine(RenderLayoutConfig.DEFAULT).render(edited, pageGeometry = multiSystem)
+            assertCommandMultisetEquivalent(fullRender, incRender)
         }
     }
 
@@ -652,6 +727,7 @@ class RenderAnnotationSpliceTest {
         private var annotationAlignment = AnnotationAlignment.CENTER
         private var annotationAnchor: StaffAnchor = StaffAnchor.BelowAllStaves
         private var annotationInteractive: Boolean = true
+        private var rangeEndMeasure: Int = 31
 
         private fun assertClose(expected: Float, actual: Float, label: String, eps: Float = 0.02f) {
             assertTrue(

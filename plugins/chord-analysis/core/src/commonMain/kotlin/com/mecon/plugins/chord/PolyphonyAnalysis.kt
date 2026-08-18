@@ -74,8 +74,8 @@ object PolyphonyTonalContextResolver {
         val timeMap = ScoreTimeMap.from(score.runtime)
         return Projection(
             timeMap = timeMap,
-            ranges = regions.map { region ->
-                HarmonyTonalRange(
+            ranges = regions.mapNotNull { region ->
+                HarmonyTonalRange.clippedOrNull(
                     id = region.id.value,
                     start = timeMap.absolute(region.onset),
                     end = timeMap.absolute(region.endOnset),

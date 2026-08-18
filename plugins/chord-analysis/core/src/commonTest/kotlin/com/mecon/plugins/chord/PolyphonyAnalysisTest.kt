@@ -232,6 +232,54 @@ class PolyphonyAnalysisTest {
         }
     }
 
+    /**
+     * `MeasureEditEngine` does not remap plugin tracks, so deleting trailing measures leaves tonal
+     * regions anchored past the new score end. Clipping such a region to that end collapses it to
+     * an empty interval — which must drop the marking, not fail: this runs inside
+     * `AnnotationStaffProvider.layout`, where an exception takes down the whole render frame.
+     */
+    @Test
+    fun tonalRegionsStrandedPastTheScoreEndAreDroppedInsteadOfFailingTheLayout() {
+        val chord = StorageChordEvent.create(tc(0), 0, ChordQuality.MAJOR)
+        val stranded = StorageTonalRegionEvent.create(
+            onset = TimeCode.of(5, Fraction.ZERO),
+            endOnset = TimeCode.of(7, Fraction.ZERO),
+            keys = listOf(PolyphonyTonalKey(1, KeySignatureMode.MAJOR)),
+        )
+        val score = score(
+            events = emptyList(),
+            pluginTracks = listOf(
+                pluginTrack(StorageChordEvent.TRACK_TYPE, listOf(chord)),
+                pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(stranded)),
+            ),
+        )
+        val ctx = object : AnnotationLayoutContext {
+            override val computedScore = score
+            override fun xForTime(time: TimeCode): Float? = null
+        }
+        val oldMode = ChordSymbolDisplaySettings.scoreDisplayMode
+        try {
+            ChordSymbolDisplaySettings.scoreDisplayMode = ChordAnalysisScoreDisplayMode.TIMELINE
+
+            val ranges = ChordTimelineAnnotationProvider.layout(ctx)
+                .filterIsInstance<AnnotationElement.Range>()
+            val tonalText = ranges.filter { it.sourceEventId == null }
+                .flatMap { range -> range.lines.map { it.content.plainText } }
+
+            assertEquals(1, ranges.count { it.sourceEventId == chord.id })
+            // The rest of the timeline still engraves: only the stranded G-major band is gone.
+            assertTrue(tonalText.isNotEmpty(), "the key-signature baseline must survive")
+            assertTrue(tonalText.none { "G" in it }, "stranded region leaked into $tonalText")
+            // The analysis side reads the same stored regions and must tolerate them too.
+            assertEquals(
+                listOf(com.mecon.theory.ModulationKey(0, KeySignatureMode.MAJOR)),
+                PolyphonyTonalContextResolver.keysAt(score, tc(0)),
+            )
+        } finally {
+            ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
+        }
+    }
+
     private fun score(
         events: List<ComputedVoiceEvent>,
         pluginTracks: List<ComputedPluginTrack<*>> = emptyList(),

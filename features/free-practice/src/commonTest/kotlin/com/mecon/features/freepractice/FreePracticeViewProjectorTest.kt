@@ -118,6 +118,12 @@ class FreePracticeViewProjectorTest {
         assertTrue(detail.title.isNotBlank())
         assertTrue(detail.explanations.isNotEmpty())
         assertTrue(detail.explanations.first().routes.isNotEmpty())
+        // Routes carry the interpretation they would pin, so a platform offering "apply this route"
+        // dispatches straight from the read model instead of resolving the catalog a second time.
+        assertTrue(
+            detail.explanations.flatMap { it.routes }.any { it.interpretationRef != null },
+            "projected routes must expose a ready-to-dispatch interpretation ref",
+        )
         val construction = PracticeChordDetailConstructionView(
             description = "共享谱例",
             events = listOf(
