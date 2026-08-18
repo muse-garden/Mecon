@@ -116,11 +116,17 @@ internal class ContinuousRenderSplicer(
                 // the staff centre — regenerate all annotations from the new layout in that case.
                 if (deltaY == StaffSpace.ZERO) {
                     val measure = rich.element.measureNumber
+                    // A duration-bearing annotation (AnnotationElement.Range) starting before the
+                    // window can still reach into or past it. Reusing it unshifted would freeze its
+                    // right edge while the tail translates by deltaX, so only a range that *ends*
+                    // before the window is a genuine prefix. Must stay the exact complement of the
+                    // regeneration filter below, or an element is duplicated / lost.
+                    val endMeasure = rich.element.endMeasureNumber ?: measure
                     when {
-                        measure == null -> {} // unknown: drop, regenerated wholesale below
-                        measure < window.first -> prefix.add(rich)
+                        measure == null || endMeasure == null -> {} // unknown: drop, regenerated below
+                        endMeasure < window.first -> prefix.add(rich)
                         measure > window.last -> tail.add(rich.translated(deltaX, StaffSpace.ZERO, scale))
-                        // in window → drop; regenerated from new layout below
+                        // intersects the window → drop; regenerated from new layout below
                     }
                 }
                 continue
@@ -256,7 +262,7 @@ internal class ContinuousRenderSplicer(
         if (layout.annotationElementLayouts.isNotEmpty()) {
             val regenerateAll = deltaY != StaffSpace.ZERO
             for (el in annotationStaffRenderer.render(layout, nextId) { placed ->
-                regenerateAll || placed.element.time.measure in window
+                regenerateAll || placed.element.intersectsMeasures(window)
             }) {
                 assembled.add(RichElement(el, emptyList(), null))
             }

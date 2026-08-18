@@ -31,6 +31,13 @@ data class RenderElement(
     val trackId: TrackId? = null,
     /** Measure number (1-based) */
     val measureNumber: Int? = null,
+    /**
+     * Last measure this element visually reaches (1-based, inclusive over-approximation).
+     * Null for point elements that live entirely inside [measureNumber]. Duration-bearing
+     * elements must set it so the incremental splice can tell "before the edit window" from
+     * "starts before but extends into it" — the latter has to be regenerated, not reused.
+     */
+    val endMeasureNumber: Int? = null,
     /** System index (0-based) */
     val systemIndex: Int? = null,
     /** Staff index within system (0-based) */
