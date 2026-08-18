@@ -26,6 +26,19 @@ import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.desktop.uikit.i18n.i18n
 import com.mecon.features.freepractice.FreePracticeToolbarSpec
 
+private val FREE_PRACTICE_ONLY_TOOLBAR_GROUPS = setOf("writing", "structure", "playback")
+
+internal fun explorationToolbarGroupIds(
+    hasExplorationController: Boolean,
+    hasFreePracticeController: Boolean,
+): List<String> = buildList {
+    FreePracticeToolbarSpec.descriptor.top.groups.forEach { group ->
+        val requiresFreePractice = group.id in FREE_PRACTICE_ONLY_TOOLBAR_GROUPS
+        if (!requiresFreePractice || hasFreePracticeController) add(group.id)
+        if (group.id == "history" && hasExplorationController) add("mode")
+    }
+}
+
 /**
  * The main toolbar row. It only lays out the toolbar groups, the dividers
  * between them, and the trailing controls — each group reads the service it
@@ -105,15 +118,13 @@ internal fun Toolbar(
         } else if (state.activeTab == i18n("menu.analysis")) {
             AnalysisActions(state = state.analysis, actions = actions.analysis)
         } else if (state.activeTab == i18n("menu.exploration")) {
-            val groups = FreePracticeToolbarSpec.descriptor.top.groups.filter { group ->
-                when (group.id) {
-                    "writing", "playback" -> freePracticeController != null
-                    else -> true
-                }
-            }
-            groups.forEachIndexed { index, group ->
+            val groupIds = explorationToolbarGroupIds(
+                hasExplorationController = explorationController != null,
+                hasFreePracticeController = freePracticeController != null,
+            )
+            groupIds.forEachIndexed { index, groupId ->
                 if (index > 0) ToolbarDivider()
-                when (group.id) {
+                when (groupId) {
                     "file" -> FileActions(
                         fileController = fileController,
                         onNewScore = actions.document.newScore,
@@ -122,7 +133,9 @@ internal fun Toolbar(
                         saveEnabled = historyHost != null,
                     )
                     "history" -> HistoryActions(session = historyHost)
+                    "mode" -> explorationController?.let { ExplorationModeToolbar(it) }
                     "writing" -> freePracticeController?.let { FreePracticeToolbar(it) }
+                    "structure" -> freePracticeController?.let { FreePracticeStructureToolbar(it) }
                     "playback" -> freePracticeController?.let {
                         PlaybackControls(
                             playback = playback,

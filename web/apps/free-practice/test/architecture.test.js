@@ -157,7 +157,7 @@ test("partitioned workbench keeps the classic branch and exposes an accessible l
   assert.match(app, /"classic-layout"/);
   assert.match(app, /renderPlanPanel\(\["harmony"\]\)/);
   assert.match(app, /renderPlanPanel\(\["idioms"\]\)/);
-  assert.match(plan, /defaultOpen=\{chordDetailsInitiallyOpen\}/);
+  assert.match(plan, /open=\{chordDetailsInitiallyOpen \|\| undefined\}/);
   assert.match(plan, /plan\.chordDetail/);
   assert.match(plan, /<FrozenScore bundle=\{construction\.bundle\}/);
   assert.equal(plan.includes("diatonicSteps"), false,

@@ -329,7 +329,7 @@ export function PracticePlanPanel({
     </details>}
 
     {visibleSections.has("details") && <details className="plan-section workbench-panel chord-details"
-      defaultOpen={chordDetailsInitiallyOpen}>
+      open={chordDetailsInitiallyOpen || undefined}>
       <summary><ChevronRight className="disclosure-icon" aria-hidden="true" size={17} strokeWidth={1.8} /><h2>{strings.chordDetailTitle}</h2></summary>
       <ChordDetailView detail={plan.chordDetail} emptyMessage={strings.noChordDetail} />
     </details>}

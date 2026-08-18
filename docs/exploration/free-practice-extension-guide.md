@@ -125,7 +125,9 @@ Desktop `Toolbar`/`HorizontalNotePalette` 与 Web `PracticeTopToolbar`/`ScoreEdi
 顺序。时值、休止、附点和变音按钮使用 `music-glyphs.js` 的命名 SMuFL 码位。回归要求见
 [统一审计及重构计划](free-practice-web-desktop-parity-plan.md)。
 descriptor 只列跨端自由练习能力；应用设置、页面导航等平台外壳入口不伪装成共享控件。Web 顶栏
-可让单个 control 跨行换行，但 stable id 顺序仍须与 descriptor 一致。
+可让单个 control 跨行换行，但 stable id 顺序仍须与 descriptor 一致。桌面探索页的“自动求解 / 自由
+练习”切换由 `explorationToolbarGroupIds` 作为壳层分组插在 history 之后，不得再依赖 descriptor 中
+不存在的平台模式 control；写作、结构与播放分组仅在自由练习 controller 已挂载时显示。
 
 自定义配置示例：
 
