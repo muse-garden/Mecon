@@ -7,6 +7,8 @@ import com.mecon.theory.ModulationPitchLabels
 import com.mecon.theory.freepractice.WorkspaceKeyMode
 import com.mecon.theory.freepractice.WorkspaceSlotId
 import com.mecon.theory.freepractice.WorkspaceTonalLayoutId
+import com.mecon.theory.harmony.HarmonyKeyAccent
+import com.mecon.theory.harmony.LanePacker
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -995,14 +997,15 @@ object PracticeTimelineSceneProjector {
 
     private fun PracticeTonalLayoutView.toKey(): ModulationKey = ModulationKey(fifths, mode.toTheory())
 
+    /** Workbench (dark-chrome) rendering of the shared key-accent assignment. */
     private fun accent(
         fifths: Int,
         mode: WorkspaceKeyMode,
         palette: PracticeTimelinePalette,
-    ): String = when ((fifths - mode.ordinal).mod(3)) {
-        0 -> palette.primaryLight
-        1 -> palette.emeraldLight
-        else -> palette.orangeLight
+    ): String = when (HarmonyKeyAccent.of(ModulationKey(fifths, mode.toTheory()))) {
+        HarmonyKeyAccent.PRIMARY -> palette.primaryLight
+        HarmonyKeyAccent.EMERALD -> palette.emeraldLight
+        HarmonyKeyAccent.ORANGE -> palette.orangeLight
     }
 
     private fun insetHorizontally(bounds: PracticeTimelineBounds, amount: Float): PracticeTimelineBounds =
@@ -1133,7 +1136,13 @@ object PracticeTimelineSceneProjector {
         val end: Fraction,
     )
 
-    /** Packs non-overlapping manual and derived tonal spans onto the same row. */
+    /**
+     * Packs non-overlapping manual and derived tonal spans onto the same row.
+     *
+     * The packing itself is [LanePacker], shared with the score-analysis harmony timeline; only the
+     * placement order is local, because this surface packs two parallel view lists whose identity is
+     * their position rather than a stable string id.
+     */
     private fun tonalLanes(timeline: PracticeTimelineView, displayEnd: Fraction): TonalLanes {
         val intervals = buildList {
             timeline.tonalLayouts.forEachIndexed { index, layout ->
@@ -1142,23 +1151,28 @@ object PracticeTimelineSceneProjector {
             timeline.derivedTonalSpans.forEachIndexed { index, span ->
                 add(TonalInterval(index, true, span.start, span.end))
             }
-        }.sortedWith(
-            compareBy<TonalInterval> { it.start }
-                .thenByDescending { it.end }
-                .thenBy { it.derived }
-                .thenBy { it.sourceIndex },
+        }
+        val lanes = LanePacker.pack(
+            size = intervals.size,
+            order = intervals.indices.sortedWith(
+                compareBy<Int> { intervals[it].start }
+                    .thenByDescending { intervals[it].end }
+                    .thenBy { intervals[it].derived }
+                    .thenBy { intervals[it].sourceIndex },
+            ),
+            start = { intervals[it].start },
+            end = { intervals[it].end },
         )
-        val laneEnds = mutableListOf<Fraction>()
         val manual = MutableList(timeline.tonalLayouts.size) { 0 }
         val derived = MutableList(timeline.derivedTonalSpans.size) { 0 }
-        intervals.forEach { interval ->
-            val lane = laneEnds.indexOfFirst { it <= interval.start }
-                .takeIf { it >= 0 }
-                ?: laneEnds.size.also { laneEnds += Fraction.ZERO }
-            laneEnds[lane] = interval.end
-            if (interval.derived) derived[interval.sourceIndex] = lane else manual[interval.sourceIndex] = lane
+        intervals.forEachIndexed { index, interval ->
+            if (interval.derived) {
+                derived[interval.sourceIndex] = lanes[index]
+            } else {
+                manual[interval.sourceIndex] = lanes[index]
+            }
         }
-        return TonalLanes(manual, derived, laneEnds.size)
+        return TonalLanes(manual, derived, LanePacker.laneCount(lanes))
     }
 
     private fun compactIdiomLabels(timeline: PracticeTimelineView): Map<String, List<String>> =
@@ -1170,15 +1184,22 @@ object PracticeTimelineSceneProjector {
             firstSlot.id.value to (idiom.title ?: idiom.definitionId)
         }.groupBy({ it.first }, { it.second })
 
+    /** Bracket rows for idiom instances; packed in catalog order, not sorted. */
     private fun idiomRanges(timeline: PracticeTimelineView): List<IdiomRange> {
-        val laneEnds = mutableListOf<Fraction>()
-        return timeline.idioms.mapNotNull { idiom ->
+        val resolved = timeline.idioms.mapNotNull { idiom ->
             val members = timeline.slots.filter { it.id in idiom.slotIds }
             val start = idiom.start ?: members.minOfOrNull { it.onset } ?: return@mapNotNull null
             val end = idiom.end ?: members.maxOfOrNull { it.onset + it.duration } ?: return@mapNotNull null
-            val lane = laneEnds.indexOfFirst { it <= start }.takeIf { it >= 0 } ?: laneEnds.size.also { laneEnds += Fraction.ZERO }
-            laneEnds[lane] = end
-            IdiomRange(idiom.id.value, idiom.title ?: idiom.definitionId, start, end, lane)
+            Triple(idiom, start, end)
+        }
+        val lanes = LanePacker.pack(
+            size = resolved.size,
+            order = resolved.indices.toList(),
+            start = { resolved[it].second },
+            end = { resolved[it].third },
+        )
+        return resolved.mapIndexed { index, (idiom, start, end) ->
+            IdiomRange(idiom.id.value, idiom.title ?: idiom.definitionId, start, end, lanes[index])
         }
     }
 

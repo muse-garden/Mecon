@@ -104,6 +104,66 @@ data class HarmonyTonalRange(
     }
 }
 
+/**
+ * Which accent slot identifies a key on a harmony timeline.
+ *
+ * The concrete colours are per-surface and legitimately differ — the free-practice workbench is dark
+ * chrome, the engraved score timeline is deliberately light regardless of app theme — but the
+ * *assignment* must not: the same key showing up blue on one timeline and orange on the other is a
+ * reading error, not a theming choice. Only the three-way slot lives here; each surface maps it onto
+ * its own palette.
+ */
+enum class HarmonyKeyAccent {
+    PRIMARY,
+    EMERALD,
+    ORANGE;
+
+    companion object {
+        fun of(key: ModulationKey): HarmonyKeyAccent =
+            when ((key.fifths - key.mode.ordinal).mod(3)) {
+                0 -> PRIMARY
+                1 -> EMERALD
+                else -> ORANGE
+            }
+    }
+}
+
+/**
+ * Greedy first-fit packing of half-open intervals into the fewest display lanes.
+ *
+ * Deliberately free of domain types: the editable free-practice timeline packs tonal layouts,
+ * derived spans and idiom brackets from its own view models, while the score-analysis annotation
+ * provider packs [HarmonyTonalRange]s. They are the same algorithm, and had drifted into three
+ * copies. Callers keep ownership of *ordering* — which is where the surfaces legitimately differ —
+ * and share only the packing.
+ */
+object LanePacker {
+    /**
+     * @param size number of items; the result is indexed by the caller's original index.
+     * @param order the same indices in placement order (earlier items claim lower lanes on a tie).
+     */
+    fun pack(
+        size: Int,
+        order: List<Int>,
+        start: (Int) -> Fraction,
+        end: (Int) -> Fraction,
+    ): List<Int> {
+        val laneEnds = mutableListOf<Fraction>()
+        val lanes = MutableList(size) { 0 }
+        order.forEach { index ->
+            val lane = laneEnds.indexOfFirst { it <= start(index) }
+                .takeIf { it >= 0 }
+                ?: laneEnds.size.also { laneEnds += Fraction.ZERO }
+            laneEnds[lane] = end(index)
+            lanes[index] = lane
+        }
+        return lanes
+    }
+
+    /** Lane count implied by a [pack] result. */
+    fun laneCount(lanes: List<Int>): Int = (lanes.maxOrNull() ?: -1) + 1
+}
+
 /** Shared interval semantics for free-practice key lines and score-analysis tonal regions. */
 object HarmonyTonalTimeline {
     fun keysAt(
@@ -131,26 +191,22 @@ object HarmonyTonalTimeline {
         return listOf(defaultKey)
     }
 
-    /** Packs overlapping tonal ranges into the minimum number of deterministic display lanes. */
-    fun lanes(ranges: List<HarmonyTonalRange>, displayEnd: Fraction): List<Int> {
-        val ordered = ranges.indices.sortedWith(
+    /**
+     * Packs overlapping tonal ranges into the minimum number of deterministic display lanes.
+     * Ties resolve on [HarmonyTonalRange.id] so the result does not depend on the order plugin
+     * events happen to arrive in.
+     */
+    fun lanes(ranges: List<HarmonyTonalRange>, displayEnd: Fraction): List<Int> = LanePacker.pack(
+        size = ranges.size,
+        order = ranges.indices.sortedWith(
             compareBy<Int> { ranges[it].start }
                 .thenByDescending { ranges[it].end ?: displayEnd }
                 .thenBy { ranges[it].derived }
                 .thenBy { ranges[it].id },
-        )
-        val laneEnds = mutableListOf<Fraction>()
-        val result = MutableList(ranges.size) { 0 }
-        ordered.forEach { index ->
-            val range = ranges[index]
-            val lane = laneEnds.indexOfFirst { it <= range.start }
-                .takeIf { it >= 0 }
-                ?: laneEnds.size.also { laneEnds += Fraction.ZERO }
-            laneEnds[lane] = range.end ?: displayEnd
-            result[index] = lane
-        }
-        return result
-    }
+        ),
+        start = { ranges[it].start },
+        end = { ranges[it].end ?: displayEnd },
+    )
 
     /** Coalesces touching or overlapping chord-owned readings with the same key. */
     fun coalesce(ranges: List<HarmonyTonalRange>): List<HarmonyTonalRange> =

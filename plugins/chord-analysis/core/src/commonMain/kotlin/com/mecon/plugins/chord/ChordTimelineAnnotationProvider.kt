@@ -16,6 +16,7 @@ import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.theory.ChordSymbolDisplayStyle
 import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationKey
+import com.mecon.theory.harmony.HarmonyKeyAccent
 import com.mecon.theory.harmony.HarmonyTimelineReadingProjector
 import com.mecon.theory.harmony.HarmonyTonalRange
 import com.mecon.theory.harmony.HarmonyTonalTimeline
@@ -198,10 +199,10 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
     private fun com.mecon.api.primitive.KeySignature.toModulationKey(): ModulationKey =
         ModulationKey(fifths, KeySignatureMode.fromApiMode(mode))
 
-    private fun tonalAccent(key: ModulationKey): RenderColor = when ((key.fifths - key.mode.ordinal).mod(3)) {
-        0 -> LightTimelinePalette.PrimaryDark
-        1 -> LightTimelinePalette.Emerald
-        else -> LightTimelinePalette.Orange
+    private fun tonalAccent(key: ModulationKey): RenderColor = when (HarmonyKeyAccent.of(key)) {
+        HarmonyKeyAccent.PRIMARY -> LightTimelinePalette.PrimaryDark
+        HarmonyKeyAccent.EMERALD -> LightTimelinePalette.Emerald
+        HarmonyKeyAccent.ORANGE -> LightTimelinePalette.Orange
     }
 
     private fun RenderColor.withAlpha(alpha: Int): RenderColor = copy(alpha = alpha)
