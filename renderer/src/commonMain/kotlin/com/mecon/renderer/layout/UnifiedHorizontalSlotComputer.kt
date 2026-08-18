@@ -191,6 +191,14 @@ internal class UnifiedHorizontalSlotComputer(
                         val width = annotationSpacingMeasurer.widthStaffSpace(element) + annotationLabelGap
                         AnnotationSpacingParticipant(element.time, trackId, width)
                     }
+                    is AnnotationElement.Range -> {
+                        val trackId = element.trackId ?: return@mapNotNull null
+                        if (windowMeasures != null && element.time.measure !in windowMeasures) {
+                            return@mapNotNull null
+                        }
+                        val width = annotationSpacingMeasurer.widthStaffSpace(element) + annotationLabelGap
+                        AnnotationSpacingParticipant(element.time, trackId, width)
+                    }
                 }
             }
         }

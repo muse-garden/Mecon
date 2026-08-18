@@ -16,6 +16,7 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.TimeIndexedList
+import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.theory.Chord
 import com.mecon.theory.ChordQuality
 import com.mecon.theory.ChordRecognizer
@@ -24,6 +25,8 @@ import com.mecon.theory.ChordSymbolFormatter
 import com.mecon.theory.KeySignatureMode
 import com.mecon.theory.ModulationCommonChordCatalog
 import com.mecon.theory.ModulationKey
+import com.mecon.theory.harmony.HarmonyTonalRange
+import com.mecon.theory.harmony.HarmonyTonalTimeline
 
 data class PolyphonyActivePitch(
     val eventId: EventId,
@@ -59,29 +62,53 @@ object PolyphonyDegreeFormatter {
  * a resolved region ends.
  */
 object PolyphonyTonalContextResolver {
+    internal data class Projection(
+        val timeMap: ScoreTimeMap,
+        val ranges: List<HarmonyTonalRange>,
+    )
+
+    internal fun projection(
+        score: ComputedScore,
+        regions: List<StorageTonalRegionEvent>,
+    ): Projection {
+        val timeMap = ScoreTimeMap.from(score.runtime)
+        return Projection(
+            timeMap = timeMap,
+            ranges = regions.map { region ->
+                HarmonyTonalRange(
+                    id = region.id.value,
+                    start = timeMap.absolute(region.onset),
+                    end = timeMap.absolute(region.endOnset),
+                    keys = region.keys.map(PolyphonyTonalKey::toModulationKey),
+                    resolvedKey = region.resolvedKey?.toModulationKey(),
+                    priority = 10,
+                )
+            },
+        )
+    }
+
     fun keysAt(
         score: ComputedScore,
         time: TimeCode,
         regions: List<StorageTonalRegionEvent> =
             score.pluginEventsOf(StorageTonalRegionEvent.TRACK_TYPE),
+    ): List<ModulationKey> = keysAt(score, time, projection(score, regions))
+
+    internal fun keysAt(
+        score: ComputedScore,
+        time: TimeCode,
+        projection: Projection,
     ): List<ModulationKey> {
-        regions.asSequence()
-            .filter { it.contains(time) }
-            .maxByOrNull { it.onset }
-            ?.let { return it.keys.map(PolyphonyTonalKey::toModulationKey) }
-
-        regions.asSequence()
-            .filter { it.endOnset <= time && it.resolvedKey != null }
-            .maxByOrNull { it.endOnset }
-            ?.resolvedKey
-            ?.let { return listOf(it.toModulationKey()) }
-
         val signature = score.runtime.getKeySignatureAt(time.measure)
-        return listOf(
+        val defaultKey =
             ModulationKey(
                 fifths = signature.fifths,
                 mode = KeySignatureMode.fromApiMode(signature.mode),
             )
+        return HarmonyTonalTimeline.keysAt(
+            time = projection.timeMap.absolute(time),
+            ranges = projection.ranges,
+            defaultKey = defaultKey,
         )
     }
 }
@@ -108,6 +135,7 @@ object PolyphonyAnalysisEngine {
 
     private var cachedVoices: TimeIndexedList<ComputedVoiceEvent>? = null
     private var cachedPluginSignature: PluginSignature? = null
+    private var cachedTonalProjection: PolyphonyTonalContextResolver.Projection? = null
     private var cachedFrames: Map<TimeCode, PolyphonyTimeFrame> = emptyMap()
 
     var lastRecomputedFrameCount: Int = 0
@@ -131,7 +159,11 @@ object PolyphonyAnalysisEngine {
         )
         val previousVoices = cachedVoices
         if (previousVoices == null || cachedPluginSignature != signature) {
-            return rebuildAll(score, voices, signature)
+            val tonalProjection = PolyphonyTonalContextResolver.projection(
+                score,
+                signature.tonalRegions,
+            )
+            return rebuildAll(score, voices, signature, tonalProjection)
         }
 
         val changed = previousVoices.changedSpan(voices)
@@ -139,6 +171,8 @@ object PolyphonyAnalysisEngine {
             lastRecomputedFrameCount = 0
             return cachedFrames
         }
+        val tonalProjection = cachedTonalProjection
+            ?: PolyphonyTonalContextResolver.projection(score, signature.tonalRegions)
 
         val oldChanged = previousVoices.range(changed.start, changed.end)
         val newChanged = voices.range(changed.start, changed.end)
@@ -171,11 +205,13 @@ object PolyphonyAnalysisEngine {
                     active[event.id to pitchIndex] = pitch
                 }
             }
-            buildFrame(score, time, active.values.toList(), signature)?.let { patched[time] = it }
+            buildFrame(score, time, active.values.toList(), signature, tonalProjection)
+                ?.let { patched[time] = it }
         }
 
         cachedVoices = voices
         cachedPluginSignature = signature
+        cachedTonalProjection = tonalProjection
         cachedFrames = patched.entries.sortedBy { it.key }.associate { it.toPair() }
         lastRecomputedFrameCount = boundaries.size
         return cachedFrames
@@ -184,6 +220,7 @@ object PolyphonyAnalysisEngine {
     fun resetForTesting() {
         cachedVoices = null
         cachedPluginSignature = null
+        cachedTonalProjection = null
         cachedFrames = emptyMap()
         lastRecomputedFrameCount = 0
     }
@@ -192,6 +229,7 @@ object PolyphonyAnalysisEngine {
         score: ComputedScore,
         voices: TimeIndexedList<ComputedVoiceEvent>,
         signature: PluginSignature,
+        tonalProjection: PolyphonyTonalContextResolver.Projection,
     ): Map<TimeCode, PolyphonyTimeFrame> {
         val events = voices.toList().filterNot(ComputedVoiceEvent::isRest)
         val startsByTime = events.groupBy(ComputedVoiceEvent::onset)
@@ -206,10 +244,12 @@ object PolyphonyAnalysisEngine {
                     active[event.id to pitchIndex] = pitch
                 }
             }
-            buildFrame(score, time, active.values.toList(), signature)?.let { frames[time] = it }
+            buildFrame(score, time, active.values.toList(), signature, tonalProjection)
+                ?.let { frames[time] = it }
         }
         cachedVoices = voices
         cachedPluginSignature = signature
+        cachedTonalProjection = tonalProjection
         cachedFrames = frames
         lastRecomputedFrameCount = boundaries.size
         return cachedFrames
@@ -220,6 +260,7 @@ object PolyphonyAnalysisEngine {
         time: TimeCode,
         active: List<PolyphonyActivePitch>,
         signature: PluginSignature,
+        tonalProjection: PolyphonyTonalContextResolver.Projection,
     ): PolyphonyTimeFrame? {
         if (active.isEmpty()) return null
         val eligible = active.filterNot { pitch ->
@@ -232,7 +273,7 @@ object PolyphonyAnalysisEngine {
         return PolyphonyTimeFrame(
             time = time,
             activePitches = active.sortedBy(PolyphonyActivePitch::pitch),
-            tonalKeys = PolyphonyTonalContextResolver.keysAt(score, time, signature.tonalRegions),
+            tonalKeys = PolyphonyTonalContextResolver.keysAt(score, time, tonalProjection),
             recognizedChord = chord,
         )
     }

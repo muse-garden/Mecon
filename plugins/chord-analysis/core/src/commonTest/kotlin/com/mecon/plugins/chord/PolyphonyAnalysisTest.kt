@@ -14,12 +14,15 @@ import com.mecon.api.primitive.KeySignature
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
+import com.mecon.api.plugin.AnnotationElement
+import com.mecon.api.plugin.AnnotationLayoutContext
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.TimeIndexedList
 import com.mecon.api.runtime.events.RuntimePluginEvent
 import com.mecon.api.storage.StorageScore
 import com.mecon.api.storage.events.StoragePluginEvent
 import com.mecon.theory.ChordQuality
+import com.mecon.theory.ChordSymbolDisplayStyle
 import com.mecon.theory.KeySignatureMode
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -160,6 +163,54 @@ class PolyphonyAnalysisTest {
 
         assertEquals(1, PolyphonyAnalysisEngine.compute(changed).getValue(time).tonalKeys.single().fifths)
         assertTrue(PolyphonyAnalysisEngine.lastRecomputedFrameCount > 0)
+    }
+
+    @Test
+    fun scoreTimelineUsesSharedReadingsAndDurationRanges() {
+        val c = StorageChordEvent.create(tc(0), 0, ChordQuality.MAJOR)
+        val g = StorageChordEvent.create(tc(2), 7, ChordQuality.MAJOR)
+        val cMajor = PolyphonyTonalKey(0, KeySignatureMode.MAJOR)
+        val gMajor = PolyphonyTonalKey(1, KeySignatureMode.MAJOR)
+        val region = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(2),
+            keys = listOf(cMajor, gMajor),
+            resolvedKey = gMajor,
+        )
+        val score = score(
+            events = emptyList(),
+            pluginTracks = listOf(
+                pluginTrack(StorageChordEvent.TRACK_TYPE, listOf(c, g)),
+                pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(region)),
+            ),
+        )
+        val ctx = object : AnnotationLayoutContext {
+            override val computedScore = score
+            override fun xForTime(time: TimeCode): Float? = null
+        }
+        val oldMode = ChordSymbolDisplaySettings.scoreDisplayMode
+        val oldStyle = ChordSymbolDisplaySettings.style
+        try {
+            ChordSymbolDisplaySettings.scoreDisplayMode = ChordAnalysisScoreDisplayMode.TIMELINE
+            ChordSymbolDisplaySettings.style = ChordSymbolDisplayStyle.SCALE_DEGREE
+
+            val ranges = ChordTimelineAnnotationProvider.layout(ctx)
+                .filterIsInstance<AnnotationElement.Range>()
+            val cards = ranges.filter { it.sourceEventId != null }
+
+            assertEquals(2, cards.size)
+            assertEquals(g.onset, cards.first { it.sourceEventId == c.id }.endTime)
+            val scoreEnd = TimeCode.of(score.runtime.measures.maxOf { it.key } + 1, Fraction.ZERO)
+            assertEquals(scoreEnd, cards.first { it.sourceEventId == g.id }.endTime)
+            assertTrue(
+                cards.first { it.sourceEventId == c.id }.lines
+                    .any { "I" in it.content.plainText },
+            )
+            assertTrue(ranges.any { it.sourceEventId == null && it.lines.any { line -> "G" in line.content.plainText } })
+        } finally {
+            ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
+            ChordSymbolDisplaySettings.style = oldStyle
+        }
     }
 
     private fun score(

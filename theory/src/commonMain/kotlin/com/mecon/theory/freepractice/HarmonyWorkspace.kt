@@ -19,6 +19,8 @@ import com.mecon.theory.harmony.ChordInterpretationRef
 import com.mecon.theory.harmony.ChordSelectionOriginRef
 import com.mecon.theory.harmony.ChordSelectionCatalog
 import com.mecon.theory.harmony.AudibleSonorityKey
+import com.mecon.theory.harmony.HarmonyTonalRange
+import com.mecon.theory.harmony.HarmonyTonalTimeline
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
@@ -437,25 +439,22 @@ data class HarmonyWorkspaceState(
     fun derivedTonalSpans(): List<WorkspaceDerivedTonalSpan> {
         val pieces = slots.flatMap { slot ->
             slot.tonality?.readings.orEmpty().map { reading ->
-                WorkspaceDerivedTonalSpan(reading.key, slot.onset, slot.onset + slot.duration)
+                HarmonyTonalRange(
+                    id = "slot:${slot.id.value}:${reading.key.fifths}:${reading.key.mode}",
+                    start = slot.onset,
+                    end = slot.onset + slot.duration,
+                    keys = listOf(reading.key),
+                    derived = true,
+                )
             }
         }
-        return pieces.groupBy { it.key }.flatMap { (key, spans) ->
-            val ordered = spans.sortedBy { it.start }
-            if (ordered.isEmpty()) return@flatMap emptyList()
-            val merged = mutableListOf<WorkspaceDerivedTonalSpan>()
-            var current = ordered.first()
-            ordered.drop(1).forEach { next ->
-                current = if (next.start <= current.end) {
-                    current.copy(end = maxOf(current.end, next.end))
-                } else {
-                    merged += current
-                    next
-                }
-            }
-            merged += current
-            merged.map { it.copy(key = key) }
-        }.sortedWith(compareBy(WorkspaceDerivedTonalSpan::start, WorkspaceDerivedTonalSpan::end))
+        return HarmonyTonalTimeline.coalesce(pieces).map { span ->
+            WorkspaceDerivedTonalSpan(
+                key = span.keys.single(),
+                start = span.start,
+                end = requireNotNull(span.end),
+            )
+        }
     }
 }
 

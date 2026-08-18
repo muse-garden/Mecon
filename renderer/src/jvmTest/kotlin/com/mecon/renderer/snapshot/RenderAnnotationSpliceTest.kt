@@ -25,6 +25,7 @@ import com.mecon.renderer.layout.AnnotationElementMeasurer
 import com.mecon.renderer.layout.PageGeometry
 import com.mecon.renderer.layout.RenderLayoutConfig
 import com.mecon.renderer.render.DrawText
+import com.mecon.renderer.render.DrawRect
 import com.mecon.renderer.render.RenderElementType
 import com.mecon.renderer.render.RenderEngine
 import com.mecon.renderer.render.RenderResult
@@ -103,6 +104,29 @@ class RenderAnnotationSpliceTest {
                     text = "degree",
                 )
             )
+    }
+
+    private object RangeAnnotationProvider : AnnotationStaffProvider {
+        override val staffId = PluginStaffId("test.range-anno.staff")
+        override val anchor = StaffAnchor.AboveAllStaves
+        override val pluginTrackTypes = emptySet<String>()
+
+        override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> = listOf(
+            AnnotationElement.Range(
+                time = TimeCode.of(1, Fraction.ZERO),
+                endTime = TimeCode.of(31, Fraction.ZERO),
+                relativeY = 0f,
+                sourceEventId = EventId("range-anno"),
+                trackId = TrackId("range-anno-track"),
+                height = 5f,
+                lines = listOf(
+                    com.mecon.api.plugin.AnnotationTextLine(
+                        com.mecon.api.render.FormattedText.plain("I · 1–3–5")
+                    )
+                ),
+                fillColor = com.mecon.api.render.RenderColor.rgba(37, 99, 184, 48),
+            )
+        )
     }
 
     @BeforeTest
@@ -357,6 +381,33 @@ class RenderAnnotationSpliceTest {
                 distinctBands.add(tcp.bottomY)
             }
             assertTrue(distinctBands.size >= 2, "annotations must span at least two different system bands, got $distinctBands")
+        }
+    }
+
+    @Test
+    fun durationAnnotationSplitsAcrossSystemsAndReservesEveryLine() {
+        val font = loadFont() ?: return
+        PluginRegistry.resetForTesting()
+        PluginRegistry.installAll(listOf(object : com.mecon.api.plugin.MeconPlugin {
+            override val id = "test.range-anno.plugin"
+            override fun install(ctx: com.mecon.api.plugin.PluginInstallContext) {
+                ctx.registerAnnotationStaffProvider(RangeAnnotationProvider)
+            }
+        }))
+
+        with(font) {
+            val result = RenderEngine(RenderLayoutConfig.DEFAULT).render(
+                buildPaginatedBase(measures = 40, annoMeasures = emptyList()),
+                pageGeometry = multiSystem,
+            )
+            val segments = result.elements.filter { element ->
+                element.type == RenderElementType.TEXT_ANNOTATION &&
+                    element.eventId == EventId("range-anno")
+            }
+
+            assertTrue(segments.mapNotNull { it.systemIndex }.distinct().size > 1)
+            assertTrue(segments.all { segment -> segment.commands.any { it is DrawRect } })
+            assertTrue(segments.all { segment -> segment.hitBox.width.value > 0f })
         }
     }
 

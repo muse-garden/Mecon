@@ -82,6 +82,12 @@ renderer preview computer 生成；JS 只重放命令，不自行拼装或平移
 标签始终同时展示，并占用独立的左侧固定控制区；内容位于滚动起点时保持原有屏幕 X，滚动后由该控制区
 裁切经过左缘的和弦，避免与 Switch 重叠。scene 总宽度必须覆盖末端 `＋` 的实际最小宽度。
 
+时间轴的和弦读法与调性区间语义已下沉到 `theory/harmony/HarmonyTimelinePresentation.kt`：
+`HarmonyTimelineReadingProjector` 是自由练习与主界面分析共用的目录读法入口，
+`HarmonyTonalTimeline` 统一活动区间、解决后延续、重叠 lane 与相邻派生区间合并。自由练习仍拥有
+workspace stable ID、编辑能力、手势和历史；其他只读页面不得为复用展示而依赖或伪造
+`FreePracticeSession`，应直接消费上述通用投影与 renderer 的 `AnnotationElement.Range`。
+
 右栏统一消费 `PracticePlanView`：选中槽与导航、活动调性线、和弦读法/锁定能力、离调候选的
 ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProjector` 给出。React 不得再从
 `timeline` 或 document workspace 查找并拼出这些关系。面板拖宽是平台布局状态；已由顶栏 descriptor

@@ -70,6 +70,8 @@ data class StaffLayoutInfo(
 data class PlacedAnnotationElement(
     val staffId: PluginStaffId,
     val x: StaffSpace,
+    /** Resolved range end; null for point annotations. */
+    val endX: StaffSpace? = null,
     val centerY: StaffSpace,
     val element: AnnotationElement,
     /** 0 for continuous (single-system) layout; set per-element in paginated mode. */

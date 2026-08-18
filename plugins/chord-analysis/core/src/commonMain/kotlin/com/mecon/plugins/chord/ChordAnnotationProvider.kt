@@ -24,8 +24,11 @@ object ChordAnnotationProvider : AnnotationStaffProvider {
 
     override val pluginTrackTypes: Set<String> = setOf(StorageChordEvent.TRACK_TYPE)
 
-    override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> =
-        ctx.computedScore
+    override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> {
+        if (ChordSymbolDisplaySettings.scoreDisplayMode != ChordAnalysisScoreDisplayMode.CLASSIC) {
+            return emptyList()
+        }
+        return ctx.computedScore
             .pluginTracks
             .values
             .filter { it.type == StorageChordEvent.TRACK_TYPE }
@@ -70,4 +73,5 @@ object ChordAnnotationProvider : AnnotationStaffProvider {
                     )
                 }
             }
+    }
 }

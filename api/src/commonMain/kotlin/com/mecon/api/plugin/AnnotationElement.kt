@@ -11,6 +11,13 @@ import com.mecon.api.render.RenderColor
  */
 enum class AnnotationAlignment { LEFT, CENTER, RIGHT }
 
+/** One text row inside a duration-bearing annotation box. */
+data class AnnotationTextLine(
+    val content: FormattedText,
+    val fontSize: Float = 12f,
+    val color: RenderColor = RenderColor.BLACK,
+)
+
 /**
  * A single element drawn on an annotation staff. Coordinates are relative:
  * - [time] selects the X position via the layout's time-slot map.
@@ -73,6 +80,35 @@ sealed class AnnotationElement {
                 alignment = alignment,
                 interactive = interactive,
             )
+        }
+    }
+
+    /**
+     * A rectangular annotation occupying the half-open musical range [time], [endTime].
+     * The renderer splits it at system breaks, keeping the visual interval continuous while each
+     * system reserves its own vertical band. Coordinates and sizes remain renderer-independent.
+     */
+    data class Range(
+        override val time: TimeCode,
+        val endTime: TimeCode,
+        override val relativeY: Float = 0f,
+        override val sourceEventId: EventId? = null,
+        override val trackId: TrackId? = null,
+        val height: Float = 5f,
+        val lines: List<AnnotationTextLine> = emptyList(),
+        val fillColor: RenderColor? = null,
+        val strokeColor: RenderColor? = RenderColor.BLACK,
+        val strokeWidth: Float = 1f,
+        val horizontalInset: Float = 0.25f,
+        val minimumWidth: Float = 0f,
+        override val interactive: Boolean = true,
+    ) : AnnotationElement() {
+        init {
+            require(endTime > time) { "Annotation range must have positive duration" }
+            require(height > 0f) { "Annotation range height must be positive" }
+            require(strokeWidth >= 0f) { "Annotation range stroke width cannot be negative" }
+            require(horizontalInset >= 0f) { "Annotation range inset cannot be negative" }
+            require(minimumWidth >= 0f) { "Annotation range minimum width cannot be negative" }
         }
     }
 }

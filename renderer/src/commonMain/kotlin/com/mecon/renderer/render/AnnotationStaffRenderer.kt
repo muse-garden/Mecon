@@ -47,6 +47,7 @@ internal class AnnotationStaffRenderer(
     ): RenderElement? {
         return when (val element = placed.element) {
             is AnnotationElement.Text -> renderText(placed, element, idGenerator)
+            is AnnotationElement.Range -> renderRange(placed, element, idGenerator)
         }
     }
 
@@ -94,6 +95,78 @@ internal class AnnotationStaffRenderer(
             type = RenderElementType.TEXT_ANNOTATION,
             commands = listOf(cmd),
             hitBox = hitBox,
+            eventId = element.sourceEventId,
+            measureNumber = element.time.measure,
+            systemIndex = placed.systemIndex,
+        )
+    }
+
+    private fun renderRange(
+        placed: PlacedAnnotationElement,
+        element: AnnotationElement.Range,
+        idGenerator: () -> RenderElementId,
+    ): RenderElement {
+        val resolvedEndX = placed.endX ?: placed.x + elementMeasurer.widthStaffSpace(element)
+        val left = placed.x + StaffSpace(element.horizontalInset)
+        val right = resolvedEndX - StaffSpace(element.horizontalInset)
+        val safeRight = maxOf(right, left + StaffSpace(0.25f))
+        val topLeft = transformer.toAbsolute(RelativePoint(left, placed.centerY))
+        val bottomRight = transformer.toAbsolute(
+            RelativePoint(safeRight, placed.centerY + StaffSpace(element.height))
+        )
+        val rect = AbsoluteRect(
+            origin = topLeft,
+            width = Pixels((bottomRight.x.value - topLeft.x.value).coerceAtLeast(1f)),
+            height = Pixels((bottomRight.y.value - topLeft.y.value).coerceAtLeast(1f)),
+        )
+        val commands = mutableListOf<RenderCommand>()
+        commands += DrawRect(
+            rect = rect,
+            fillColor = element.fillColor,
+            strokeColor = element.strokeColor,
+            strokeThickness = Pixels(element.strokeWidth),
+        )
+
+        if (element.lines.isNotEmpty()) {
+            val lineHeights = element.lines.map { line ->
+                elementMeasurer.bounds(
+                    AnnotationElement.Text(
+                        time = element.time,
+                        content = line.content,
+                        fontSize = line.fontSize,
+                    )
+                ).heightPx
+            }
+            val totalTextHeight = lineHeights.sum()
+            var y = rect.origin.y.value + (rect.height.value - totalTextHeight) / 2f
+            element.lines.forEachIndexed { index, line ->
+                val lineHeight = lineHeights[index]
+                commands += DrawText(
+                    text = line.content.plainText,
+                    position = AbsolutePoint(
+                        x = Pixels(rect.origin.x.value + rect.width.value / 2f),
+                        y = Pixels(y),
+                    ),
+                    fontFamily = AnnotationElementMeasurer.DEFAULT_TEXT_FONT_FAMILY,
+                    fontSize = Pixels(line.fontSize),
+                    color = line.color,
+                    alignment = TextAlignment.CENTER,
+                    richText = line.content,
+                    bounds = rect,
+                )
+                y += lineHeight
+            }
+        }
+
+        return RenderElement(
+            id = idGenerator(),
+            type = RenderElementType.TEXT_ANNOTATION,
+            commands = commands,
+            hitBox = if (element.interactive) rect else AbsoluteRect(
+                origin = AbsolutePoint.ZERO,
+                width = Pixels(0f),
+                height = Pixels(0f),
+            ),
             eventId = element.sourceEventId,
             measureNumber = element.time.measure,
             systemIndex = placed.systemIndex,

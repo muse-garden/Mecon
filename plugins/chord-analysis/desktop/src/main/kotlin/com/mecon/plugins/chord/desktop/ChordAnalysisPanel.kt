@@ -46,6 +46,7 @@ import com.mecon.plugins.chord.ComputedChordEvent
 import com.mecon.plugins.chord.RuntimeChordEvent
 import com.mecon.plugins.chord.StorageChordEvent
 import com.mecon.plugins.chord.ChordSymbolDisplaySettings
+import com.mecon.plugins.chord.ChordAnalysisScoreDisplayMode
 import com.mecon.plugins.chord.desktop.ChordSymbolParser.Parsed
 import com.mecon.theory.Chord
 import com.mecon.theory.ChordRecognitionCandidate
@@ -101,6 +102,11 @@ internal object ChordAnalysisPanel : PluginPanel {
         var coloringEnabled by remember { mutableStateOf(ChordToneStyleProvider.isEnabled) }
         var pitchMode by remember { mutableStateOf(PitchMode.ABSOLUTE) }
         var chordSymbolStyle by remember { mutableStateOf(ChordSymbolDisplaySettings.style) }
+        var timelineDisplay by remember {
+            mutableStateOf(
+                ChordSymbolDisplaySettings.scoreDisplayMode == ChordAnalysisScoreDisplayMode.TIMELINE
+            )
+        }
 
         val keySignature = remember(displayChord, selectionChord, ctx.targetTimeCode, ctx.runtimeScore) {
             val rs = ctx.runtimeScore
@@ -127,6 +133,20 @@ internal object ChordAnalysisPanel : PluginPanel {
                     ChordSymbolDisplaySettings.style = chordSymbolStyle
                     ctx.onRequestRender?.invoke()
                 }
+            )
+            Spacer(Modifier.height(6.dp))
+            MeconLabeledSwitch(
+                label = i18n("plugin.chord.panel.timelineDisplay"),
+                checked = timelineDisplay,
+                onCheckedChange = { enabled ->
+                    timelineDisplay = enabled
+                    ChordSymbolDisplaySettings.scoreDisplayMode = if (enabled) {
+                        ChordAnalysisScoreDisplayMode.TIMELINE
+                    } else {
+                        ChordAnalysisScoreDisplayMode.CLASSIC
+                    }
+                    ctx.onRequestRender?.invoke()
+                },
             )
             Spacer(Modifier.height(6.dp))
             MeconLabeledSwitch(

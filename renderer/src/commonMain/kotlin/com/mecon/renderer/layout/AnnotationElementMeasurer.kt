@@ -22,6 +22,7 @@ internal class AnnotationElementMeasurer(
     fun bounds(element: AnnotationElement): AnnotationElementBounds =
         when (element) {
             is AnnotationElement.Text -> textBounds(element)
+            is AnnotationElement.Range -> rangeBounds(element)
         }
 
     fun widthStaffSpace(element: AnnotationElement): StaffSpace =
@@ -36,6 +37,12 @@ internal class AnnotationElementMeasurer(
                     val height = bounds(element).heightStaffSpace(pixelsPerStaffSpace).value
                     val above = -element.relativeY
                     val below = element.relativeY + height
+                    if (above > topExtent.value) topExtent = StaffSpace(above)
+                    if (below > bottomExtent.value) bottomExtent = StaffSpace(below)
+                }
+                is AnnotationElement.Range -> {
+                    val above = -element.relativeY
+                    val below = element.relativeY + element.height
                     if (above > topExtent.value) topExtent = StaffSpace(above)
                     if (below > bottomExtent.value) bottomExtent = StaffSpace(below)
                 }
@@ -66,6 +73,37 @@ internal class AnnotationElementMeasurer(
         }
     }
 
+    private fun rangeBounds(element: AnnotationElement.Range): AnnotationElementBounds {
+        val contentWidth = element.lines.maxOfOrNull { line ->
+            measuredLine(line.content, line.fontSize).widthPx
+        } ?: 0f
+        return AnnotationElementBounds(
+            widthPx = maxOf(
+                element.minimumWidth * pixelsPerStaffSpace,
+                contentWidth + RANGE_HORIZONTAL_PADDING_PX * 2f,
+            ),
+            heightPx = element.height * pixelsPerStaffSpace,
+        )
+    }
+
+    private fun measuredLine(
+        content: com.mecon.api.render.FormattedText,
+        fontSize: Float,
+    ): AnnotationElementBounds {
+        val key = TextKey(content, DEFAULT_TEXT_FONT_FAMILY, fontSize)
+        return textBoundsCache.getOrPut(key) {
+            var widthPx = 0f
+            var heightPx = 0f
+            for (run in content.runs) {
+                val runSize = fontSize * run.style.sizeScale
+                val measured = PlatformTextMeasurer.measure(run.text, DEFAULT_TEXT_FONT_FAMILY, runSize)
+                widthPx += measured.widthPx
+                heightPx = maxOf(heightPx, measured.heightPx)
+            }
+            AnnotationElementBounds(widthPx, heightPx.takeIf { it > 0f } ?: fontSize)
+        }
+    }
+
     private data class TextKey(
         val content: com.mecon.api.render.FormattedText,
         val fontFamily: String,
@@ -77,5 +115,6 @@ internal class AnnotationElementMeasurer(
 
         /** Matches [com.mecon.renderer.geometry.ScaleFactor.DEFAULT] (8 px/staff-space). */
         const val DEFAULT_PIXELS_PER_STAFF_SPACE: Float = 8f
+        private const val RANGE_HORIZONTAL_PADDING_PX: Float = 8f
     }
 }

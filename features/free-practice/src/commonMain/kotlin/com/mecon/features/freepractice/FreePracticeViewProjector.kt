@@ -12,6 +12,7 @@ import com.mecon.theory.harmony.ChordSelectionChoice
 import com.mecon.theory.harmony.ChordInterpretationRef
 import com.mecon.theory.harmony.ChordCatalogSnapshot
 import com.mecon.theory.harmony.ChordKnowledgeContext
+import com.mecon.theory.harmony.HarmonyTimelineReadingProjector
 import com.mecon.theory.harmony.SoundingInterpretationQuery
 import com.mecon.theory.schoenberg.SchoenbergHarmonicTreatments
 import com.mecon.theory.freepractice.tonalityOptions
@@ -564,15 +565,16 @@ object FreePracticeViewProjector {
         mode: WorkspaceKeyMode,
     ): PracticeTimelineChordReadingView {
         val key = com.mecon.theory.ModulationKey(fifths, mode.toTheory())
+        val reading = HarmonyTimelineReadingProjector.reading(this, key)
         return PracticeTimelineChordReadingView(
             fifths = fifths,
             mode = mode,
             keyLabel = key.displayName + if (mode == WorkspaceKeyMode.MINOR) "m" else "",
-            functionalSymbol = functionalSymbol,
-            absoluteTones = absoluteTones,
-            relativeTones = relativeTones,
-            absoluteTonesLabel = absoluteTones.joinToString(" · "),
-            relativeTonesLabel = relativeTones.joinToString(" · "),
+            functionalSymbol = reading.functionalSymbol,
+            absoluteTones = reading.absoluteTones,
+            relativeTones = reading.relativeTones,
+            absoluteTonesLabel = reading.absoluteTones.joinToString(" · "),
+            relativeTonesLabel = reading.relativeTones.joinToString(" · "),
         )
     }
 

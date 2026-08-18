@@ -19,6 +19,7 @@ open class ChordAnalysisPlugin : MeconPlugin {
         ctx.registerEventSerializer(StorageNonChordToneEvent::class, StorageNonChordToneEvent.serializer())
         ctx.registerEventSerializer(StorageTonalRegionEvent::class, StorageTonalRegionEvent.serializer())
         ctx.registerAnnotationStaffProvider(ChordAnnotationProvider)
+        ctx.registerAnnotationStaffProvider(ChordTimelineAnnotationProvider)
         ctx.registerAnnotationStaffProvider(PolyphonyAnnotationProvider)
         ctx.registerNoteStyleProvider(ChordToneStyleProvider)
     }

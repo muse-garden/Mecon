@@ -1,6 +1,6 @@
 # 和弦分析插件：当前架构与 TODO
 
-> **状态**：✅ 插件输入、序列化、计算、注释谱表、符头着色、桌面面板和局部渲染已打通。
+> **状态**：✅ 插件输入、序列化、计算、两种谱面展示、符头着色、桌面面板和局部渲染已打通。
 > 本文记录当前边界与验收入口；不再按提交逐条记录实现过程。复调分析见
 > [polyphony-analysis.md](polyphony-analysis.md)。
 
@@ -10,6 +10,7 @@
 |------|------|
 | `:plugins:chord-analysis:core` | `StorageChordEvent`、Runtime/Computed 投影、`ChordCompute`、注释 provider、音符着色 provider |
 | `:plugins:chord-analysis:desktop` | 和弦输入/检查面板、解析器、i18n、桌面插件注册 |
+| `:theory` | `ChordSelectionCatalog`、共享和弦时间轴读法与调性区间语义 |
 | `:api` plugin SPI | `MeconPlugin`、注册上下文、序列化模块、`AnnotationStaffProvider`、`NoteStyleProvider` |
 | `:renderer` | annotation staff 布局/测量/绘制、`TEXT_ANNOTATION` 命中、样式覆盖 |
 | `apps/desktop` | 插件 bootstrap、面板宿主、选择状态、提交和渲染刷新 |
@@ -31,6 +32,12 @@ Chord panel input
 `AnnotationLayoutContext` 只暴露 `ComputedScore`、notation staff layout 和 `xFor(TimeCode)`。
 文字的尺寸由 renderer 测量，宽度参与比例排版；不要在插件里按字符数估算宽度。
 
+右栏“在谱面上使用和声时间轴”在原有的下方点状 `ChordAnnotationProvider` 与上方的
+`ChordTimelineAnnotationProvider` 之间切换。时间轴从相邻 `StorageChordEvent` 推导半开区间，
+末项延伸到谱尾；调号区间和 `StorageTonalRegionEvent` 一并交给 `HarmonyTonalTimeline`，和弦的
+多调性读法由 `HarmonyTimelineReadingProjector` 通过自由练习同源的 `ChordSelectionCatalog`
+投影，不在插件内维护第二套离调/级数格式规则。
+
 `sourceEventId` 从 annotation provider 贯通到 `RenderElement.eventId`。音符点击是只读上下文，
 注释点击才进入精确的可编辑和弦事件；两类选择互斥。
 
@@ -40,6 +47,8 @@ Chord panel input
 - `AboveStaff` / `BelowStaff` 当前安全回退到 `BelowAllStaves`，以后补充指定 staff 的局部锚定；
 - `interactive=false` 的注释生成零尺寸 hit box，让点击穿透到音符；
 - annotation 文本、面板标题和候选结果共享 `FormattedText` / `ChordSymbolFormatter`；
+- `AnnotationElement.Range` 携带起止拍点、框高度和多行文字；renderer 在断行后拆成逐系统片段，
+  每个系统都为相交范围预留上方注释带，声明/实测宽度也进入比例排版；
 - 注释宽度变化使用 `RenderEngine.renderRange` / `ComputeChangeSet.forRange`，窗口内重排，分行
   变化时安全回退全量。详见 [renderer/incremental-rendering.md](../renderer/incremental-rendering.md)。
 
@@ -92,7 +101,9 @@ annotation 增量结果与冷全量结果等价。
 2. 为 provider 增加可选的窗口计算协议；不支持窗口的 provider 继续全量回退。
 3. 让 style snapshot 也能按 dirty section 增量合并，避免 provider 局部化后 snapshot 仍整轨重建。
 4. 处理多窗口插件刷新前，先保持单一连续范围入口，避免 desktop 与 renderer 各维护一套窗口规则。
-5. 修复 Gradle capability 冲突时必须先确认模块依赖方向，不能通过让 `:api` 依赖 Compose 或 core 来绕过。
+5. 分析页面需要时间轴时复用 `HarmonyTimelineReadingProjector`、`HarmonyTonalTimeline` 与
+   `AnnotationElement.Range`，不要复制主界面 provider 的离调判定或框布局。
+6. 修复 Gradle capability 冲突时必须先确认模块依赖方向，不能通过让 `:api` 依赖 Compose 或 core 来绕过。
 
 相关文档：[plugin-framework.md](plugin-framework.md)、[custom-track.md](custom-track.md)、
 [renderer/README.md](../renderer/README.md)、[ARCHITECTURE.md](../ARCHITECTURE.md)。

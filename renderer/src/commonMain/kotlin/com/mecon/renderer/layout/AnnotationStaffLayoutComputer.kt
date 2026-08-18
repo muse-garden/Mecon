@@ -30,8 +30,15 @@ internal class AnnotationStaffLayoutComputer(
     private data class AnchoredAnnotation(
         val element: AnnotationElement,
         val x: StaffSpace,
+        val endX: StaffSpace?,
         val systemIndex: Int,
         val order: Int
+    )
+
+    private data class ResolvedAnchor(
+        val systemIndex: Int,
+        val x: StaffSpace,
+        val endX: StaffSpace? = null,
     )
 
     private data class HorizontalExtent(
@@ -122,11 +129,18 @@ internal class AnnotationStaffLayoutComputer(
 
             val placed = placedByStaff.getOrPut(provider.staffId) { mutableListOf() }
             placed += placeTrackLocal(provider, elements) { element ->
-                ctx.xForTime(element.time)?.let { xValue -> 0 to StaffSpace(xValue) }
+                val startX = ctx.xForTime(element.time) ?: return@placeTrackLocal emptyList()
+                val endX = (element as? AnnotationElement.Range)
+                    ?.let { range ->
+                        ctx.xForTime(range.endTime)?.let(::StaffSpace)
+                            ?: timeSlotMap.all().lastOrNull()?.x
+                    }
+                listOf(ResolvedAnchor(0, StaffSpace(startX), endX))
             }.map { anchored ->
                 PlacedAnnotationElement(
                     staffId = provider.staffId,
                     x = anchored.x,
+                    endX = anchored.endX,
                     centerY = centerY + StaffSpace(anchored.element.relativeY),
                     element = anchored.element
                 )
@@ -199,9 +213,13 @@ internal class AnnotationStaffLayoutComputer(
             val anchor = provider.supportedAnchor()
 
             val resolved = placeTrackLocal(provider, elements) { element ->
-                val slot = timeSlotMap.atTime(element.time) ?: return@placeTrackLocal null
-                val noteLeftX = slot.noteEvents().minOfOrNull { (slot.x + it.relativeX).value } ?: slot.x.value
-                slot.systemIndex to StaffSpace(noteLeftX)
+                if (element is AnnotationElement.Range) {
+                    resolvePaginatedRange(element, timeSlotMap, systems)
+                } else {
+                    val slot = timeSlotMap.atTime(element.time) ?: return@placeTrackLocal emptyList()
+                    val noteLeftX = slot.noteEvents().minOfOrNull { (slot.x + it.relativeX).value } ?: slot.x.value
+                    listOf(ResolvedAnchor(slot.systemIndex, StaffSpace(noteLeftX)))
+                }
             }
             if (resolved.isEmpty()) continue
 
@@ -224,6 +242,7 @@ internal class AnnotationStaffLayoutComputer(
                     placed += PlacedAnnotationElement(
                         staffId = provider.staffId,
                         x = r.x,
+                        endX = r.endX,
                         centerY = centerY + StaffSpace(r.element.relativeY),
                         element = r.element,
                         systemIndex = systemIndex,
@@ -270,7 +289,22 @@ internal class AnnotationStaffLayoutComputer(
             var above = 0f
             var below = 0f
             for ((index, elements) in providerElements.withIndex()) {
-                val inLine = elements.filter { it.time.measure in range }
+                val inLine = elements.filter { element ->
+                    when (element) {
+                        is AnnotationElement.Text -> element.time.measure in range
+                        is AnnotationElement.Range -> {
+                            val lineStart = TimeCode.of(
+                                range.first,
+                                com.mecon.api.primitive.Fraction.ZERO,
+                            )
+                            val lineEnd = TimeCode.of(
+                                range.last + 1,
+                                com.mecon.api.primitive.Fraction.ZERO,
+                            )
+                            element.time < lineEnd && element.endTime > lineStart
+                        }
+                    }
+                }
                 if (inLine.isEmpty()) continue
                 val (topExtent, bottomExtent) = elementMeasurer.extents(inLine)
                 val extent = config.interStaffGap.value + topExtent.value + bottomExtent.value
@@ -287,12 +321,19 @@ internal class AnnotationStaffLayoutComputer(
     private fun placeTrackLocal(
         provider: AnnotationStaffProvider,
         elements: List<AnnotationElement>,
-        resolveAnchor: (AnnotationElement) -> Pair<Int, StaffSpace>?
+        resolveAnchor: (AnnotationElement) -> List<ResolvedAnchor>
     ): List<AnchoredAnnotation> {
         val fallbackTrackId = TrackId("__annotation__:${provider.staffId.value}")
-        val anchored = elements.mapIndexedNotNull { index, element ->
-            val (systemIndex, x) = resolveAnchor(element) ?: return@mapIndexedNotNull null
-            AnchoredAnnotation(element, x, systemIndex, index)
+        val anchored = elements.flatMapIndexed { index, element ->
+            resolveAnchor(element).map { resolved ->
+                AnchoredAnnotation(
+                    element = element,
+                    x = resolved.x,
+                    endX = resolved.endX,
+                    systemIndex = resolved.systemIndex,
+                    order = index,
+                )
+            }
         }
         if (anchored.size <= 1) return anchored
 
@@ -301,6 +342,10 @@ internal class AnnotationStaffLayoutComputer(
         for ((_, group) in anchored.groupBy { it.systemIndex to (it.element.trackId ?: fallbackTrackId) }) {
             var lastRight: StaffSpace? = null
             for (item in group.sortedWith(compareBy<AnchoredAnnotation> { it.element.time }.thenBy { it.order })) {
+                if (item.element is AnnotationElement.Range) {
+                    placed += item
+                    continue
+                }
                 var x = item.x
                 var extent = horizontalExtent(item.element, x)
                 val minLeft = lastRight?.let { it + minGap }
@@ -333,7 +378,40 @@ internal class AnnotationStaffLayoutComputer(
                 AnnotationAlignment.CENTER -> HorizontalExtent(x - StaffSpace(width.value / 2f), x + StaffSpace(width.value / 2f))
                 AnnotationAlignment.RIGHT -> HorizontalExtent(x - width, x)
             }
+            is AnnotationElement.Range -> HorizontalExtent(x, x + width)
         }
+    }
+
+    private fun resolvePaginatedRange(
+        element: AnnotationElement.Range,
+        timeSlotMap: UnifiedTimeSlotMap,
+        systems: List<SystemLayout>,
+    ): List<ResolvedAnchor> = systems.mapNotNull { system ->
+        val systemStart = TimeCode.of(system.measureRange.first, com.mecon.api.primitive.Fraction.ZERO)
+        val systemEnd = TimeCode.of(system.measureRange.last + 1, com.mecon.api.primitive.Fraction.ZERO)
+        val start = maxOf(element.time, systemStart)
+        val end = minOf(element.endTime, systemEnd)
+        if (start >= end) return@mapNotNull null
+
+        val startX = if (start == systemStart) {
+            slotX(timeSlotMap, start)?.takeIf { timeSlotMap.atTime(start)?.systemIndex == system.systemIndex }
+                ?: system.lineFirstNoteX
+                ?: system.lineStartX
+        } else {
+            slotX(timeSlotMap, start) ?: return@mapNotNull null
+        }
+        val endX = if (end == systemEnd) {
+            system.closingBarline?.x ?: system.lineEndX
+        } else {
+            slotX(timeSlotMap, end) ?: return@mapNotNull null
+        }
+        ResolvedAnchor(system.systemIndex, startX, maxOf(startX, endX))
+    }
+
+    private fun slotX(timeSlotMap: UnifiedTimeSlotMap, time: TimeCode): StaffSpace? {
+        val slot = timeSlotMap.atTime(time) ?: return null
+        val noteLeftX = slot.noteEvents().minOfOrNull { (slot.x + it.relativeX).value }
+        return StaffSpace(noteLeftX ?: slot.x.value)
     }
 
     private class TimeSlotAnnotationLayoutContext(

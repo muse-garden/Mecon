@@ -24,7 +24,7 @@ context(bravuraFont) {
 | `voiceEventLayouts` | `EventId → VoiceEventLayout`：该事件相对所在时间槽的几何 |
 | `barlineLayouts` | 小节线槽位与几何 |
 | `staffLayouts` | 各谱表的 Y 范围与中线 |
-| `annotationElementLayouts` | `PluginStaffId → List<PlacedAnnotationElement>`，插件文字注释的绝对位置 |
+| `annotationElementLayouts` | `PluginStaffId → List<PlacedAnnotationElement>`，插件点注释或时值范围注释的最终位置 |
 | `headerOriginX` | 谱表头（括号 + 标签）的左边缘 X |
 | `systemStartX` | 谱线开始的 X（= `headerOriginX + headerWidth`） |
 
@@ -94,7 +94,7 @@ context(bravuraFont) {
 
 6. AnnotationStaffLayoutComputer
    - 拉取 PluginRegistry.annotationStaffProviders()
-   - 对每个 provider 调 layout(ctx) 得到 AnnotationElement 列表
+   - 对每个 provider 调 layout(ctx) 得到 `AnnotationElement.Text` / `AnnotationElement.Range` 列表
    - 用 `AnnotationElementMeasurer` 逐元素测量实际 bounds，并缓存本次布局中重复出现的文字尺寸
    - **横向空间已在 §3 / §5 的比例求解中上游预留**（音符已为记号让位）；本 pass 只负责 Y 分带 + 把标记锚定到音符左边缘。按 `(system, trackId)` 的轨道内最小间隙右移仅作安全网（音符已让位后通常不再触发）
    - 按 anchor 在已布好的 notation staves 之下/之上追加 StaffLayoutInfo(kind = ANNOTATION)
@@ -262,6 +262,6 @@ beam 不跨小节故几乎不跨行（跨谱表 beam 在同一系统内）。
 
 - **行内均匀性**：贪心累加 + 线性拉伸，未做 LilyPond 式的"先粗排再优化"与弹性间距。
 - **增量分页渲染**：分页 splice 只覆盖受保护的布局形状；遇到 `PluginRenderComponent` 叠加或无法证明等价的跨系统变化时回退全量渲染。注释谱表已支持（连续 + 分页，整体重生成，见 [incremental-rendering.md](incremental-rendering.md)）。
-- **注释谱表**：连续模式按全局基线排在记号谱下方并预留高度（`extraHeight`）；分页模式由 `AnnotationStaffLayoutComputer.computePaginated` 在断行后按 system 重解析坐标（per-system justified X + `systemIndex`，Y 落在该 system 记号谱底下方）。水平排列、垂直占位与 `TEXT_ANNOTATION` hitBox 均使用 `AnnotationElementMeasurer` 的实际文字 bounds（同一布局 pass 内缓存），不再用 `text.length * fontSize * 0.6` 估算和弦符号体积；注释元素按自身 `trackId` 在同一 system 内依次右推以避免同轨道重叠，但不参与主谱比例排版，也不跨轨道避让。分页垂直空间已预留：`AnnotationStaffLayoutComputer.perLineExtentFn` 算出每行注释带高度，经 `SystemBreaker.verticalPass`（`annotationLineExtent` 参数）并入该行的垂直占位，影响分页与下一行偏移——预留量与 `computePaginated` 的堆叠（`notationBottom + Σ(interStaffGap+extents)`）严格一致，故注释落在真实预留空间内而非 system 间隙。
+- **注释谱表**：连续模式按全局基线排在记号谱上/下方并预留高度；分页模式由 `AnnotationStaffLayoutComputer.computePaginated` 在断行后按 system 重解析坐标（per-system justified X + `systemIndex`）。`Text` 使用实测文字 bounds；`Range` 使用起止 `TimeCode`，跨系统时拆成“本行起点—行尾 / 行首—本行终点”的片段，并在每个相交系统计入垂直 extent。两类元素的实测/声明最小宽度都可作为 annotation spacing participant 参与比例排版；点注释仍按 `trackId` 依次避让，范围框保持音乐边界不被碰撞器平移。分页垂直空间由 `perLineExtentsFn` 经 `SystemBreaker.verticalPass` 并入该行占位，因此范围框不会落入下一系统。
 
 后续演进思路见 [../roadmap.md](../roadmap.md)。
