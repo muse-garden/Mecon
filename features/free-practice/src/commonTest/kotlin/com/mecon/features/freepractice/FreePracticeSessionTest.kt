@@ -137,6 +137,41 @@ class FreePracticeSessionTest {
         assertEquals(listOf(selectedSlot.id), requested.requests.single().scopeSlotIds)
     }
 
+    /**
+     * `structure` carries predictions, not descriptions: `pristine` decides whether a platform
+     * dispatches `SetPracticeTimeSignature` at all, and the session rejects that intent with
+     * `freePractice.timeSignature.scoreToolRequired` based on the *committed* workspace. Projecting
+     * it from the optimistic workspace of an in-flight write therefore produces a dead control.
+     */
+    @Test
+    fun structurePredictionsFollowTheCommittedWorkspaceWhileAWriteIsInFlight() {
+        val session = session()
+        val initial = session.frame()
+        assertTrue(initial.structure.pristine)
+
+        val slot = initial.document.workspace.slots.single().id
+        val supertonic = WorkspaceChordChoice.of(listOf(2, 5, 9))
+        val requested = session.dispatch(
+            FreePracticeIntent.ReplaceChord(initial.revision, slot, supertonic),
+        )
+
+        assertTrue(requested.requests.isNotEmpty(), "the chord edit must leave a write in flight")
+        // The frame already shows the optimistic, no-longer-tonic workspace...
+        assertEquals(
+            supertonic.pitchClasses,
+            requested.frame.document.workspace.slots.single().chordChoice?.pitchClasses,
+        )
+        // ...but nothing is committed, so the meter command is still the pristine one.
+        assertTrue(requested.frame.structure.pristine)
+        val meter = session.dispatch(
+            FreePracticeIntent.SetPracticeTimeSignature(
+                requested.frame.revision,
+                TimeSignature.THREE_FOUR,
+            ),
+        )
+        assertNotEquals(FreePracticeEffectKind.INVALID, meter.effect.kind)
+    }
+
     @Test
     fun measureInsertionResolvesSelectedNoteAndBarlineInTheSharedSession() {
         fun sessionWithTrailingMeasures(): FreePracticeSession {
