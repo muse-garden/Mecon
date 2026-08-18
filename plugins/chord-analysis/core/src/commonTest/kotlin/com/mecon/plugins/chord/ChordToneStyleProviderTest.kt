@@ -17,6 +17,7 @@ import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.TimeIndexedList
 import com.mecon.api.storage.StorageScore
 import com.mecon.theory.ChordQuality
+import com.mecon.theory.NonChordToneType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -149,6 +150,11 @@ class ChordToneStyleProviderTest {
     // ---------------------------------------------------------------------------
     // Color assignment
     // ---------------------------------------------------------------------------
+
+    @Test
+    fun everyNonChordToneType_hasLegendAndRenderColor() {
+        assertEquals(NonChordToneType.entries.toSet(), ChordToneStyleProvider.typeColors.keys)
+    }
 
     @Test
     fun chordTone_receivesGreenFillColor() {

@@ -28,6 +28,7 @@ object ChordToneStyleProvider : NoteStyleProvider {
         NonChordToneType.ESCAPE to RenderColor.rgb(249, 115, 22),
         NonChordToneType.NEIGHBOR_GROUP to RenderColor.rgb(245, 158, 11),
         NonChordToneType.ANTICIPATION to RenderColor.rgb(20, 184, 166),
+        NonChordToneType.SUSTAINED to RenderColor.rgb(6, 182, 212),
         NonChordToneType.PEDAL to RenderColor.rgb(132, 204, 22),
     )
 
