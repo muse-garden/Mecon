@@ -138,8 +138,9 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
         }
         val regions = ctx.computedScore
             .pluginEventsOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
-            .map { region ->
-                HarmonyTonalRange(
+            .mapNotNull { region ->
+                // Clipping to the score end collapses regions left behind by a measure deletion.
+                HarmonyTonalRange.clippedOrNull(
                     id = region.id.value,
                     start = timeMap.absolute(region.onset),
                     end = minOf(scoreEnd, timeMap.absolute(region.endOnset)),

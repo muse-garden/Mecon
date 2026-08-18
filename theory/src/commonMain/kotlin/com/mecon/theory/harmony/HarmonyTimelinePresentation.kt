@@ -64,6 +64,44 @@ data class HarmonyTonalRange(
     }
 
     fun contains(time: Fraction): Boolean = time >= start && (end == null || time < end)
+
+    companion object {
+        /**
+         * Builds a range from *stored* interval data, returning null instead of throwing when the
+         * interval does not survive.
+         *
+         * Plugin events outlive the measures they point at — `MeasureEditEngine` does not remap
+         * plugin tracks — so a saved region can start past the current score end, and clipping it
+         * to that end collapses it. A hand-edited or older document can likewise carry an empty
+         * interval or a `resolvedKey` outside `keys`. Point annotations already fail safe here (an
+         * unresolvable time simply yields no element); a range must do the same, because these
+         * constructors run inside `AnnotationStaffProvider.layout`, where an exception takes down
+         * the whole render frame rather than one stale marking.
+         */
+        fun clippedOrNull(
+            id: String,
+            start: Fraction,
+            end: Fraction?,
+            keys: List<ModulationKey>,
+            resolvedKey: ModulationKey? = keys.singleOrNull(),
+            derived: Boolean = false,
+            priority: Int = 0,
+        ): HarmonyTonalRange? {
+            if (keys.isEmpty()) return null
+            if (end != null && end <= start) return null
+            return HarmonyTonalRange(
+                id = id,
+                start = start,
+                end = end,
+                // Keep the candidate keys rather than dropping the whole region: only the
+                // continuation-after-resolution hint is lost.
+                resolvedKey = resolvedKey?.takeIf { it in keys },
+                keys = keys,
+                derived = derived,
+                priority = priority,
+            )
+        }
+    }
 }
 
 /** Shared interval semantics for free-practice key lines and score-analysis tonal regions. */

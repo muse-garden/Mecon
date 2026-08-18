@@ -50,8 +50,13 @@ Chord panel input
 - annotation 文本、面板标题和候选结果共享 `FormattedText` / `ChordSymbolFormatter`；
 - `AnnotationElement.Range` 携带起止拍点、框高度和多行文字；renderer 在断行后拆成逐系统片段，
   每个系统都为相交范围预留上方注释带，声明/实测宽度也进入比例排版；
+- **provider 里不得因陈旧数据抛异常**：`layout` 运行在渲染管线内，一次 `require` 失败会带走整帧，
+  而不是丢掉一个标记。`MeasureEditEngine` 不重映射 plugin track，删小节后 `StorageTonalRegionEvent`
+  会残留在谱尾之外，裁剪到谱尾就退化成空区间——用 `HarmonyTonalRange.clippedOrNull` 丢弃，
+  与点状注释“解析不到 x 就不生成”保持同一种 fail-safe；
 - 注释宽度变化使用 `RenderEngine.renderRange` / `ComputeChangeSet.forRange`，窗口内重排，分行
-  变化时安全回退全量。详见 [renderer/incremental-rendering.md](../renderer/incremental-rendering.md)。
+  变化时安全回退全量。跨小节的 `Range` 还要满足 `endMeasureNumber` 分区契约，详见
+  [renderer/incremental-rendering.md](../renderer/incremental-rendering.md)。
 
 ## 4. 音符着色
 
