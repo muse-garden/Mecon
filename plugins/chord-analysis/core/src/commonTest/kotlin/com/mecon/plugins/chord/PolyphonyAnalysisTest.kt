@@ -16,6 +16,7 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.plugin.AnnotationElement
 import com.mecon.api.plugin.AnnotationLayoutContext
+import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.TimeIndexedList
 import com.mecon.api.runtime.events.RuntimePluginEvent
@@ -207,6 +208,24 @@ class PolyphonyAnalysisTest {
                     .any { "I" in it.content.plainText },
             )
             assertTrue(ranges.any { it.sourceEventId == null && it.lines.any { line -> "G" in line.content.plainText } })
+            cards.forEach { card ->
+                assertEquals(RenderColor.rgb(220, 234, 254), card.fillColor)
+                assertEquals(RenderColor.rgb(96, 165, 250), card.strokeColor)
+                assertTrue(card.lines.all { it.color == RenderColor.rgb(30, 41, 59) })
+            }
+            val tonalRanges = ranges.filter { it.sourceEventId == null }
+            assertTrue(tonalRanges.isNotEmpty())
+            assertTrue(
+                tonalRanges.flatMap { it.lines }.all { it.color == RenderColor.rgb(29, 78, 216) },
+            )
+
+            ChordSymbolDisplaySettings.style = ChordSymbolDisplayStyle.LETTER
+            val letterLines = ChordTimelineAnnotationProvider.layout(ctx)
+                .filterIsInstance<AnnotationElement.Range>()
+                .filter { it.sourceEventId != null }
+                .flatMap { it.lines }
+            assertTrue(letterLines.any { it.color == RenderColor.rgb(30, 41, 59) })
+            assertTrue(letterLines.any { it.color == RenderColor.rgb(100, 116, 139) })
         } finally {
             ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
             ChordSymbolDisplaySettings.style = oldStyle

@@ -36,7 +36,8 @@ Chord panel input
 `ChordTimelineAnnotationProvider` 之间切换。时间轴从相邻 `StorageChordEvent` 推导半开区间，
 末项延伸到谱尾；调号区间和 `StorageTonalRegionEvent` 一并交给 `HarmonyTonalTimeline`，和弦的
 多调性读法由 `HarmonyTimelineReadingProjector` 通过自由练习同源的 `ChordSelectionCatalog`
-投影，不在插件内维护第二套离调/级数格式规则。
+投影，不在插件内维护第二套离调/级数格式规则。该谱面时间轴固定采用浅色主题的 surface、文字、
+边框与强调色，不随主界面的明暗主题切换。
 
 `sourceEventId` 从 annotation provider 贯通到 `RenderElement.eventId`。音符点击是只读上下文，
 注释点击才进入精确的可编辑和弦事件；两类选择互斥。

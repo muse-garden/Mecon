@@ -198,9 +198,9 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
         ModulationKey(fifths, KeySignatureMode.fromApiMode(mode))
 
     private fun tonalAccent(key: ModulationKey): RenderColor = when ((key.fifths - key.mode.ordinal).mod(3)) {
-        0 -> RenderColor.rgb(96, 165, 250)
-        1 -> RenderColor.rgb(112, 181, 163)
-        else -> RenderColor.rgb(210, 164, 119)
+        0 -> LightTimelinePalette.PrimaryDark
+        1 -> LightTimelinePalette.Emerald
+        else -> LightTimelinePalette.Orange
     }
 
     private fun RenderColor.withAlpha(alpha: Int): RenderColor = copy(alpha = alpha)
@@ -213,8 +213,19 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
     private const val MAX_CARD_LINES = 3
     private val CHORD_TRACK_ID = TrackId("__harmony_timeline_chords")
     private val TONAL_TRACK_ID = TrackId("__harmony_timeline_tonality")
-    private val CARD_FILL = RenderColor.rgba(37, 99, 184, 58)
-    private val CARD_BORDER = RenderColor.rgba(96, 165, 250, 210)
-    private val CARD_TEXT = RenderColor.rgb(225, 231, 238)
-    private val CARD_MUTED = RenderColor.rgb(158, 173, 191)
+    private val CARD_FILL = LightTimelinePalette.SelectedSurface
+    private val CARD_BORDER = LightTimelinePalette.SelectedBorder
+    private val CARD_TEXT = LightTimelinePalette.TextPrimary
+    private val CARD_MUTED = LightTimelinePalette.TextMuted
+
+    /** Fixed light-theme roles: the score timeline stays paper-like regardless of app chrome. */
+    private object LightTimelinePalette {
+        val PrimaryDark = RenderColor.rgb(29, 78, 216)
+        val SelectedSurface = RenderColor.rgb(220, 234, 254)
+        val SelectedBorder = RenderColor.rgb(96, 165, 250)
+        val TextPrimary = RenderColor.rgb(30, 41, 59)
+        val TextMuted = RenderColor.rgb(100, 116, 139)
+        val Emerald = RenderColor.rgb(63, 146, 127)
+        val Orange = RenderColor.rgb(182, 129, 85)
+    }
 }
