@@ -104,6 +104,17 @@ Web，须单独完成禁忌表平台无关索引与 JVM/JS key 集合等价门�
 
 钢琴卷轴保留桌面实现，本轮不计入 Web 完整工作台退出条件；后续接入时再新增独立能力行与 trace。
 
+## 明确不接入 Web 的范围
+
+| 能力 | 桌面状态 | Web 状态与原因 |
+|------|----------|----------------|
+| 主界面谱面和声时间轴 | ✅ 和弦分析面板"在谱面上使用和声时间轴"开关，在 `ChordAnnotationProvider`（下方点状）与 `ChordTimelineAnnotationProvider`（上方区间卡片）之间切换 | ❌ 未接入。`:plugins:chord-analysis:core` 已是 KMP（含 js target），provider 本体跨端可用；缺的是 ① web 引擎未依赖也未注册 `ChordAnalysisPlugin`，② 开关只有桌面 `ChordAnalysisPanel`，③ `ChordSymbolDisplaySettings.scoreDisplayMode` 是进程级可变全局，不属于 document，接 Web 前需先落到文档或会话状态。接入时按本矩阵新增能力行 |
+| 顶栏 `mode`（探索/自由练习模式切换） | ✅ 桌面注入在 `history` 之后 | ❌ 不适用。Web 没有该模式概念，故**刻意不进** `FreePracticeToolbarSpec`——descriptor 的含义是"两端都必须复现的东西"。桌面侧由 `Toolbar.kt` 的 `DESKTOP_MODE_GROUP` 具名承载 |
+
+上表以外的差异一律视为遗漏而非决策；descriptor 里出现桌面画不出的 group 时
+`explorationToolbarGroupIds` 会直接 `require` 失败，与 Web 壳层
+`Unsupported free-practice toolbar controls` 的抛错同义。
+
 后续每个新编辑能力都必须按
 [乐谱编辑多端接入规范](../score-editing-multiplatform.md) 完成共享 session、桌面/Web adapter、
 renderer/splice 与跨端测试，并在本矩阵新增或更新对应能力行；不得在 Web 壳层复制业务算法。
