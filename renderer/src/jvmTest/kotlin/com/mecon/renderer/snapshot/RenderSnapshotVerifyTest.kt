@@ -1,6 +1,9 @@
 package com.mecon.renderer.snapshot
 
 import com.mecon.renderer.render.RenderElement
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -74,24 +77,87 @@ class RenderSnapshotVerifyTest {
         if (expected.firstMeasure != actual.firstMeasure || expected.lastMeasure != actual.lastMeasure) {
             appendLine("  measures: expected ${expected.firstMeasure}..${expected.lastMeasure}, got ${actual.firstMeasure}..${actual.lastMeasure}")
         }
-        // Report first differing element
+        // Report the first differing element, plus how many differ in total. One element out of
+        // hundreds is a localised regression; "985 of 985 noteheads" is a renderer-wide change that
+        // just needs the goldens regenerated — the two want completely different reactions.
         val minSize = minOf(expected.elements.size, actual.elements.size)
-        for (i in 0 until minSize) {
-            val expJson = snapshotJson.encodeToString(RenderElement.serializer(), expected.elements[i])
-            val actJson = snapshotJson.encodeToString(RenderElement.serializer(), actual.elements[i])
-            if (expJson != actJson) {
-                appendLine("  first diff at elements[$i] (type=${expected.elements[i].type}, id=${expected.elements[i].id}):")
-                val expLines = expJson.lines()
-                val actLines = actJson.lines()
-                for (j in 0 until minOf(expLines.size, actLines.size)) {
-                    if (expLines[j] != actLines[j]) {
-                        appendLine("    expected: ${expLines[j].trim()}")
-                        appendLine("    actual:   ${actLines[j].trim()}")
-                        break
-                    }
-                }
-                break
-            }
+        val differing = (0 until minSize).filter { i ->
+            snapshotJson.encodeToString(RenderElement.serializer(), expected.elements[i]) !=
+                snapshotJson.encodeToString(RenderElement.serializer(), actual.elements[i])
         }
+        val first = differing.firstOrNull() ?: return@buildString
+        appendLine(
+            "  ${differing.size} of $minSize elements differ; first at elements[$first] " +
+                "(type=${expected.elements[first].type}, id=${expected.elements[first].id}):"
+        )
+        fieldDifferences(expected.elements[first], actual.elements[first]).forEach {
+            appendLine("    $it")
+        }
+    }
+
+    /**
+     * Names the fields that actually differ, rather than the first differing *line* of pretty-printed
+     * JSON. A newly emitted field makes the line above it grow a trailing comma, so the line-based
+     * report showed `"pitchIndex": "0"` vs `"pitchIndex": "0",` — which reads like punctuation noise
+     * and hid a real un-regenerated golden (`metadata.noteheadFilled`, added in e3e577df). Do not
+     * relax the comparison to tolerate that: the goldens are meant to record everything the renderer
+     * emits, and regenerating is one documented command. Make the message say what changed instead.
+     */
+    private fun fieldDifferences(expected: RenderElement, actual: RenderElement): List<String> {
+        val differences = mutableListOf<String>()
+        collectJsonDifferences(
+            snapshotJson.parseToJsonElement(
+                snapshotJson.encodeToString(RenderElement.serializer(), expected)
+            ),
+            snapshotJson.parseToJsonElement(
+                snapshotJson.encodeToString(RenderElement.serializer(), actual)
+            ),
+            path = "",
+            into = differences,
+        )
+        return differences.ifEmpty { listOf("(no field-level difference found)") }
+    }
+
+    private fun collectJsonDifferences(
+        expected: JsonElement,
+        actual: JsonElement,
+        path: String,
+        into: MutableList<String>,
+        limit: Int = MAX_REPORTED_FIELD_DIFFERENCES,
+    ) {
+        if (into.size >= limit) return
+        when {
+            expected is JsonObject && actual is JsonObject -> {
+                for (key in LinkedHashSet(expected.keys + actual.keys)) {
+                    val child = if (path.isEmpty()) key else "$path.$key"
+                    val expectedValue = expected[key]
+                    val actualValue = actual[key]
+                    when {
+                        expectedValue == null -> into += "$child: added in render (${actualValue.brief()})"
+                        actualValue == null -> into += "$child: missing from render (was ${expectedValue.brief()})"
+                        else -> collectJsonDifferences(expectedValue, actualValue, child, into, limit)
+                    }
+                    if (into.size >= limit) return
+                }
+            }
+            expected is JsonArray && actual is JsonArray -> {
+                if (expected.size != actual.size) {
+                    into += "$path: ${expected.size} entries in snapshot, ${actual.size} in render"
+                    return
+                }
+                for (index in expected.indices) {
+                    collectJsonDifferences(expected[index], actual[index], "$path[$index]", into, limit)
+                    if (into.size >= limit) return
+                }
+            }
+            expected != actual -> into += "$path: ${expected.brief()} -> ${actual.brief()}"
+        }
+    }
+
+    private fun JsonElement?.brief(): String =
+        this?.toString()?.let { if (it.length > 60) it.take(57) + "..." else it } ?: "absent"
+
+    private companion object {
+        const val MAX_REPORTED_FIELD_DIFFERENCES = 5
     }
 }
