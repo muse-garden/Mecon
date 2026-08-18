@@ -166,6 +166,7 @@ onset 的事件做原子交换。
 | [free-practice-auto-writing.md](free-practice-auto-writing.md) | ✅ 自动声部写作、回溯/重写/换结果、工具栏设置、撤销与回放；锁定/refine 后续 |
 | [free-practice-customary-progressions-plan.md](free-practice-customary-progressions-plan.md) | ✅ 惯用进行扩充、章节复用、重叠模型、所选和弦交互与自动写作修复实施记录 |
 | [free-practice-multiplatform.md](free-practice-multiplatform.md) | ✅ 自由练习共享 session、Web 首发与移动复用边界 |
+| [../ui/mobile.md](../ui/mobile.md) | 🚧 手机 / Pad 打谱与自由练习的自适应布局、触控和输入方案 |
 | [free-practice-extension-guide.md](free-practice-extension-guide.md) | 当前功能调整、新 intent/投影/后台能力及跨端验收操作手册 |
 | [free-practice-web-workbench-completion-plan.md](free-practice-web-workbench-completion-plan.md) | ✅ 公共 Web 乐谱编辑器、和声时间轴、右侧面板与收口门禁实施记录（钢琴卷轴后置） |
 | [free-practice-web-desktop-parity-plan.md](free-practice-web-desktop-parity-plan.md) | ✅ 共享时间轴 raw scene/interaction、谱面布局与双工具栏桌面统一 |

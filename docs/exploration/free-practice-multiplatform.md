@@ -379,6 +379,9 @@ channel 应用。另有真实 JS 求解器
 
 ## 7. 移动版复用
 
+手机四活动、Pad 两栏、触控时间轴和后台状态的具体交互见
+[移动端交互调研与 UI 方案](../ui/mobile.md) §6。
+
 Web 稳定后给 `api/core/theory/exploration/features/*/audio/renderer` 增加 Android 与 iOS target。
 移动端进程内直接持有 `FreePracticeSession`，不走 JSON。Desktop/Android/iOS 可共享 Compose 叶组件
 （和弦目录、路线卡、finding 行、播放控件）；composition root 与导航不共享——手机分步、平板两栏、

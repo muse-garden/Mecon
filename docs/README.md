@@ -8,6 +8,7 @@
 | 构建、测试与依赖仓库配置 | [development.md](development.md) |
 | Web 端安装、Kotlin/JS 构建、运行与 Playwright | [web-development.md](web-development.md) |
 | 多端移植（Web / Android / iOS / 鸿蒙 / 平板）🚧 | [multiplatform-porting.md](multiplatform-porting.md) |
+| 移动端交互调研与 UI 方案（手机 / Pad）🚧 | [ui/mobile.md](ui/mobile.md) |
 | 乐谱编辑多端接入规范（Web 轻量壳层、桌面共享 session） | [score-editing-multiplatform.md](score-editing-multiplatform.md) |
 | 数据模型（四层架构） | [data_model/README.md](data_model/README.md) |
 | 基础类型（Pitch / TimeCode / Duration） | [data_model/primitives.md](data_model/primitives.md) |
@@ -188,6 +189,7 @@ docs/
 │
 └── ui/
     ├── desktop.md          桌面 UI 组件
+    ├── mobile.md           🚧 手机 / Pad 打谱、自由练习与触控交互
     ├── score-editing.md    乐谱编辑交互（音符录入工具 / 虚影 / 编辑引擎）
     ├── note-input.md       键盘 / MIDI 步进与实时录入
     ├── expression-editing.md 表情、力度与八度记号编辑

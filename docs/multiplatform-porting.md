@@ -193,6 +193,9 @@ data class FrozenScoreBundle(
 
 ## 5. Android、iOS 与手机交互
 
+手机与 Pad 的产品范围、窗口布局、触控命中、屏幕钢琴和自由练习流程见
+[移动端交互调研与 UI 方案](ui/mobile.md)；本节只定义复用与平台架构。
+
 - 引擎与增量管线直接编入 app 进程，不在每次编辑时跨 JSON/FFI；这样才能保持桌面端的局部重算效率。
 - Android 使用 KMP Android target；iOS 输出 framework 并在 macOS CI 构建。两端后台串行执行
   Compute/Layout/Render，UI 仅消费不可变结果。
