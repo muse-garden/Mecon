@@ -104,6 +104,7 @@ internal data class PracticePlanActions(
         String,
         String,
     ) -> Unit,
+    val setIdiomChordToneCount: (WorkspaceIdiomInstanceId, Int, Int) -> Unit,
     val removeIdiom: (WorkspaceIdiomInstanceId) -> Unit,
     val selectSlot: (WorkspaceSlotId) -> Unit,
     val appendChord: () -> Unit,
@@ -256,6 +257,18 @@ internal fun PracticePlanPanel(
         }
 
         if ((showHarmony || showChordDetails) && selectedSlot != null && selectedChordLayout != null) {
+            val selectedCatalogFilter = view.chordCatalogFilters.firstOrNull { it.selected }
+                ?: view.chordCatalogFilters.firstOrNull()
+            val toneCountFilters = selectedCatalogFilter?.toneCountFilters.orEmpty()
+            var selectedToneCountFilterId by remember(selectedCatalogFilter?.id) {
+                mutableStateOf("any")
+            }
+            val selectedToneCountFilter = toneCountFilters.firstOrNull {
+                it.id == selectedToneCountFilterId
+            } ?: toneCountFilters.firstOrNull()
+            val displayedCatalogGroups = selectedToneCountFilter?.chordGroups
+                ?: selectedCatalogFilter?.chordGroups
+                ?: view.chordCatalogGroups
             val effectiveChordLayout = selectedChordKey?.let { key ->
                 selectedChordLayout.copy(
                     fifths = key.fifths,
@@ -306,13 +319,26 @@ internal fun PracticePlanPanel(
                     toneMode = state.chordToneMode,
                     onSetTonality = actions.setChordTonality,
                 )
+                if (toneCountFilters.isNotEmpty()) {
+                    Text(strings.chordToneCount, color = MeconColors.TextMuted, fontSize = 10.sp)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        toneCountFilters.forEach { filter ->
+                            PracticeChip(filter.label, filter.id == selectedToneCountFilter?.id) {
+                                selectedToneCountFilterId = filter.id
+                            }
+                        }
+                    }
+                }
                 ChordToolbar(
                     selectedChordChoice = selectedSlot.chordChoice,
                     selectedInterpretationRef = chordTonalReadings.firstOrNull()?.interpretationRef
                         ?: selectedSlot.chordInterpretationRef,
                     legacyChordSymbol = selectedSlot.chordIdentity,
                     groups = selectedChordKey?.let(chordGroupsByKey::get).orEmpty(),
-                    catalogGroups = view.chordCatalogGroups,
+                    catalogGroups = displayedCatalogGroups,
                     groupsByKey = catalogGroupsByKey,
                     activeLayouts = catalogLayouts,
                     selectedLayoutId = selectedChordLayout.id,
@@ -343,7 +369,7 @@ internal fun PracticePlanPanel(
                         ?: selectedSlot.chordInterpretationRef,
                     legacyChordSymbol = selectedSlot.chordIdentity,
                     groups = selectedChordKey?.let(chordGroupsByKey::get).orEmpty(),
-                    catalogGroups = view.chordCatalogGroups,
+                    catalogGroups = displayedCatalogGroups,
                     groupsByKey = catalogGroupsByKey,
                     activeLayouts = catalogLayouts,
                     selectedLayoutId = selectedChordLayout.id,
@@ -380,6 +406,31 @@ internal fun PracticePlanPanel(
                         IdiomCatalogTab.ALL_TEACHING
                     },
                 )
+            }
+            view.selectedIdiomForm?.let { form ->
+                Text(strings.idiomChordForms, color = MeconColors.TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(form.title, color = MeconColors.TextMuted, fontSize = 10.sp)
+                form.steps.forEach { step ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Text(step.chordLabel, color = MeconColors.TextMuted, fontSize = 10.sp)
+                        step.options.forEach { option ->
+                            MeconChoiceChip(
+                                label = option.label,
+                                selected = option.selected,
+                                onClick = {
+                                    if (option.enabled) actions.setIdiomChordToneCount(
+                                        form.idiomInstanceId,
+                                        step.stepIndex,
+                                        option.toneCount,
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
             }
             if (view.idiomCatalogFilters.size > 1) {
                 Text(strings.idiomCatalogTonality, color = MeconColors.TextMuted, fontSize = 10.sp)
@@ -425,17 +476,17 @@ internal fun PracticePlanPanel(
                 }
             }
             fun List<com.mecon.features.freepractice.PracticeIdiomDefinitionView>.forSelectedTarget(
-                includeVariant: (com.mecon.features.freepractice.PracticeIdiomVariantView) -> Boolean,
+                includeChoice: (com.mecon.features.freepractice.PracticeIdiomChoiceView) -> Boolean,
             ) =
                 mapNotNull { definition ->
-                    definition.variants.filter { variant ->
-                        includeVariant(variant) && run {
+                    definition.choices.filter { choice ->
+                        includeChoice(choice) && run {
                             val selected = state.selectedIdiomTargetKey
-                            selected == null || variant.suggestedKey?.let {
+                            selected == null || choice.suggestedKey?.let {
                                 it.fifths == selected.fifths && it.mode.toTheory() == selected.mode
                             } == true
                         }
-                    }.takeIf { it.isNotEmpty() }?.let { definition.copy(variants = it) }
+                    }.takeIf { it.isNotEmpty() }?.let { definition.copy(choices = it) }
                 }
             val focusedIdioms = view.idiomCatalog.definitions
                 .filter { it.relatedToFocus }
@@ -470,7 +521,7 @@ internal fun PracticePlanPanel(
                         TeachingMaterialLoading(strings.loadingRelatedIdioms)
                     }
                     if (focusedIdioms.isNotEmpty()) {
-                        IdiomDefinitionList(focusedIdioms, state, actions)
+                        IdiomDefinitionList(focusedIdioms, state, actions, useRelatedVariant = true)
                     } else if (!view.idiomCatalog.loading) {
                         Text(strings.noRelatedIdioms, color = MeconColors.TextDark, fontSize = 11.sp)
                     }
@@ -481,7 +532,7 @@ internal fun PracticePlanPanel(
                         TeachingMaterialLoading(strings.loadingAllIdioms)
                     }
                     if (defaultIdioms.isNotEmpty()) {
-                        IdiomDefinitionList(defaultIdioms, state, actions)
+                        IdiomDefinitionList(defaultIdioms, state, actions, useRelatedVariant = false)
                     } else if (!view.idiomCatalog.loading) {
                         Text(strings.noAllIdioms, color = MeconColors.TextDark, fontSize = 11.sp)
                     }
@@ -807,6 +858,7 @@ private fun IdiomDefinitionList(
     definitions: List<com.mecon.features.freepractice.PracticeIdiomDefinitionView>,
     state: PracticePlanState,
     actions: PracticePlanActions,
+    useRelatedVariant: Boolean,
 ) {
     definitions.forEach { definition ->
         Text(
@@ -819,24 +871,29 @@ private fun IdiomDefinitionList(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            definition.variants.forEach { variant ->
+            definition.choices.forEach { choice ->
+                val variantId = if (useRelatedVariant) {
+                    choice.relatedVariantId ?: choice.defaultVariantId
+                } else {
+                    choice.defaultVariantId
+                }
                 PracticeChip(
-                    variant.displayLabel,
+                    choice.displayLabel,
                     state.selectedIdiomInstanceId?.let { selectedId ->
                         state.workspace.idiomInstances.firstOrNull { it.id == selectedId }
                     }?.let { selected ->
-                        selected.definitionId == definition.id && selected.variantId == variant.id
+                        selected.definitionId == definition.id && selected.variantId in choice.variantIds
                     } == true,
-                    if (variant.enabled) MeconColors.Primary else MeconColors.TextDark,
+                    if (choice.enabled) MeconColors.Primary else MeconColors.TextDark,
                 ) {
-                    if (variant.enabled) {
+                    if (choice.enabled) {
                         val selected = state.selectedIdiomInstanceId?.let { selectedId ->
                             state.workspace.idiomInstances.firstOrNull { it.id == selectedId }
                         }
                         if (selected == null) {
-                            actions.insertIdiom(definition.id, variant.id)
+                            actions.insertIdiom(definition.id, variantId)
                         } else {
-                            actions.replaceIdiom(selected, definition.id, variant.id)
+                            actions.replaceIdiom(selected, definition.id, variantId)
                         }
                     }
                 }

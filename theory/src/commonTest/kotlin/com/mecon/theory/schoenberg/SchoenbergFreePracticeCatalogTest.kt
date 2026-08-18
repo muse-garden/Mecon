@@ -398,6 +398,37 @@ class SchoenbergFreePracticeCatalogTest {
     }
 
     @Test
+    fun offKeyGermanSixthKeepsOneTargetKeyAcrossChordSizes() {
+        val index = SchoenbergFreePracticeCatalog.buildIndex(
+            SchoenbergFreePracticeDiscoveryRequest(
+                initialKey = MAJOR,
+                activeKeys = listOf(MAJOR),
+                maxVariantsPerDefinition = 64,
+                includeOffKey = true,
+                targetKeys = allFreePracticeTargetKeys(),
+            )
+        )
+        val germanVariants = index.discover().idioms
+            .flatMap { it.variants }
+            .filter { variant ->
+                variant.suggestedKey != MAJOR && variant.title.startsWith("Ger+6 – V")
+            }
+        val adjustableFamily = germanVariants
+            .groupBy { Triple(it.structureId, it.interpretationContextId, it.suggestedKey) }
+            .values
+            .firstOrNull { family -> family.map { it.chordToneCounts.last() }.toSet().containsAll(setOf(3, 4)) }
+            ?: error(
+                germanVariants.joinToString("\n") {
+                    "${it.title}; counts=${it.chordToneCounts}; context=${it.interpretationContextId}; " +
+                        "target=${it.suggestedKey}"
+                }
+            )
+
+        assertEquals(1, adjustableFamily.map { it.suggestedKey }.distinct().size)
+        assertTrue(adjustableFamily.none { it.suggestedKey == MAJOR })
+    }
+
+    @Test
     fun ordinaryHalfDiminishedSelectionFindsItsAugmentedSixthProgression() {
         val index = SchoenbergFreePracticeCatalog.buildIndex(
             SchoenbergFreePracticeDiscoveryRequest(

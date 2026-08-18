@@ -429,8 +429,10 @@ object SchoenbergMinorSubdominantChapter :
     private fun isNeapolitan(interpretation: ChordInterpretation): Boolean =
         interpretation.symbol.degree == SUPERTONIC_DEGREE &&
             interpretation.symbol.alteration == -1 &&
-            interpretation.symbol.quality == ChordQuality.MAJOR &&
-            interpretation.symbol.arity == ChordArity.TRIAD
+            when (interpretation.symbol.arity) {
+                ChordArity.TRIAD -> interpretation.symbol.quality == ChordQuality.MAJOR
+                ChordArity.SEVENTH -> interpretation.symbol.quality == ChordQuality.MAJOR7
+            }
 
     private fun minorSubdominantDetails(
         context: TonalContext,
@@ -946,8 +948,10 @@ object SchoenbergMinorSubdominantChapter :
     private fun SchoenbergSymbolicChord.isNeapolitan(): Boolean =
         degree == SUPERTONIC_DEGREE &&
             rootAlteration == -1 &&
-            quality == ChordQuality.MAJOR &&
-            arity == ChordArity.TRIAD
+            when (arity) {
+                ChordArity.TRIAD -> quality == ChordQuality.MAJOR
+                ChordArity.SEVENTH -> quality == ChordQuality.MAJOR7
+            }
 
     private fun requireMajor(key: Key) {
         require(key.mode == Mode.IONIAN) {

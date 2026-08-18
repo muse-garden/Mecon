@@ -145,13 +145,16 @@ class FreePracticeTraceTest {
                 )
                 "applyCatalogFixture" -> {
                     val slot = session.frame().document.workspace.slots.single()
-                    val choice = session.frame().catalog.chordChoices.first().choice
-                    fun variant(id: String) = PracticeIdiomVariantView(
+                    val catalogChoices = session.frame().catalog.chordChoices.map { it.choice }
+                    fun variant(id: String, toneCount: Int, context: String) = PracticeIdiomVariantView(
                         id = id,
+                        structureId = "trace-basic",
+                        interpretationContextId = context,
                         title = id,
                         durations = listOf(com.mecon.api.primitive.Fraction.QUARTER),
                         chordIdentities = listOf("I"),
-                        chordChoices = listOf(choice),
+                        chordChoices = listOf(catalogChoices.first { it.pitchClasses.size == toneCount }),
+                        chordToneCounts = listOf(toneCount),
                     )
                     session.applyTeachingCatalogResult(
                         PracticeTeachingCatalogResult(
@@ -165,7 +168,12 @@ class FreePracticeTraceTest {
                                     sourceExerciseId = "trace-exercise",
                                     sourceChapterId = "trace-chapter",
                                     availableByDefault = true,
-                                    variants = listOf(variant("variant-a"), variant("variant-b")),
+                                    variants = listOf(
+                                        variant("local-a", 3, ""),
+                                        variant("local-b", 4, ""),
+                                        variant("variant-a", 3, "viewed-as:6:MAJOR"),
+                                        variant("variant-b", 4, "viewed-as:6:MAJOR"),
+                                    ),
                                 )
                             ),
                         )
@@ -181,12 +189,12 @@ class FreePracticeTraceTest {
                 ).also { result ->
                     insertedIdiomId = result.frame.document.workspace.idiomInstances.singleOrNull()?.id
                 }
-                "replaceIdiom" -> session.dispatch(
-                    FreePracticeIntent.ReplaceIdiom(
+                "setIdiomChordToneCount" -> session.dispatch(
+                    FreePracticeIntent.SetIdiomChordToneCount(
                         expectedRevision!!.toLong(),
                         requireNotNull(insertedIdiomId),
-                        "trace.idiom",
-                        "variant-b",
+                        stepIndex = 0,
+                        toneCount = 4,
                     )
                 )
                 "selectIdiom" -> session.dispatch(

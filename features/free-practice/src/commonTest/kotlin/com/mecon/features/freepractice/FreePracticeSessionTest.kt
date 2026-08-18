@@ -664,6 +664,109 @@ class FreePracticeSessionTest {
     }
 
     @Test
+    fun chordSizeChangeKeepsTheSelectedReinterpretationContext() {
+        val preset = FreePracticePreset.document().let { document ->
+            document.copy(
+                settings = document.settings.copy(
+                    writing = document.settings.writing.copy(autoWritingEnabled = false),
+                ),
+            )
+        }
+        val session = session(preset)
+        val initial = session.initialUpdate()
+        val withOffKey = session.dispatch(
+            FreePracticeIntent.InsertTonalLayout(
+                expectedRevision = initial.revision,
+                fifths = 6,
+                mode = com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR,
+                start = Fraction.ZERO,
+                end = Fraction.HALF,
+            )
+        )
+        val request = withOffKey.catalogRequests.single()
+        val anchorSlot = withOffKey.frame.document.workspace.slots.single()
+        val localCatalog = projectPracticeCatalog(ModulationKey(0, KeySignatureMode.MAJOR))
+        val offKeyCatalog = projectPracticeCatalog(ModulationKey(6, KeySignatureMode.MAJOR))
+        val localFourTone = localCatalog.chordChoices.first {
+            it.choice.pitchClasses.distinct().size == 4
+        }.choice
+        val localThreeTone = localCatalog.chordChoices.first {
+            it.choice.pitchClasses.distinct().size == 3
+        }.choice
+        val offKeyFourTone = offKeyCatalog.chordChoices.first {
+            it.choice.pitchClasses.distinct().size == 4
+        }.choice
+        val offKeyThreeTone = offKeyCatalog.chordChoices.first {
+            it.choice.pitchClasses.distinct().size == 3
+        }.choice
+        fun variant(
+            id: String,
+            targetKey: PracticeKeyView,
+            first: WorkspaceChordChoice,
+            second: WorkspaceChordChoice,
+        ) =
+            PracticeIdiomVariantView(
+                id = id,
+                structureId = "german-sixth-resolution",
+                title = "Ger+6 – V",
+                durations = listOf(Fraction.QUARTER, Fraction.QUARTER),
+                chordIdentities = listOf("Ger+6", if (second.pitchClasses.size == 4) "V7" else "V"),
+                chordChoices = listOf(first, second),
+                chordToneCounts = listOf(first.pitchClasses.distinct().size, second.pitchClasses.distinct().size),
+                suggestedKey = targetKey,
+            )
+        val localKey = PracticeKeyView(0, com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR)
+        val offKey = PracticeKeyView(6, com.mecon.theory.freepractice.WorkspaceKeyMode.MAJOR)
+        val definition = PracticeIdiomDefinitionView(
+            id = "fixture.german-sixth",
+            title = "German sixth",
+            sourceExerciseId = "fixture-exercise",
+            sourceChapterId = "fixture-chapter",
+            availableByDefault = true,
+            // Keep local variants first: the old matcher incorrectly selected local-seven.
+            variants = listOf(
+                variant("local-triad", localKey, localFourTone, localThreeTone),
+                variant("local-seven", localKey, localFourTone, localFourTone),
+                variant("viewed-triad", offKey, offKeyFourTone, offKeyThreeTone),
+                variant("viewed-seven", offKey, offKeyFourTone, offKeyFourTone),
+            ),
+        )
+        session.applyTeachingCatalogResult(
+            PracticeTeachingCatalogResult(
+                requestId = request.requestId,
+                baseRevision = request.baseRevision,
+                fingerprint = request.fingerprint,
+                definitions = listOf(definition),
+            )
+        )
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertIdiom(
+                expectedRevision = withOffKey.frame.revision,
+                anchorSlotId = anchorSlot.id,
+                definitionId = definition.id,
+                variantId = "viewed-triad",
+            )
+        )
+        assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+        val instanceId = inserted.frame.document.workspace.idiomInstances.single().id
+        val changed = session.dispatch(
+            FreePracticeIntent.SetIdiomChordToneCount(
+                expectedRevision = inserted.frame.revision,
+                idiomInstanceId = instanceId,
+                stepIndex = 1,
+                toneCount = 4,
+            )
+        )
+
+        assertEquals("viewed-seven", changed.frame.document.workspace.idiomInstances.single().variantId)
+        assertEquals(
+            offKeyFourTone.pinnedInterpretationRef,
+            changed.frame.document.workspace.slots[1].chordChoice?.pinnedInterpretationRef,
+        )
+    }
+
+    @Test
     fun selectingAnIdiomTailInsertsAContinuationInsteadOfReplacingThePreviousIdiom() {
         val preset = FreePracticePreset.document()
         val template = preset.workspace.slots.single()

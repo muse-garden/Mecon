@@ -8,6 +8,8 @@ import com.mecon.theory.freepractice.WorkspaceChordChoice
 import com.mecon.theory.freepractice.WorkspaceChordTonality
 import com.mecon.theory.freepractice.WorkspaceChordTonalReading
 import com.mecon.theory.freepractice.WorkspaceSlotId
+import com.mecon.theory.freepractice.WorkspaceIdiomInstance
+import com.mecon.theory.freepractice.WorkspaceIdiomInstanceId
 import com.mecon.theory.freepractice.HarmonyWorkspaceCommand
 import com.mecon.theory.freepractice.HarmonyWorkspaceEditor
 import com.mecon.theory.harmony.ChordSelectionCatalog
@@ -18,6 +20,102 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FreePracticeViewProjectorTest {
+    @Test
+    fun chordCatalogPublishesReadyToRenderToneCountFilters() {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val workspace = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+
+        val plan = FreePracticeViewProjector.plan(
+            workspace = workspace,
+            selectedSlotId = workspace.slots.single().id,
+            catalog = projectPracticeCatalog(key),
+        )
+
+        val filters = plan.chordCatalogFilters.single().toneCountFilters
+        assertEquals(listOf("any", "tones-3", "tones-4"), filters.take(3).map { it.id })
+        assertEquals(listOf("任意", "3音", "4音"), filters.take(3).map { it.label })
+        filters.filter { it.toneCount != null }.forEach { filter ->
+            assertTrue(filter.chordGroups.flatMap { it.choices }.all {
+                it.choice.pitchClasses.size == filter.toneCount
+            })
+        }
+    }
+
+    @Test
+    fun idiomCatalogCollapsesSizeVariantsWithoutMergingReinterpretationContexts() {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val catalog = projectPracticeCatalog(key)
+        val triad = catalog.chordChoices.first { it.choice.pitchClasses.size == 3 }.choice
+        val seventh = catalog.chordChoices.first { it.choice.pitchClasses.size == 4 }.choice
+        val structureId = "cadence-basic"
+        fun variant(
+            id: String,
+            context: String,
+            title: String,
+            choice: WorkspaceChordChoice,
+            toneCount: Int,
+            availableByDefault: Boolean,
+            relatedToFocus: Boolean,
+        ) =
+            PracticeIdiomVariantView(
+                id = id,
+                structureId = structureId,
+                interpretationContextId = context,
+                title = title,
+                durations = listOf(Fraction.QUARTER),
+                chordIdentities = listOf(title),
+                chordChoices = listOf(choice),
+                chordToneCounts = listOf(toneCount),
+                availableByDefault = availableByDefault,
+                relatedToFocus = relatedToFocus,
+            )
+        val definition = PracticeIdiomDefinitionView(
+            id = "cadence",
+            title = "终止式",
+            sourceExerciseId = "exercise",
+            sourceChapterId = "chapter",
+            availableByDefault = true,
+            variants = listOf(
+                variant("local-triad", "", "V", triad, 3, true, false),
+                variant("local-seventh", "", "V7", seventh, 4, true, false),
+                variant("viewed-triad", "viewed-as:6:MAJOR", "V", triad, 3, false, true),
+                variant("viewed-seventh", "viewed-as:6:MAJOR", "V7", seventh, 4, false, true),
+            ),
+        )
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+        val instanceId = WorkspaceIdiomInstanceId("idiom-test")
+        val workspace = initial.copy(
+            idiomInstances = listOf(
+                WorkspaceIdiomInstance(
+                    id = instanceId,
+                    definitionId = definition.id,
+                    variantId = "viewed-triad",
+                    sourceExerciseId = definition.sourceExerciseId,
+                    sourceChapterId = definition.sourceChapterId,
+                    tonalLayoutId = initial.tonalLayouts.single().id,
+                    slotIds = listOf(initial.slots.single().id),
+                )
+            ),
+        )
+
+        val plan = FreePracticeViewProjector.plan(
+            workspace = workspace,
+            selectedSlotId = workspace.slots.single().id,
+            catalog = catalog,
+            idiomCatalog = PracticeIdiomCatalogView(definitions = listOf(definition)),
+            selectedIdiomInstanceId = instanceId,
+        )
+
+        val projected = plan.idiomCatalog.definitions.single()
+        assertEquals(4, projected.variants.size)
+        assertEquals(2, projected.choices.size)
+        assertEquals("local-triad", projected.choices.single { it.availableByDefault }.defaultVariantId)
+        assertEquals("viewed-triad", projected.choices.single { it.relatedToFocus }.relatedVariantId)
+        val form = requireNotNull(plan.selectedIdiomForm)
+        assertEquals(listOf(3, 4), form.steps.single().options.map { it.toneCount })
+        assertEquals(listOf("三和弦", "七和弦"), form.steps.single().options.map { it.label })
+    }
+
     @Test
     fun simultaneousReadingsFollowTheirTonalLineStartOrderInsteadOfPrimaryOrder() {
         val c = ModulationKey(0, KeySignatureMode.MAJOR)

@@ -189,6 +189,7 @@ object FreePracticeViewProjector {
         catalog: PracticeCatalogView,
         selectedIdiomTonalLayoutId: com.mecon.theory.freepractice.WorkspaceTonalLayoutId? = null,
         idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
+        selectedIdiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId? = null,
     ): PracticePlanView {
         val strings = PracticePlanStrings()
         val slot = selectedSlotId?.let { id -> workspace.slots.firstOrNull { it.id == id } }
@@ -258,12 +259,12 @@ object FreePracticeViewProjector {
                 tonalLayoutId = layout.id,
                 selected = layout.id == chordCatalogLayout?.id,
                 chordGroups = enrichedGroups,
+                toneCountFilters = chordToneCountFilters(enrichedGroups, strings.anyBass),
             )
         }
         val projectedIdiomCatalog = idiomCatalog.copy(
             definitions = idiomCatalog.definitions.map { definition ->
-                definition.copy(
-                    variants = definition.variants.map { variant ->
+                val variants = definition.variants.map { variant ->
                         val lead = variant.durations.take(variant.anchorStepIndex)
                             .fold(com.mecon.api.primitive.Fraction.ZERO) { total, duration -> total + duration }
                         val disabledReason = if (slot != null && slot.onset - lead <
@@ -280,7 +281,10 @@ object FreePracticeViewProjector {
                             enabled = disabledReason == null,
                             disabledReasonLabel = disabledReason,
                         )
-                    },
+                    }
+                definition.copy(
+                    variants = variants,
+                    choices = projectIdiomChoices(variants),
                 )
             },
         )
@@ -557,7 +561,143 @@ object FreePracticeViewProjector {
                 )
             },
             idiomCatalog = projectedIdiomCatalog,
+            selectedIdiomForm = selectedIdiomForm(
+                workspace,
+                selectedIdiomInstanceId,
+                projectedIdiomCatalog,
+            ),
         )
+    }
+
+    private fun chordToneCountFilters(
+        groups: List<PracticeChordCatalogGroupView>,
+        anyLabel: String,
+    ): List<PracticeChordToneCountFilterView> {
+        val counts = groups.asSequence()
+            .flatMap { it.choices.asSequence() }
+            .map { it.choice.pitchClasses.distinct().size }
+            .distinct()
+            .sorted()
+            .toList()
+        return listOf(
+            PracticeChordToneCountFilterView(
+                id = "any",
+                label = anyLabel,
+                chordGroups = groups,
+            )
+        ) + counts.map { count ->
+            PracticeChordToneCountFilterView(
+                id = "tones-$count",
+                toneCount = count,
+                label = "${count}音",
+                chordGroups = groups.mapNotNull { group ->
+                    group.copy(
+                        choices = group.choices.filter {
+                            it.choice.pitchClasses.distinct().size == count
+                        },
+                    ).takeIf { it.choices.isNotEmpty() }
+                },
+            )
+        }
+    }
+
+    /**
+     * The executable variants remain intact, while the catalog shows one basic formula per
+     * definition. Focused routes may expose a different formula, but size combinations never
+     * become separate rows.
+     */
+    private fun projectIdiomChoices(
+        variants: List<PracticeIdiomVariantView>,
+    ): List<PracticeIdiomChoiceView> {
+        val defaultStructureId = variants.firstOrNull { it.availableByDefault }?.structureId
+        return variants.groupBy(PracticeIdiomVariantView::realizationFamilyKey)
+            .map { (family, realizations) ->
+            fun baseline(source: List<PracticeIdiomVariantView>) = source.minWithOrNull(
+                compareBy<PracticeIdiomVariantView>(
+                    { it.effectiveToneCounts().sum() },
+                    { it.title },
+                    { it.id },
+                )
+            )
+            val base = requireNotNull(baseline(realizations))
+            val default = baseline(realizations.filter { it.availableByDefault }) ?: base
+            val related = baseline(realizations.filter { it.relatedToFocus })
+            val action = related ?: default
+            PracticeIdiomChoiceView(
+                id = "${family.structureId}@${family.interpretationContextId}@" +
+                    "${family.suggestedKey?.fifths}:${family.suggestedKey?.mode?.name}",
+                title = base.title,
+                displayLabel = action.displayLabel.ifBlank { base.title },
+                variantIds = realizations.map { it.id },
+                defaultVariantId = default.id,
+                relatedVariantId = related?.id,
+                suggestedKey = family.suggestedKey,
+                availableByDefault = family.structureId == defaultStructureId &&
+                    realizations.any { it.availableByDefault },
+                relatedToFocus = related != null,
+                enabled = action.enabled,
+                disabledReasonLabel = action.disabledReasonLabel,
+            )
+        }
+    }
+
+    private fun selectedIdiomForm(
+        workspace: HarmonyWorkspaceState,
+        selectedIdiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId?,
+        catalog: PracticeIdiomCatalogView,
+    ): PracticeSelectedIdiomFormView? {
+        val instance = selectedIdiomInstanceId?.let { id ->
+            workspace.idiomInstances.firstOrNull { it.id == id }
+        } ?: return null
+        val definition = catalog.definitions.firstOrNull { it.id == instance.definitionId } ?: return null
+        val selected = definition.variants.firstOrNull { it.id == instance.variantId } ?: return null
+        val selectedCounts = selected.effectiveToneCounts()
+        if (selectedCounts.size != selected.chordIdentities.size) return null
+        val selectedFamily = selected.realizationFamilyKey()
+        val realizations = definition.variants.filter { it.realizationFamilyKey() == selectedFamily }
+        val base = realizations.minWithOrNull(
+            compareBy<PracticeIdiomVariantView>({ it.effectiveToneCounts().sum() }, { it.id })
+        ) ?: return null
+        val steps = selectedCounts.indices.mapNotNull { stepIndex ->
+            val candidates = realizations.filter { candidate ->
+                val counts = candidate.effectiveToneCounts()
+                counts.size == selectedCounts.size && counts.indices.all { index ->
+                    index == stepIndex || counts[index] == selectedCounts[index]
+                }
+            }.map { it.effectiveToneCounts()[stepIndex] }.distinct().sorted()
+            if (candidates.size < 2) return@mapNotNull null
+            PracticeIdiomToneCountStepView(
+                stepIndex = stepIndex,
+                chordLabel = base.chordIdentities[stepIndex],
+                options = candidates.map { toneCount ->
+                    PracticeIdiomToneCountOptionView(
+                        toneCount = toneCount,
+                        label = chordStackLabel(toneCount),
+                        selected = toneCount == selectedCounts[stepIndex],
+                    )
+                },
+            )
+        }
+        return PracticeSelectedIdiomFormView(
+            idiomInstanceId = instance.id,
+            definitionId = definition.id,
+            structureId = selected.structureId,
+            title = base.title,
+            steps = steps,
+        ).takeIf { it.steps.isNotEmpty() }
+    }
+
+    private fun PracticeIdiomVariantView.effectiveToneCounts(): List<Int> =
+        chordToneCounts.takeIf { it.size == chordIdentities.size }
+            ?: chordChoices.map { it.pitchClasses.distinct().size }
+
+    private fun chordStackLabel(toneCount: Int): String = when (toneCount) {
+        3 -> "三和弦"
+        4 -> "七和弦"
+        5 -> "九和弦"
+        6 -> "十一和弦"
+        7 -> "十三和弦"
+        else -> "${toneCount}音和弦"
     }
 
     private fun Iterable<ChordSelectionChoice>.matching(

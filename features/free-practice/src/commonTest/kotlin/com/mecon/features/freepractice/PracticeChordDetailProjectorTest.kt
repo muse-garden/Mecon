@@ -144,7 +144,9 @@ class PracticeChordDetailProjectorTest {
         assertEquals(3, modalConstruction.events.count { event -> event.tones.single().muted.not() })
         assertEquals(0, modalConstruction.keySignatureFifths)
 
-        val neapolitan = groups.single { it.category.id == "neapolitan" }.chords.single()
+        val neapolitan = groups.single { it.category.id == "neapolitan" }.chords.single { chord ->
+            chord.interpretationRefs.any { it.interpretationId.value.endsWith("major.triad") }
+        }
         val relation = assertNotNull(
             PracticeChordDetailProjector.map(detail(neapolitan, snapshot)) { it }
                 .explanations.single { it.id == "schoenberg.neapolitan" }

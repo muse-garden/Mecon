@@ -456,6 +456,11 @@ internal fun FreePracticeWorkbench(
             }
             return@replaceIdiom
         },
+        setIdiomChordToneCount = { instanceId, stepIndex, toneCount ->
+            currentHost.value?.setIdiomChordToneCount(instanceId, stepIndex, toneCount) { message ->
+                completeWritingOperation(message)
+            } ?: reportMissingPracticeHost { operationError = it }
+        },
         removeIdiom = { id ->
             val succeeded = currentHost.value?.removeIdiom(id)
                 ?: reportMissingPracticeHost { operationError = it }

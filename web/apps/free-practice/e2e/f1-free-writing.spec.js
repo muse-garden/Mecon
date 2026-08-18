@@ -1359,6 +1359,22 @@ test("tonal layouts stay session-owned and narrow workbench tabs preserve the mo
     tonic: expect.not.arrayContaining(initialCatalogTonic),
   });
   await expect(page.getByText(/另 1 调：/).first()).toBeVisible();
+  const toneCountFilter = page.getByRole("group", { name: "组成音个数" });
+  await expect(toneCountFilter.getByRole("button", { name: "任意", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  await toneCountFilter.getByRole("button", { name: "4音", exact: true }).click();
+  await expect(toneCountFilter.getByRole("button", { name: "4音", exact: true }))
+    .toHaveAttribute("aria-pressed", "true");
+  const visibleToneCounts = await page.locator(".chord-catalog-group [data-choice-id]:visible")
+    .evaluateAll((buttons) => buttons.map((button) => button.dataset.choiceId));
+  const fourToneChoiceIds = await page.evaluate(() => {
+    const selected = window.__MECON_E2E__.snapshot().practiceUpdate.plan.chordCatalogFilters
+      .find((filter) => filter.selected);
+    return selected.toneCountFilters.find((filter) => filter.toneCount === 4).chordGroups
+      .flatMap((group) => group.choices).map((choice) => choice.id);
+  });
+  expect(visibleToneCounts.every((id) => fourToneChoiceIds.includes(id))).toBe(true);
+  await toneCountFilter.getByRole("button", { name: "任意", exact: true }).click();
   const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
   await autoWriting.click();
   await expectRevision(7);
@@ -1515,6 +1531,16 @@ test("teaching idiom catalog renders kernel data and dispatches stable-id insert
   await expect(offKeyToggle).toBeChecked({ timeout: 30_000 });
   await expect(idiomCatalog).not.toHaveAttribute("data-generation", catalogGeneration, { timeout: 60_000 });
   await expect(idiomCatalog.locator("button")).toHaveCount(defaultVariantCount);
+  const collapsedCadence = await page.evaluate(() => {
+    const definition = window.__MECON_E2E__.snapshot().practiceUpdate.plan.idiomCatalog.definitions
+      .find((item) => item.id === "schoenberg.cadence.complete-authentic");
+    return {
+      listed: definition.choices.filter((choice) => choice.availableByDefault).map((choice) => choice.title),
+      concreteCount: definition.variants.filter((variant) => variant.availableByDefault).length,
+    };
+  });
+  expect(collapsedCadence.listed).toEqual(["ii – V – I"]);
+  expect(collapsedCadence.concreteCount).toBeGreaterThan(1);
   const firstVariant = idiomCatalog.locator("button:not([disabled])").first();
   await expect(firstVariant).toBeEnabled();
   await firstVariant.click();
@@ -1523,6 +1549,19 @@ test("teaching idiom catalog renders kernel data and dispatches stable-id insert
   await expect(page.locator(".timeline-idiom-range")).toHaveCount(1);
   await expect(page.locator(".timeline-slot-control.locked")).not.toHaveCount(0);
   await expect(page.locator(".timeline-slot-control.locked .timeline-start-handle")).toHaveCount(0);
+  const form = await page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.plan.selectedIdiomForm);
+  expect(form.steps.length).toBeGreaterThan(0);
+  const firstStep = form.steps[0];
+  const alternate = firstStep.options.find((option) => !option.selected);
+  const revisionBeforeFormChange = await page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.revision);
+  const alternateFormButton = page.getByRole("group", { name: `${firstStep.chordLabel} 调整和弦形态` })
+    .getByRole("button", { name: alternate.label, exact: true });
+  await expect(alternateFormButton).toBeEnabled({ timeout: 30_000 });
+  await alternateFormButton.click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.revision), { timeout: 30_000 }).toBeGreaterThan(revisionBeforeFormChange);
 
   const [download] = await Promise.all([
     page.waitForEvent("download"),
@@ -1546,7 +1585,7 @@ test("teaching idiom catalog renders kernel data and dispatches stable-id insert
   await expect(page.locator(".practice-idiom-list li")).toHaveCount(0);
 });
 
-test("idiom catalog follows the selected chord after navigating to a progression tail", async ({ page }) => {
+test("off-key German-sixth form changes keep their target key and tail navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
   await expect(page.locator(".practice-revision-announcer")).toHaveText("revision 0", {
@@ -1564,11 +1603,53 @@ test("idiom catalog follows the selected chord after navigating to a progression
   await offKeyToggle.click();
   await expect(offKeyToggle).toBeChecked({ timeout: 30_000 });
   const idiomCatalog = page.getByTestId("idiom-catalog");
-  const gerToV7 = idiomCatalog.getByRole("button", { name: /^Ger\+6 – V7(?: ·|$)/ }).first();
-  await expect(gerToV7).toBeEnabled({ timeout: 60_000 });
-  await gerToV7.click();
+  const gerToV = idiomCatalog.getByRole("button", { name: /^Ger\+6 – V(?: ·|$)/ }).first();
+  await expect(gerToV).toBeEnabled({ timeout: 60_000 });
+  await gerToV.click();
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
     .practiceUpdate.document.workspace.idiomInstances.length), { timeout: 30_000 }).toBe(1);
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.writing.phase), { timeout: 60_000 }).toBe("READY");
+
+  const beforeFormChange = await page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const instance = update.document.workspace.idiomInstances[0];
+    const definition = update.plan.idiomCatalog.definitions
+      .find((item) => item.id === instance.definitionId);
+    const variant = definition.variants.find((item) => item.id === instance.variantId);
+    const step = update.plan.selectedIdiomForm.steps
+      .find((item) => item.options.some((option) => option.toneCount === 4 && !option.selected));
+    return {
+      revision: update.revision,
+      tonalLayoutId: instance.tonalLayoutId,
+      suggestedKey: variant.suggestedKey,
+      stepIndex: step.stepIndex,
+      chordLabel: step.chordLabel,
+    };
+  });
+  await page.getByRole("group", {
+    name: `${beforeFormChange.chordLabel} 调整和弦形态`,
+  }).getByRole("button", { name: "七和弦", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
+    .practiceUpdate.revision), { timeout: 30_000 }).toBeGreaterThan(beforeFormChange.revision);
+  await expect.poll(() => page.evaluate((expected) => {
+    const update = window.__MECON_E2E__.snapshot().practiceUpdate;
+    const instance = update.document.workspace.idiomInstances[0];
+    const definition = update.plan.idiomCatalog.definitions
+      .find((item) => item.id === instance.definitionId);
+    const variant = definition.variants.find((item) => item.id === instance.variantId);
+    return {
+      tonalLayoutId: instance.tonalLayoutId,
+      suggestedKey: variant.suggestedKey,
+      toneCount: variant.chordToneCounts[expected.stepIndex],
+      title: variant.title,
+    };
+  }, beforeFormChange), { timeout: 60_000 }).toEqual({
+    tonalLayoutId: beforeFormChange.tonalLayoutId,
+    suggestedKey: beforeFormChange.suggestedKey,
+    toneCount: 4,
+    title: expect.stringMatching(/^Ger\+6 – V7/),
+  });
   await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.snapshot()
     .practiceUpdate.writing.phase), { timeout: 60_000 }).toBe("READY");
 
@@ -1582,9 +1663,9 @@ test("idiom catalog follows the selected chord after navigating to a progression
   // catalog generation. The rendered memo must follow those authoritative definitions.
   await expect.poll(() => page.evaluate(() => {
     const plan = window.__MECON_E2E__.snapshot().practiceUpdate.plan;
-    const expected = plan.idiomCatalog.definitions.flatMap((definition) => definition.variants
-      .filter((variant) => variant.relatedToFocus)
-      .map((variant) => variant.displayLabel));
+    const expected = plan.idiomCatalog.definitions.flatMap((definition) => definition.choices
+      .filter((choice) => choice.relatedToFocus)
+      .map((choice) => choice.displayLabel));
     const rendered = [...document.querySelectorAll('[data-testid="idiom-catalog"] button')]
       .map((button) => button.textContent);
     return {

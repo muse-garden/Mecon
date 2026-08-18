@@ -801,6 +801,9 @@ export function App() {
     onReplaceIdiom={(idiomInstanceId, definitionId, variantId) => dispatchPractice({
       type: "replaceIdiom", idiomInstanceId, definitionId, variantId,
     })}
+    onSetIdiomChordToneCount={(idiomInstanceId, stepIndex, toneCount) => dispatchPractice({
+      type: "setIdiomChordToneCount", idiomInstanceId, stepIndex, toneCount,
+    })}
     onSelectIdiom={(idiomInstanceId) => dispatchPractice({ type: "selectIdiom", idiomInstanceId })}
     onSetCatalogFilter={(includeOffKey) => dispatchPractice({ type: "setCatalogFilter", includeOffKey })}
     onRemoveIdiom={(idiomInstanceId) => dispatchPractice({ type: "removeIdiom", idiomInstanceId })}
@@ -971,4 +974,3 @@ export function App() {
     </ScoreEditor>
   );
 }
-

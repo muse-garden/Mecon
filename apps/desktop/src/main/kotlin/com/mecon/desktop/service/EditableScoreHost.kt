@@ -697,6 +697,21 @@ class HarmonyPracticeScoreHost(
         onComplete,
     )
 
+    fun setIdiomChordToneCount(
+        idiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId,
+        stepIndex: Int,
+        toneCount: Int,
+        onComplete: (String?) -> Unit = {},
+    ) = dispatchWorkspaceIntent(
+        FreePracticeIntent.SetIdiomChordToneCount(
+            freePracticeSession.frame().revision,
+            idiomInstanceId,
+            stepIndex,
+            toneCount,
+        ),
+        onComplete,
+    )
+
     fun removeIdiom(idiomInstanceId: com.mecon.theory.freepractice.WorkspaceIdiomInstanceId): Boolean =
         dispatchImmediate { revision -> FreePracticeIntent.RemoveIdiom(revision, idiomInstanceId) }
 

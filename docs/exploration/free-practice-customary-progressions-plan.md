@@ -251,3 +251,19 @@ solution target 属于对应槽允许域，再交给物化器。
 - Workbench 仅在用户手动选和弦、改低音/转位或移动时间轴和弦时更新瞬态的
   `lastUserEditedOnset`；惯用进行自动填充不更新该标记。长进行覆盖成短进行时，若标记尚未到达
   缩短后多出的尾段，则 reducer 删除该未编辑尾段；若用户已经编辑到尾段，则保留为普通和声槽。
+
+## 15. 基础进行与和弦规模轴（2026-08-18）
+
+- 教学目录继续保留章节产出的全部具体变体，供 session 校验、插入、替换与规则投影；面板改为消费
+  `PracticeIdiomChoiceView`，默认每个 definition 只列一个基础公式。例如“完整的正格终止”只列
+  `ii–V–I`，不再把 `ii7–V–I`、`ii–V7–I`、`ii7–V7–I` 各画成独立按钮。
+- 具体变体以去除和弦规模后的 `structureId` 归组。插入基础进行后，`PracticeSelectedIdiomFormView`
+  在面板顶部列出可调整步骤；`SetIdiomChordToneCount` 由共享 session 在同一结构内寻找目标变体并
+  原子替换，Desktop/Web 不拼 variant id，也不自行推导和弦。
+- 规模切换的候选 family 同时包含 `structureId`、目标调 `suggestedKey` 与重解释谱系
+  `interpretationContextId`。例如把本调 V7 视作离调 Ger+6 后，将尾部 V 改为 V7 仍留在同一目标调，
+  不得因本调存在同形 `Ger+6–V7` 而串回本调。
+- 规模轴在 wire 上使用开放的 `toneCount: Int`，不固定为三/七和弦枚举。当前标签为三和弦、七和弦；
+  未来九、十一、十三和弦沿同一轴扩展，基础公式、平台组件和 intent 形状均不需要重做。
+- “与当前和弦相关”仍可展示与 focus 匹配的其他基础公式；“全部教材进行”只展示每类首选基础公式。
+  离调目标调仍是 choice 身份的一部分，不能把不同目标调的同形公式合并为一个按钮。

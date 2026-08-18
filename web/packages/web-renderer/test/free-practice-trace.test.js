@@ -168,12 +168,16 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         tonalLayoutId: insertedTonalLayoutId,
       });
     } else if (step.kind === "applyCatalogFixture") {
-      const variant = (id) => ({
+      const variant = (id, toneCount, interpretationContextId) => ({
         id,
+        structureId: "trace-basic",
+        interpretationContextId,
         title: id,
         durations: [{ numerator: 1, denominator: 4 }],
         chordIdentities: ["I"],
-        chordChoices: [session.initialUpdate().catalog.chordChoices[0].choice],
+        chordChoices: [session.initialUpdate().catalog.chordChoices
+          .map((item) => item.choice).find((choice) => choice.pitchClasses.length === toneCount)],
+        chordToneCounts: [toneCount],
         targetKeyDistance: 0,
         parameters: {},
         anchorStepIndex: 0,
@@ -189,7 +193,12 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
           sourceExerciseId: "trace-exercise",
           sourceChapterId: "trace-chapter",
           availableByDefault: true,
-          variants: [variant("variant-a"), variant("variant-b")],
+          variants: [
+            variant("local-a", 3, ""),
+            variant("local-b", 4, ""),
+            variant("variant-a", 3, "viewed-as:6:MAJOR"),
+            variant("variant-b", 4, "viewed-as:6:MAJOR"),
+          ],
         }],
       });
     } else if (step.kind === "insertIdiom") {
@@ -201,13 +210,13 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         variantId: "variant-a",
       });
       insertedIdiomId = update.document.workspace.idiomInstances[0].id;
-    } else if (step.kind === "replaceIdiom") {
+    } else if (step.kind === "setIdiomChordToneCount") {
       update = session.dispatch({
-        type: "replaceIdiom",
+        type: "setIdiomChordToneCount",
         expectedRevision: step.expectedRevision,
         idiomInstanceId: insertedIdiomId,
-        definitionId: "trace.idiom",
-        variantId: "variant-b",
+        stepIndex: 0,
+        toneCount: 4,
       });
     } else if (step.kind === "selectIdiom") {
       update = session.dispatch({
@@ -471,7 +480,7 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
     }
     if (update.catalogRequests.length === 1) catalogRequest = update.catalogRequests[0];
     if (update.findingRequests.length === 1) findingRequest = update.findingRequests[0];
-    assert.equal(update.schemaVersion, 4, `${step.kind} schema`);
+    assert.equal(update.schemaVersion, 5, `${step.kind} schema`);
     assert.equal(update.revision, step.revision, step.kind);
     assert.equal(update.effect.kind, step.effect, step.kind);
     if (step.editPlayback !== undefined) {

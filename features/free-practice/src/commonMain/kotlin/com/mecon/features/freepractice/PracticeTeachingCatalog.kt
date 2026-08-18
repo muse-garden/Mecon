@@ -44,11 +44,18 @@ object PracticeTeachingCatalogExecutor {
                 val definition = sameDefinitions.first()
                 val focusedVariants = focusedDefinitions.filter { it.id == definitionId }.flatMap { it.variants }
                 val defaultVariants = defaultDefinitions.filter { it.id == definitionId }.flatMap { it.variants }
-                val variants = (focusedVariants + defaultVariants).groupBy { it.id }.map { (_, sameVariants) ->
+                fun variantIdentity(variant: com.mecon.theory.schoenberg.SchoenbergFreePracticeIdiomVariant) =
+                    Triple(variant.id, variant.interpretationContextId, variant.suggestedKey)
+                val focusedIdentities = focusedVariants.mapTo(hashSetOf(), ::variantIdentity)
+                val defaultIdentities = defaultVariants.mapTo(hashSetOf(), ::variantIdentity)
+                // Keep the focus-independent order first: it defines which structure is the one
+                // basic progression shown in the default catalog. Reinterpretations with the same
+                // legacy variant id remain separate families instead of losing focused metadata.
+                val variants = (defaultVariants + focusedVariants).groupBy(::variantIdentity).map { (identity, sameVariants) ->
                     val variant = sameVariants.first()
                     variant to Pair(
-                        focusedVariants.any { it.id == variant.id },
-                        defaultVariants.any { it.id == variant.id },
+                        identity in focusedIdentities,
+                        identity in defaultIdentities,
                     )
                 }
                 PracticeIdiomDefinitionView(
@@ -60,10 +67,13 @@ object PracticeTeachingCatalogExecutor {
                     variants = variants.mapNotNull { (variant, membership) ->
                         val view = PracticeIdiomVariantView(
                             id = variant.id,
+                            structureId = variant.structureId,
+                            interpretationContextId = variant.interpretationContextId,
                             title = variant.title,
                             durations = variant.durations,
                             chordIdentities = variant.chordIdentities,
                             chordChoices = variant.chordChoices,
+                            chordToneCounts = variant.chordToneCounts,
                             suggestedKey = variant.suggestedKey?.let {
                                 PracticeKeyView(it.fifths, WorkspaceKeyMode.fromTheory(it.mode))
                             },

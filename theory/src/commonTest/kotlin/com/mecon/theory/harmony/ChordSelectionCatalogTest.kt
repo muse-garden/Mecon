@@ -132,12 +132,20 @@ class ChordSelectionCatalogTest {
         val groups = ChordSelectionCatalog.groups(ModulationKey(0, KeySignatureMode.MAJOR))
         val neapolitanGroup = groups.single { it.category.id == "neapolitan" }
         val relatedGroup = groups.single { it.category.id == "minor-subdominant-related" }
-        val neapolitan = neapolitanGroup.chords.single()
-        val neapolitanRef = neapolitan.interpretationRefs.single()
+        val neapolitans = neapolitanGroup.chords
+        val neapolitanRefs = neapolitans.flatMap { it.interpretationRefs }
 
-        assertEquals("minor-subdominant.2.-1.major.triad", neapolitanRef.interpretationId.value)
-        assertEquals(ChordCatalogCategoryId("neapolitan"), neapolitan.origin.categoryId)
-        assertFalse(relatedGroup.chords.any { neapolitanRef in it.interpretationRefs })
+        assertEquals(
+            setOf(
+                "minor-subdominant.2.-1.major.triad",
+                "minor-subdominant.2.-1.major7.seventh",
+            ),
+            neapolitanRefs.map { it.interpretationId.value }.toSet(),
+        )
+        assertTrue(neapolitans.all { it.origin.categoryId == ChordCatalogCategoryId("neapolitan") })
+        assertFalse(relatedGroup.chords.any { related ->
+            neapolitanRefs.any { it in related.interpretationRefs }
+        })
         assertTrue(groups.indexOf(neapolitanGroup) < groups.indexOf(relatedGroup))
     }
 

@@ -100,6 +100,7 @@ export function PracticePlanPanel({
   onSelectIdiomTonalLayout,
   onInsertIdiom,
   onReplaceIdiom,
+  onSetIdiomChordToneCount,
   onRemoveIdiom,
   onSelectIdiom,
   onSetCatalogFilter,
@@ -116,6 +117,7 @@ export function PracticePlanPanel({
   const [showDoubleTonality, setShowDoubleTonality] = useState(false);
   const [idiomTab, setIdiomTab] = useState("RELATED");
   const [targetKeyId, setTargetKeyId] = useState("all");
+  const [chordToneCountFilterId, setChordToneCountFilterId] = useState("any");
 
   useEffect(() => {
     if (!showInsertTonalLayout) return undefined;
@@ -145,14 +147,14 @@ export function PracticePlanPanel({
     const definitions = plan?.idiomCatalog?.definitions ?? [];
     return definitions.map((definition) => ({
       ...definition,
-      variants: definition.variants.filter((variant) => {
-        const inTab = idiomTab === "RELATED" ? variant.relatedToFocus : variant.availableByDefault;
+      choices: (definition.choices ?? []).filter((choice) => {
+        const inTab = idiomTab === "RELATED" ? choice.relatedToFocus : choice.availableByDefault;
         if (!inTab) return false;
         if (targetKeyId === "all") return true;
-        return variant.suggestedKey &&
-          `${variant.suggestedKey.fifths}:${variant.suggestedKey.mode}` === targetKeyId;
+        return choice.suggestedKey &&
+          `${choice.suggestedKey.fifths}:${choice.suggestedKey.mode}` === targetKeyId;
       }),
-    })).filter((definition) => definition.variants.length > 0);
+    })).filter((definition) => definition.choices.length > 0);
   }, [plan?.idiomCatalog?.definitions, idiomTab, targetKeyId]);
 
   if (!update || !plan || !strings) return <aside className="panel practice-plan-panel">
@@ -167,7 +169,12 @@ export function PracticePlanPanel({
   const chordCatalogFilters = plan.chordCatalogFilters ?? [];
   const selectedChordCatalog = chordCatalogFilters.find((filter) => filter.selected)
     ?? chordCatalogFilters[0];
-  const chordCatalogGroups = selectedChordCatalog?.chordGroups ?? plan.chordCatalogGroups;
+  const chordToneCountFilters = selectedChordCatalog?.toneCountFilters ?? [];
+  const selectedToneCountFilter = chordToneCountFilters.find(
+    (filter) => filter.id === chordToneCountFilterId,
+  ) ?? chordToneCountFilters[0];
+  const chordCatalogGroups = selectedToneCountFilter?.chordGroups
+    ?? selectedChordCatalog?.chordGroups ?? plan.chordCatalogGroups;
   const readingTones = (reading) => toneMode === "ABSOLUTE"
     ? reading.absoluteTonesLabel : reading.relativeTonesLabel;
   const writingLocked = update.writing.phase === "RUNNING";
@@ -310,6 +317,15 @@ export function PracticePlanPanel({
             aria-pressed={filter.selected}
             onClick={() => onSelectTonalLayout(filter.tonalLayoutId)}>{filter.keyLabel}</button>)}
         </div>}
+        {!!chordToneCountFilters.length && <div className="bass-selection">
+          <span>{strings.chordToneCount}</span>
+          <div className="practice-choice-list idiom-target-filter" role="group"
+            aria-label={strings.chordToneCount}>
+            {chordToneCountFilters.map((filter) => <button key={filter.id} type="button"
+              aria-pressed={filter.id === selectedToneCountFilter?.id}
+              onClick={() => setChordToneCountFilterId(filter.id)}>{filter.label}</button>)}
+          </div>
+        </div>}
         {chordCatalogGroups.map((group) => <section key={group.id} className="chord-catalog-group">
           <p><strong>{group.titleLabel}：</strong>{group.descriptionLabel}</p>
           <div className="practice-choice-list">{group.choices.map((choice) => <button
@@ -336,6 +352,23 @@ export function PracticePlanPanel({
 
     {visibleSections.has("idioms") && <details className="plan-section workbench-panel idiom-panel" open>
       <summary><ChevronRight className="disclosure-icon" aria-hidden="true" size={17} strokeWidth={1.8} /><h2>{strings.idiomTitle}</h2></summary>
+      {plan.selectedIdiomForm && <div className="idiom-form-controls">
+        <strong>{strings.idiomChordForms}</strong>
+        <small>{plan.selectedIdiomForm.title}</small>
+        {plan.selectedIdiomForm.steps.map((step) => <div className="bass-selection" key={step.stepIndex}>
+          <span>{step.chordLabel}</span>
+          <div className="practice-choice-list idiom-target-filter" role="group"
+            aria-label={`${step.chordLabel} ${strings.idiomChordForms}`}>
+            {step.options.map((option) => <button key={option.toneCount} type="button"
+              aria-pressed={option.selected} disabled={!option.enabled || writingLocked}
+              onClick={() => onSetIdiomChordToneCount(
+                plan.selectedIdiomForm.idiomInstanceId,
+                step.stepIndex,
+                option.toneCount,
+              )}>{option.label}</button>)}
+          </div>
+        </div>)}
+      </div>}
       {(plan.idiomCatalogFilters ?? []).length > 1 && <>
         <span>{strings.idiomCatalogTonality}</span>
         <div className="practice-choice-list" role="group" aria-label={strings.idiomCatalogTonality}>
@@ -370,16 +403,18 @@ export function PracticePlanPanel({
         data-generation={plan.idiomCatalog.generation}>
         {idiomDefinitions.map((definition) => <div key={definition.id} className="practice-flat-list">
           <strong>{definition.title}</strong>
-          <div className="practice-choice-list">{definition.variants.filter((variant) =>
-            idiomTab === "RELATED" ? variant.relatedToFocus : variant.availableByDefault,
-          ).filter((variant) => targetKeyId === "all" || (variant.suggestedKey &&
-            `${variant.suggestedKey.fifths}:${variant.suggestedKey.mode}` === targetKeyId)).map((variant) => <button
-            key={variant.id} type="button" disabled={!variant.enabled || writingLocked}
-            title={variant.disabledReasonLabel ?? undefined}
-            aria-pressed={selectedIdiom?.definitionId === definition.id && selectedIdiom?.variantId === variant.id}
-            onClick={() => selectedIdiom
-              ? onReplaceIdiom(selectedIdiom.id, definition.id, variant.id)
-              : onInsertIdiom(definition.id, variant.id)}>{variant.displayLabel}</button>)}</div>
+          <div className="practice-choice-list">{definition.choices.map((choice) => {
+            const variantId = idiomTab === "RELATED"
+              ? (choice.relatedVariantId ?? choice.defaultVariantId)
+              : choice.defaultVariantId;
+            return <button key={choice.id} type="button" disabled={!choice.enabled || writingLocked}
+              title={choice.disabledReasonLabel ?? undefined}
+              aria-pressed={selectedIdiom?.definitionId === definition.id &&
+                choice.variantIds.includes(selectedIdiom?.variantId)}
+              onClick={() => selectedIdiom
+                ? onReplaceIdiom(selectedIdiom.id, definition.id, variantId)
+                : onInsertIdiom(definition.id, variantId)}>{choice.displayLabel}</button>;
+          })}</div>
         </div>)}
       </div>
     </details>}

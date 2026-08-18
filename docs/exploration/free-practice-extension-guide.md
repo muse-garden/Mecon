@@ -101,6 +101,15 @@ ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProject
 `PracticePlanView.tonalKeyChoices`。tab、展开状态和相对/绝对音切换可保留为瞬时 UI 状态。
 和弦目录的分组标题、说明以及相对/绝对音芯片标签由 `PracticePlanView.chordCatalogGroups` 提供；
 两端均展示带内部滚动的分类平铺目录，不允许 Web 将其降级成单行原生 `select`。
+组成音个数筛选同样由 `PracticeChordToneCountFilterView` 发布已经过滤好的分组；平台只保留当前
+筛选项的瞬时选择，不得按 `pitchClasses.size` 再过滤。筛选轴使用开放整数，因此加入九和弦等高叠
+和弦时由 commonMain 自动增加选项，不扩平台枚举。
+
+惯用进行面板消费 `PracticeIdiomDefinitionView.choices`，不直接把内部 concrete `variants` 平铺。
+默认目录每类只显示基础公式；选中已插入进行后，顶部消费 `selectedIdiomForm`，以
+`SetIdiomChordToneCount` 调整各步骤的三/七和弦形态。具体 variant 查找、合法性和原子替换均在 session。
+形态变体必须共享 `structureId`，同时保留 `suggestedKey` 与 `interpretationContextId`；投影和 session
+统一使用三者组成的 realization family key，平台不得按标题或和弦符号自行寻找替代变体。
 
 自由练习当前有经典布局与分区布局。桌面由顶栏切换：经典布局继续同时纵排五线谱与钢琴卷轴；
 分区布局的写作区一次只挂载一个表面，并在五线谱/钢琴卷轴之间切换，写作区下方以可调高度的

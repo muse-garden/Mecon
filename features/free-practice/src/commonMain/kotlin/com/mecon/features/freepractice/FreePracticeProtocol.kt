@@ -166,6 +166,21 @@ sealed interface FreePracticeIntent {
         val variantId: String,
     ) : FreePracticeIntent
 
+    /** Changes one step's chord size while preserving the selected basic progression formula. */
+    @Serializable
+    @SerialName("setIdiomChordToneCount")
+    data class SetIdiomChordToneCount(
+        override val expectedRevision: Long,
+        val idiomInstanceId: WorkspaceIdiomInstanceId,
+        val stepIndex: Int,
+        val toneCount: Int,
+    ) : FreePracticeIntent {
+        init {
+            require(stepIndex >= 0)
+            require(toneCount > 0)
+        }
+    }
+
     @Serializable
     @SerialName("insertChordRange")
     data class InsertChordRange(
@@ -529,6 +544,17 @@ data class PracticeChordCatalogFilterView(
     val tonalLayoutId: WorkspaceTonalLayoutId,
     val selected: Boolean = false,
     val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
+    val toneCountFilters: List<PracticeChordToneCountFilterView> = emptyList(),
+)
+
+@Serializable
+data class PracticeChordToneCountFilterView(
+    val id: String,
+    /** Null means no tone-count restriction. */
+    val toneCount: Int? = null,
+    val label: String,
+    /** Already filtered by commonMain; platforms only choose and render one result. */
+    val chordGroups: List<PracticeChordCatalogGroupView> = emptyList(),
 )
 
 @Serializable
@@ -800,6 +826,7 @@ data class PracticePlanStrings(
     val followManualTonality: String = "跟随调性线",
     val chordCatalog: String = "选择和弦",
     val chordCatalogTonality: String = "按哪个调选和弦",
+    val chordToneCount: String = "组成音个数",
     val idiomCatalogTonality: String = "按哪个调选惯用进行",
     val chooseChord: String = "选用和弦",
     val bass: String = "低音",
@@ -823,6 +850,7 @@ data class PracticePlanStrings(
     val detachIdiom: String = "解除",
     val insertIdiom: String = "插入到当前和弦",
     val replaceIdiom: String = "替换当前进行",
+    val idiomChordForms: String = "调整和弦形态",
     val idiomCatalogError: String = "目录加载失败",
 )
 
@@ -857,6 +885,7 @@ data class PracticePlanView(
     val idiomTargetKeys: List<PracticePlanKeyFilterView> = emptyList(),
     val idiomCatalogFilters: List<PracticePlanTonalLayoutFilterView> = emptyList(),
     val idiomCatalog: PracticeIdiomCatalogView = PracticeIdiomCatalogView(),
+    val selectedIdiomForm: PracticeSelectedIdiomFormView? = null,
 )
 
 @Serializable
@@ -880,10 +909,16 @@ data class FreePracticeSelection(
 @Serializable
 data class PracticeIdiomVariantView(
     val id: String,
+    /** Shared basic-progression identity; variants differ only in selectable chord sizes. */
+    val structureId: String = id,
+    /** Reinterpretation lineage that must survive a chord-size change. */
+    val interpretationContextId: String = "",
     val title: String,
     val durations: List<Fraction>,
     val chordIdentities: List<String>,
     val chordChoices: List<WorkspaceChordChoice> = emptyList(),
+    /** Open integer axis rather than a triad/seventh enum, so higher stacks extend the same wire. */
+    val chordToneCounts: List<Int> = emptyList(),
     val suggestedKey: PracticeKeyView? = null,
     val targetKeyDistance: Int = 0,
     val parameters: Map<String, String> = emptyMap(),
@@ -919,6 +954,56 @@ data class PracticeIdiomDefinitionView(
     val availableByDefault: Boolean,
     val variants: List<PracticeIdiomVariantView>,
     val relatedToFocus: Boolean = false,
+    /** Collapsed, presentation-ready basic progressions. Concrete [variants] stay session-owned. */
+    val choices: List<PracticeIdiomChoiceView> = emptyList(),
+)
+
+@Serializable
+data class PracticeIdiomChoiceView(
+    val id: String,
+    val title: String,
+    val displayLabel: String,
+    val variantIds: List<String>,
+    val defaultVariantId: String,
+    val relatedVariantId: String? = null,
+    val suggestedKey: PracticeKeyView? = null,
+    val availableByDefault: Boolean = false,
+    val relatedToFocus: Boolean = false,
+    val enabled: Boolean = true,
+    val disabledReasonLabel: String? = null,
+)
+
+internal data class PracticeIdiomRealizationFamilyKey(
+    val structureId: String,
+    val interpretationContextId: String,
+    val suggestedKey: PracticeKeyView?,
+)
+
+internal fun PracticeIdiomVariantView.realizationFamilyKey(): PracticeIdiomRealizationFamilyKey =
+    PracticeIdiomRealizationFamilyKey(structureId, interpretationContextId, suggestedKey)
+
+@Serializable
+data class PracticeIdiomToneCountOptionView(
+    val toneCount: Int,
+    val label: String,
+    val selected: Boolean,
+    val enabled: Boolean = true,
+)
+
+@Serializable
+data class PracticeIdiomToneCountStepView(
+    val stepIndex: Int,
+    val chordLabel: String,
+    val options: List<PracticeIdiomToneCountOptionView>,
+)
+
+@Serializable
+data class PracticeSelectedIdiomFormView(
+    val idiomInstanceId: WorkspaceIdiomInstanceId,
+    val definitionId: String,
+    val structureId: String,
+    val title: String,
+    val steps: List<PracticeIdiomToneCountStepView>,
 )
 
 @Serializable

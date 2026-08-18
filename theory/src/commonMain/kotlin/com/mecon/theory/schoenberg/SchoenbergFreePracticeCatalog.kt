@@ -99,6 +99,10 @@ class SchoenbergFreePracticeCatalogIndex internal constructor(
 
 data class SchoenbergFreePracticeIdiomVariant(
     val id: String,
+    /** Stable formula identity with chord size removed; concrete realizations share this id. */
+    val structureId: String = id,
+    /** Stable reinterpretation lineage within one structure and target key. */
+    val interpretationContextId: String = "",
     val title: String,
     val chordIdentities: List<String>,
     val durations: List<Fraction>,
@@ -107,6 +111,8 @@ data class SchoenbergFreePracticeIdiomVariant(
     val targetKeyDistance: Int = 0,
     val parameters: Map<String, String> = emptyMap(),
     val chordChoices: List<WorkspaceChordChoice> = emptyList(),
+    /** Exact sounding-tone count per step; intentionally open-ended for ninth chords and beyond. */
+    val chordToneCounts: List<Int> = emptyList(),
     val anchorStepIndex: Int = 0,
     /** Step indices whose inversion is structurally required by the source chapter rules. */
     val fixedInversionStepIndices: Set<Int> = emptySet(),
@@ -122,6 +128,8 @@ data class SchoenbergFreePracticeIdiomVariant(
         require(chordIdentities.size == durations.size)
         require(durations.all { it.isPositive })
         require(chordChoices.isEmpty() || chordChoices.size == chordIdentities.size)
+        require(chordToneCounts.isEmpty() || chordToneCounts.size == chordIdentities.size)
+        require(chordToneCounts.all { it > 0 })
         require(anchorStepIndex in chordIdentities.indices)
         require(fixedInversionStepIndices.all(chordIdentities.indices::contains))
         require(customaryBassStepIndices.all(chordIdentities.indices::contains))
@@ -510,6 +518,9 @@ private fun SchoenbergFreePracticeIdiomVariant.withGermanDominantSeventhReading(
     return copy(
         title = identities.joinToString(" – "),
         chordIdentities = identities,
+        interpretationContextId = interpretationContextId.appendInterpretationContext(
+            "german-as-dominant:${focus.chordChoice.pinnedInterpretationRef?.interpretationId?.value}"
+        ),
         parameters = parameters + (VIEWED_AS_DOMINANT_SEVENTH_PARAMETER to "true"),
         fixedInversionStepIndices = fixedInversionStepIndices - (anchorStepIndex + 1),
         customaryBassStepIndices = customaryBassStepIndices + anchorStepIndex,
@@ -557,6 +568,9 @@ private fun SchoenbergFreePracticeIdiomVariant.withLocalAlteredReadings(
         id = "$id.viewed-as-${focus.key.fifths}-${focus.key.mode.name.lowercase()}",
         title = identities.joinToString(" – "),
         chordIdentities = identities,
+        interpretationContextId = interpretationContextId.appendInterpretationContext(
+            "viewed-as:${sourceKey.fifths}:${sourceKey.mode.name}"
+        ),
         suggestedKey = focus.key,
         targetKeyDistance = 0,
         parameters = parameters + mapOf(
@@ -568,6 +582,9 @@ private fun SchoenbergFreePracticeIdiomVariant.withLocalAlteredReadings(
         chordChoices = remappedChoices,
     )
 }
+
+private fun String.appendInterpretationContext(context: String): String =
+    if (isEmpty()) context else "$this|$context"
 
 private fun List<ChordSelectionChoice>.readingForFocus(
     focus: SchoenbergFreePracticeChordFocus,
@@ -1358,8 +1375,10 @@ private fun idiomVariant(
         )
     }
     val identities = slots.map(SchoenbergSymbolicChord::freePracticeIdentity)
+    val workspaceChoices = targets.map(InterpretedChordTarget::toWorkspaceChordChoice)
     SchoenbergFreePracticeIdiomVariant(
         id = id,
+        structureId = slots.idiomStructureId(),
         title = identities.joinToString(" – "),
         chordIdentities = identities,
         durations = List(slots.size) { Fraction.QUARTER },
@@ -1367,7 +1386,8 @@ private fun idiomVariant(
         parameters = parameters + teachingSource
             ?.let { mapOf(TEACHING_SOURCE_PARAMETER to SchoenbergTeachingSourceCodec.encode(it)) }
             .orEmpty(),
-        chordChoices = targets.map(InterpretedChordTarget::toWorkspaceChordChoice),
+        chordChoices = workspaceChoices,
+        chordToneCounts = workspaceChoices.map { it.pitchClasses.size },
         anchorStepIndex = anchorStepIndex,
         fixedInversionStepIndices = fixedInversionStepIndices,
         customaryBassStepIndices = slots.mapIndexedNotNullTo(linkedSetOf()) { index, chord ->
@@ -1380,6 +1400,37 @@ private fun idiomVariant(
         avoidSecondInversionStepIndices = avoidSecondInversionStepIndices,
     )
 }.getOrNull()
+
+/**
+ * Collapses only chord size. Function, chromatic spelling, family and inversion remain part of the
+ * formula, so a future ninth/eleventh/thirteenth realization can join the same basic progression
+ * without teaching a platform UI about new [ChordArity] values.
+ */
+private fun List<SchoenbergSymbolicChord>.idiomStructureId(): String = joinToString("|") { chord ->
+    listOf(
+        chord.degree,
+        chord.rootAlteration,
+        chord.quality.structureFamily(),
+        chord.appliedToDegree,
+        chord.secondaryFamily,
+        chord.augmentedSixthFamily,
+        chord.position.ordinal,
+        chord.rootlessDominantNinthChordId,
+        chord.rootlessDominantNinthUsageId,
+    ).joinToString(":")
+}
+
+private fun ChordQuality.structureFamily(): String = when (this) {
+    ChordQuality.MAJOR7, ChordQuality.DOMINANT7, ChordQuality.MAJOR9,
+    ChordQuality.DOMINANT9, ChordQuality.MAJOR11, ChordQuality.DOMINANT11,
+    ChordQuality.MAJOR13, ChordQuality.DOMINANT13,
+    -> ChordQuality.MAJOR.name
+    ChordQuality.MINOR7, ChordQuality.MINOR_MAJOR7, ChordQuality.MINOR9,
+    ChordQuality.MINOR11, ChordQuality.MINOR13,
+    -> ChordQuality.MINOR.name
+    ChordQuality.DIMINISHED7, ChordQuality.HALF_DIMINISHED7 -> ChordQuality.DIMINISHED.name
+    else -> name
+}
 
 private fun SchoenbergFreePracticeIdiomVariant.withCadentialSixFourBeforeLast(
     key: ModulationKey,
@@ -1400,6 +1451,9 @@ private fun SchoenbergFreePracticeIdiomVariant.withCadentialSixFourBeforeLast(
     return listOf(
         copy(
             id = "$id.with-i64",
+            structureId = structureId.split("|").toMutableList().apply {
+                add(insertion, sixFour.structureId)
+            }.joinToString("|"),
             title = (chordIdentities.toMutableList().apply {
                 add(insertion, sixFour.chordIdentities.single())
             }).joinToString(" – "),
@@ -1411,6 +1465,9 @@ private fun SchoenbergFreePracticeIdiomVariant.withCadentialSixFourBeforeLast(
             },
             chordChoices = chordChoices.toMutableList().apply {
                 add(insertion, sixFour.chordChoices.single())
+            },
+            chordToneCounts = chordToneCounts.toMutableList().apply {
+                add(insertion, sixFour.chordToneCounts.single())
             },
             anchorStepIndex = if (anchorStepIndex >= insertion) anchorStepIndex + 1 else anchorStepIndex,
             fixedInversionStepIndices = fixedInversionStepIndices.mapTo(linkedSetOf()) { index ->

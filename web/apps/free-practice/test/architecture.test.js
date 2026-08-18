@@ -76,16 +76,19 @@ test("right panel replays the shared plan projection without duplicating top-too
   assert.match(plan, /plan\.tonalityChoices/);
   assert.match(plan, /plan\.bassChoices/);
   assert.match(plan, /plan\.chordCatalogGroups/);
-  assert.match(plan, /variant\.displayLabel/);
-  assert.match(plan, /variant\.relatedToFocus/);
-  assert.match(plan, /variant\.availableByDefault/);
+  assert.match(plan, /choice\.displayLabel/);
+  assert.match(plan, /choice\.relatedToFocus/);
+  assert.match(plan, /choice\.availableByDefault/);
+  assert.match(plan, /toneCountFilters/);
+  assert.match(plan, /plan\.selectedIdiomForm/);
+  assert.match(plan, /onSetIdiomChordToneCount/);
   assert.match(plan, /const strings = plan\?\.strings/);
   assert.equal(plan.includes("function keyLabel"), false,
     "dynamic key labels must come from PracticePlanView");
   assert.equal(plan.includes("idiomDefinitionId"), false,
     "desktop uses flat idiom choices, so Web must not restore a definition dropdown");
   assert.equal(plan.includes("idiomVariantId"), false,
-    "desktop uses flat idiom variants, so Web must not restore a variant dropdown");
+    "shared projection exposes base idiom choices, so Web must not restore a concrete-variant dropdown");
   assert.equal(plan.includes('<select value={catalogChoiceId}'), false,
     "desktop uses the expanded grouped chord catalog, so Web must not collapse it to a native select");
 });

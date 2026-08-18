@@ -16,7 +16,7 @@
     { "kind": "applyCatalogFixture", "revision": 11, "effect": "CATALOG_UPDATED", "catalogDefinitionCount": 1 },
     { "kind": "insertIdiom", "expectedRevision": 11, "revision": 12, "effect": "WRITING_REQUESTED", "idiomCount": 1, "idiomVariant": "variant-a", "timelineIdiomTitle": "variant-a", "timelineIdiomRange": "0/1+1/4", "editableSlotCount": 1 },
     { "kind": "cancelWriting", "expectedRevision": 12, "revision": 13, "effect": "WRITING_CANCELLED", "idiomCount": 1 },
-    { "kind": "replaceIdiom", "expectedRevision": 13, "revision": 14, "effect": "WRITING_REQUESTED", "idiomCount": 1, "idiomVariant": "variant-b" },
+    { "kind": "setIdiomChordToneCount", "expectedRevision": 13, "revision": 14, "effect": "WRITING_REQUESTED", "idiomCount": 1, "idiomVariant": "variant-b" },
     { "kind": "cancelWriting", "expectedRevision": 14, "revision": 15, "effect": "WRITING_CANCELLED", "idiomCount": 1 },
     { "kind": "selectIdiom", "expectedRevision": 15, "revision": 15, "effect": "NO_OP", "selectionIdiom": "idiom-0" },
     { "kind": "removeIdiom", "expectedRevision": 15, "revision": 16, "effect": "APPLIED", "idiomCount": 0, "editableSlotCount": 2 },

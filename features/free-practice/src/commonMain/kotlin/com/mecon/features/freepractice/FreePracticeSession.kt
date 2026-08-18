@@ -190,6 +190,7 @@ class FreePracticeSession private constructor(
             currentCatalog,
             selectedIdiomCatalogLayout()?.id,
             teachingCatalog,
+            validIdiomInstanceId,
         )
         return FreePracticeFrame(
         revision = revision,
@@ -422,6 +423,7 @@ class FreePracticeSession private constructor(
             }
             is FreePracticeIntent.InsertIdiom -> insertIdiom(intent, baseRevision)
             is FreePracticeIntent.ReplaceIdiom -> replaceIdiom(intent, baseRevision)
+            is FreePracticeIntent.SetIdiomChordToneCount -> setIdiomChordToneCount(intent, baseRevision)
             is FreePracticeIntent.InsertChordRange -> applyWorkspaceCommand(
                 baseRevision,
                 HarmonyWorkspaceCommand.InsertChordRange(intent.onset, intent.duration),
@@ -1444,6 +1446,42 @@ class FreePracticeSession private constructor(
         return commitIdiomEdit(baseRevision, edit.state, replaced.slotIds)
     }
 
+    private fun setIdiomChordToneCount(
+        intent: FreePracticeIntent.SetIdiomChordToneCount,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        val instance = workspace.idiomInstances.firstOrNull { it.id == intent.idiomInstanceId }
+            ?: return staleIdiomTarget(baseRevision, intent.idiomInstanceId)
+        val definition = teachingCatalog.definitions.firstOrNull { it.id == instance.definitionId }
+            ?: return staleCatalogTarget(baseRevision)
+        val current = definition.variants.firstOrNull { it.id == instance.variantId }
+            ?: return staleCatalogTarget(baseRevision)
+        val currentCounts = current.effectiveToneCounts()
+        if (intent.stepIndex !in currentCounts.indices) return invalidScope(baseRevision)
+        if (currentCounts[intent.stepIndex] == intent.toneCount) return noOp(baseRevision)
+        val currentFamily = current.realizationFamilyKey()
+        val replacement = definition.variants.firstOrNull { candidate ->
+            if (candidate.realizationFamilyKey() != currentFamily) return@firstOrNull false
+            val counts = candidate.effectiveToneCounts()
+            counts.size == currentCounts.size && counts.indices.all { index ->
+                counts[index] == if (index == intent.stepIndex) intent.toneCount else currentCounts[index]
+            }
+        } ?: return invalidScope(baseRevision)
+        return replaceIdiom(
+            FreePracticeIntent.ReplaceIdiom(
+                expectedRevision = intent.expectedRevision,
+                idiomInstanceId = instance.id,
+                definitionId = definition.id,
+                variantId = replacement.id,
+            ),
+            baseRevision,
+        )
+    }
+
+    private fun PracticeIdiomVariantView.effectiveToneCounts(): List<Int> =
+        chordToneCounts.takeIf { it.size == chordIdentities.size }
+            ?: chordChoices.map { it.pitchClasses.distinct().size }
+
     private fun commitIdiomEdit(
         baseRevision: Long,
         nextWorkspace: HarmonyWorkspaceState,
@@ -2279,7 +2317,7 @@ private fun practiceChordCatalogText(key: String): String = when (key) {
     "exploration.chordCatalog.modalColors.title" -> "调式色彩和弦"
     "exploration.chordCatalog.modalColors.description" -> "由上行或下行调式路径产生的其他变化和弦。"
     "exploration.chordCatalog.neapolitan.title" -> "拿坡里和弦"
-    "exploration.chordCatalog.neapolitan.description" -> "从小下属关系和弦中单列的降二级大三和弦。"
+    "exploration.chordCatalog.neapolitan.description" -> "从小下属关系和弦中单列的降二级大三和弦及其七和弦。"
     "exploration.chordCatalog.minorSubdominant.title" -> "小下属关系和弦"
     "exploration.chordCatalog.minorSubdominant.description" ->
         "由同主音小调与下属小调的自然音级和弦借入的降号和弦。"

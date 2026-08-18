@@ -106,8 +106,21 @@ class ChordKnowledgeCatalogTest {
     @Test
     fun neapolitanAloneDeclaresPredominantSubstitution() {
         val snapshot = snapshot()
-        val neapolitan = snapshot.selectionGroups.single { it.category.id == "neapolitan" }
-            .chords.single()
+        val neapolitans = snapshot.selectionGroups.single { it.category.id == "neapolitan" }.chords
+        val neapolitan = neapolitans.single { chord ->
+            chord.interpretationRefs.any { it.interpretationId.value.endsWith("major.triad") }
+        }
+        neapolitans.forEach { chord ->
+            val chordDetail = snapshot.resolve(
+                SoundingInterpretationQuery(chord.audibleKey, chord.origin),
+                context,
+            )
+            val chordExplanation = chordDetail.explanations.single { it.id.value == "schoenberg.neapolitan" }
+            val chordRelation = chordExplanation.routes.single().functionRelations
+                .filterIsInstance<ChordFunctionRelation.SubstitutesFor>().single()
+            assertEquals(SchoenbergHarmonicTreatments.DIATONIC_PREDOMINANT, chordRelation.targetTreatmentId)
+            assertEquals(HarmonicFunction.PREDOMINANT, chordRelation.function)
+        }
         val detail = snapshot.resolve(
             SoundingInterpretationQuery(neapolitan.audibleKey, neapolitan.origin),
             context,
