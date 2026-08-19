@@ -6,7 +6,6 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.renderer.elements.BarlineElement
 import com.mecon.renderer.elements.ClefElement
 import com.mecon.renderer.elements.KeySignatureElement
-import com.mecon.renderer.enums.toClefType
 import com.mecon.renderer.geometry.StaffSpace
 import com.mecon.renderer.smufl.BravuraFont
 
@@ -60,7 +59,7 @@ internal class SystemHeaderComputer(private val config: RenderLayoutConfig) {
                     staffIndex = staff.staffIndex,
                     keySignature = activeKey,
                     isInitial = true,
-                    clefType = activeClef.toClefType(),
+                    clef = activeClef,
                     staffTrackId = staff.trackId,
                     sectionTime = measureTime,
                 ).copy(relativeX = leadIn + clefWidth)

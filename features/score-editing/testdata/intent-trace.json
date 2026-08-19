@@ -8757,6 +8757,665 @@
           }
         ]
       }
+    },
+    {
+      "name": "first musical slot updates initial clef",
+      "intent": {
+        "type": "setClef",
+        "expectedRevision": 17,
+        "staffTrackId": "staff-1",
+        "onset": {
+          "measure": 1,
+          "beat": {
+            "numerator": 0,
+            "denominator": 1
+          }
+        },
+        "clef": "BASS"
+      },
+      "expect": {
+        "baseRevision": 17,
+        "canPaste": true,
+        "canRedo": false,
+        "canUndo": true,
+        "effect": {
+          "actualRevision": null,
+          "expectedRevision": null,
+          "kind": "APPLIED",
+          "messageKey": null
+        },
+        "kind": "FULL",
+        "nextInputPosition": null,
+        "renderHint": {
+          "firstMeasure": 0,
+          "lastMeasure": 1,
+          "notationChanged": true,
+          "structureReflow": true
+        },
+        "revision": 18,
+        "schemaVersion": 1,
+        "score": {
+          "controllerTracks": {},
+          "defaultKeySignature": {
+            "customScale": null,
+            "fifthsOverride": null,
+            "mode": "MAJOR",
+            "root": 0
+          },
+          "defaultTempo": 120.0,
+          "defaultTimeSignature": {
+            "beatGroups": null,
+            "denominator": 4,
+            "numerator": 4,
+            "symbol": "COMMON"
+          },
+          "geometry": null,
+          "globalTrack": {
+            "events": [],
+            "id": "@id:0",
+            "name": "Global",
+            "tempoEvents": []
+          },
+          "id": "trace-score",
+          "initialBarlineType": "SINGLE",
+          "instruments": [
+            {
+              "abbreviation": "Pno.",
+              "catalogId": null,
+              "id": "@id:1",
+              "name": "Piano",
+              "playback": {
+                "midiBank": 0,
+                "midiProgram": 0,
+                "pluginId": null,
+                "pluginState": {},
+                "soundFontId": null
+              },
+              "staffIds": [
+                "staff-1"
+              ]
+            }
+          ],
+          "measures": [
+            {
+              "endBarlineType": null,
+              "keySignature": null,
+              "navigationMarkOffsets": {},
+              "navigationMarks": [],
+              "number": 1,
+              "rehearsalMark": null,
+              "repeatCount": 2,
+              "repeatEnd": false,
+              "repeatStart": false,
+              "timeSignature": null,
+              "voltaNumbers": []
+            },
+            {
+              "endBarlineType": null,
+              "keySignature": null,
+              "navigationMarkOffsets": {},
+              "navigationMarks": [],
+              "number": 2,
+              "rehearsalMark": null,
+              "repeatCount": 2,
+              "repeatEnd": false,
+              "repeatStart": false,
+              "timeSignature": null,
+              "voltaNumbers": []
+            }
+          ],
+          "metadata": {
+            "arranger": null,
+            "composer": null,
+            "copyright": null,
+            "createdAt": 0,
+            "lyricist": null,
+            "modifiedAt": 0,
+            "subtitle": null,
+            "title": "Trace"
+          },
+          "orchestration": null,
+          "pageLayout": {
+            "marginBottomMm": 15.0,
+            "marginLeftMm": 15.0,
+            "marginRightMm": 15.0,
+            "marginTopMm": 15.0,
+            "paginated": false,
+            "paperHeightMm": 297.0,
+            "paperWidthMm": 210.0,
+            "presetName": "A4",
+            "staffSpaceMm": 1.8
+          },
+          "pitchTracks": {
+            "pitch-1": {
+              "events": [
+                {
+                  "articulations": [],
+                  "id": "@id:2",
+                  "onset": {
+                    "beat": {
+                      "denominator": 1,
+                      "numerator": 0
+                    },
+                    "measure": 1
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 0
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:10",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 1
+                    },
+                    "measure": 1
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 2
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:11",
+                  "onset": {
+                    "beat": {
+                      "denominator": 8,
+                      "numerator": 3
+                    },
+                    "measure": 1
+                  },
+                  "pitches": []
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:24",
+                  "onset": {
+                    "beat": {
+                      "denominator": 2,
+                      "numerator": 1
+                    },
+                    "measure": 1
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 4
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:38",
+                  "onset": {
+                    "beat": {
+                      "denominator": 12,
+                      "numerator": 7
+                    },
+                    "measure": 1
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 5
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:26",
+                  "onset": {
+                    "beat": {
+                      "denominator": 3,
+                      "numerator": 2
+                    },
+                    "measure": 1
+                  },
+                  "pitches": []
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:27",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 3
+                    },
+                    "measure": 1
+                  },
+                  "pitches": []
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:14",
+                  "onset": {
+                    "beat": {
+                      "denominator": 1,
+                      "numerator": 0
+                    },
+                    "measure": 2
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 0
+                    },
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 2
+                    },
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 4
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:20",
+                  "onset": {
+                    "beat": {
+                      "denominator": 2,
+                      "numerator": 1
+                    },
+                    "measure": 2
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 0,
+                      "diatonicSteps": 0
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:34",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 3
+                    },
+                    "measure": 2
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": 1,
+                      "diatonicSteps": 0
+                    }
+                  ]
+                },
+                {
+                  "articulations": [],
+                  "id": "@id:35",
+                  "onset": {
+                    "beat": {
+                      "denominator": 8,
+                      "numerator": 7
+                    },
+                    "measure": 2
+                  },
+                  "pitches": [
+                    {
+                      "chromaticOffset": -1,
+                      "diatonicSteps": 1
+                    }
+                  ]
+                }
+              ],
+              "id": "pitch-1",
+              "name": "Pitch Track"
+            }
+          },
+          "pluginTracks": {},
+          "reductions": [],
+          "showTimeSignatures": true,
+          "staffGroups": [],
+          "staffTracks": {
+            "staff-1": {
+              "attachments": [
+                {
+                  "controllerEventId": null,
+                  "id": "@id:19",
+                  "level": "MF",
+                  "onset": {
+                    "beat": {
+                      "denominator": 1,
+                      "numerator": 0
+                    },
+                    "measure": 1
+                  },
+                  "placement": "BELOW",
+                  "type": "dynamicMark",
+                  "voiceNumber": null
+                }
+              ],
+              "clef": "BASS",
+              "clefChanges": [],
+              "hiddenRanges": [],
+              "id": "staff-1",
+              "keySignature": {
+                "customScale": null,
+                "fifthsOverride": null,
+                "mode": "MAJOR",
+                "root": 0
+              },
+              "name": "Staff",
+              "staffLabel": null,
+              "staffLabelAbbreviation": null,
+              "transposition": null,
+              "voiceTrackIds": [
+                "voice-1"
+              ]
+            }
+          },
+          "viewPreferences": {
+            "pageArrangement": "VERTICAL",
+            "showMeasureNumbers": true
+          },
+          "voiceTracks": {
+            "voice-1": {
+              "events": [
+                {
+                  "duration": {
+                    "base": "QUARTER",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:5",
+                  "onset": {
+                    "beat": {
+                      "denominator": 1,
+                      "numerator": 0
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:2",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:12",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 1
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:10",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:13",
+                  "onset": {
+                    "beat": {
+                      "denominator": 8,
+                      "numerator": 3
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:11",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": {
+                      "actual": 3,
+                      "normal": 2
+                    }
+                  },
+                  "graceInfo": null,
+                  "id": "@id:28",
+                  "onset": {
+                    "beat": {
+                      "denominator": 2,
+                      "numerator": 1
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:24",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": {
+                    "beatUnit": "EIGHTH",
+                    "count": 3,
+                    "displayStyle": "BRACKET_AND_NUMBER",
+                    "endTimeCode": {
+                      "beat": {
+                        "denominator": 4,
+                        "numerator": 3
+                      },
+                      "measure": 1
+                    },
+                    "smallNotes": false
+                  }
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": {
+                      "actual": 3,
+                      "normal": 2
+                    }
+                  },
+                  "graceInfo": null,
+                  "id": "@id:39",
+                  "onset": {
+                    "beat": {
+                      "denominator": 12,
+                      "numerator": 7
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:38",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": {
+                      "actual": 3,
+                      "normal": 2
+                    }
+                  },
+                  "graceInfo": null,
+                  "id": "@id:30",
+                  "onset": {
+                    "beat": {
+                      "denominator": 3,
+                      "numerator": 2
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:26",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "QUARTER",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:31",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 3
+                    },
+                    "measure": 1
+                  },
+                  "pitchEventId": "@id:27",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "HALF",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:16",
+                  "onset": {
+                    "beat": {
+                      "denominator": 1,
+                      "numerator": 0
+                    },
+                    "measure": 2
+                  },
+                  "pitchEventId": "@id:14",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "QUARTER",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:22",
+                  "onset": {
+                    "beat": {
+                      "denominator": 2,
+                      "numerator": 1
+                    },
+                    "measure": 2
+                  },
+                  "pitchEventId": "@id:20",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:36",
+                  "onset": {
+                    "beat": {
+                      "denominator": 4,
+                      "numerator": 3
+                    },
+                    "measure": 2
+                  },
+                  "pitchEventId": "@id:34",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                },
+                {
+                  "duration": {
+                    "base": "EIGHTH",
+                    "dots": 0,
+                    "tuplet": null
+                  },
+                  "graceInfo": null,
+                  "id": "@id:37",
+                  "onset": {
+                    "beat": {
+                      "denominator": 8,
+                      "numerator": 7
+                    },
+                    "measure": 2
+                  },
+                  "pitchEventId": "@id:35",
+                  "rendering": null,
+                  "slurEnds": 0,
+                  "slurStarts": 0,
+                  "ties": [],
+                  "tupletSpan": null
+                }
+              ],
+              "id": "voice-1",
+              "name": "Voice",
+              "pitchTrackId": "pitch-1",
+              "slurs": [
+                {
+                  "endEventId": "@id:12",
+                  "id": "@id:18",
+                  "startEventId": "@id:5"
+                }
+              ],
+              "voiceNumber": 1
+            }
+          }
+        },
+        "scoreChanged": true,
+        "selection": [
+          {
+            "onset": {
+              "beat": {
+                "denominator": 1,
+                "numerator": 0
+              },
+              "measure": 0
+            },
+            "staffTrackId": "staff-1",
+            "type": "clef"
+          }
+        ]
+      }
     }
   ]
 }

@@ -6,13 +6,14 @@ import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
+import com.mecon.api.primitive.DiatonicTranspose
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.runtime.tracks.RuntimeVoiceTrack
-import com.mecon.api.storage.tracks.Clef
+import com.mecon.core.engine.StaffPitchContext
 import com.mecon.core.engine.edit.NoteEditEngine
 import com.mecon.renderer.elements.FlagElement
 import com.mecon.renderer.elements.NoteElement
@@ -144,7 +145,6 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
 
         // --- Y → staff position (0.5 staff space per diatonic step; 0 = middle line) ---
         val staffPos = ((centerY.value - relPoint.y.value) / 0.5f).roundToInt()
-        val diatonicSteps = staffPos + middleLineDiatonicSteps(staffTrack.clef)
 
         // --- X → snapped onset (absolute), then to relative for geometry placement ---
         // The snap is constrained to the hovered system's vertical band: in 分行/paginated layouts
@@ -163,6 +163,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             smallNoteDuration = duration.takeIf { targetVoice != null },
         ) ?: return null
         val onset = snap.onset
+        val pitchTimeline = StaffPitchContext.timeline(staffTrack)
+        val diatonicSteps = StaffPitchContext.diatonicStepsAt(staffPos, onset, pitchTimeline)
         val snapAbsX = snap.absoluteX
         val snapRelX = transformer.toRelative(AbsolutePoint(Pixels(snapAbsX), Pixels(0f))).x
         val measureNumber = onset.measure
@@ -174,7 +176,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         // glyph — exactly how the committed note will engrave via EffectiveAccidentalComputer.
         val chromaticOffset = accidental?.offset
             ?: carriedAccidentalOffset(voice, onset, diatonicSteps)
-            ?: 0
+            ?: DiatonicTranspose.spell(runtime.getKeySignatureAt(onset.measure), diatonicSteps).chromaticOffset
         val pitch = Pitch(diatonicSteps = diatonicSteps, chromaticOffset = chromaticOffset)
 
         val onsetAbs = absoluteWholeNotes(onset, runtime)
@@ -610,14 +612,5 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         private const val MIN_APPEND_PREVIEW_GAP_PX = 8f
         /** Synthetic id for the (uncommitted) ghost note; never registered in any computed score. */
         private val GHOST_EVENT_ID = EventId("__ghost__")
-
-        /** Diatonic step of the middle staff line per clef (inverse of core's StaffPositionComputer). */
-        private fun middleLineDiatonicSteps(clef: Clef): Int = when (clef) {
-            Clef.TREBLE -> 6   // B4
-            Clef.BASS -> -6    // D3
-            Clef.ALTO -> 0     // C4
-            Clef.TENOR -> -2   // A3
-            Clef.PERCUSSION -> 0
-        }
     }
 }

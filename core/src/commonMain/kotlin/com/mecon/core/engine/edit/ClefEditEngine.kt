@@ -34,6 +34,10 @@ object ClefEditEngine {
                 .filter { it.onset <= target.onset }
                 .maxByOrNull { it.onset }
                 ?.onset ?: TimeCode.ZERO
+        } else if (target.onset.compareTo(TimeCode.START) == 0) {
+            // Pointer insertion addresses the first musical slot as 1:0, while the initial staff
+            // state is stored at the score origin 0:0. They are the same edit boundary.
+            TimeCode.ZERO
         } else {
             target.onset
         }

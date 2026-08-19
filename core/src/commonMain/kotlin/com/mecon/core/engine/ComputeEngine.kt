@@ -32,6 +32,8 @@ class ComputeEngine(
     private val orderedStaffs: List<RuntimeStaffTrack> = score.orderedStaffs()
     private val staffIndexById: Map<TrackId, Int> =
         orderedStaffs.withIndex().associate { (i, s) -> s.id to i }
+    private val staffPitchTimelines: Map<TrackId, StaffPitchContext.Timeline> =
+        score.staffTracks.values.associate { it.id to StaffPitchContext.timeline(it) }
 
     /**
      * Resolve the staff a note actually renders on, honoring a cross-staff offset
@@ -393,7 +395,7 @@ class ComputeEngine(
         val renderStaff = resolveRenderStaff(staff, event.rendering?.crossStaffOffset)
 
         // Resolve the clef in effect at this event's onset (mid-score clef changes).
-        val clef = StaffPitchContext.effectiveClef(event.onset, renderStaff)
+        val clef = staffPitchTimelines.getValue(renderStaff.id).at(event.onset).clef
 
         // Resolve octave-shift display offset: 8va moves the written pitch down an octave
         // (-7 diatonic steps) so the sounding pitch renders closer to the staff.

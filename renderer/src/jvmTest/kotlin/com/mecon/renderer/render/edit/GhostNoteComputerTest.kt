@@ -7,6 +7,8 @@ import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.storage.StorageScore
+import com.mecon.api.storage.tracks.Clef
+import com.mecon.api.storage.tracks.StorageClefChange
 import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.computeScoreIncremental
 import com.mecon.core.serializer.ScoreSerializer
@@ -28,6 +30,63 @@ class GhostNoteComputerTest {
 
     private fun emptyScore(): RuntimeScore =
         RuntimeScore.fromStorage(StorageScore.create(StorageScore.CreationOptions("T", TimeSignature.COMMON, KeySignature.C_MAJOR)))
+
+    @Test
+    fun ghostUsesKeySignatureWhenNoAccidentalIsSelected() {
+        val font = loadFont() ?: return
+        val runtime = RuntimeScore.fromStorage(
+            StorageScore.create(StorageScore.CreationOptions("F major", TimeSignature.COMMON, KeySignature.F_MAJOR)),
+        )
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(runtime)
+            val staff = result.elements.first { it.type == RenderElementType.STAFF }
+            val ghost = assertNotNull(
+                engine.computeGhost(result, runtime, staff.hitBox.center, Duration.QUARTER, null, false),
+            )
+
+            assertEquals(6, ghost.pitch.diatonicSteps, "treble middle line is B4")
+            assertEquals(-1, ghost.pitch.chromaticOffset, "F major defaults B to B-flat")
+        }
+    }
+
+    @Test
+    fun ghostUsesClefTimelineAtSnappedOnset() {
+        val font = loadFont() ?: return
+        val storage = StorageScore.create(StorageScore.CreationOptions("Clef", measureCount = 2))
+        val staffId = storage.staffTracks.keys.single()
+        val bassAtM2 = com.mecon.api.primitive.TimeCode.of(2, com.mecon.api.primitive.Fraction.ZERO)
+        val changed = storage.copy(
+            staffTracks = storage.staffTracks + (
+                staffId to storage.staffTracks.getValue(staffId).copy(
+                    clefChanges = listOf(StorageClefChange(bassAtM2, Clef.BASS)),
+                )
+            ),
+        )
+        val runtime = RuntimeScore.fromStorage(changed)
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(runtime)
+            val x = assertNotNull(result.timeCodePositions[bassAtM2]?.x)
+            val staff = result.elements.first { it.type == RenderElementType.STAFF }
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result,
+                    runtime,
+                    com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(x),
+                        staff.hitBox.center.y,
+                    ),
+                    Duration.QUARTER,
+                    null,
+                    false,
+                ),
+            )
+
+            assertEquals(bassAtM2, ghost.onset)
+            assertEquals(-6, ghost.pitch.diatonicSteps, "bass middle line is D3")
+        }
+    }
 
     /** An empty (rest-only) measure is padded to a usable width only when [padEmptyMeasures] is on. */
     @Test

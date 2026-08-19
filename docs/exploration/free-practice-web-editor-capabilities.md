@@ -21,14 +21,14 @@ raw input 与 Kotlin/JS facade；浏览器动态导出的 `.mecon` 由桌面 `Me
 | 能力族 | 桌面入口/共享本体 | E0 协议 | Web UI/E2E |
 |---|---|---:|---:|
 | 选择、局部/和弦音选择、全选 | `RenderedScoreSelectionGestures` / interaction sections | ✅ | ✅ 单音头、框选、全选；框选拖动时显示半透明虚线矩形并实时染蓝框内元素，不绘制元素 hit-box 虚线框 |
-| 单音、休止、和弦与跨小节插入 | `NoteEditEngine.insert/insertChord` | ✅ | ✅ 原子和弦、跨小节拆分 |
+| 单音、休止、和弦与跨小节插入 | `NoteEditEngine.insert/insertChord` | ✅ | ✅ 原子和弦、跨小节拆分；pointer 音高按落点时刻的谱号与调号生成，Desktop/Web 共用 `StaffPitchContext` ghost |
 | 删除、音高拖动与移调 | `NoteEditEngine.delete/transpose` + renderer `TransposePreviewComputer` | ✅ | ✅ 音符 preview 由 Kotlin renderer 重刻完整符头/符杆/符尾/加线，Web 只重放命令并提交 shared intent；休止 preview + commit |
 | 时值、附点、连音组、小音符 | `editDurations/applyTuplets/createSmallNoteRegions` | ✅ | ✅ 设置与更新 |
 | 临时记号、延音线、符杠、发音法 | `editAccidentals/editTies/editBeaming` | ✅ | ✅ 选择模式反映并编辑所选音符；录入模式保持下一音符的默认值，Canvas ghost、pointer 与键盘/手工步进共用该值；临时记号落音后清除 |
 | 倚音组 | `GraceNoteEditing` / `editGraceGroups` | ✅ | ✅ 插入与属性更新 |
 | 复制、剪切、粘贴 | `NoteCopyPaste`、`SelectionClipboard` | ✅ | ✅ 按钮状态与快捷键 |
 | 跨声部/谱表移动 | `VoiceMoveEngine` | ✅ | ✅ 跨谱表移动与选择恢复 |
-| 谱号、调号、拍号 | `Clef/KeySignature/TimeSignatureEditEngine` | ✅ | ✅ 自由练习“调整拍号”与桌面共用拍号笔语义：Bravura 候选、悬停幽灵、点击小节后发送 `ScoreEditIntent.SetTimeSignature` |
+| 谱号、调号、拍号 | `Clef/KeySignature/TimeSignatureEditEngine` | ✅ | ✅ 第 1 小节拍首规范化为初始谱号/调号状态，不生成冗余 change；后续谱号进入中央 C 时间序列；调号升降号按谱号算法定位；真实 pointer E2E 覆盖换谱号后的落音 |
 | 小节插删、结构重排 | `MeasureEditEngine` | ✅ | ✅ 插入、确认删除 |
 | 小节线、反复、房子、导航记号 | `Barline/RepeatStructureEditEngine` | ✅ | ✅ 房子端点、跨系统导航与删除 |
 | 速度、力度、发夹、8va、文本与演奏记号 | `Tempo/ExpressionEditEngine` | ✅ | ✅ 添加、更新、删除、整体/端点拖动 |

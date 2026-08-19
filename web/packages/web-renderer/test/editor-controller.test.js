@@ -60,18 +60,19 @@ const input = {
 };
 
 function setup(overrides = {}) {
+  const { input: inputOverrides = {}, ...updateOverrides } = overrides;
   const intents = [];
   const update = {
     score: { voiceTracks: { voice: { events: [{ id: "event-1" }] } } },
     selection: [{ type: "event", voiceTrackId: "voice", eventId: "event-1" }],
     canPaste: true,
-    ...overrides,
+    ...updateOverrides,
   };
   return {
     intents,
     controller: createScoreEditorCommandController({
       update,
-      input,
+      input: { ...input, ...inputOverrides },
       structure: {
         clefValue: "BASS", keyValue: "7|MAJOR", meterNumerator: "3", meterDenominator: "8",
         boundaryMeasure: "2", barlineValue: "REPEAT_RIGHT", repeatCount: "3",
@@ -154,6 +155,15 @@ test("editor controller builds structural and expression intents", () => {
   ]);
   assert.deepEqual(intents[0].onset, { measure: 3, beat: { numerator: 0, denominator: 1 } });
   assert.deepEqual(intents[5].end, { measure: 5, beat: { numerator: 3, denominator: 8 } });
+});
+
+test("editor controller sends the first musical slot without encoding storage-origin semantics", () => {
+  const { controller, intents } = setup({ input: { insertMeasure: "1" } });
+  assert.equal(controller.applyClef(), true);
+  assert.deepEqual(intents[0].onset, {
+    measure: 1,
+    beat: { numerator: 0, denominator: 1 },
+  });
 });
 
 test("editor controller centralizes selection and paste target construction", () => {

@@ -7,6 +7,7 @@ import { loadMeconDocument } from "../../../packages/frozen-score/index.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const fixture = resolve(here, "../../../build/e2e/free-practice.mecon");
 const practiceFixture = resolve(here, "../../../build/e2e/free-practice-f1.mecon");
+const pitchContextFixture = resolve(here, "../../../build/e2e/free-practice-f1-pitch-context.mecon");
 
 async function openFixture(page) {
   await page.goto("/");
@@ -16,10 +17,10 @@ async function openFixture(page) {
   await expect(page.locator("canvas")).toBeVisible();
 }
 
-async function openPracticeFixture(page) {
+async function openPracticeFixture(page, source = practiceFixture) {
   await page.goto("/");
   await expect(page.locator(".app-loading-overlay")).toBeHidden({ timeout: 30_000 });
-  await page.getByLabel("打开 .mecon").setInputFiles(practiceFixture);
+  await page.getByLabel("打开 .mecon").setInputFiles(source);
   await expect(page.locator(".practice-revision-announcer")).toHaveText("revision 0", { timeout: 30_000 });
   await expect(page.locator(".score-pane > .score-editor-toolbar")).toBeVisible();
 }
@@ -100,8 +101,8 @@ async function staffCenterPoint(page, systemIndex, staffIndex) {
   }, { systemIndex, staffIndex });
 }
 
-async function noteInputPoint(page, timeCode) {
-  return page.evaluate((wanted) => {
+async function noteInputPoint(page, timeCode, staffPosition = 2) {
+  return page.evaluate(({ wanted, staffPosition }) => {
     const frame = window.__MECON_E2E__.snapshot();
     const surface = frame.bundle.surfaces[0];
     const value = (item) => Number(item?.value ?? item ?? 0);
@@ -119,9 +120,9 @@ async function noteInputPoint(page, timeCode) {
     const halfSpace = (lines[1] - lines[0]) / 2;
     return {
       x: value(position.x) - origin.x,
-      y: lines.reduce((sum, line) => sum + line, 0) / lines.length - origin.y - halfSpace * 2,
+      y: lines.reduce((sum, line) => sum + line, 0) / lines.length - origin.y - halfSpace * staffPosition,
     };
-  }, timeCode);
+  }, { wanted: timeCode, staffPosition });
 }
 
 async function dragEventElement(page, type, eventId, deltaX, deltaY, expectedMode) {
@@ -467,11 +468,52 @@ test("W1 accidental palette arms the next pointer note, its ghost, and selected-
   await expect(sharpButton).toHaveAttribute("aria-pressed", "true");
 });
 
+test("W1 pointer note input follows the active key and clef timeline", async ({ page }) => {
+  await openPracticeFixture(page, pitchContextFixture);
+  await page.keyboard.press("Escape");
+  const quarterButton = page.locator(
+    '.score-pane > .score-editor-toolbar [data-control-id="duration.quarter"] button',
+  );
+  await quarterButton.click();
+  const bassMiddleLine = await noteInputPoint(page, {
+    measure: 1, beat: { numerator: 0, denominator: 1 },
+  }, 0);
+  await page.locator("canvas").hover({ position: bassMiddleLine });
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.noteInputPreview()?.pitch))
+    .toMatchObject({ diatonicSteps: -6, chromaticOffset: 0 });
+  await act(page, () => page.locator("canvas").click({ position: bassMiddleLine }));
+
+  const bassBLine = await noteInputPoint(page, {
+    measure: 1, beat: { numerator: 0, denominator: 1 },
+  }, -2);
+  await page.locator("canvas").hover({ position: bassBLine });
+  await expect.poll(() => page.evaluate(() => window.__MECON_E2E__.noteInputPreview()?.pitch))
+    .toMatchObject({ diatonicSteps: -8, chromaticOffset: -1 });
+  await act(page, () => page.locator("canvas").click({ position: bassBLine }));
+
+  const selectedPitches = await page.evaluate(() => {
+    const update = window.__MECON_E2E__.snapshot().update;
+    const eventId = update.selection.find((target) => target.type === "event")?.eventId;
+    const event = Object.values(update.score.voiceTracks).flatMap((voice) => voice.events)
+      .find((candidate) => candidate.id === eventId);
+    return Object.values(update.score.pitchTracks).flatMap((track) => track.events)
+      .find((candidate) => candidate.id === event?.pitchEventId)?.pitches ?? [];
+  });
+  expect(selectedPitches).toEqual(expect.arrayContaining([
+    expect.objectContaining({ diatonicSteps: -6, chromaticOffset: 0 }),
+    expect.objectContaining({ diatonicSteps: -8, chromaticOffset: -1 }),
+  ]));
+});
+
 test("W1 structure, layout, expressions and mecon export run through Web UI", async ({ page }) => {
   await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
   await openFixture(page);
   await page.getByLabel("谱号").selectOption("BASS");
   await act(page, () => page.getByRole("button", { name: "设置谱号" }).click());
+  await expect.poll(() => page.evaluate(() => {
+    const staff = Object.values(window.__MECON_E2E__.snapshot().update.score.staffTracks)[0];
+    return { clef: staff.clef, clefChanges: staff.clefChanges ?? [] };
+  })).toEqual({ clef: "BASS", clefChanges: [] });
   await page.getByLabel("调号").selectOption("7|MAJOR");
   await act(page, () => page.getByRole("button", { name: "设置调号" }).click());
   await page.getByLabel("拍号分子").fill("3");

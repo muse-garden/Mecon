@@ -169,6 +169,11 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 - 计算符杠分组（这是 Computed 层职责）
 - 推导小节边界
 
+谱号相关的纵向换算统一由 core 的 `StaffPitchContext.Timeline` 提供。每个事件记录 onset、谱号和
+“中央 C 的谱表位置”，音符命中、ghost、Computed 音高与调号排版都按自己的时间点查询该序列；
+平台不得拿谱表初始谱号直接反推音高。调号纵坐标由 `KeySignaturePositionComputer` 把升/降号顺序中的
+音名投影到当前谱号的传统七级音域，再把向上的谱表位置转换为向下的画布 Y，不维护最终坐标表。
+
 详见根 `AGENTS.md` 中"Renderer 与 Computed 层职责划分"。
 
 ## 7. 分行 / 分页（System Break & Pagination）

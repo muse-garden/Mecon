@@ -99,6 +99,24 @@ class ClefEditEngineTest {
     }
 
     @Test
+    fun insertingAtFirstMusicalSlotEditsInitialClef() {
+        val runtime = RuntimeScore.fromStorage(StorageScore.create(StorageScore.CreationOptions("ClefEdit")))
+        val staffId = runtime.staffTracks.keys.first()
+
+        val result = assertNotNull(
+            ClefEditEngine.setClef(
+                runtime,
+                ClefEditEngine.Target(staffId, TimeCode.of(1, Fraction.ZERO)),
+                Clef.BASS,
+            ),
+        )
+
+        assertEquals(TimeCode.ZERO, result.editedOnset)
+        assertEquals(Clef.BASS, result.score.staffTracks.getValue(staffId).clef)
+        assertEquals(emptyList(), result.score.staffTracks.getValue(staffId).clefChanges)
+    }
+
+    @Test
     fun sameClefIsNoOp() {
         val runtime = RuntimeScore.fromStorage(StorageScore.create(StorageScore.CreationOptions("ClefEdit")))
         val staffId = runtime.staffTracks.keys.first()

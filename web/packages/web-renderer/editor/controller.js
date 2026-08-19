@@ -152,7 +152,7 @@ export function createScoreEditorCommandController({
 
   function structureOnset() {
     const measure = Math.max(1, Number(input.insertMeasure) || 1);
-    return { measure: measure === 1 ? 0 : measure, beat: { numerator: 0, denominator: 1 } };
+    return { measure, beat: { numerator: 0, denominator: 1 } };
   }
 
   function selectedStructure(type) {

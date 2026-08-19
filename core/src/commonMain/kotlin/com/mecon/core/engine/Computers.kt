@@ -94,6 +94,13 @@ object StaffPositionComputer {
         Clef.PERCUSSION -> 0
     }
 
+    /**
+     * Staff position of middle C for [clef]. This is the stable reference used by every
+     * pitch-to-staff conversion: a clef change is therefore a time-varying sequence of middle-C
+     * positions, rather than a special case copied into each renderer or interaction adapter.
+     */
+    fun middleCStaffPosition(clef: Clef): Int = -middleLineDiatonicSteps(clef)
+
     fun compute(
         pitch: Pitch,
         clef: Clef
@@ -113,6 +120,41 @@ object StaffPositionComputer {
     /** Staff position of a note with [diatonicSteps] (relative to C4) under [clef]. Inverse of [compute]. */
     fun staffPositionOf(diatonicSteps: Int, clef: Clef): Int =
         diatonicSteps - middleLineDiatonicSteps(clef)
+}
+
+/**
+ * Computes traditional key-signature accidental positions from note names and a clef reference.
+ *
+ * The accidentals are not stored as a table of final Y coordinates. Instead each note name is
+ * projected from middle C into the conventional seven-position octave for the active clef. The
+ * octave ends match the standard `sharp-positions` / `flat-positions` ranges used by LilyPond;
+ * adding another clef only requires its middle-C reference and its conventional octave end.
+ */
+object KeySignaturePositionComputer {
+    fun staffPositions(keySignature: KeySignature, clef: Clef): List<Int> {
+        val sharps = keySignature.fifths > 0
+        return keySignature.accidentals().map { (noteName, _) ->
+            staffPosition(noteName, clef, sharps)
+        }
+    }
+
+    fun staffPosition(noteName: NoteName, clef: Clef, sharps: Boolean): Int {
+        val octaveEnd = conventionalOctaveEnd(clef, sharps)
+        val octaveStart = octaveEnd - 6
+        val middleC = StaffPositionComputer.middleCStaffPosition(clef)
+        var position = middleC + noteName.toIndex()
+        while (position < octaveStart) position += 7
+        while (position > octaveEnd) position -= 7
+        return position
+    }
+
+    private fun conventionalOctaveEnd(clef: Clef, sharps: Boolean): Int = when (clef) {
+        Clef.TREBLE -> if (sharps) 5 else 3
+        Clef.BASS -> if (sharps) 3 else 1
+        Clef.ALTO -> if (sharps) 4 else 2
+        Clef.TENOR -> 4
+        Clef.PERCUSSION -> if (sharps) 4 else 2
+    }
 }
 
 /**
