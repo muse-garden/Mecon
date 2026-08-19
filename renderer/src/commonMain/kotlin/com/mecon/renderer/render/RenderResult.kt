@@ -36,6 +36,16 @@ data class RenderResult(
     internal val elementIndex: Map<RenderElementId, RenderElement> = emptyMap(),
     /** Map of TimeCode to absolute positions for rendering playhead */
     val timeCodePositions: Map<TimeCode, TimeCodePosition> = emptyMap(),
+    /**
+     * Final rendered right edge of the rightmost notehead for each
+     * `time -> (staffIndex, voiceNumber)` tuple.
+     *
+     * A time-slot X is the right edge of the complete slot, not necessarily a notehead: accidentals,
+     * augmentation dots, chord seconds and same-time voice collision offsets can all move the heads
+     * left inside that slot. Note-input previews use this render-frame metadata so they snap to the
+     * note column that is actually on screen instead of reconstructing an anchor from slot width.
+     */
+    internal val noteheadRightPositions: Map<TimeCode, Map<Pair<Int, Int>, Float>> = emptyMap(),
     /** Collision-safe continuous time projection from the same complete render generation. */
     val resolvedTimeAxis: ResolvedTimeAxis? = null,
     /**
@@ -90,6 +100,10 @@ data class RenderResult(
      */
     fun elementsForEvent(eventId: EventId): List<RenderElement> =
         elements.filter { it.eventId == eventId }
+
+    /** Final on-screen notehead anchor for one staff voice at [time], if that slot contains a note. */
+    internal fun noteheadRightX(time: TimeCode, staffIndex: Int, voiceNumber: Int): Float? =
+        noteheadRightPositions[time]?.get(staffIndex to voiceNumber)
 
     /**
      * Get elements in a measure.

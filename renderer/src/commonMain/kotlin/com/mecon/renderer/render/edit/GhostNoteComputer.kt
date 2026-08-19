@@ -155,6 +155,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             result = result,
             runtime = runtime,
             voice = voice,
+            staffIndex = staffHit.staffIndex,
+            noteheadVoiceNumber = voiceNumber.takeIf { targetVoice != null },
             targetAbsX = point.x.value,
             targetAbsY = point.y.value,
             systemY = absCenterY,
@@ -394,6 +396,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         result: RenderResult,
         runtime: RuntimeScore,
         voice: RuntimeVoiceTrack,
+        staffIndex: Int,
+        noteheadVoiceNumber: Int?,
         targetAbsX: Float,
         targetAbsY: Float,
         systemY: Float,
@@ -480,28 +484,32 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             return known.last().second
         }
 
+        // Ordinary score layout stores a slot's complete right edge in TimeCodePosition.x. The
+        // visible note column may be farther left after accidentals, dots, chord seconds or
+        // same-time voice collision avoidance have expanded that slot. Prefer the final notehead
+        // anchor emitted by this exact render frame. Aligned score/timeline mode deliberately uses
+        // the shared time boundary plus notationContentStartGap, so it must retain the axis X.
+        fun previewXForTimeCode(tc: TimeCode): Float? {
+            val timeX = xForTimeCode(tc) ?: return null
+            if (config.alignedTimeAxisRequest != null) return timeX
+            val targetNumber = noteheadVoiceNumber ?: return timeX
+            return result.noteheadRightX(tc, staffIndex, targetNumber) ?: timeX
+        }
+
         // Clicking a real notehead is an unambiguous request to edit that event (normally add a
         // chord tone). Resolve it before the preceding small-note append gap because a notehead can
         // visually extend left of its onset at the small-note span's exclusive endpoint.
-        voiceEvents
-            .asSequence()
-            .filter { !it.isRest && it.onset.measure in firstM..lastM }
-            .firstOrNull { event ->
-                result.elementsForEvent(event.id)
-                    .asSequence()
-                    .filter { it.type == RenderElementType.NOTEHEAD }
-                    .any { element ->
-                        val box = element.hitBox
-                        targetAbsX >= box.origin.x.value &&
-                            targetAbsX <= box.origin.x.value + box.width.value &&
-                            targetAbsY >= box.origin.y.value &&
-                            targetAbsY <= box.origin.y.value + box.height.value
-                    }
-            }
+        val voiceEventsById = voiceEvents.associateBy { it.id }
+        result.hitTest(AbsolutePoint(Pixels(targetAbsX), Pixels(targetAbsY))).elements
+            .asReversed()
+            .firstOrNull { it.type == RenderElementType.NOTEHEAD }
+            ?.let { result.elementById(it.elementId)?.eventId }
+            ?.let(voiceEventsById::get)
+            ?.takeIf { !it.isRest && it.onset.measure in firstM..lastM }
             ?.let { event ->
                 return SnapTarget(
                     onset = event.onset,
-                    absoluteX = xForTimeCode(event.onset) ?: targetAbsX,
+                    absoluteX = previewXForTimeCode(event.onset) ?: targetAbsX,
                 )
             }
 
@@ -554,7 +562,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             }
 
         return candidates
-            .mapNotNull { tc -> xForTimeCode(tc)?.let { tc to it } }
+            .mapNotNull { tc -> previewXForTimeCode(tc)?.let { tc to it } }
             .minByOrNull { abs(it.second - targetAbsX) }
             ?.let { (onset, x) -> SnapTarget(onset, x) }
     }
