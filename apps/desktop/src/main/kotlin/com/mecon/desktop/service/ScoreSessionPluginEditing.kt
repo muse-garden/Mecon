@@ -90,6 +90,35 @@ fun ScoreSession.deletePluginEvent(trackType: String, eventId: EventId) {
 }
 
 /**
+ * Replace a plugin track in one history commit.
+ *
+ * This is used when one user action has coupled interval semantics, such as inserting a new tonal
+ * region while shortening the region it supersedes. Issuing two independent async edits would race
+ * against the same score snapshot and would also create two undo entries.
+ */
+fun ScoreSession.replacePluginEvents(trackType: String, events: List<StoragePluginEvent>) {
+    require(events.map(StoragePluginEvent::id).distinct().size == events.size) {
+        "Plugin track $trackType contains duplicate event ids"
+    }
+    val current = manager?.currentState?.runtimeScore ?: return
+    @Suppress("UNCHECKED_CAST")
+    val existing = current.pluginTracks.values.firstOrNull { it.type == trackType }
+        as? RuntimePluginTrack<StoragePluginEvent>
+    val updated = RuntimePluginTrack(
+        id = existing?.id ?: com.mecon.api.primitive.TrackId.generate(),
+        name = existing?.name ?: trackType,
+        type = trackType,
+        events = TimeIndexedList.of(events.map(::runtimePluginEvent)),
+    )
+    val oldEvents = existing?.events?.map(RuntimePluginEvent<StoragePluginEvent>::storageEvent).orEmpty()
+    val impacts = (oldEvents + events).map(current::renderImpact)
+    applyPluginEdit(
+        current.updatePluginTrack(updated.id, updated),
+        *impacts.toTypedArray(),
+    )
+}
+
+/**
  * Apply a plugin-track (e.g. chord) edit and drive a **bounded** re-render of the measures whose
  * annotation geometry changed, instead of a full re-render.
  *

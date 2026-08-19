@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import com.mecon.desktop.uikit.theme.MeconColors
 
 /**
@@ -29,6 +30,7 @@ fun MeconDropdownMenu(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = MeconColors.Surface,
+    properties: PopupProperties = PopupProperties(focusable = true),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DropdownMenu(
@@ -36,6 +38,7 @@ fun MeconDropdownMenu(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         containerColor = containerColor,
+        properties = properties,
         content = content,
     )
 }

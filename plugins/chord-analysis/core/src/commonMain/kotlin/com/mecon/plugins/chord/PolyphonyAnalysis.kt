@@ -7,8 +7,13 @@ import com.mecon.api.plugin.AnnotationAlignment
 import com.mecon.api.plugin.AnnotationElement
 import com.mecon.api.plugin.AnnotationLayoutContext
 import com.mecon.api.plugin.AnnotationStaffProvider
+import com.mecon.api.plugin.NoteSelectionLabel
+import com.mecon.api.plugin.NoteSelectionLabelProvider
 import com.mecon.api.plugin.PluginStaffId
 import com.mecon.api.plugin.StaffAnchor
+import com.mecon.api.interaction.EventSection
+import com.mecon.api.interaction.VoiceEventSection
+import com.mecon.api.interaction.VoiceNoteSection
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.KeySignature
 import com.mecon.api.primitive.Pitch
@@ -17,6 +22,7 @@ import com.mecon.api.primitive.TrackId
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.TimeIndexedList
 import com.mecon.api.runtime.ScoreTimeMap
+import com.mecon.api.runtime.RuntimeScore
 import com.mecon.theory.Chord
 import com.mecon.theory.ChordQuality
 import com.mecon.theory.ChordRecognizer
@@ -93,6 +99,62 @@ object PolyphonyTonalContextResolver {
         regions: List<StorageTonalRegionEvent> =
             score.pluginEventsOf(StorageTonalRegionEvent.TRACK_TYPE),
     ): List<ModulationKey> = keysAt(score, time, projection(score, regions))
+
+    fun keysAt(
+        score: RuntimeScore,
+        time: TimeCode,
+        regions: List<StorageTonalRegionEvent>,
+    ): List<ModulationKey> {
+        val timeMap = ScoreTimeMap.from(score)
+        val ranges = regions.mapNotNull { region ->
+            HarmonyTonalRange.clippedOrNull(
+                id = region.id.value,
+                start = timeMap.absolute(region.onset),
+                end = timeMap.absolute(region.endOnset),
+                keys = region.keys.map(PolyphonyTonalKey::toModulationKey),
+                resolvedKey = region.resolvedKey?.toModulationKey(),
+                priority = 10,
+            )
+        }
+        val signature = score.getKeySignatureAt(time.measure)
+        return HarmonyTonalTimeline.keysAt(
+            time = timeMap.absolute(time),
+            ranges = ranges,
+            defaultKey = ModulationKey(
+                fifths = signature.fifths,
+                mode = KeySignatureMode.fromApiMode(signature.mode),
+            ),
+        )
+    }
+
+    /**
+     * Selection-overlay fast path. Tonal regions use half-open [TimeCode] intervals, so resolving
+     * them does not require constructing the whole-score absolute-time map on the UI thread.
+     */
+    fun keysAtSelection(
+        score: RuntimeScore,
+        time: TimeCode,
+        regions: List<StorageTonalRegionEvent>,
+    ): List<ModulationKey> {
+        val active = regions.asSequence()
+            .filter { it.onset <= time && time < it.endOnset && it.keys.isNotEmpty() }
+            .maxWithOrNull(compareBy<StorageTonalRegionEvent> { it.onset }.thenBy { it.id.value })
+        if (active != null) return active.keys.map(PolyphonyTonalKey::toModulationKey)
+
+        val continuation = regions.asSequence()
+            .filter { it.endOnset <= time && it.resolvedKey != null }
+            .maxWithOrNull(compareBy<StorageTonalRegionEvent> { it.endOnset }.thenBy { it.id.value })
+            ?.resolvedKey
+        if (continuation != null) return listOf(continuation.toModulationKey())
+
+        val signature = score.getKeySignatureAt(time.measure)
+        return listOf(
+            ModulationKey(
+                fifths = signature.fifths,
+                mode = KeySignatureMode.fromApiMode(signature.mode),
+            )
+        )
+    }
 
     internal fun keysAt(
         score: ComputedScore,
@@ -285,18 +347,20 @@ object PolyphonyAnalysisEngine {
 object PolyphonyAnnotationProvider : AnnotationStaffProvider {
     override val staffId: PluginStaffId = PluginStaffId("mecon.chord_analysis.polyphony")
     override val anchor: StaffAnchor = StaffAnchor.AboveAllStaves
+    // The assistant can analyze a plain score before any plugin track exists.
     override val pluginTrackTypes: Set<String> = emptySet()
 
     override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> {
-        if (!PolyphonyDisplaySettings.isEnabled) return emptyList()
-        val frames = PolyphonyAnalysisEngine.compute(ctx.computedScore)
-        if (frames.isEmpty()) return emptyList()
-        val nonChordByNote = ctx.computedScore
-            .pluginEventsOf<StorageNonChordToneEvent>(StorageNonChordToneEvent.TRACK_TYPE)
-            .groupBy { it.voiceEventId to it.pitchIndex }
+        val assistantEnabled = PolyphonyDisplaySettings.isEnabled
+        val frames = if (assistantEnabled) PolyphonyAnalysisEngine.compute(ctx.computedScore) else emptyMap()
+        val nonChordByNote = if (assistantEnabled) {
+            ctx.computedScore
+                .pluginEventsOf<StorageNonChordToneEvent>(StorageNonChordToneEvent.TRACK_TYPE)
+                .groupBy { it.voiceEventId to it.pitchIndex }
+        } else emptyMap()
 
         return buildList {
-            if (PolyphonyDisplaySettings.showDegreeTrack) {
+            if (assistantEnabled && PolyphonyDisplaySettings.showDegreeTrack) {
                 frames.values.forEach { frame ->
                     frame.activePitches
                         .sortedByDescending(PolyphonyActivePitch::pitch)
@@ -315,22 +379,25 @@ object PolyphonyAnnotationProvider : AnnotationStaffProvider {
                                     relativeY = row * DEGREE_ROW_GAP,
                                     trackId = TrackId("$DEGREE_ROW_TRACK_PREFIX$row"),
                                     fontSize = DEGREE_FONT_SIZE,
-                                    color = when {
-                                        active.eventId to active.pitchIndex in
-                                            PolyphonyDisplaySettings.selectedNoteheads -> SELECTED_COLOR
-                                        explicitNonChord -> NON_CHORD_COLOR
-                                        else -> DEGREE_COLOR
-                                    },
+                                    color = if (explicitNonChord) NON_CHORD_COLOR else DEGREE_COLOR,
                                     alignment = AnnotationAlignment.CENTER,
                                     interactive = false,
                                 )
                             )
-                        }
+                    }
                 }
             }
 
-            addAll(tonalRegionMarkers(ctx.computedScore))
-            if (PolyphonyDisplaySettings.showPassingChords) {
+            val timelineHasChordCards = ctx.computedScore
+                .pluginEventsOf<StorageChordEvent>(StorageChordEvent.TRACK_TYPE)
+                .isNotEmpty()
+            if (
+                ChordSymbolDisplaySettings.scoreDisplayMode != ChordAnalysisScoreDisplayMode.TIMELINE ||
+                !timelineHasChordCards
+            ) {
+                addAll(tonalRegionMarkers(ctx.computedScore))
+            }
+            if (assistantEnabled && PolyphonyDisplaySettings.showPassingChords) {
                 addAll(passingChordElements(ctx.computedScore, frames))
             }
         }
@@ -433,8 +500,50 @@ object PolyphonyAnnotationProvider : AnnotationStaffProvider {
     private val PASSING_CHORD_TRACK_ID = TrackId("__polyphony_passing_chords")
     private val REGION_TRACK_ID = TrackId("__polyphony_tonal_regions")
     private val DEGREE_COLOR = RenderColor.rgb(71, 85, 105)
-    private val SELECTED_COLOR = RenderColor.rgb(249, 115, 22)
     private val NON_CHORD_COLOR = RenderColor.rgb(168, 85, 247)
     private val PASSING_CHORD_COLOR = RenderColor.rgb(14, 116, 144)
     private val REGION_COLOR = RenderColor.rgb(99, 102, 241)
+}
+
+/** Scale degrees for the host's non-spacing selected-note overlay. */
+object ChordSelectionDegreeLabelProvider : NoteSelectionLabelProvider {
+    override val id: String = "mecon.chord_analysis.selection_degrees"
+
+    override fun labels(
+        score: ComputedScore,
+        selection: Set<EventSection>,
+    ): List<NoteSelectionLabel> {
+        if (!PolyphonyDisplaySettings.showSelectedDegrees) return emptyList()
+        val selected = selection.flatMap { section ->
+            when (section) {
+                is VoiceNoteSection -> listOf(section)
+                is VoiceEventSection -> section.event.pitchData.indices.map { pitchIndex ->
+                    VoiceNoteSection(section.event, pitchIndex)
+                }
+                else -> emptyList()
+            }
+        }.filterNot { it.event.isRest }
+            .distinctBy { it.event.id to it.pitchIndex }
+            .sortedWith(
+                compareBy<VoiceNoteSection> { it.event.onset }
+                    .thenByDescending { it.pitchData.pitch },
+            )
+        if (selected.isEmpty()) return emptyList()
+
+        val regions = score.pluginEventsOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
+        return selected.map { note ->
+            NoteSelectionLabel(
+                eventId = note.event.id,
+                pitchIndex = note.pitchIndex,
+                text = PolyphonyDegreeFormatter.format(
+                    PolyphonyTonalContextResolver.keysAtSelection(
+                        score.runtime,
+                        note.event.onset,
+                        regions,
+                    ),
+                    note.pitchData.pitch,
+                ),
+            )
+        }
+    }
 }

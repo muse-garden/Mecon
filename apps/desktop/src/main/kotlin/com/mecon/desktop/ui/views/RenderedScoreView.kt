@@ -45,6 +45,7 @@ import com.mecon.audio.converter.ScoreToMidiConverter
 import com.mecon.audio.engine.PlaybackState
 import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.api.render.RenderColor
+import com.mecon.api.plugin.PluginRegistry
 import com.mecon.api.interaction.*
 import com.mecon.renderer.geometry.*
 import com.mecon.renderer.layout.AlignedTimeAxisRequest
@@ -101,6 +102,8 @@ fun RenderedScoreView(
     val selectableSection = selectionConfig.selectableSection
     val noteStyleRefreshKey = display.noteStyleRefreshKey
     val renderRefreshKey = display.renderRefreshKey
+    val selectionOverlayRefreshKey = display.selectionOverlayRefreshKey
+    val showPluginSelectionLabels = display.showPluginSelectionLabels
     val isReference = display.isReference
     val readOnly = display.readOnly
     val panEnabled = display.panEnabled
@@ -246,6 +249,18 @@ fun RenderedScoreView(
         },
     )
     val renderResultIdentityKey = rememberIdentityKey(renderResult)
+    val noteSelectionLabels = remember(
+        computedIdentityKey,
+        selection,
+        selectionOverlayRefreshKey,
+        showPluginSelectionLabels,
+    ) {
+        computed?.takeIf { showPluginSelectionLabels }?.let { score ->
+            PluginRegistry.noteSelectionLabelProviders().flatMap { provider ->
+                provider.labels(score, selection)
+            }
+        }.orEmpty()
+    }
     val currentOnResolvedTimeAxis by rememberUpdatedState(onResolvedTimeAxis)
     LaunchedEffect(renderResultIdentityKey, alignedTimeAxisIdentityKey) {
         val nextAxis = renderResult?.resolvedTimeAxis
@@ -1126,6 +1141,7 @@ fun RenderedScoreView(
                                 selectedAttachmentElements = selectedAttachmentElements,
                                 noteheadBackgroundGroups = noteheadBackgroundGroups,
                                 noteheadCenterMarkers = noteheadCenterMarkers,
+                                noteSelectionLabels = noteSelectionLabels,
                             ),
                             ghosts = RenderedScoreGhostOverlay(
                                 note = ghost,

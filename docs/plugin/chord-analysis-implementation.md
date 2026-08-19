@@ -11,7 +11,7 @@
 | `:plugins:chord-analysis:core` | `StorageChordEvent`、Runtime/Computed 投影、`ChordCompute`、注释 provider、音符着色 provider |
 | `:plugins:chord-analysis:desktop` | 和弦输入/检查面板、解析器、i18n、桌面插件注册 |
 | `:theory` | `ChordSelectionCatalog`、共享和弦时间轴读法与调性区间语义 |
-| `:api` plugin SPI | `MeconPlugin`、注册上下文、序列化模块、`AnnotationStaffProvider`、`NoteStyleProvider` |
+| `:api` plugin SPI | `MeconPlugin`、注册上下文、序列化模块、`AnnotationStaffProvider`、`NoteStyleProvider`、`NoteSelectionLabelProvider` |
 | `:renderer` | annotation staff 布局/测量/绘制、`TEXT_ANNOTATION` 命中、样式覆盖 |
 | `apps/desktop` | 插件 bootstrap、面板宿主、选择状态、提交和渲染刷新 |
 
@@ -41,6 +41,30 @@ Chord panel input
 
 `sourceEventId` 从 annotation provider 贯通到 `RenderElement.eventId`。音符点击是只读上下文，
 注释点击才进入精确的可编辑和弦事件；两类选择互斥。
+
+### 2.1 主界面调性区域编辑
+
+桌面“和弦分析”面板直接提供“插入离调 / 转调”，不依赖“复调分析助手”总开关。目标范围来自
+所选音符的最早 onset / 最晚 end，或所选和声时间轴和弦框到下一和弦框（末项到谱尾）。弹层复用
+五度圈，并默认在当前目标结束处终止与其重叠的旧调性区域；旧区域缩短、清除其后续调性中心和
+新增区域通过 `PluginPanelContext.onReplacePluginEvents` 一次提交，保持单历史项和失败原子性。
+
+模糊调性选择由 `TonalRegionKeyInference` 在插件 commonMain 统一投影：
+
+- 单音模式按该音的拼写列出“音级 + 大/小调”组合，包含变化音级；
+- 多音模式先最小化所选不同拼写音高中的变化音数量，再优先 `♯4`、`♯5` 等常见变化音，最后按
+  当前调性的五度圈距离稳定排序；
+- 下拉框在没有选中音符时也允许先切换五度圈、单音音级或多音候选；弹层采用非焦点模式，点击谱面
+  修改选择时不会关闭，选择方式、是否终止旧调性的状态和实时候选都会保留；
+- 所选音符的音级由 `NoteSelectionLabelProvider` 投影，桌面通过 `SectionIndex` 定位符头 X；同一位置的
+  音级在白底框内纵向排列。框的底边位于每个系统所选范围最上方谱表的实际占用 `StaffRegion.topY`
+  之上，避开加线、符干等扩张内容。覆盖框不进入 annotation staff、排版边界、分页或命中索引，
+  因此选择变化只重绘画布；和弦分析面板可独立关闭该常驻显示；
+- 完整复调音级轨道和经过和弦检测仍受原“复调分析助手”总开关控制。
+
+调性候选与音级标签只消费 `Pitch` / `ModulationKey`、当前选择和存储事件，不把 Compose 状态或像素
+坐标带入共享层。`NoteSelectionLabelProvider` 只遍历选择与调性区域，不在 Compose 主线程扫描整谱；
+坐标定位是桌面 adapter 的非持久化职责。没有新增存储字段，旧 `.mecon` 的读写语义不变。
 
 ## 3. 注释谱表与锚定
 
@@ -97,6 +121,10 @@ load/save。YAML 与 JSON round-trip 都要覆盖含插件事件的乐谱。若�
 - `:renderer:jvmTest`；
 - `RenderAnnotationSpliceTest`；
 - 插件模块的实际测试（没有测试源时应明确记录 `NO-SOURCE`，不能当作行为覆盖）。
+
+调性区域入口还需运行 `:plugins:chord-analysis:core:jvmTest` 与
+`:plugins:chord-analysis:core:jsTest`，覆盖候选顺序、单音音级、终止旧区域，以及独立于助手开关的
+非占位选择音级投影。
 
 检查 YAML/JSON round-trip、注释宽度变化、注释命中与音符选择互斥、note-style 轻量刷新，以及
 annotation 增量结果与冷全量结果等价。

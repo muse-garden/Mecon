@@ -31,6 +31,7 @@ Gradle 项目名后缀避免与 `:core` / `:apps:desktop` 的 capability 冲突�
 | 多态事件序列化 | `StoragePluginEvent` 子类 | `ctx.registerEventSerializer(...)` | `:api` |
 | 注释谱表（文字 / Glyph） | `AnnotationStaffProvider` | `ctx.registerAnnotationStaffProvider(...)` | `:api` |
 | 音符样式 | `NoteStyleProvider` | `ctx.registerNoteStyleProvider(...)` | `:api` |
+| 所选符头临时标签（不占排版） | `NoteSelectionLabelProvider` | `ctx.registerNoteSelectionLabelProvider(...)` | `:api` |
 | 桌面右侧面板 | `PluginPanel` | `ctx.registerPanelDescriptor(...)` | `:apps:desktop-ui-kit` |
 
 通用渲染叠加层 `PluginRenderComponent` 仍保留作为逃生口，但**首选**通过 `AnnotationStaffProvider` 抽象（坐标自动处理，不会直接接触 `CoordinateTransformer`）。

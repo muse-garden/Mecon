@@ -70,6 +70,7 @@ import com.mecon.desktop.service.applyMetadata
 import com.mecon.desktop.service.applyPageConfig
 import com.mecon.desktop.service.applyStorageEdit
 import com.mecon.desktop.service.deletePluginEvent
+import com.mecon.desktop.service.replacePluginEvents
 import com.mecon.desktop.service.toggleMeasureNumbers
 import com.mecon.desktop.service.updatePluginEvent
 import com.mecon.audio.JvmAudioEngine
@@ -536,6 +537,8 @@ fun App() {
     var noteStyleNonce by remember { mutableStateOf(0) }
     // Full render refresh for plugin display preferences that affect annotation layout.
     var pluginRenderNonce by remember { mutableStateOf(0) }
+    // Repaint-only refresh for plugin selection overlays; never starts score layout.
+    var pluginSelectionOverlayNonce by remember { mutableStateOf(0) }
 
     // Layout state
     var isSplitView by remember { mutableStateOf(false) }
@@ -973,6 +976,7 @@ fun App() {
                             onCycleMidiDevice = midiInput::cycleDevice,
                             noteStyleNonce = noteStyleNonce,
                             pluginRenderNonce = pluginRenderNonce,
+                            selectionOverlayNonce = pluginSelectionOverlayNonce,
                             scoreViewMode = scoreViewMode,
                         ),
                         scoreState = AppMainScoreState(
@@ -1058,6 +1062,7 @@ fun App() {
                             targetTimeCode = eventSelection.lastOrNull()?.timeCode,
                             onRequestNoteStyleRecompute = { noteStyleNonce++ },
                             onRequestRender = { pluginRenderNonce++ },
+                            onRequestSelectionOverlayRefresh = { pluginSelectionOverlayNonce++ },
                             pianoRollChordOverlayEnabled = pianoRollChordOverlay,
                             onShowPianoRollChords = { enabled ->
                                 pianoRollChordOverlay = enabled
@@ -1069,6 +1074,7 @@ fun App() {
                             onAddPluginEvent = session::addPluginEvent,
                             onUpdatePluginEvent = session::updatePluginEvent,
                             onDeletePluginEvent = session::deletePluginEvent,
+                            onReplacePluginEvents = session::replacePluginEvents,
                         ),
                     )
                 }

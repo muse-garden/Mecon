@@ -16,6 +16,7 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.plugin.AnnotationElement
 import com.mecon.api.plugin.AnnotationLayoutContext
+import com.mecon.api.interaction.VoiceNoteSection
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.TimeIndexedList
@@ -39,6 +40,10 @@ class PolyphonyAnalysisTest {
     @BeforeTest
     fun reset() {
         PolyphonyAnalysisEngine.resetForTesting()
+        PolyphonyDisplaySettings.isEnabled = false
+        PolyphonyDisplaySettings.showDegreeTrack = true
+        PolyphonyDisplaySettings.showPassingChords = true
+        PolyphonyDisplaySettings.showSelectedDegrees = true
     }
 
     @Test
@@ -111,6 +116,16 @@ class PolyphonyAnalysisTest {
             PolyphonyTonalContextResolver.keysAt(score, tc(3)).map(PolyphonyTonalKey::from),
         )
         assertEquals(
+            listOf(cMajor, gMajor),
+            PolyphonyTonalContextResolver.keysAtSelection(score.runtime, tc(1), listOf(region))
+                .map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
+            listOf(gMajor),
+            PolyphonyTonalContextResolver.keysAtSelection(score.runtime, tc(3), listOf(region))
+                .map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
             "C:1 · G:4",
             PolyphonyDegreeFormatter.format(
                 listOf(cMajor.toModulationKey(), gMajor.toModulationKey()),
@@ -164,6 +179,68 @@ class PolyphonyAnalysisTest {
 
         assertEquals(1, PolyphonyAnalysisEngine.compute(changed).getValue(time).tonalKeys.single().fifths)
         assertTrue(PolyphonyAnalysisEngine.lastRecomputedFrameCount > 0)
+    }
+
+    @Test
+    fun selectedDegreesUseNonSpacingProviderWithoutEnablingAssistant() {
+        val c = voice("c", tc(0), Pitch.C4)
+        val region = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(1),
+            keys = listOf(PolyphonyTonalKey(0, KeySignatureMode.MAJOR)),
+        )
+        val score = score(
+            events = listOf(c),
+            pluginTracks = listOf(pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(region))),
+        )
+        val ctx = object : AnnotationLayoutContext {
+            override val computedScore = score
+            override fun xForTime(time: TimeCode): Float? = null
+        }
+        val oldMode = ChordSymbolDisplaySettings.scoreDisplayMode
+        try {
+            ChordSymbolDisplaySettings.scoreDisplayMode = ChordAnalysisScoreDisplayMode.CLASSIC
+
+            val texts = PolyphonyAnnotationProvider.layout(ctx)
+                .filterIsInstance<AnnotationElement.Text>()
+            val labels = ChordSelectionDegreeLabelProvider.labels(
+                score,
+                setOf(VoiceNoteSection(c, 0)),
+            )
+
+            assertEquals(listOf("1"), labels.map { it.text })
+            assertTrue(texts.none { it.text == "1" })
+            assertTrue(texts.any { it.sourceEventId == region.id })
+
+            PolyphonyDisplaySettings.showSelectedDegrees = false
+            assertTrue(
+                ChordSelectionDegreeLabelProvider.labels(
+                    score,
+                    setOf(VoiceNoteSection(c, 0)),
+                ).isEmpty()
+            )
+        } finally {
+            ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
+        }
+    }
+
+    @Test
+    fun selectedDegreesRemainAvailableFromNativeKeyWithoutStoredRegion() {
+        val c = voice("c", tc(0), Pitch.C4)
+        val gRuntime = runtime.copy(
+            defaultKeySignature = KeySignature.G_MAJOR,
+            measures = runtime.measures.put(
+                1,
+                runtime.getMeasure(1)!!.copy(keySignature = KeySignature.G_MAJOR),
+            ),
+        )
+
+        val labels = ChordSelectionDegreeLabelProvider.labels(
+            score(listOf(c), scoreRuntime = gRuntime),
+            setOf(VoiceNoteSection(c, 0)),
+        )
+
+        assertEquals(listOf("4"), labels.map { it.text })
     }
 
     @Test

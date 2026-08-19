@@ -19,6 +19,7 @@ interface PluginInstallContext {
     )
     fun registerAnnotationStaffProvider(provider: AnnotationStaffProvider)
     fun registerNoteStyleProvider(provider: NoteStyleProvider)
+    fun registerNoteSelectionLabelProvider(provider: NoteSelectionLabelProvider)
     fun registerPanelDescriptor(descriptor: Any) // 实际类型 PluginPanelDescriptor
 }
 ```
@@ -30,6 +31,7 @@ object PluginRegistry {
     fun installAll(plugins: List<MeconPlugin>)
     fun annotationStaffProviders(): List<AnnotationStaffProvider>
     fun noteStyleProviders(): List<NoteStyleProvider>
+    fun noteSelectionLabelProviders(): List<NoteSelectionLabelProvider>
     fun panelDescriptors(): List<Any>
     fun buildSerializersModule(): SerializersModule
     fun resetForTesting()
@@ -74,7 +76,16 @@ interface NoteStyleProvider {
 ctx.registerNoteStyleProvider(ChordToneStyleProvider)
 ```
 
-## 4. PluginPanel（桌面 UI）
+## 4. NoteSelectionLabelProvider
+
+> 路径：`api/src/commonMain/kotlin/com/mecon/api/plugin/NoteSelectionLabelProvider.kt`
+
+该 SPI 将当前 `EventSection` 选择投影为 `(EventId, pitchIndex, text)`，供宿主绘制临时符头标签。
+它与 `AnnotationStaffProvider` 的边界不同：标签不进入排版、分页、命中索引或存储；桌面宿主通过
+`SectionIndex` 解析符头坐标。provider 在 UI 线程随选择调用，只能遍历当前选择和小型插件投影，
+禁止扫描整谱。面板显示偏好变化通过 `onRequestSelectionOverlayRefresh` 只触发覆盖层重绘。
+
+## 5. PluginPanel（桌面 UI）
 
 > 路径：`apps/desktop-ui-kit/.../plugin/`
 
@@ -109,7 +120,7 @@ data class PluginPanelContext(
 - `selectedAnnotationEventId`（注释符号点击）→ 表单进入"编辑/删除"状态
 - `eventSelection`（音符 / 音头多选）→ 插件可读取 `VoiceNoteSection` / `VoiceEventSection` 生成派生分析；例如和弦分析面板从多选音高识别和弦，并通过 `onAddPluginEvent` 写入最早选中音符处
 
-## 5. 运行时轨道事件查询
+## 6. 运行时轨道事件查询
 
 `RuntimePluginTrack<T>` 在 `events: TimeIndexedList<RuntimePluginEvent<T>>` 之上提供高效查询方法，直接走底层 B+ 树，无需遍历全轨道：
 
@@ -156,7 +167,7 @@ val next: StorageChordEvent? = track.nextEvent(currentChord.onset)?.storageEvent
 
 > **原则**：插件 UI 组件不应调用 `.events.toList()` 或 `flatMap { it.events.toList() }`；始终通过 `pluginTrackOf` + 上述查询方法访问轨道，避免 O(n) 全量展开。
 
-## 6. 多态事件序列化
+## 7. 多态事件序列化
 
 ```kotlin
 // 插件 core 模块内
@@ -167,7 +178,7 @@ override fun install(ctx: PluginInstallContext) {
 
 `PluginRegistry.buildSerializersModule()` 将所有注册项组装为 `polymorphic(StoragePluginEvent::class) { ... }`，必须由 `ScoreSerializer.installSerializersModule(...)` 灌入 kaml / Json，否则乐谱保存时插件事件无法识别。Spike 验证：`core/.../serializer/ScorePluginRoundTripSpike.kt`。
 
-## 7. 安装顺序
+## 8. 安装顺序
 
 ```
 BuiltinStrings.install()              i18n 内置包
@@ -178,7 +189,7 @@ application { Window { App() } }
 
 `bootstrapPlugins()` 是这条链的统一入口。
 
-## 8. 已知限制 / TODO
+## 9. 已知限制 / TODO
 
 - 卸载、热重载未实现
 - 命令 / Shortcut 注册 SPI 缺失

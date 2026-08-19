@@ -47,6 +47,7 @@ import com.mecon.plugins.chord.RuntimeChordEvent
 import com.mecon.plugins.chord.StorageChordEvent
 import com.mecon.plugins.chord.ChordSymbolDisplaySettings
 import com.mecon.plugins.chord.ChordAnalysisScoreDisplayMode
+import com.mecon.plugins.chord.PolyphonyDisplaySettings
 import com.mecon.plugins.chord.desktop.ChordSymbolParser.Parsed
 import com.mecon.theory.Chord
 import com.mecon.theory.ChordRecognitionCandidate
@@ -107,6 +108,9 @@ internal object ChordAnalysisPanel : PluginPanel {
                 ChordSymbolDisplaySettings.scoreDisplayMode == ChordAnalysisScoreDisplayMode.TIMELINE
             )
         }
+        var selectedDegreeOverlay by remember {
+            mutableStateOf(PolyphonyDisplaySettings.showSelectedDegrees)
+        }
 
         val keySignature = remember(displayChord, selectionChord, ctx.targetTimeCode, ctx.runtimeScore) {
             val rs = ctx.runtimeScore
@@ -158,6 +162,16 @@ internal object ChordAnalysisPanel : PluginPanel {
                     ctx.onRequestNoteStyleRecompute?.invoke()
                 }
             )
+            Spacer(Modifier.height(6.dp))
+            MeconLabeledSwitch(
+                label = i18n("plugin.chord.panel.showSelectedDegrees"),
+                checked = selectedDegreeOverlay,
+                onCheckedChange = { enabled ->
+                    selectedDegreeOverlay = enabled
+                    PolyphonyDisplaySettings.showSelectedDegrees = enabled
+                    ctx.onRequestSelectionOverlayRefresh?.invoke()
+                },
+            )
             if (coloringEnabled) {
                 Spacer(Modifier.height(6.dp))
                 NonChordToneLegend()
@@ -169,6 +183,8 @@ internal object ChordAnalysisPanel : PluginPanel {
             ) {
                 ctx.onShowPianoRollChords?.invoke(it)
             }
+            Spacer(Modifier.height(10.dp))
+            TonalRegionEditor(ctx)
             Spacer(Modifier.height(10.dp))
             PolyphonyAssistantSection(ctx)
             Spacer(Modifier.height(12.dp))

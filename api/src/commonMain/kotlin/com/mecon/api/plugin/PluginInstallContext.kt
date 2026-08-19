@@ -30,6 +30,9 @@ interface PluginInstallContext {
     /** Register a note style provider for per-notehead coloring. */
     fun registerNoteStyleProvider(provider: NoteStyleProvider)
 
+    /** Register a transient, non-spacing label provider for selected noteheads. */
+    fun registerNoteSelectionLabelProvider(provider: NoteSelectionLabelProvider)
+
     /**
      * Register a host-specific descriptor (e.g. a desktop panel). The host
      * narrows the [Any] back to its concrete descriptor type.

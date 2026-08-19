@@ -18,7 +18,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mecon.api.interaction.*
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Pitch
@@ -39,6 +42,7 @@ import com.mecon.renderer.render.edit.GhostNote
 import com.mecon.renderer.render.edit.GhostTimeSignature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest) {
     val composeRendererSource = request.render.renderer
@@ -67,6 +71,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     val selectedAttachmentElements = request.selection.selectedAttachmentElements
     val noteheadBackgroundGroups = request.selection.noteheadBackgroundGroups
     val noteheadCenterMarkers = request.selection.noteheadCenterMarkers
+    val noteSelectionLabels = request.selection.noteSelectionLabels
     val ghost = request.ghosts.note
     val clefGhost = request.ghosts.clef
     val timeGhost = request.ghosts.timeSignature
@@ -421,6 +426,113 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
                     topLeft = topLeft,
                     size = Size(bounds.width.value * density, bounds.height.value * density),
                 )
+            }
+        }
+    }
+
+    // Plugin selection labels are a pure canvas overlay. Resolve selected noteheads through the
+    // stable section index, then place each white capsule above the highest selected staff in its
+    // system. Nothing here participates in engraving bounds, pagination, or hit testing.
+    if (noteSelectionLabels.isNotEmpty()) {
+        data class PositionedLabel(
+            val x: Float,
+            val text: String,
+            val staffIndex: Int,
+        )
+
+        val noteSections = buildMap<Pair<EventId, Int>, VoiceNoteSection> {
+            selection.forEach { section ->
+                when (section) {
+                    is VoiceNoteSection -> put(section.event.id to section.pitchIndex, section)
+                    is VoiceEventSection -> section.event.pitchData.indices.forEach { pitchIndex ->
+                        put(section.event.id to pitchIndex, VoiceNoteSection(section.event, pitchIndex))
+                    }
+                    else -> Unit
+                }
+            }
+        }
+        val positionedBySystem = linkedMapOf<Int, MutableList<PositionedLabel>>()
+        noteSelectionLabels.forEach { label ->
+            val section = noteSections[label.eventId to label.pitchIndex] ?: return@forEach
+            val notehead = rr.sectionIndex.elementsFor(section).elementIds
+                .asSequence()
+                .mapNotNull(rr::elementById)
+                .firstOrNull { it.type == RenderElementType.NOTEHEAD }
+                ?: return@forEach
+            val systemIndex = notehead.systemIndex ?: return@forEach
+            val staffIndex = notehead.staffIndex ?: return@forEach
+            positionedBySystem.getOrPut(systemIndex, ::mutableListOf) += PositionedLabel(
+                x = notehead.center.x.value,
+                text = label.text,
+                staffIndex = staffIndex,
+            )
+        }
+
+        val systems = rr.spatialIndex.allSystems().associateBy { it.systemIndex }
+        val labelStyle = TextStyle(color = Color(0xFFEA580C), fontSize = 11.sp)
+        positionedBySystem.forEach { (systemIndex, labels) ->
+            val system = systems[systemIndex] ?: return@forEach
+            val selectedStaffs = labels.mapTo(hashSetOf()) { it.staffIndex }
+            val topStaff = system.staffRegions
+                .filter { it.staffIndex in selectedStaffs }
+                .minByOrNull { it.centerY.value }
+                ?: return@forEach
+            // StaffRegion.topY is the expanded occupied bound (notes, stems, ledger lines, etc.),
+            // not merely the top staff line. Anchor the capsule above it so selection labels never
+            // cover ledger-line notation.
+            val occupiedTopY = rr.transformerSnapshot.toAbsolute(
+                RelativePoint(StaffSpace(0f), topStaff.topY)
+            ).y.value
+
+            val columns = labels.mapNotNull { label ->
+                val design = if (paginatedView) {
+                    globalToDesign(label.x, occupiedTopY, pages, pageSlots)
+                } else {
+                    Offset(label.x, occupiedTopY)
+                } ?: return@mapNotNull null
+                design.x to label.text
+            }.groupBy { (x, _) -> (x / 3f).roundToInt() }
+
+            columns.values.forEach { column ->
+                val x = column.map { it.first }.average().toFloat() * density
+                val layouts = column.map { it.second }.distinct().map { text ->
+                    textMeasurer.measure(text = text, style = labelStyle)
+                }
+                val paddingX = 5f * density
+                val paddingY = 2.5f * density
+                val rowGap = 1.5f * density
+                val boxWidth = layouts.maxOf { it.size.width } + paddingX * 2f
+                val boxHeight = layouts.sumOf { it.size.height } +
+                    rowGap * (layouts.size - 1).coerceAtLeast(0) + paddingY * 2f
+                val designTop = if (paginatedView) {
+                    globalToDesign(labels.first().x, occupiedTopY, pages, pageSlots)?.y
+                } else occupiedTopY
+                val boxTop = (designTop ?: return@forEach) * density - boxHeight - 3f * density
+                val boxLeft = x - boxWidth / 2f
+                drawRoundRect(
+                    color = Color.White.copy(alpha = 0.97f),
+                    topLeft = Offset(boxLeft, boxTop),
+                    size = Size(boxWidth, boxHeight),
+                    cornerRadius = CornerRadius(4f * density),
+                )
+                drawRoundRect(
+                    color = Color(0xFFD1D5DB),
+                    topLeft = Offset(boxLeft, boxTop),
+                    size = Size(boxWidth, boxHeight),
+                    cornerRadius = CornerRadius(4f * density),
+                    style = Stroke(width = density.coerceAtLeast(1f)),
+                )
+                var rowTop = boxTop + paddingY
+                layouts.forEach { layout ->
+                    drawText(
+                        textLayoutResult = layout,
+                        topLeft = Offset(
+                            x - layout.size.width / 2f,
+                            rowTop,
+                        ),
+                    )
+                    rowTop += layout.size.height + rowGap
+                }
             }
         }
     }

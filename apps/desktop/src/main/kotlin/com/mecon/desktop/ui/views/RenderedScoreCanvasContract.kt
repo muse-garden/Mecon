@@ -9,6 +9,7 @@ import com.mecon.api.interaction.VoltaEndingSection
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.render.RenderColor
+import com.mecon.api.plugin.NoteSelectionLabel
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.audio.engine.PlaybackState
 import com.mecon.renderer.geometry.AbsoluteRect
@@ -65,6 +66,7 @@ internal data class RenderedScoreSelectionOverlay(
     val selectedAttachmentElements: List<RenderElement>,
     val noteheadBackgroundGroups: List<RenderedScoreNoteheadBackgroundGroup>,
     val noteheadCenterMarkers: List<NoteheadCenterMarker>,
+    val noteSelectionLabels: List<NoteSelectionLabel>,
 )
 
 internal data class RenderedScoreGhostOverlay(

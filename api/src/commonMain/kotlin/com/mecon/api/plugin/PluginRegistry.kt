@@ -26,6 +26,7 @@ object PluginRegistry {
     private val eventSerializers = mutableListOf<EventSerializerEntry<*>>()
     private val annotationProviders = mutableListOf<AnnotationStaffProvider>()
     private val noteStyleProviders = mutableListOf<NoteStyleProvider>()
+    private val noteSelectionLabelProviders = mutableListOf<NoteSelectionLabelProvider>()
     private val panelDescriptors = mutableListOf<Any>()
     private val installedPluginIds = mutableSetOf<String>()
 
@@ -40,6 +41,9 @@ object PluginRegistry {
     fun annotationStaffProviders(): List<AnnotationStaffProvider> = annotationProviders.toList()
 
     fun noteStyleProviders(): List<NoteStyleProvider> = noteStyleProviders.toList()
+
+    fun noteSelectionLabelProviders(): List<NoteSelectionLabelProvider> =
+        noteSelectionLabelProviders.toList()
 
     fun panelDescriptors(): List<Any> = panelDescriptors.toList()
 
@@ -58,6 +62,7 @@ object PluginRegistry {
         eventSerializers.clear()
         annotationProviders.clear()
         noteStyleProviders.clear()
+        noteSelectionLabelProviders.clear()
         panelDescriptors.clear()
         installedPluginIds.clear()
     }
@@ -84,6 +89,10 @@ object PluginRegistry {
 
         override fun registerNoteStyleProvider(provider: NoteStyleProvider) {
             noteStyleProviders += provider
+        }
+
+        override fun registerNoteSelectionLabelProvider(provider: NoteSelectionLabelProvider) {
+            noteSelectionLabelProviders += provider
         }
 
         override fun registerPanelDescriptor(descriptor: Any) {

@@ -60,6 +60,7 @@ internal data class AppMainScoreUi(
     val onCycleMidiDevice: () -> Unit,
     val noteStyleNonce: Int,
     val pluginRenderNonce: Int,
+    val selectionOverlayNonce: Int,
     val scoreViewMode: ScoreViewMode,
 )
 
@@ -103,6 +104,7 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
     val noteTool = request.ui.noteTool
     val noteStyleNonce = request.ui.noteStyleNonce
     val pluginRenderNonce = request.ui.pluginRenderNonce
+    val selectionOverlayNonce = request.ui.selectionOverlayNonce
     val scoreViewMode = request.ui.scoreViewMode
     val applyExpressionResult = request.actions.applyExpressionResult
     val auditionSingleEditedEvent = request.actions.auditionEditedEvent
@@ -164,6 +166,8 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
             display = RenderedScoreDisplayConfig(
                 noteStyleRefreshKey = noteStyleNonce,
                 renderRefreshKey = pluginRenderNonce,
+                selectionOverlayRefreshKey = selectionOverlayNonce,
+                showPluginSelectionLabels = true,
                 currentPositionTicks = currentPositionTicks,
                 playbackState = playbackState,
                 arrangement = session.pageArrangement,

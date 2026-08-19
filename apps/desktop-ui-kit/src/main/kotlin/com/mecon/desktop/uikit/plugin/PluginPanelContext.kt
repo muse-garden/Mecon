@@ -27,6 +27,8 @@ data class PluginPanelContext(
     val onRequestNoteStyleRecompute: (() -> Unit)? = null,
     /** Signal to the host that a plugin display preference changed and annotations need re-layout. */
     val onRequestRender: (() -> Unit)? = null,
+    /** Signal to repaint transient selection overlays without running score layout. */
+    val onRequestSelectionOverlayRefresh: (() -> Unit)? = null,
     /** Whether the host piano roll is currently showing the chord-analysis overlay. */
     val pianoRollChordOverlayEnabled: Boolean = false,
     /** Open the host piano roll and enable or disable its chord-analysis overlay. */
@@ -37,4 +39,6 @@ data class PluginPanelContext(
     val onUpdatePluginEvent: ((trackType: String, oldEventId: EventId, newEvent: StoragePluginEvent) -> Unit)? = null,
     /** Remove a plugin event from the track identified by [trackType]. */
     val onDeletePluginEvent: ((trackType: String, eventId: EventId) -> Unit)? = null,
+    /** Atomically replace one plugin track's events (one undo step). */
+    val onReplacePluginEvents: ((trackType: String, events: List<StoragePluginEvent>) -> Unit)? = null,
 )

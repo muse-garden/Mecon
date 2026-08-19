@@ -128,5 +128,5 @@ object PolyphonyDisplaySettings {
     var isEnabled: Boolean = false
     var showDegreeTrack: Boolean = true
     var showPassingChords: Boolean = true
-    var selectedNoteheads: Set<Pair<EventId, Int>> = emptySet()
+    var showSelectedDegrees: Boolean = true
 }

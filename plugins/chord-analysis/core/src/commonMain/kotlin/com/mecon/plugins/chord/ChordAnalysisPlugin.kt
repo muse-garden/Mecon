@@ -22,5 +22,6 @@ open class ChordAnalysisPlugin : MeconPlugin {
         ctx.registerAnnotationStaffProvider(ChordTimelineAnnotationProvider)
         ctx.registerAnnotationStaffProvider(PolyphonyAnnotationProvider)
         ctx.registerNoteStyleProvider(ChordToneStyleProvider)
+        ctx.registerNoteSelectionLabelProvider(ChordSelectionDegreeLabelProvider)
     }
 }

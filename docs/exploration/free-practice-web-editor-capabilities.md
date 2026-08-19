@@ -109,7 +109,7 @@ Web，须单独完成禁忌表平台无关索引与 JVM/JS key 集合等价门�
 
 | 能力 | 桌面状态 | Web 状态与原因 |
 |------|----------|----------------|
-| 主界面谱面和声时间轴 | ✅ 和弦分析面板"在谱面上使用和声时间轴"开关，在 `ChordAnnotationProvider`（下方点状）与 `ChordTimelineAnnotationProvider`（上方区间卡片）之间切换 | ❌ 未接入。`:plugins:chord-analysis:core` 已是 KMP（含 js target），provider 本体跨端可用；缺的是 ① web 引擎未依赖也未注册 `ChordAnalysisPlugin`，② 开关只有桌面 `ChordAnalysisPanel`，③ `ChordSymbolDisplaySettings.scoreDisplayMode` 是进程级可变全局，不属于 document，接 Web 前需先落到文档或会话状态。接入时按本矩阵新增能力行 |
+| 主界面谱面和声时间轴与调性区域编辑 | ✅ 和弦分析面板可在点状和弦注释与上方区间卡片之间切换；可先在常驻下拉框选择五度圈、单音音级或多音候选，再修改谱面选择；候选随选择更新，并以单历史项可选终止旧调性。所选音级用不占排版的白底覆盖框显示，可单独关闭 | ❌ 未接入。`:plugins:chord-analysis:core` 已是 KMP（含 js target），provider、候选排序和区间变换本体跨端可用；缺的是 ① web 引擎未依赖也未注册 `ChordAnalysisPlugin`，② 开关、非焦点编辑弹层和选择标签覆盖层只有桌面实现，③ `ChordSymbolDisplaySettings.scoreDisplayMode` / 覆盖层开关是进程级可变全局，不属于 document，接 Web 前需先落到文档或会话状态。接入时按本矩阵新增能力行 |
 | 顶栏 `mode`（探索/自由练习模式切换） | ✅ 桌面注入在 `history` 之后 | ❌ 不适用。Web 没有该模式概念，故**刻意不进** `FreePracticeToolbarSpec`——descriptor 的含义是"两端都必须复现的东西"。桌面侧由 `Toolbar.kt` 的 `DESKTOP_MODE_GROUP` 具名承载 |
 
 上表以外的差异一律视为遗漏而非决策；descriptor 里出现桌面画不出的 group 时

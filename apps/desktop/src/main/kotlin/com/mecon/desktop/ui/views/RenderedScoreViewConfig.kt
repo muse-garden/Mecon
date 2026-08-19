@@ -94,6 +94,10 @@ data class RenderedScoreStaffSelectorConfig(
 data class RenderedScoreDisplayConfig(
     val noteStyleRefreshKey: Int = 0,
     val renderRefreshKey: Int = 0,
+    /** Recomputes transient selection labels without invalidating score layout. */
+    val selectionOverlayRefreshKey: Int = 0,
+    /** Enables plugin-provided selected-note overlays for this score surface. */
+    val showPluginSelectionLabels: Boolean = false,
     val isReference: Boolean = false,
     val readOnly: Boolean = false,
     val panEnabled: Boolean = true,
