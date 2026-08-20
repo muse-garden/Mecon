@@ -4,6 +4,7 @@ import com.mecon.api.computed.ComputedScore
 import com.mecon.renderer.geometry.DrawableGeometry
 import com.mecon.renderer.geometry.RelativePoint
 import com.mecon.api.interaction.EventSection
+import com.mecon.renderer.geometry.RelativeHitShape
 import com.mecon.renderer.geometry.RelativeRect
 import com.mecon.renderer.geometry.StaffSpace
 import com.mecon.renderer.render.CoordinateTransformer
@@ -30,12 +31,12 @@ data class SectionRegistration(
  *
  * @param elementId Matches the corresponding [RenderElement.id]
  * @param relativeHitBox Bounding box in score-relative coordinates (StaffSpace)
- * @param customIntersect Optional custom intersection test for non-rectangular shapes
+ * @param hitShape Optional precise, translation-safe shape for non-rectangular elements
  */
 data class ElementHitArea(
     val elementId: RenderElementId,
     val relativeHitBox: RelativeRect,
-    val customIntersect: ((RelativePoint) -> Boolean)? = null
+    val hitShape: RelativeHitShape? = null,
 )
 
 /**

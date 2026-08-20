@@ -196,7 +196,8 @@ internal fun RichElement.translated(deltaX: StaffSpace, deltaY: StaffSpace, scal
                         x = h.relativeHitBox.origin.x + deltaX,
                         y = h.relativeHitBox.origin.y + deltaY
                     )
-                )
+                ),
+                hitShape = h.hitShape?.translatedBy(deltaX, deltaY),
             )
         }
     )

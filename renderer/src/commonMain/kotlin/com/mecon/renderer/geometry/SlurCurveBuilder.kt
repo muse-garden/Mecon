@@ -34,6 +34,9 @@ object SlurCurveBuilder {
     /** Default upper bound on apex height (staff spaces). */
     val DEFAULT_MAX_HEIGHT = StaffSpace(4f)
 
+    /** Small pointer halo outside the painted tie/slur lens. */
+    val DEFAULT_HIT_TOLERANCE = StaffSpace(0.3f)
+
     /**
      * Build a closed lens path between [start] and [end].
      *

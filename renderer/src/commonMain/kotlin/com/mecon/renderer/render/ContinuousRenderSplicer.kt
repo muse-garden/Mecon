@@ -66,11 +66,12 @@ internal class ContinuousRenderSplicer(
         // Annotation staves (plugin chord symbols etc.) are spliceable: they carry no hittable/section
         // registration (see FullScoreRenderer's addElements path), so they never touch the spatial/section
         // index splice — they are dropped from the cached frame and regenerated wholesale from `layout`.
+        // Precise RelativeHitShape instances are splice-safe: RichElement.translated moves them with
+        // the cached element, so they do not require the old blanket full-render fallback.
         if (cachedRich.any {
                 (!isSpliceableType(it.element.type) &&
                     it.element.type != RenderElementType.TEXT_ANNOTATION &&
-                    it.element.type != RenderElementType.EDITOR_MARKER) ||
-                    it.hit?.customIntersect != null
+                    it.element.type != RenderElementType.EDITOR_MARKER)
             }) return null
 
         val window = changeSet.affectedMeasures

@@ -382,16 +382,11 @@ class ScoreSpatialAdapter {
                 height = hittable.relativeHitBox.height
             )
 
-            // Transform customIntersect coordinates: score-relative → cell-relative
-            val cellCustomIntersect = if (hittable.customIntersect != null) {
-                { cellPoint: RelativePoint ->
-                    val scorePoint = RelativePoint(
-                        cellPoint.x + measureStartX,
-                        cellPoint.y + staffRegion.centerY
-                    )
-                    hittable.customIntersect.invoke(scorePoint)
-                }
-            } else null
+            // Transform precise hit geometry from score-relative to cell-relative coordinates.
+            val cellHitShape = hittable.hitShape?.translatedBy(
+                StaffSpace(-measureStartX.value),
+                StaffSpace(-staffRegion.centerY.value),
+            )
 
             systemNode.getCell(measureIndex, staffRegionIndex).add(
                 ScoreHittableElement(
@@ -399,7 +394,7 @@ class ScoreSpatialAdapter {
                     type = hittable.type,
                     sections = hittable.sections,
                     relativeBounds = cellRelativeBounds,
-                    customIntersect = cellCustomIntersect,
+                    hitShape = cellHitShape,
                     metadata = hittable.metadata,
                 )
             )

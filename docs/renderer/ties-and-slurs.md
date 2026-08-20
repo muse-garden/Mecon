@@ -134,7 +134,8 @@ startY = staffLayout.centerY + sourceNotehead.centerY + tieVerticalGap * sign
 7. Slur 可传入 `middleStraightening`：长跨度时外/内曲线按连续偏移函数拆成多段 cubic，不设置 shoulder 点。起止端继续沿用原单段 cubic 的切线方向，中部曲率逐渐降低，并保留很浅的 apex，避免宽跨度弧线变成完全平直的平台。
 8. 默认路径 = `MoveTo(start) → CubicTo(outer cps, end) → CubicTo(inner cps reversed, start) → Close`；长 slur 拉直路径则包含更多 `CubicTo`，仍可直接交给 `DrawPath(fillColor=BLACK, strokeColor=null)`。
 
-`lensBounds()` 用同一参数返回保守 AABB（取外侧顶点 + 两端点的极值），用于命中与脏区。
+`lensBounds()` 用同一参数返回保守 AABB（取外侧顶点 + 两端点的极值），用于绘制 bounds、
+空间索引粗筛与脏区；点命中不会直接接受整个 AABB。
 
 `midpointThickness` 来自 `EngravingDefaults.tieMidpointThickness`（Bravura 默认 0.22 staff space）。
 
@@ -242,6 +243,11 @@ required = max over obstacles in span of (
 ### 7.7 交互注册
 
 每条 `SlurElement` 注册 `VoiceSlurSection(startEvent, endEvent, nestingLevel)`，`sectionId = "slur:<startId>-><endId>:<nestingLevel>"`。嵌套层级编入 ID，所以重叠的多层 slur 可以独立选中。`RenderedScoreView.selectByPriority()` 给 slur 优先级 6（高于小节线 / 谱号 / 调号 / 拍号）。
+
+Tie/slur 的点命中按实际填充路径判断，并在墨迹外保留 `0.3 ss` 小容差；AABB 内但远离弧线的
+空白不会命中。精确命中形状是可平移的不可变几何，continuous/paginated splice 平移复用元素时
+会同步平移，不能因精确命中退回全量渲染。Frozen Score 额外通过 `hitShape=filledPath` metadata
+携带同一契约，Web Canvas/SVG 壳层从 `DrawPath` 重放等价命中。
 
 ### 7.8 持久化几何（overlay）
 

@@ -32,7 +32,7 @@ internal object RenderHitAreaEnricher {
                 measureIndices = ScoreSpatialAdapter.findOverlappingMeasureIndices(
                     hitArea.relativeHitBox, measureBoundaries, systemStartX
                 ),
-                customIntersect = hitArea.customIntersect,
+                hitShape = hitArea.hitShape,
                 metadata = renderElem.metadata,
             )
         }

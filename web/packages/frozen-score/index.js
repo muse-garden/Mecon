@@ -333,13 +333,137 @@ export function hitTest(bundleInput, surfaceIndex, x, y, options = {}) {
     if (types && !types.has(element.type)) continue;
     const box = rect(element.hitBox);
     const padding = Number(options.padding ?? 0);
+    const shapePadding = element.metadata?.hitShape === "filledPath"
+      ? Number(element.metadata?.hitTolerancePx ?? 0)
+      : 0;
+    const totalPadding = padding + shapePadding;
     if (
-      surfaceX >= box.x - padding && surfaceX <= box.x + box.width + padding &&
-      surfaceY >= box.y - padding && surfaceY <= box.y + box.height + padding
+      surfaceX >= box.x - totalPadding && surfaceX <= box.x + box.width + totalPadding &&
+      surfaceY >= box.y - totalPadding && surfaceY <= box.y + box.height + totalPadding &&
+      elementHitContains(element, surfaceX, surfaceY, padding)
     ) return element;
   }
   return null;
 }
+
+function elementHitContains(element, x, y, extraPadding) {
+  if (element.metadata?.hitShape !== "filledPath") return true;
+  const tolerance = Number(element.metadata?.hitTolerancePx ?? 0) + extraPadding;
+  const paths = (element.commands ?? [])
+    .filter((command) => commandKind(command) === "DrawPath")
+    .map((command) => command.path?.segments ?? [])
+    .filter((segments) => segments.length > 0);
+  if (paths.length === 0) return true;
+  return paths.some((segments) => filledPathContains(segments, x, y, tolerance));
+}
+
+function filledPathContains(segments, x, y, tolerance) {
+  const polygon = flattenPath(segments);
+  if (pointInPolygon(x, y, polygon)) return true;
+  const toleranceSquared = tolerance * tolerance;
+  if (toleranceSquared <= 0 || polygon.length === 0) return false;
+  for (let index = 0; index < polygon.length - 1; index++) {
+    if (segmentDistanceSquared(x, y, polygon[index], polygon[index + 1]) <= toleranceSquared) return true;
+  }
+  if (polygon.length > 1 && segmentDistanceSquared(x, y, polygon.at(-1), polygon[0]) <= toleranceSquared) {
+    return true;
+  }
+  return false;
+}
+
+function flattenPath(segments) {
+  const points = [];
+  let current = null;
+  let subpathStart = null;
+  for (const segment of segments) {
+    switch (segmentKind(segment)) {
+      case "MoveTo": {
+        current = point(segment.point);
+        subpathStart = current;
+        points.push(current);
+        break;
+      }
+      case "LineTo": {
+        current = point(segment.point);
+        points.push(current);
+        break;
+      }
+      case "QuadTo": {
+        if (!current) break;
+        const start = current;
+        const control = point(segment.control);
+        const end = point(segment.end);
+        for (let step = 1; step <= PATH_HIT_SUBDIVISIONS; step++) {
+          const t = step / PATH_HIT_SUBDIVISIONS;
+          const u = 1 - t;
+          points.push({
+            x: u * u * start.x + 2 * u * t * control.x + t * t * end.x,
+            y: u * u * start.y + 2 * u * t * control.y + t * t * end.y,
+          });
+        }
+        current = end;
+        break;
+      }
+      case "CubicTo": {
+        if (!current) break;
+        const start = current;
+        const control1 = point(segment.control1);
+        const control2 = point(segment.control2);
+        const end = point(segment.end);
+        for (let step = 1; step <= PATH_HIT_SUBDIVISIONS; step++) {
+          const t = step / PATH_HIT_SUBDIVISIONS;
+          const u = 1 - t;
+          points.push({
+            x: u * u * u * start.x + 3 * u * u * t * control1.x +
+              3 * u * t * t * control2.x + t * t * t * end.x,
+            y: u * u * u * start.y + 3 * u * u * t * control1.y +
+              3 * u * t * t * control2.y + t * t * t * end.y,
+          });
+        }
+        current = end;
+        break;
+      }
+      case "Close": {
+        if (subpathStart && !samePoint(points.at(-1), subpathStart)) points.push(subpathStart);
+        current = subpathStart;
+        break;
+      }
+    }
+  }
+  return points;
+}
+
+function pointInPolygon(x, y, polygon) {
+  if (polygon.length < 3) return false;
+  let inside = false;
+  let previous = polygon.at(-1);
+  for (const current of polygon) {
+    const crossesY = (current.y > y) !== (previous.y > y);
+    if (crossesY) {
+      const crossingX = (previous.x - current.x) * (y - current.y) /
+        (previous.y - current.y) + current.x;
+      if (x < crossingX) inside = !inside;
+    }
+    previous = current;
+  }
+  return inside;
+}
+
+function segmentDistanceSquared(x, y, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= Number.EPSILON) return (x - start.x) ** 2 + (y - start.y) ** 2;
+  const projection = ((x - start.x) * dx + (y - start.y) * dy) / lengthSquared;
+  const t = Math.max(0, Math.min(1, projection));
+  return (x - (start.x + dx * t)) ** 2 + (y - (start.y + dy * t)) ** 2;
+}
+
+function samePoint(a, b) {
+  return a?.x === b?.x && a?.y === b?.y;
+}
+
+const PATH_HIT_SUBDIVISIONS = 16;
 
 export function renderCanvas(canvas, bundleInput, options = {}) {
   const bundle = parseFrozenScore(bundleInput);

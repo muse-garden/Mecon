@@ -4017,7 +4017,9 @@
         "slurId": "slur:ve-m4-1->ve-m4-8:0",
         "startEventId": "ve-m4-1",
         "endEventId": "ve-m4-8",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     }
   ],

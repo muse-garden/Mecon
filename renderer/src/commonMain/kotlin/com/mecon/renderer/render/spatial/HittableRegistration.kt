@@ -1,7 +1,7 @@
 package com.mecon.renderer.render.spatial
 
-import com.mecon.renderer.geometry.RelativePoint
 import com.mecon.renderer.geometry.RelativeRect
+import com.mecon.renderer.geometry.RelativeHitShape
 import com.mecon.api.interaction.EventSection
 import com.mecon.renderer.render.RenderElementType
 import com.mecon.renderer.render.RenderElementId
@@ -19,7 +19,7 @@ import com.mecon.renderer.render.RenderElementId
  * @param staffIndex Staff index (0-based) resolved by the engine
  * @param systemIndex Visual system that owns the element; null for legacy/global registrations
  * @param measureIndices Measure indices this element overlaps (may span multiple measures)
- * @param customIntersect Optional custom intersection test for non-rectangular shapes
+ * @param hitShape Optional precise, translation-safe shape for non-rectangular elements
  */
 data class HittableRegistration(
     val elementId: RenderElementId,
@@ -29,6 +29,6 @@ data class HittableRegistration(
     val staffIndex: Int,
     val systemIndex: Int? = null,
     val measureIndices: List<Int>,
-    val customIntersect: ((RelativePoint) -> Boolean)? = null,
+    val hitShape: RelativeHitShape? = null,
     val metadata: Map<String, String> = emptyMap(),
 )

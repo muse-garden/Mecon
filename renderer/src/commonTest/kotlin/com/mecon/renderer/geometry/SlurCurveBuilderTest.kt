@@ -106,6 +106,55 @@ class SlurCurveBuilderTest {
         assertTrue(startCap.control1.y.value < startCap.end.y.value)
     }
 
+    @Test
+    fun filledPathHitTesterRejectsEmptyInteriorOfSlurBounds() {
+        val path = SlurCurveBuilder.buildLensPath(
+            start = RelativePoint.of(0f, 0f),
+            end = RelativePoint.of(24f, 0f),
+            direction = SlurDirection.ABOVE,
+            midpointThickness = StaffSpace(0.22f),
+            heightUsesHorizontalSpan = true,
+        )
+        val hit = path.createFilledPathHitShape(SlurCurveBuilder.DEFAULT_HIT_TOLERANCE)
+
+        assertTrue(hit.contains(RelativePoint.of(12f, -1.8f)), "painted apex should remain selectable")
+        assertTrue(hit.contains(RelativePoint.of(12f, -2.1f)), "small halo outside the apex should be selectable")
+        assertTrue(!hit.contains(RelativePoint.of(12f, -0.4f)), "empty space inside the AABB must not select the slur")
+    }
+
+    @Test
+    fun filledPathHitTesterFollowsStraightenedSlurSegments() {
+        val path = SlurCurveBuilder.buildLensPath(
+            start = RelativePoint.of(0f, 0f),
+            end = RelativePoint.of(80f, 16f),
+            direction = SlurDirection.BELOW,
+            midpointThickness = StaffSpace(0.22f),
+            heightUsesHorizontalSpan = true,
+            middleStraightening = 1f,
+        )
+        val hit = path.createFilledPathHitShape(SlurCurveBuilder.DEFAULT_HIT_TOLERANCE)
+        val outerCenterSegment = path.segments[4] as RelativePathSegment.CubicTo
+
+        assertTrue(hit.contains(outerCenterSegment.end), "multi-cubic slur path should remain selectable")
+        assertTrue(!hit.contains(RelativePoint.of(40f, 8f)), "baseline interior should not select a bowed slur")
+    }
+
+    @Test
+    fun filledPathHitShapeFollowsIncrementalTranslation() {
+        val path = SlurCurveBuilder.buildLensPath(
+            start = RelativePoint.of(0f, 0f),
+            end = RelativePoint.of(24f, 0f),
+            direction = SlurDirection.ABOVE,
+            midpointThickness = StaffSpace(0.22f),
+            heightUsesHorizontalSpan = true,
+        )
+        val original = path.createFilledPathHitShape(SlurCurveBuilder.DEFAULT_HIT_TOLERANCE)
+        val translated = original.translatedBy(StaffSpace(7f), StaffSpace(3f))
+
+        assertTrue(translated.contains(RelativePoint.of(19f, 1.2f)))
+        assertTrue(!translated.contains(RelativePoint.of(12f, -1.8f)))
+    }
+
     private fun excursionFromBaseline(point: RelativePoint): Float =
         abs(point.y.value - baselineY(point.x.value))
 
