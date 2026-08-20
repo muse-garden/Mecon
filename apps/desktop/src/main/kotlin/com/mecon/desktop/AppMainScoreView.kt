@@ -14,6 +14,7 @@ import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.interaction.StyleOverride
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.api.runtime.pluginTrackOf
 import com.mecon.api.storage.events.TempoMarkType
 import com.mecon.api.storage.ScoreGeometry
 import com.mecon.api.storage.tracks.MeasureRange
@@ -24,6 +25,7 @@ import com.mecon.core.engine.edit.TempoEditEngine
 import com.mecon.desktop.service.PlaybackController
 import com.mecon.desktop.service.ScoreFileController
 import com.mecon.desktop.service.ScoreSession
+import com.mecon.desktop.service.updatePluginEvent
 import com.mecon.desktop.ui.components.*
 import com.mecon.desktop.input.NoteInputState
 import com.mecon.desktop.ui.components.topbar.ScoreViewMode
@@ -34,6 +36,7 @@ import com.mecon.desktop.ui.views.RenderedScoreLifecycleConfig
 import com.mecon.desktop.ui.views.RenderedScoreNoteheadBackgroundGroup
 import com.mecon.desktop.ui.views.RenderedScoreNotationInsertion
 import com.mecon.desktop.ui.views.RenderedScoreSelectionConfig
+import com.mecon.desktop.ui.views.AnnotationRangeEndpoint
 import com.mecon.desktop.ui.views.RenderedScoreSource
 import com.mecon.desktop.ui.views.RenderedScoreStaffSelectorConfig
 import com.mecon.desktop.ui.views.RenderedScoreStructuralMoveActions
@@ -41,6 +44,8 @@ import com.mecon.desktop.ui.views.RenderedScoreView
 import com.mecon.desktop.ui.views.RenderedScoreViewConfig
 import com.mecon.desktop.ui.views.noteMovementActions
 import com.mecon.renderer.interaction.*
+import com.mecon.plugins.chord.StorageTonalRegionEvent
+import com.mecon.plugins.chord.TonalRegionEditPolicy
 
 internal data class AppMainScoreDocument(
     val session: ScoreSession,
@@ -121,6 +126,11 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
         request.state.selectedAnnotationId,
         request.state.setSelectedAnnotationId,
     )
+    val tonalRegionIds = session.runtimeScore
+        ?.pluginTrackOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
+        ?.events
+        ?.mapTo(linkedSetOf()) { it.id }
+        .orEmpty()
     RenderedScoreView(
         config = RenderedScoreViewConfig(
             source = RenderedScoreSource(
@@ -153,6 +163,25 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
                 onSelectAnnotationEvent = { id ->
                     selectedAnnotationEventId = id
                     if (id != null) eventSelection = emptySet()
+                },
+                resizableAnnotationEventIds = tonalRegionIds,
+                onResizeAnnotationRange = resizeRegion@{ id, endpoint, time ->
+                    val region = session.runtimeScore
+                        ?.pluginTrackOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
+                        ?.findEventById(id)
+                        ?.storageEvent
+                        ?: return@resizeRegion
+                    val updated = TonalRegionEditPolicy.resize(
+                        region,
+                        when (endpoint) {
+                            AnnotationRangeEndpoint.START -> TonalRegionEditPolicy.Endpoint.START
+                            AnnotationRangeEndpoint.END -> TonalRegionEditPolicy.Endpoint.END
+                        },
+                        time,
+                    )
+                    if (updated != region) {
+                        session.updatePluginEvent(StorageTonalRegionEvent.TRACK_TYPE, id, updated)
+                    }
                 },
                 selectedAnnotationEventId = selectedAnnotationEventId,
                 noteheadBackgroundGroups = request.syncMode?.noteheadBackgroundGroups.orEmpty(),

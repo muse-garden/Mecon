@@ -65,6 +65,55 @@ class TonalRegionInferenceTest {
     }
 
     @Test
+    fun previousRegionEndsAtTheSelectedRangeEndWhileTheNewRegionKeepsItsOpenTail() {
+        val previous = region("previous", quarter(0), quarter(8), ModulationKey(0, KeySignatureMode.MAJOR))
+        val inserted = region("inserted", quarter(1), quarter(8), ModulationKey(1, KeySignatureMode.MAJOR))
+
+        val result = TonalRegionEditPolicy.insert(
+            existing = listOf(previous),
+            region = inserted,
+            terminatePrevious = true,
+            terminatePreviousAt = quarter(2),
+        )
+
+        assertEquals(quarter(2), result.first { it.id == previous.id }.endOnset)
+        assertEquals(quarter(8), result.first { it.id == inserted.id }.endOnset)
+        assertNull(result.first { it.id == previous.id }.resolvedKey)
+    }
+
+    @Test
+    fun firstInsertionMaterializesTheScoreKeyAsAnEditableOverlappingBaseline() {
+        val baseline = StorageTonalRegionEvent(
+            id = EventId("baseline"),
+            onset = quarter(0),
+            endOnset = quarter(8),
+            keys = listOf(PolyphonyTonalKey.from(cMajor)),
+            resolvedKey = null,
+            role = TonalRegionRole.SCORE_KEY_BASELINE,
+        )
+        val inserted = region(
+            "inserted",
+            quarter(1),
+            quarter(8),
+            ModulationKey(1, KeySignatureMode.MAJOR),
+        )
+
+        val result = TonalRegionEditPolicy.insert(
+            existing = emptyList(),
+            region = inserted,
+            terminatePrevious = true,
+            terminatePreviousAt = quarter(2),
+            fallbackPrevious = baseline,
+        )
+
+        val storedBaseline = result.first { it.role == TonalRegionRole.SCORE_KEY_BASELINE }
+        assertEquals(quarter(0), storedBaseline.onset)
+        assertEquals(quarter(2), storedBaseline.endOnset)
+        assertNull(storedBaseline.resolvedKey)
+        assertEquals(quarter(8), result.first { it.id == inserted.id }.endOnset)
+    }
+
+    @Test
     fun insertionCanLeaveThePreviousRegionUntouched() {
         val previous = region("previous", quarter(0), quarter(4), ModulationKey(0, KeySignatureMode.MAJOR))
         val inserted = region("inserted", quarter(1), quarter(2), ModulationKey(1, KeySignatureMode.MAJOR))
@@ -72,6 +121,61 @@ class TonalRegionInferenceTest {
         val result = TonalRegionEditPolicy.insert(listOf(previous), inserted, terminatePrevious = false)
 
         assertEquals(previous, result.first { it.id == previous.id })
+    }
+
+    @Test
+    fun newRegionDefaultsToTheScoreEnd() {
+        assertEquals(
+            quarter(8),
+            TonalRegionEditPolicy.defaultInsertionEnd(
+                start = quarter(1),
+                selectedEnd = quarter(2),
+                scoreEnd = quarter(8),
+            ),
+        )
+    }
+
+    @Test
+    fun endpointResizeKeepsTheRegionNonEmpty() {
+        val original = region("region", quarter(1), quarter(4), cMajor)
+
+        assertEquals(
+            quarter(2),
+            TonalRegionEditPolicy.resize(
+                original,
+                TonalRegionEditPolicy.Endpoint.START,
+                quarter(2),
+            ).onset,
+        )
+        assertEquals(
+            original,
+            TonalRegionEditPolicy.resize(
+                original,
+                TonalRegionEditPolicy.Endpoint.END,
+                quarter(1),
+            ),
+        )
+
+        val baseline = original.copy(
+            role = TonalRegionRole.SCORE_KEY_BASELINE,
+            resolvedKey = null,
+        )
+        assertEquals(
+            baseline,
+            TonalRegionEditPolicy.resize(
+                baseline,
+                TonalRegionEditPolicy.Endpoint.START,
+                quarter(2),
+            ),
+        )
+        assertEquals(
+            quarter(3),
+            TonalRegionEditPolicy.resize(
+                baseline,
+                TonalRegionEditPolicy.Endpoint.END,
+                quarter(3),
+            ).endOnset,
+        )
     }
 
     private fun region(id: String, start: TimeCode, end: TimeCode, key: ModulationKey) =

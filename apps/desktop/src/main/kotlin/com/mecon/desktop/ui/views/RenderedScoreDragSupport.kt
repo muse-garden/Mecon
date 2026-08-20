@@ -58,11 +58,167 @@ internal fun List<EventSection>.selectByPriority(): EventSection? {
 
 /** Which behaviour a mouse-drag gesture resolved to at its start (see the unified drag handler). */
 internal enum class DragMode {
-    NONE, PAN, TRANSPOSE, REST_MOVE, BEAM, ATTACHMENT, CURVE, VOLTA, NAVIGATION, MARQUEE
+    NONE, PAN, TRANSPOSE, REST_MOVE, BEAM, ATTACHMENT, CURVE, VOLTA, NAVIGATION,
+    ANNOTATION_RANGE, MARQUEE
+}
+
+internal data class AnnotationRangeEndpointHit(
+    val eventId: EventId,
+    val endpoint: AnnotationRangeEndpoint,
+    val point: AbsolutePoint,
+    val systemIndex: Int,
+)
+
+internal data class AnnotationRangeDragState(
+    val eventId: EventId,
+    val endpoint: AnnotationRangeEndpoint,
+    val originalPoint: AbsolutePoint,
+    val currentPoint: AbsolutePoint,
+    val sourceSystemIndex: Int,
+    val candidateTime: TimeCode? = null,
+)
+
+internal data class AnnotationBoundarySnap(
+    val time: TimeCode,
+    val absoluteX: Float,
+)
+
+internal fun annotationDragTargetSystem(
+    sourceSystemIndex: Int,
+    sourceRawY: Float?,
+    pointerRawY: Float,
+    nearestSystemIndex: Int?,
+    sourceRowLockPx: Float,
+): Int = if (
+    sourceRawY != null && kotlin.math.abs(pointerRawY - sourceRawY) <= sourceRowLockPx
+) {
+    sourceSystemIndex
+} else {
+    nearestSystemIndex ?: sourceSystemIndex
+}
+
+internal fun annotationRangeEndpointPoints(
+    result: RenderResult,
+    eventId: EventId,
+): List<AnnotationRangeEndpointHit> {
+    val elements = result.elements.filter {
+        it.type == RenderElementType.TEXT_ANNOTATION && it.eventId == eventId &&
+            it.hitBox.width.value > 0f && it.hitBox.height.value > 0f
+    }
+    if (elements.isEmpty()) return emptyList()
+    // A Range keeps the original whole-range measure metadata after the annotation layout splits
+    // it across systems. Use the fragment's system ownership to expose only the two true outer
+    // endpoints; otherwise every line start/end becomes a handle for the whole musical range.
+    val firstSystem = elements.minOf { it.systemIndex ?: 0 }
+    val lastSystem = elements.maxOf { it.systemIndex ?: 0 }
+    val firstSystemElements = elements.filter { (it.systemIndex ?: 0) == firstSystem }
+    val lastSystemElements = elements.filter { (it.systemIndex ?: 0) == lastSystem }
+    val startX = firstSystemElements.minOf { it.hitBox.origin.x.value }
+    val endX = lastSystemElements.maxOf { it.hitBox.bottomRight.x.value }
+    return buildList {
+        firstSystemElements.filter {
+            kotlin.math.abs(it.hitBox.origin.x.value - startX) <= ENDPOINT_ALIGNMENT_TOLERANCE_PX
+        }.forEach { element ->
+            add(
+                AnnotationRangeEndpointHit(
+                    eventId,
+                    AnnotationRangeEndpoint.START,
+                    AbsolutePoint(element.hitBox.origin.x, element.center.y),
+                    element.systemIndex ?: firstSystem,
+                )
+            )
+        }
+        lastSystemElements.filter {
+            kotlin.math.abs(it.hitBox.bottomRight.x.value - endX) <= ENDPOINT_ALIGNMENT_TOLERANCE_PX
+        }.forEach { element ->
+            add(
+                AnnotationRangeEndpointHit(
+                    eventId,
+                    AnnotationRangeEndpoint.END,
+                    AbsolutePoint(element.hitBox.bottomRight.x, element.center.y),
+                    element.systemIndex ?: lastSystem,
+                )
+            )
+        }
+    }
+}
+
+/** Endpoint hit testing for split annotation ranges, including duplicated double-tonality lines. */
+internal fun annotationRangeEndpointAt(
+    result: RenderResult,
+    point: AbsolutePoint,
+    resizableEventIds: Set<EventId>,
+    radius: Float,
+): AnnotationRangeEndpointHit? = resizableEventIds.asSequence()
+    .flatMap { eventId -> annotationRangeEndpointPoints(result, eventId).asSequence() }
+    .filter { hit ->
+        val dx = hit.point.x.value - point.x.value
+        val dy = hit.point.y.value - point.y.value
+        dx * dx + dy * dy <= radius * radius
+    }.minByOrNull { hit ->
+        val dx = hit.point.x.value - point.x.value
+        val dy = hit.point.y.value - point.y.value
+        dx * dx + dy * dy
+    }
+
+/** Snap a tonal-range endpoint to the nearest visible note/barline boundary in one system. */
+internal fun resolveAnnotationBoundaryTime(
+    result: RenderResult,
+    absoluteX: Float,
+    systemIndex: Int?,
+): TimeCode? = resolveAnnotationBoundarySnap(result, absoluteX, systemIndex)?.time
+
+internal fun resolveAnnotationBoundarySnap(
+    result: RenderResult,
+    absoluteX: Float,
+    systemIndex: Int?,
+): AnnotationBoundarySnap? {
+    val targetSystem = systemIndex?.let { target ->
+        result.spatialIndex.allSystems().firstOrNull { it.systemIndex == target }
+    }
+    fun isOnTargetSystem(position: TimeCodePosition): Boolean {
+        if (systemIndex == null) return true
+        val system = targetSystem ?: return false
+        val middleY = (position.topY + position.bottomY) / 2f
+        val relativeY = result.transformerSnapshot.toRelative(
+            AbsolutePoint(Pixels(position.x), Pixels(middleY))
+        ).y
+        return relativeY >= system.topY && relativeY <= system.bottomY
+    }
+    val slotCandidates = result.timeCodePositions.values.asSequence()
+        .filter(::isOnTargetSystem)
+        // Annotation ranges anchor to the left edge of the note group, not the slot's right edge.
+        .map { it.timeCode to it.leftX }
+    val measureCandidates = result.measureBounds.asSequence()
+        .filter { systemIndex == null || it.systemIndex == systemIndex }
+        .flatMap { bounds ->
+            val leftX = result.transformerSnapshot.toAbsolute(
+                RelativePoint(bounds.leftX, StaffSpace.ZERO)
+            ).x.value
+            val rightX = result.transformerSnapshot.toAbsolute(
+                RelativePoint(bounds.rightX, StaffSpace.ZERO)
+            ).x.value
+            fun renderedAnchor(time: TimeCode, boundaryX: Float): Pair<TimeCode, Float> {
+                val slotX = result.timeCodePositions[time]
+                    ?.takeIf(::isOnTargetSystem)
+                    ?.leftX
+                return time to (slotX ?: boundaryX)
+            }
+            sequenceOf(
+                renderedAnchor(TimeCode.of(bounds.measureNumber, Fraction.ZERO), leftX),
+                renderedAnchor(TimeCode.of(bounds.measureNumber + 1, Fraction.ZERO), rightX),
+            )
+        }
+    return (slotCandidates + measureCandidates)
+        .distinctBy { it.first to it.second }
+        .minByOrNull { kotlin.math.abs(it.second - absoluteX) }
+        ?.let { (time, x) -> AnnotationBoundarySnap(time, x) }
 }
 
 /** Timeout safety net: if no committed re-render arrives this long after release, drop the hold anyway. */
 internal const val COMMIT_HOLD_TIMEOUT_MS = 5000L
+private const val ENDPOINT_ALIGNMENT_TOLERANCE_PX = 0.5f
+internal const val ANNOTATION_SOURCE_ROW_LOCK_DP = 28f
 internal const val BEAM_CONTROL_SIZE_DP = 8f
 internal const val BEAM_CONTROL_STROKE_DP = 1.5f
 internal const val BEAM_CONTROL_HIT_RADIUS = 4f

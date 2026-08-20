@@ -135,6 +135,75 @@ class PolyphonyAnalysisTest {
     }
 
     @Test
+    fun explicitRegionKeepsTheScoreSignatureAsASecondaryReading() {
+        val cMajor = PolyphonyTonalKey(0, KeySignatureMode.MAJOR)
+        val gMajor = PolyphonyTonalKey(1, KeySignatureMode.MAJOR)
+        val region = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(2),
+            keys = listOf(gMajor),
+        )
+        val score = score(
+            events = emptyList(),
+            pluginTracks = listOf(pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(region))),
+        )
+
+        assertEquals(
+            listOf(cMajor, gMajor),
+            PolyphonyTonalContextResolver.keysAt(score, tc(1)).map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
+            listOf(cMajor, gMajor),
+            PolyphonyTonalContextResolver.keysAtSelection(score.runtime, tc(1), listOf(region))
+                .map(PolyphonyTonalKey::from),
+        )
+    }
+
+    @Test
+    fun editableScoreBaselineAndInsertedRegionOnlyDoubleInsideTheirIntersection() {
+        val cMajor = PolyphonyTonalKey(0, KeySignatureMode.MAJOR)
+        val gMajor = PolyphonyTonalKey(1, KeySignatureMode.MAJOR)
+        val baseline = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(2),
+            keys = listOf(cMajor),
+            resolvedKey = null,
+            role = TonalRegionRole.SCORE_KEY_BASELINE,
+        )
+        val inserted = StorageTonalRegionEvent.create(
+            onset = tc(1),
+            endOnset = tc(4),
+            keys = listOf(gMajor),
+        )
+        val regions = listOf(baseline, inserted)
+        val score = score(
+            events = emptyList(),
+            pluginTracks = listOf(pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, regions)),
+        )
+
+        assertEquals(
+            listOf(cMajor),
+            PolyphonyTonalContextResolver.keysAt(score, tc(0), regions)
+                .map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
+            listOf(cMajor, gMajor),
+            PolyphonyTonalContextResolver.keysAt(score, tc(1), regions)
+                .map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
+            listOf(gMajor),
+            PolyphonyTonalContextResolver.keysAt(score, tc(3), regions)
+                .map(PolyphonyTonalKey::from),
+        )
+        assertEquals(
+            listOf(gMajor),
+            PolyphonyTonalContextResolver.keysAtSelection(score.runtime, tc(3), regions)
+                .map(PolyphonyTonalKey::from),
+        )
+    }
+
+    @Test
     fun singlePitchEditPatchesOnlyItsSoundingWindow() {
         val events = (1..80).map { measure ->
             voice("v$measure", TimeCode.ofMeasure(measure), Pitch.C4)
@@ -198,6 +267,7 @@ class PolyphonyAnalysisTest {
             override fun xForTime(time: TimeCode): Float? = null
         }
         val oldMode = ChordSymbolDisplaySettings.scoreDisplayMode
+        val oldSelectedDegrees = PolyphonyDisplaySettings.showSelectedDegrees
         try {
             ChordSymbolDisplaySettings.scoreDisplayMode = ChordAnalysisScoreDisplayMode.CLASSIC
 
@@ -221,6 +291,7 @@ class PolyphonyAnalysisTest {
             )
         } finally {
             ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
+            PolyphonyDisplaySettings.showSelectedDegrees = oldSelectedDegrees
         }
     }
 
@@ -241,6 +312,34 @@ class PolyphonyAnalysisTest {
         )
 
         assertEquals(listOf("4"), labels.map { it.text })
+    }
+
+    @Test
+    fun selectedDegreesIncludeOverlappingTonalLinesInStartOrder() {
+        val c = voice("c", tc(2), Pitch.C4)
+        val cRegion = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(4),
+            keys = listOf(PolyphonyTonalKey(0, KeySignatureMode.MAJOR)),
+        )
+        val gRegion = StorageTonalRegionEvent.create(
+            onset = tc(1),
+            endOnset = tc(3),
+            keys = listOf(PolyphonyTonalKey(1, KeySignatureMode.MAJOR)),
+        )
+        val score = score(
+            events = listOf(c),
+            pluginTracks = listOf(
+                pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(gRegion, cRegion)),
+            ),
+        )
+
+        val label = ChordSelectionDegreeLabelProvider.labels(
+            score,
+            setOf(VoiceNoteSection(c, 0)),
+        ).single().text
+
+        assertEquals("C:1 · G:4", label)
     }
 
     @Test
@@ -274,35 +373,102 @@ class PolyphonyAnalysisTest {
 
             val ranges = ChordTimelineAnnotationProvider.layout(ctx)
                 .filterIsInstance<AnnotationElement.Range>()
-            val cards = ranges.filter { it.sourceEventId != null }
+            val chordIds = setOf(c.id, g.id)
+            val cards = ranges.filter { it.sourceEventId in chordIds }
+            val explicitTonalLines = ranges.filter {
+                it.sourceEventId == region.id && it.relativeY > 0f
+            }
 
             assertEquals(2, cards.size)
+            assertEquals(2, explicitTonalLines.size)
+            assertTrue(explicitTonalLines.all(AnnotationElement.Range::interactive))
+            assertTrue(explicitTonalLines.all { it.relativeY > 0f })
             assertEquals(g.onset, cards.first { it.sourceEventId == c.id }.endTime)
             val scoreEnd = TimeCode.of(score.runtime.measures.maxOf { it.key } + 1, Fraction.ZERO)
             assertEquals(scoreEnd, cards.first { it.sourceEventId == g.id }.endTime)
-            assertTrue(
-                cards.first { it.sourceEventId == c.id }.lines
-                    .any { "I" in it.content.plainText },
-            )
-            assertTrue(ranges.any { it.sourceEventId == null && it.lines.any { line -> "G" in line.content.plainText } })
+            val cCardLines = cards.first { it.sourceEventId == c.id }.lines
+                .map { it.content.plainText }
+            assertEquals(2, cCardLines.size)
+            assertTrue("C: I" in cCardLines[0])
+            assertTrue("G: IV" in cCardLines[1])
             cards.forEach { card ->
                 assertEquals(RenderColor.rgb(220, 234, 254), card.fillColor)
                 assertEquals(RenderColor.rgb(96, 165, 250), card.strokeColor)
                 assertTrue(card.lines.all { it.color == RenderColor.rgb(30, 41, 59) })
             }
-            val tonalRanges = ranges.filter { it.sourceEventId == null }
+            val tonalRanges = ranges.filter { it.relativeY == 0f }
             assertTrue(tonalRanges.isNotEmpty())
+            assertTrue(tonalRanges.all { it.relativeY == 0f })
             assertTrue(
-                tonalRanges.flatMap { it.lines }.all { it.color == RenderColor.rgb(29, 78, 216) },
+                tonalRanges.any {
+                    it.strokeColor?.alpha == 70 && it.sourceEventId == region.id && it.interactive
+                },
+                "the light key-signature segment must remain on top and resize the region",
             )
 
             ChordSymbolDisplaySettings.style = ChordSymbolDisplayStyle.LETTER
             val letterLines = ChordTimelineAnnotationProvider.layout(ctx)
                 .filterIsInstance<AnnotationElement.Range>()
-                .filter { it.sourceEventId != null }
+                .filter { it.sourceEventId in chordIds }
                 .flatMap { it.lines }
             assertTrue(letterLines.any { it.color == RenderColor.rgb(30, 41, 59) })
             assertTrue(letterLines.any { it.color == RenderColor.rgb(100, 116, 139) })
+        } finally {
+            ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
+            ChordSymbolDisplaySettings.style = oldStyle
+        }
+    }
+
+    @Test
+    fun scoreTimelineUsesTheEditableBaselineIntersectionAsTheDoubleTonalityRange() {
+        val before = StorageChordEvent.create(tc(0), 0, ChordQuality.MAJOR)
+        val overlap = StorageChordEvent.create(tc(1), 0, ChordQuality.MAJOR)
+        val after = StorageChordEvent.create(tc(3), 0, ChordQuality.MAJOR)
+        val baseline = StorageTonalRegionEvent.create(
+            onset = tc(0),
+            endOnset = tc(2),
+            keys = listOf(PolyphonyTonalKey(0, KeySignatureMode.MAJOR)),
+            resolvedKey = null,
+            role = TonalRegionRole.SCORE_KEY_BASELINE,
+        )
+        val inserted = StorageTonalRegionEvent.create(
+            onset = tc(1),
+            endOnset = tc(4),
+            keys = listOf(PolyphonyTonalKey(1, KeySignatureMode.MAJOR)),
+        )
+        val score = score(
+            events = emptyList(),
+            pluginTracks = listOf(
+                pluginTrack(StorageChordEvent.TRACK_TYPE, listOf(before, overlap, after)),
+                pluginTrack(StorageTonalRegionEvent.TRACK_TYPE, listOf(baseline, inserted)),
+            ),
+        )
+        val ctx = object : AnnotationLayoutContext {
+            override val computedScore = score
+            override fun xForTime(time: TimeCode): Float? = null
+        }
+        val oldMode = ChordSymbolDisplaySettings.scoreDisplayMode
+        val oldStyle = ChordSymbolDisplaySettings.style
+        try {
+            ChordSymbolDisplaySettings.scoreDisplayMode = ChordAnalysisScoreDisplayMode.TIMELINE
+            ChordSymbolDisplaySettings.style = ChordSymbolDisplayStyle.SCALE_DEGREE
+
+            val ranges = ChordTimelineAnnotationProvider.layout(ctx)
+                .filterIsInstance<AnnotationElement.Range>()
+            val cards = ranges.filter { it.sourceEventId in setOf(before.id, overlap.id, after.id) }
+            assertEquals(1, cards.first { it.sourceEventId == before.id }.lines.size)
+            assertEquals(2, cards.first { it.sourceEventId == overlap.id }.lines.size)
+            assertEquals(1, cards.first { it.sourceEventId == after.id }.lines.size)
+
+            val baselinePieces = ranges.filter { it.sourceEventId == baseline.id }
+            assertTrue(baselinePieces.isNotEmpty())
+            assertTrue(baselinePieces.all { it.relativeY == 0f && it.interactive })
+            assertEquals(Fraction.ZERO, baselinePieces.minBy { it.time }.time.beat?.simplified())
+            assertEquals(Fraction.HALF, baselinePieces.maxBy { it.endTime }.endTime.beat?.simplified())
+            assertTrue(baselinePieces.any { it.strokeColor?.alpha == 70 })
+
+            val insertedLines = ranges.filter { it.sourceEventId == inserted.id }
+            assertTrue(insertedLines.all { it.relativeY > 0f && it.interactive })
         } finally {
             ChordSymbolDisplaySettings.scoreDisplayMode = oldMode
             ChordSymbolDisplaySettings.style = oldStyle
@@ -340,7 +506,7 @@ class PolyphonyAnalysisTest {
 
             val ranges = ChordTimelineAnnotationProvider.layout(ctx)
                 .filterIsInstance<AnnotationElement.Range>()
-            val tonalText = ranges.filter { it.sourceEventId == null }
+            val tonalText = ranges.filter { it.relativeY == 0f }
                 .flatMap { range -> range.lines.map { it.content.plainText } }
 
             assertEquals(1, ranges.count { it.sourceEventId == chord.id })

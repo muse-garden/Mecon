@@ -20,20 +20,11 @@ data class HarmonyTimelineReading(
 object HarmonyTimelineReadingProjector {
     fun readings(chord: Chord, keys: List<ModulationKey>): List<HarmonyTimelineReading> {
         val sounding = chord.pitchClasses.mapTo(linkedSetOf()) { it.value }
-        return keys.distinct().flatMap { key ->
+        return keys.distinct().mapNotNull { key ->
             ChordSelectionCatalog.choices(key)
-                .filter { it.pitchClasses == sounding }
-                .flatMap { choice ->
-                    choice.interpretationSymbols.map { symbol ->
-                        HarmonyTimelineReading(
-                            key = key,
-                            functionalSymbol = symbol,
-                            absoluteTones = choice.absoluteTones,
-                            relativeTones = choice.relativeTones,
-                        )
-                    }
-                }
-        }.distinctBy { it.key to it.functionalSymbol }
+                .firstOrNull { it.pitchClasses == sounding }
+                ?.let { choice -> reading(choice, key) }
+        }
     }
 
     fun reading(choice: ChordSelectionChoice, key: ModulationKey): HarmonyTimelineReading =
@@ -170,26 +161,43 @@ object HarmonyTonalTimeline {
         time: Fraction,
         ranges: List<HarmonyTonalRange>,
         defaultKey: ModulationKey,
+        includeDefaultKeyWithActive: Boolean = false,
     ): List<ModulationKey> {
-        val active = ranges.asSequence()
-            .filter { it.contains(time) }
-            .maxWithOrNull(compareBy<HarmonyTonalRange>({ it.priority }, { it.start }))
+        val active = ranges.filter { it.contains(time) }
+        val activePriority = active.maxOfOrNull(HarmonyTonalRange::priority)
+        val activeAtPriority = activePriority?.let { priority ->
+            active.asSequence()
+                .filter { it.priority == priority }
+                .sortedWith(compareBy(HarmonyTonalRange::start, HarmonyTonalRange::id))
+                .toList()
+        }.orEmpty()
         val continuation = ranges.asSequence()
             .filter { it.end != null && it.end <= time && it.resolvedKey != null }
             .maxWithOrNull(compareBy<HarmonyTonalRange>({ it.priority }, { it.end!! }))
 
-        if (active != null && continuation != null) {
-            return if (active.priority >= continuation.priority) {
-                active.keys
+        if (activeAtPriority.isNotEmpty() && continuation != null) {
+            return if (activePriority!! >= continuation.priority) {
+                activeKeys(activeAtPriority, defaultKey, includeDefaultKeyWithActive)
             } else {
                 listOf(continuation.resolvedKey!!)
             }
         }
-        active?.let { return it.keys }
+        if (activeAtPriority.isNotEmpty()) {
+            return activeKeys(activeAtPriority, defaultKey, includeDefaultKeyWithActive)
+        }
         continuation?.resolvedKey?.let { return listOf(it) }
 
         return listOf(defaultKey)
     }
+
+    private fun activeKeys(
+        active: List<HarmonyTonalRange>,
+        defaultKey: ModulationKey,
+        includeDefaultKey: Boolean,
+    ): List<ModulationKey> = buildList {
+        if (includeDefaultKey) add(defaultKey)
+        active.flatMapTo(this, HarmonyTonalRange::keys)
+    }.distinct()
 
     /**
      * Packs overlapping tonal ranges into the minimum number of deterministic display lanes.

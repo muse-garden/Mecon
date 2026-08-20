@@ -81,6 +81,12 @@ data class StorageNonChordToneEvent(
  * and becomes the tonal center after [endOnset].
  */
 @Serializable
+enum class TonalRegionRole {
+    INSERTED,
+    SCORE_KEY_BASELINE,
+}
+
+@Serializable
 @SerialName("mecon.chord_analysis.tonal_region")
 data class StorageTonalRegionEvent(
     override val id: EventId,
@@ -88,6 +94,7 @@ data class StorageTonalRegionEvent(
     override val endOnset: TimeCode,
     val keys: List<PolyphonyTonalKey>,
     val resolvedKey: PolyphonyTonalKey? = keys.singleOrNull(),
+    val role: TonalRegionRole = TonalRegionRole.INSERTED,
 ) : StoragePluginEvent(), StoragePluginIntervalEvent, StoragePluginForwardAffectingEvent {
     init {
         require(endOnset > onset) { "tonal region must be non-empty" }
@@ -110,12 +117,14 @@ data class StorageTonalRegionEvent(
             endOnset: TimeCode,
             keys: List<PolyphonyTonalKey>,
             resolvedKey: PolyphonyTonalKey? = keys.singleOrNull(),
+            role: TonalRegionRole = TonalRegionRole.INSERTED,
         ): StorageTonalRegionEvent = StorageTonalRegionEvent(
             id = EventId.generate(),
             onset = onset,
             endOnset = endOnset,
             keys = keys,
             resolvedKey = resolvedKey,
+            role = role,
         )
     }
 }

@@ -44,11 +44,14 @@ internal data class DragGestureMode(
     val readOnly: Boolean,
     val noteTool: NoteToolState?,
     val marqueeSelectableTypes: Set<RenderElementType>,
+    val resizableAnnotationEventIds: Set<EventId>,
 )
 
 internal data class DragSelectionActions(
     val selectionChange: (Set<EventSection>) -> Unit,
     val auditionNote: (com.mecon.api.computed.ComputedVoiceEvent, Set<Int>?, Set<Int>?, Int) -> Unit,
+    val selectAnnotationEvent: (EventId?) -> Unit,
+    val resizeAnnotationRange: (EventId, AnnotationRangeEndpoint, TimeCode) -> Unit,
 )
 
 internal data class DragNoteMovementActions(
@@ -136,6 +139,8 @@ internal class DragPreviewState(
     private val setNavigation: (NavigationDragState?) -> Unit,
     private val getCurve: () -> CurveDragState?,
     private val setCurve: (CurveDragState?) -> Unit,
+    private val getAnnotationRange: () -> AnnotationRangeDragState?,
+    private val setAnnotationRange: (AnnotationRangeDragState?) -> Unit,
 ) {
     var transpose: TransposeDragState?
         get() = getTranspose()
@@ -155,6 +160,9 @@ internal class DragPreviewState(
     var curve: CurveDragState?
         get() = getCurve()
         set(value) = setCurve(value)
+    var annotationRange: AnnotationRangeDragState?
+        get() = getAnnotationRange()
+        set(value) = setAnnotationRange(value)
 }
 
 internal data class DragGestureState(

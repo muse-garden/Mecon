@@ -57,6 +57,7 @@ internal data class RenderedScoreSelectionOverlay(
     val selection: Set<EventSection>,
     val highlightedElements: Set<RenderElementId>,
     val selectedAnnotationEventId: EventId?,
+    val resizableAnnotationEventIds: Set<EventId>,
     val selectedBeamSection: VoiceBeamSection?,
     val selectedBeamControls: BeamControlPoints?,
     val selectedVoltaSection: VoltaEndingSection?,
@@ -90,6 +91,7 @@ internal data class RenderedScoreDragOverlay(
     val navigationCommitted: Boolean,
     val curve: CurveDragState?,
     val curveCommitted: Boolean,
+    val annotationRange: AnnotationRangeDragState?,
     val selectionColor: RenderColor,
 )
 
