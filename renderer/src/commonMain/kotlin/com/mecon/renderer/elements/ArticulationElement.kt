@@ -33,11 +33,15 @@ data class ArticulationElement(
         for (mark in layout.marks) {
             val position = context.transformer.toAbsolute(mark.origin)
             val command = RenderHelpers.createGlyphCommand(mark.glyph, position, fontSize)
+            val semanticEventId = computedEvent?.fermata
+                ?.takeIf { mark.articulation == com.mecon.api.storage.Articulation.FERMATA }
+                ?.id
+                ?: layout.eventId
 
             val elemId = context.idGenerator()
             val element = renderElement(elemId, RenderElementType.ARTICULATION)
                 .addCommand(command)
-                .eventId(layout.eventId)
+                .eventId(semanticEventId)
                 .trackId(layout.trackId)
                 .measureNumber(layout.measureNumber)
                 .staffIndex(layout.staffIndex)
@@ -48,7 +52,7 @@ data class ArticulationElement(
             if (computedEvent != null) {
                 sections.add(SectionRegistration(VoiceEventSection(computedEvent), elemId))
                 sections.add(SectionRegistration(
-                    VoiceArticulationSection(computedEvent, mark.index), elemId
+                    VoiceArticulationSection(computedEvent, mark.index, mark.articulation), elemId
                 ))
             }
             hitAreas.add(ElementHitArea(elemId, mark.bounds))

@@ -345,6 +345,103 @@ class ScoreEditingSessionTest {
         assertNull(stale.toWireUpdate().noteInputTransition)
     }
 
+    @Test
+    fun emptyTupletRegionIsCreatedBeforeMobileNoteEntry() {
+        val score = StorageScore.create(StorageScore.CreationOptions(measureCount = 1))
+        val voiceId = score.voiceTracks.keys.single()
+        val session = ScoreEditingSession.open(score)
+        val start = TimeCode.of(1, Fraction.ZERO)
+        val intent = ScoreEditIntent.CreateTupletRegion(
+            expectedRevision = 0,
+            voiceTrackId = voiceId,
+            start = start,
+            totalDuration = Duration.QUARTER,
+            count = 3,
+        )
+        assertEquals(intent, ScoreEditCodec.decodeIntent(ScoreEditCodec.encodeIntent(intent)))
+
+        val created = session.dispatch(intent)
+        assertEquals(start, created.frame.nextInputPosition)
+        assertEquals(Duration.EIGHTH, assertNotNull(created.noteInputTransition).duration)
+        val placeholders = created.frame.runtimeScore.getVoiceTrack(voiceId)!!.events.toList()
+            .filter { it.duration.tuplet?.actual == 3 }
+        assertEquals(3, placeholders.size)
+        assertTrue(placeholders.all { it.isRest && it.duration.tuplet?.actual == 3 })
+        assertEquals(3, placeholders.first().tupletSpan?.count)
+
+        val entered = session.dispatch(
+            ScoreEditIntent.InsertNote(
+                expectedRevision = 1,
+                voiceTrackId = voiceId,
+                start = start,
+                duration = Duration.EIGHTH,
+                pitch = Pitch.C4,
+            ),
+        )
+        val events = entered.frame.runtimeScore.getVoiceTrack(voiceId)!!.events.toList()
+            .filter { it.duration.tuplet?.actual == 3 }
+        assertEquals(3, events.size)
+        assertFalse(events.first().isRest)
+        assertEquals(TimeCode.of(1, Fraction(1, 12)), entered.frame.nextInputPosition)
+    }
+
+    @Test
+    fun smallNoteRegionReturnsStableAppendAnchorAndSwitchesToEntry() {
+        val score = StorageScore.create(StorageScore.CreationOptions(measureCount = 1))
+        val voiceId = score.voiceTracks.keys.single()
+        val session = ScoreEditingSession.open(score)
+        val first = session.dispatch(
+            ScoreEditIntent.InsertNote(
+                expectedRevision = 0,
+                voiceTrackId = voiceId,
+                start = TimeCode.of(1, Fraction.ZERO),
+                duration = Duration.EIGHTH,
+                pitch = null,
+                isRest = true,
+            ),
+        )
+        val firstId = assertNotNull(first.frame.selection.single().eventIdOrNull)
+        val second = session.dispatch(
+            ScoreEditIntent.InsertNote(
+                expectedRevision = 1,
+                voiceTrackId = voiceId,
+                start = TimeCode.of(1, Fraction.EIGHTH),
+                duration = Duration.EIGHTH,
+                pitch = null,
+                isRest = true,
+            ),
+        )
+        val secondId = assertNotNull(second.frame.selection.single().eventIdOrNull)
+
+        val grouped = session.dispatch(
+            ScoreEditIntent.CreateSmallNoteRegions(
+                expectedRevision = 2,
+                targets = listOf(
+                    ScoreEditIntent.EventGroupTarget(voiceId, setOf(firstId, secondId)),
+                ),
+            ),
+        )
+        val transition = assertNotNull(grouped.noteInputTransition)
+        val appendId = assertNotNull(transition.smallNoteAppendStartEventId)
+        assertEquals(TimeCode.of(1, Fraction.ZERO), grouped.frame.nextInputPosition)
+        assertEquals(appendId, grouped.frame.selection.first().eventIdOrNull)
+
+        val appended = session.dispatch(
+            ScoreEditIntent.InsertNote(
+                expectedRevision = 3,
+                voiceTrackId = voiceId,
+                start = assertNotNull(grouped.frame.nextInputPosition),
+                duration = transition.duration,
+                pitch = Pitch.D4,
+                smallNoteAppendStartEventId = appendId,
+            ),
+        )
+        val entered = appended.frame.runtimeScore.getVoiceTrack(voiceId)!!.events.toList()
+            .filterNot { it.isRest }
+        assertEquals(1, entered.size)
+        assertTrue(entered.single().tupletSpan?.smallNotes == true)
+    }
+
     /**
      * Remote clients reuse their previous layout whenever `scoreChanged` is false, so an update that
      * claims nothing changed while the score actually moved would silently render a stale document.

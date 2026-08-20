@@ -251,6 +251,8 @@ data class UnifiedLayoutResult(
     val postLayoutMarkers: List<PostLayoutMarker> = emptyList(),
     /** Shared continuous projection published only when an aligned request was applied. */
     val resolvedTimeAxis: ResolvedTimeAxis? = null,
+    /** Musical-time canonicalizer from the same runtime frame as this layout. */
+    val scoreTimeMap: com.mecon.api.runtime.ScoreTimeMap? = null,
     /**
      * The proportional slot map **before** line-breaking / justification. In continuous mode this is the
      * same instance as [timeSlotMap] (no breaking happens). In paginated mode [timeSlotMap] holds the

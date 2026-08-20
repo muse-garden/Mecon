@@ -4,6 +4,7 @@ import com.mecon.api.primitive.BarlineType
 import com.mecon.api.primitive.DurationBase
 import com.mecon.api.storage.events.DynamicLevel
 import com.mecon.api.storage.tracks.Clef
+import com.mecon.features.scoreediting.ScoreInteractionFamily
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -45,5 +46,17 @@ class NoteToolStateCompositionTest {
         assertEquals(DynamicLevel.MF, state.expression.selectedDynamic)
         assertNull(state.structure.selectedVoltaNumber)
         assertFalse(state.scoreElementPaletteExpanded)
+    }
+
+    @Test
+    fun desktopToolsUseSharedInteractionFamilies() {
+        val state = NoteToolState()
+        assertEquals(ScoreInteractionFamily.N, state.activeInteractionSpec.family)
+        state.tool = EditTool.NOTE
+        assertEquals(ScoreInteractionFamily.E, state.activeInteractionSpec.family)
+        state.tool = EditTool.HAIRPIN
+        assertEquals(ScoreInteractionFamily.S, state.activeInteractionSpec.family)
+        state.tool = EditTool.BARLINE
+        assertEquals(ScoreInteractionFamily.B, state.activeInteractionSpec.family)
     }
 }

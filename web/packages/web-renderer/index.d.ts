@@ -58,6 +58,7 @@ export interface KotlinFreePracticeTimeline {
 }
 export interface KotlinScoreEditor {
   initialUpdateJson(): string;
+  interactionCatalogJson(): string;
   dispatchJson(intentJson: string): string;
   close(): void;
 }
@@ -99,6 +100,13 @@ export interface CreateScoreEditorOptions {
 export class MeconScoreEditor {
   constructor(editor: KotlinScoreEditor);
   initialUpdate(): any;
+  interactionCatalog(): Array<{
+    commandId: string;
+    family: "N" | "E" | "P" | "S" | "G" | "T" | "B" | "H" | "F";
+    topology: string;
+    toolGroup: string;
+    successPolicy: string;
+  }>;
   dispatch(intent: string | object): any;
   close(): void;
 }

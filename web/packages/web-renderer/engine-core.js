@@ -182,6 +182,10 @@ export class ScoreEditorFacade {
     return JSON.parse(this.editor.initialUpdateJson());
   }
 
+  interactionCatalog() {
+    return JSON.parse(this.editor.interactionCatalogJson());
+  }
+
   dispatch(intent) {
     const intentJson = typeof intent === "string" ? intent : JSON.stringify(intent);
     return JSON.parse(this.editor.dispatchJson(intentJson));

@@ -86,7 +86,9 @@ data class VoiceEventSection(val event: ComputedVoiceEvent) : EventSection {
  */
 data class VoiceArticulationSection(
     val event: ComputedVoiceEvent,
-    val index: Int
+    val index: Int,
+    /** Displayed mark kind; lets adapters distinguish a projected fermata from stored articulations. */
+    val articulation: com.mecon.api.storage.Articulation? = null,
 ) : EventSection {
     override val id: EventSectionId = EventSectionId.voiceArticulation(event.id, index)
     override val sectionId: String get() = "${event.id.value}:artic:$index"

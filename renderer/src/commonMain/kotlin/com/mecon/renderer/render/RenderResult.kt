@@ -2,6 +2,9 @@ package com.mecon.renderer.render
 
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.TimeCode
+import com.mecon.api.primitive.TrackId
+import com.mecon.api.runtime.ScoreTimeMap
+import com.mecon.api.storage.ScoreGeometry
 import com.mecon.renderer.geometry.AbsolutePoint
 import com.mecon.renderer.geometry.AbsoluteRect
 import com.mecon.renderer.geometry.Pixels
@@ -36,8 +39,20 @@ data class RenderResult(
     internal val elementIndex: Map<RenderElementId, RenderElement> = emptyMap(),
     /** Map of TimeCode to absolute positions for rendering playhead */
     val timeCodePositions: Map<TimeCode, TimeCodePosition> = emptyMap(),
+    /**
+     * First writable X inside each rendered measure, after its opening barline/header cluster.
+     * Empty measures have no note-bearing [timeCodePositions] entry, so entry UIs must use this
+     * renderer-owned position rather than guessing from the raw measure edge.
+     */
+    internal val measureEntryXs: Map<Int, StaffSpace> = emptyMap(),
     /** Collision-safe continuous time projection from the same complete render generation. */
     val resolvedTimeAxis: ResolvedTimeAxis? = null,
+    /** Musical-time canonicalizer from the same complete render generation. */
+    val scoreTimeMap: ScoreTimeMap? = null,
+    /** O(1) semantic ownership used by pointer adapters; never rescan RuntimeScore on tap. */
+    val eventVoiceTrackIds: Map<EventId, TrackId> = emptyMap(),
+    /** Auto/captured geometry from this exact rendered generation, for semantic handle edits. */
+    val capturedGeometry: ScoreGeometry? = null,
     /**
      * Spatial index for hit testing, built from the *same* render pass as [elements].
      * Bundling it into the result (rather than a mutable engine field) guarantees that
@@ -108,6 +123,95 @@ data class RenderResult(
      */
     fun allCommands(): List<RenderCommand> =
         elements.flatMap { it.commands }
+
+    /**
+     * Resolve the visual insertion caret for a musical position.
+     *
+     * [TimeCode.compareTo] deliberately treats omitted trailing zero components as equal, while
+     * data-class equality (and therefore map lookup) preserves their structural depth. Cursor
+     * navigation commonly produces `measure` and `measure:0` interchangeably, so interactive
+     * clients must not use [timeCodePositions] as an exact-key-only lookup.
+     *
+     * Empty rhythmic positions have no note slot in [timeCodePositions]. For those, interpolate
+     * between the surrounding rendered slots and the owning measure edges. This is required for
+     * the two most common entry states: an empty measure downbeat and the position immediately
+     * after the final note. Measure edges are inset slightly so the blue caret cannot disappear
+     * underneath a barline.
+     */
+    fun insertionPositionAt(time: TimeCode): TimeCodePosition? {
+        timeCodePositions[time]?.let { return it }
+        timeCodePositions.entries.firstOrNull { (candidate, _) -> candidate.compareTo(time) == 0 }
+            ?.value
+            ?.let { return it }
+
+        val canonical = scoreTimeMap?.timeCodeAt(scoreTimeMap.absolute(time))
+            ?: resolvedTimeAxis?.canonicalTimeAt(time)
+            ?: time
+        if (canonical != time) {
+            timeCodePositions[canonical]?.let { return it }
+            timeCodePositions.entries.firstOrNull { (candidate, _) -> candidate.compareTo(canonical) == 0 }
+                ?.value
+                ?.let { return it }
+        }
+
+        val requestedMeasure = measureBounds.firstOrNull { it.measureNumber == canonical.measure }
+        // ScoreTimeMap deliberately represents the instant after the final measure as the next
+        // measure's downbeat. The score has no system for that measure yet, so keep the caret
+        // visible just inside the final barline while preserving the canonical musical position.
+        val measure = requestedMeasure ?: measureBounds.lastOrNull()?.takeIf {
+            canonical.measure == it.measureNumber + 1 && canonical.beat?.isZero != false
+        } ?: return null
+        val system = spatialIndex.allSystems().firstOrNull { it.systemIndex == measure.systemIndex }
+            ?: return null
+        if (system.staffRegions.isEmpty()) return null
+
+        val entryX = measureEntryXs[measure.measureNumber]
+            ?.coerceIn(measure.leftX + StaffSpace(0.75f), measure.rightX - StaffSpace(0.55f))
+            ?: (measure.leftX + StaffSpace(0.75f))
+        val left = transformerSnapshot.toAbsolute(
+            RelativePoint(entryX, StaffSpace.ZERO),
+        ).x.value
+        val right = transformerSnapshot.toAbsolute(
+            RelativePoint(measure.rightX - StaffSpace(0.55f), StaffSpace.ZERO),
+        ).x.value.coerceAtLeast(left)
+        val x = if (requestedMeasure == null) {
+            right
+        } else {
+            val beat = canonical.beat ?: com.mecon.api.primitive.Fraction.ZERO
+            val map = scoreTimeMap
+            val length = map?.let {
+                it.absolute(TimeCode.of(canonical.measure + 1, com.mecon.api.primitive.Fraction.ZERO)) -
+                    it.absolute(TimeCode.of(canonical.measure, com.mecon.api.primitive.Fraction.ZERO))
+            }
+            if (length == null || !length.isPositive || beat.isNegative || beat > length) return null
+
+            val anchors = timeCodePositions.values
+                .asSequence()
+                .filter { it.timeCode.measure == canonical.measure }
+                .map { (it.timeCode.beat ?: com.mecon.api.primitive.Fraction.ZERO) to it.x }
+                .sortedBy { it.first }
+                .toList()
+            val before = anchors.lastOrNull { it.first < beat }
+            val after = anchors.firstOrNull { it.first > beat }
+            val startBeat = before?.first ?: com.mecon.api.primitive.Fraction.ZERO
+            val endBeat = after?.first ?: length
+            val startX = before?.second ?: left
+            val endX = after?.second ?: right
+            if (endBeat == startBeat) startX else {
+                val ratio = ((beat - startBeat) / (endBeat - startBeat)).toFloat().coerceIn(0f, 1f)
+                startX + (endX - startX) * ratio
+            }
+        }
+        val top = system.staffRegions.minOf { it.centerY.value - 2f }
+        val bottom = system.staffRegions.maxOf { it.centerY.value + 2f }
+        return TimeCodePosition(
+            timeCode = canonical,
+            x = x,
+            topY = transformerSnapshot.toAbsolute(RelativePoint(StaffSpace.ZERO, StaffSpace(top))).y.value,
+            bottomY = transformerSnapshot.toAbsolute(RelativePoint(StaffSpace.ZERO, StaffSpace(bottom))).y.value,
+            leftX = x,
+        )
+    }
 
     /**
      * Find elements containing a point.
@@ -198,6 +302,35 @@ data class RenderResult(
             .filter { (_, distance) -> distance <= tolerance.value }
             .minByOrNull { (_, distance) -> distance }
             ?.first
+    }
+
+    /** Exact visual line for a previously resolved boundary hit, used by platform previews. */
+    fun barlinePositionAt(hit: RenderedBarlineHit): TimeCodePosition? {
+        val system = spatialIndex.getSystem(hit.systemIndex) ?: return null
+        if (system.staffRegions.isEmpty()) return null
+        val measures = measureBounds.filter { it.systemIndex == hit.systemIndex }
+        val x = measures.firstOrNull { it.measureNumber == hit.measureNumber }?.rightX
+            ?: measures.firstOrNull()
+                ?.takeIf { hit.measureNumber == it.measureNumber - 1 }
+                ?.leftX
+            ?: return null
+        val absoluteX = transformerSnapshot.toAbsolute(RelativePoint(x, StaffSpace.ZERO)).x.value
+        val top = system.staffRegions.minOf { it.centerY.value - 2f }
+        val bottom = system.staffRegions.maxOf { it.centerY.value + 2f }
+        return TimeCodePosition(
+            timeCode = TimeCode.of(
+                (hit.measureNumber + 1).coerceAtLeast(1),
+                com.mecon.api.primitive.Fraction.ZERO,
+            ),
+            x = absoluteX,
+            topY = transformerSnapshot.toAbsolute(
+                RelativePoint(StaffSpace.ZERO, StaffSpace(top)),
+            ).y.value,
+            bottomY = transformerSnapshot.toAbsolute(
+                RelativePoint(StaffSpace.ZERO, StaffSpace(bottom)),
+            ).y.value,
+            leftX = absoluteX,
+        )
     }
 
     /**

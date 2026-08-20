@@ -81,7 +81,16 @@ pointer 类型必须逐事件判断，不能因为设备支持 Pencil 就禁用�
 顶栏常驻返回、标题/保存状态、undo/redo 和播放状态；低频的页面设置、导出与文档信息进溢出菜单。
 切换活动先取消未提交 preview，不改变 revision，也不重建 session。
 
+Phone 在一级活动栏上方常驻一排**工具组**，例如音符、力度、区间、结构；工具组选择保持可见，具体参数
+进入其上方的上下文条或 sheet。P/S 成功后不退出当前工具组，但清空本次位置，下一次必须重新选单点或
+起止区间。E 保持输入会话并自动跟随 `nextInputPosition`，同时常驻上一/下一音符、上一/下一小节按钮。
+
 ## 4. 主打谱交互
+
+本节给出移动端原则；所有具体能力必须归入
+[打谱交互分类与跨设备接口](score-interaction-taxonomy.md)的 N/E/P/S/G/T/B/H/F 九个家族，原型状态与
+评审问题见[移动打谱交互原型](mobile-score-prototypes.md)。评审通过前不进入移动 M0/M1，实现时不得用
+平台手势另造一套业务协议。
 
 ### 4.1 输入方式
 
@@ -122,7 +131,8 @@ Browsing ──tap──> Selected ──drag handle──> Previewing
   authoritative revision 变化都 cancel，不隐式提交。
 - drag move 只更新本地/共享 preview，不入历史；pointer up 发送一次普通 intent，恰好形成一个历史项。
   提交后保留 preview，直到完整新 `RenderResult` 发布；不能收到流式第一页就提前解除保护。
-- 每个拖动都有按钮或表单等价项；复杂的跨系统几何编辑在手机上可要求进入横屏精修页。
+- 每个拖动都有按钮或表单等价项。Phone 首版不承担精细 engraving，不要求横屏精修页；复杂几何保持
+  可选择、可 nudge、可无损保存，高级曲线控制可后置到 Pad/Desktop。
 
 ### 4.4 虚拟钢琴与步进输入
 
@@ -135,6 +145,23 @@ Browsing ──tap──> Selected ──drag handle──> Previewing
   🚧 当前 `InsertChord` 接受 `List<Pitch>`；实现前应给共享协议增加 MIDI chord 输入，由 session 统一拼写，
   不能在移动壳调用自己的 `Pitch.fromMidi` 规则。
 - 连音组等一次性输入只消费 `noteInputTransition`，移动 UI 不自行计算下一个成员的时值或位置。
+- 移动端新建 tuplet 先发送共享 `CreateTupletRegion(count, totalDuration)`：原子建立全休止范围，返回成员
+  时值与范围起点后切入 E，再用普通 `InsertNote`/`InsertChord` 填入。Desktop 的“范围 + 首音”旧入口可
+  兼容保留，但不得成为移动 adapter 的隐式业务规则。
+- 小音符仍先选择完整休止区间并发送 `CreateSmallNoteRegions`；成功后切到 E，后续音符带 session 返回的
+  稳定 append anchor。平台不通过 TimeCode 猜测 exclusive end 属于小音符还是普通时间轴。
+- E 的下方输入条持有 common `MobileNoteInputState`：全音符、二分、四分、八分、十六分、三十二分与
+  单附点共用一个 `Duration`，钢琴、谱面直接输入、休止和新建 tuplet 范围都读取它。Android 不保存一份
+  平台专用时值枚举，也不自行计算写入后的下一拍。
+- Phone 点谱采用两步语义：第一次由共享 renderer 的 `computeGhost` 在当前 `RenderResult` 上解析
+  staff/voice/onset/pitch，显示蓝色插入线、真实 ghost 和确认提示；第二次点同一候选才发送普通
+  `InsertNote`。休止模式走同一流程并设置 `isRest=true`。钢琴键可在第一次定位后直接决定 MIDI 音高并
+  提交，不要求第二次点谱。
+- 成功后 ghost 清空，插入线只跟随 session 返回的 `nextInputPosition`；新完整 `RenderResult` 发布前继续
+  显示旧帧，不用旧几何猜新位置。上一/下一音符、上一/下一小节仍走 shared cursor navigator。
+- 空拍与空小节不要求存在音符 slot：`RenderResult.insertionPositionAt` 依据同帧的时间映射和小节内容入口
+  插值。小节起点避开谱号/调号/拍号与小节线；末音之后及最后小节后的逻辑下拍也保留可见插入线。
+  Android 将当前 cursor 作为绘制节点输入，纯导航不等下一次写入或 renderer revision 才刷新。
 
 ## 5. 手机的“总览 + 聚焦编辑”
 
@@ -222,13 +249,76 @@ Mobile shell / pointer / MIDI / audio / files
 
 | 阶段 | 交付 | 退出条件 |
 |------|------|----------|
+| M-1 交互评审 | 57 intent 分类、统一接口、Phone/Pad/Pencil 九类原型 | 产品逐类记录接受/调整/后置；未决项不进入实现 |
 | M0 基础 | Android/iOS target、进程内 session、字体/绘制、文件/音频、viewport cache | 同一 score/practice trace 在移动 target 通过；移动 `.mecon` 可由桌面回读 |
 | M1 Pad 核心 | 笔、手指两步选择、候选、放大镜、手柄、钢琴单音步进 | 一次拖动一个历史项；取消零历史；undo 恢复选择 |
 | M2 Pad 完整 | 全部共享记谱/自由练习入口、硬件键盘/MIDI、协议化钢琴卷轴 | Pad 能力矩阵逐项有实现或平台原因 |
 | M3 手机记录 | 快速草稿、聚焦谱面、钢琴、常用编辑、播放/恢复 | 单手完成新建—录入—修改—试听—保存 |
 | M4 手机练习/分析 | 四活动、自动写作状态、finding、缩谱导航 | 完成选和弦—配声—检查—换结果—试听；后台崩溃可恢复 |
 
+### 9.1 当前实现起点
+
+- `features/score-editing/.../ScoreInteraction.kt` 已提供九类命令目录、语义锚点、成功策略、输入能力和
+  E 光标导航；Desktop 与 Web 只做 adapter 映射。
+- `apps/mobile/src/commonMain/` 已建立 Android-first 的移动工作流控制器，负责常驻工具组、活动切换、
+  session dispatch、两阶段 tuplet 与 MIDI 步进输入。该层不引用 Android/Compose/像素对象，可直接复用到
+  iOS 与 Harmony 壳层。
+- `apps/mobile-android/` 已建立 Android Compose 壳：顶栏 undo/redo、聚焦谱段、E 导航/音高输入、
+  空 tuplet 范围、常驻工具组和四活动均直接调用 common controller。当前使用与全仓 Kotlin/Compose
+  基线兼容的 AGP 8.7。记录活动提供明确的“打开/收起钢琴”入口和 C4–C6 黑白键；每个键只发送普通
+  `InsertNote`，由 session 返回 `nextInputPosition`。
+- `apps/mobile/.../MobileScoreRenderSession.kt` 直接持有共享 `RenderEngine`；Android 使用串行 conflated
+  后台 worker 生成完整 `RenderResult`，旧帧保留到新帧完成，再由 Compose Canvas 重放全部
+  `RenderCommand`。Bravura 字形使用随 APK 打包的 OTF 按基线绘制。点按谱面由共享 `computeGhost`
+  针对当前同一 `RenderResult` 解析稳定 staff/voice/onset/pitch，不在 UI 重算排版。当前 Android 工程通过 JVM
+  artifact bridge 消费该 KMP common 实现；增加正式 Android target 时应删除 bridge，但保持 controller、
+  renderer session 与 Canvas adapter 的边界不变。
+- P 已覆盖谱号、调号、拍号、力度、速度、延长记号、换气和单点装饰音，统一为“选择类型 → 点谱生成
+  renderer ghost → 完成/取消 → 单个 shared intent”。SMuFL/文本预览集中在
+  `GhostPointSymbolComputer`，平台不复制字形或定位规则。S 已覆盖 hairpin、8va/8vb、渐快/渐慢和区间
+  trill 的“起点 → 终点 → 完整区间 ghost → 完成/取消”闭环；slur 由稳定事件多选后一次提交。
+- N/T 已形成语义选择与批量变换闭环：Android“选择”工具由 `RenderResult.hitTest` 解析音符/和弦音头及
+  谱号、调号、拍号、小节线、房子、导航、slur/tie/beam、演奏法、附件、换行和隐藏谱表，renderer 随结果携带
+  `eventId → voiceTrackId` 索引，触控热路径不扫描 `RuntimeScore`；稳定目标经 `SetSelection` 进入共享
+  session，并以蓝色外框反馈。“追加选择”显式替代手机上不可用的 Shift；再次点选会从集合移除。底部动作已覆盖
+  复制/剪切/粘贴、删除、移调、时值、变音、tie、符杠、声部、演奏法、琶音、休止位置，以及删除 slur/表情。
+  框选直接查询同一 `RenderResult.hitTestRegion`，拖动中显示矩形，松手将重复 renderer fragment 合并为稳定
+  event/pitch target 后只提交一次 `SetSelection`；重叠候选不再猜测，而显示可访问的目标列表。
+- B 使用 renderer 的 `barlineHitAt` 与触控容差解析稳定 boundary；紫色预览线确认当前系统中的真实边界。
+  入口覆盖小节增删、小节线与反复次数、房子、导航记号、系统/分页换行和谱表显隐，全部只提交共享结构 intent。
+- G 已复用 N 的多选集合，可把同 voice 的选中事件以一个 `ApplyTuplets` 或
+  `CreateSmallNoteRegions` intent 提交；小音符成功后按统一成功策略切回 E 并携带 append anchor。
+- H 对 slur/tie/beam/演奏法/附件使用 renderer 捕获的 `ScoreGeometry`：连续拖动时隐藏旧元素并平移同一帧的
+  renderer 原图，取消零提交，抬手才按 staff-space 差值提交一次；房子端点和导航记号可拖到 renderer 解析的
+  逻辑小节边界，并保留半谱间/边界 nudge。F 对 ornament、tempo、fermata/breath 使用本地草稿，确认时
+  分别提交一次 typed update；不兼容的附件不会误发 performance 更新。
+- S 首点即由共享渲染会话生成默认长度 ghost，并显示左右方形端点；实心端点可直接拖动，也可先选中再点
+  目标位置迁移。P/S 参数行覆盖力度、BPM、延长/换气形状、装饰音种类与 hairpin 样式；T/G 提供连音数、
+  符杠位置、演奏法、
+  琶音、目标声部、休止位置和倚音借时；B 的小节数、反复次数、导航类型和隐藏范围先形成草稿，再由“完成”一次提交。
+- 当前审阅版九个家族均有真实 renderer → 语义目标 → shared session → 完整重绘链。文件/音频和硬件 MIDI
+  属移动平台集成门禁，不改变本轮已经完成的九类普通打谱交互协议。
+- Android 的 E 流程现已覆盖：谱面首点定位并显示真实 ghost、同点二次确认、六档时值、附点、休止模式、
+  直接写入休止、钢琴落音、tuplet 总时值复用与成功后自动前进。后续命中工作转向 N/T/H 家族的选择、
+  变换与手柄拖动，不再扩写第二套音符输入路径。
+- Android API 35 SDK 与本机 `local.properties` 已配置；
+  `./gradlew.bat :apps:mobile-android:assembleDebug` 已通过首个 APK 门禁。该文件仅记录本机 SDK 路径并由
+  Git 忽略，不进入跨平台工程配置。
+
+当前家族能力矩阵（“审阅闭环”表示 taxonomy 中的持久化 intent 已有 Android 入口；设备增强仍按末列继续）：
+
+| 家族 | Android 状态 | 当前入口 | 下一缺口 |
+|------|--------------|----------|----------|
+| N | 完整原型 | undo/redo、语义光标、14 类目标点选、追加/框选、候选菜单、蓝色反馈 | Pad 空白起拖平移策略复核 |
+| E | 完整原型 | 音符/休止、和弦 latch、钢琴、时值/附点、空 tuplet、粘贴 | 硬件 MIDI 平台接入 |
+| P | 完整原型 | taxonomy 8 类 intent、真实 ghost、类型参数行、完成/取消 | 完整调号调式选择器 |
+| S | 完整原型 | slur、hairpin、8va/8vb、渐快/渐慢、区间 ornament、样式参数 | 跨系统触笔放大镜 |
+| G | 完整原型 | tuplet/小音符/grace 参数草稿、组选区摘要、完成/取消 | 跨 voice 错误文案细化 |
+| T | 完整原型 | taxonomy 14 个批量 intent 与主要参数 | 混合值 inspector |
+| B | 完整原型 | taxonomy 10 个结构 intent、范围/参数草稿、真实边界预览、完成/取消 | 多系统拖选范围 |
+| H | 完整原型 | renderer 原图连续 ghost、一次提交、取消、nudge、房子/导航边界拖动 | Pencil hover 放大镜 |
+| F | 完整原型 | typed draft、校验、确认/取消、无 drag 路径 | 同类多选混合值 |
+
 除 JVM/JS 现有 trace 外，新增移动 adapter/设备测试：手指歧义命中、笔 hover 与无 hover、两步拖动、
 边缘滚动、pointer cancel、`nextInputPosition`、`noteInputTransition`、活动/旋转保留选择、worker 崩溃、
 屏幕阅读器非拖动路径。大谱还要证明 UI 主线程无全谱扫描，完整结果发布前不提前解锁。
-

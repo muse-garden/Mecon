@@ -103,6 +103,23 @@ sealed interface ScoreEditIntent {
         val grace: GraceInsertion? = null,
     ) : ScoreEditIntent
 
+    /**
+     * Creates an empty tuplet span filled with shared-engine rests. Mobile entry uses this before
+     * entering notes so choosing the group and choosing its first pitch are two explicit actions.
+     * Legacy desktop entry may keep using [InsertNote.tupletCount] for its combined first-note flow.
+     */
+    @Serializable
+    @SerialName("createTupletRegion")
+    data class CreateTupletRegion(
+        override val expectedRevision: Long,
+        val voiceTrackId: TrackId,
+        val start: TimeCode,
+        val totalDuration: Duration,
+        val count: Int,
+        val staffTrackId: TrackId? = null,
+        val voiceNumber: Int = 1,
+    ) : ScoreEditIntent
+
     @Serializable
     data class GraceInsertion(
         val totalDuration: Duration = Duration.EIGHTH,
@@ -677,10 +694,14 @@ data class ScoreEditRenderHint(
  * group's member unit. Platforms consume this transition instead of reimplementing tuplet maths or
  * guessing from the stored events. A null [tupletCount] explicitly clears the pending group switch.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class ScoreNoteInputTransition(
     val duration: Duration,
     val tupletCount: Int? = null,
+    /** Explicit shared-engine append target for entry into an open small-note region. */
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val smallNoteAppendStartEventId: EventId? = null,
 )
 
 /** First wire version intentionally sends a full immutable score snapshot after every accepted edit. */

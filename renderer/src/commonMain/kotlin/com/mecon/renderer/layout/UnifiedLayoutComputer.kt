@@ -3,6 +3,7 @@ package com.mecon.renderer.layout
 import com.mecon.api.computed.ComputedScore
 import com.mecon.api.primitive.*
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.renderer.elements.BarlineElement
 import com.mecon.renderer.elements.ClefElement
@@ -757,6 +758,7 @@ class UnifiedLayoutComputer(
             titleBlock = titleBlock,
             postLayoutMarkers = postLayoutMarkers,
             resolvedTimeAxis = resolvedTimeAxis,
+            scoreTimeMap = ScoreTimeMap.from(runtime),
             preBreakTimeSlotMap = preBreakTimeSlotMap,
             preBreakMeasureWidths = measureWidths,
             preBreakMeasureExtents = measureExtents,

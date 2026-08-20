@@ -333,20 +333,7 @@ internal class StaffAttachmentLayoutComputer(
         timeSlotMap: UnifiedTimeSlotMap,
     ): RawAttachment? {
         val slot = timeSlotMap.atTime(mark.time) ?: return null
-        val glyph = when (mark.kind) {
-            com.mecon.api.storage.events.OrnamentKind.TRILL -> SmuflGlyphs.ornamentTrill
-            com.mecon.api.storage.events.OrnamentKind.MORDENT -> SmuflGlyphs.ornamentMordent
-            com.mecon.api.storage.events.OrnamentKind.INVERTED_MORDENT -> SmuflGlyphs.ornamentShortTrill
-            com.mecon.api.storage.events.OrnamentKind.TREMBLEMENT -> SmuflGlyphs.ornamentTremblement
-            com.mecon.api.storage.events.OrnamentKind.TREMBLEMENT_COUPERIN -> SmuflGlyphs.ornamentTremblementCouperin
-            com.mecon.api.storage.events.OrnamentKind.MORDENT_UPPER_PREFIX -> SmuflGlyphs.ornamentPrecompMordentUpperPrefix
-            com.mecon.api.storage.events.OrnamentKind.INVERTED_MORDENT_UPPER_PREFIX ->
-                SmuflGlyphs.ornamentPrecompInvertedMordentUpperPrefix
-            com.mecon.api.storage.events.OrnamentKind.MORDENT_RELEASE -> SmuflGlyphs.ornamentPrecompMordentRelease
-            com.mecon.api.storage.events.OrnamentKind.TURN -> SmuflGlyphs.ornamentTurn
-            com.mecon.api.storage.events.OrnamentKind.INVERTED_TURN -> SmuflGlyphs.ornamentTurnInverted
-            com.mecon.api.storage.events.OrnamentKind.TURN_SLASH -> SmuflGlyphs.ornamentTurnSlash
-        }
+        val glyph = com.mecon.renderer.render.OrnamentGlyphs.glyphFor(mark.kind)
         val bbox = this@BravuraFont.getBBox(glyph) ?: return null
         fun accidentalGlyph(accidental: com.mecon.api.primitive.Accidental) = when (accidental) {
             com.mecon.api.primitive.Accidental.DOUBLE_FLAT -> SmuflGlyphs.accidentalDoubleFlat

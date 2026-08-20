@@ -7,6 +7,8 @@ import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.storage.events.HairpinStyle
 import com.mecon.api.storage.events.HairpinType
 import com.mecon.api.storage.events.OctaveShiftType
+import com.mecon.api.storage.events.OrnamentKind
+import com.mecon.api.storage.events.TempoMarkType
 import com.mecon.api.storage.events.StaffAttachmentPlacement
 import com.mecon.renderer.geometry.AbsolutePoint
 import com.mecon.renderer.geometry.Pixels
@@ -20,12 +22,15 @@ import com.mecon.renderer.geometry.SpanLineStyle
 import com.mecon.renderer.layout.RenderLayoutConfig
 import com.mecon.renderer.render.RenderCommand
 import com.mecon.renderer.render.RenderResult
+import com.mecon.renderer.render.OrnamentGlyphs
 import com.mecon.renderer.smufl.BravuraFont
 
 /** The expression span that is being inserted, before it exists in the score. */
 sealed interface ExpressionSpanKind {
     data class Hairpin(val type: HairpinType, val style: HairpinStyle) : ExpressionSpanKind
     data class Octave(val type: OctaveShiftType) : ExpressionSpanKind
+    data class GradualTempo(val type: TempoMarkType) : ExpressionSpanKind
+    data class Ornament(val kind: OrnamentKind) : ExpressionSpanKind
 }
 
 /** A drag preview for a new hairpin or octave-shift span. */
@@ -35,6 +40,9 @@ data class GhostExpressionSpan(
     val end: TimeCode,
     val commands: List<RenderCommand>,
     val anchor: AbsolutePoint,
+    /** Editor-only endpoint controls. They are not persisted or emitted as render elements. */
+    val startHandle: AbsolutePoint,
+    val endHandle: AbsolutePoint,
 )
 
 /**
@@ -152,15 +160,74 @@ class GhostExpressionSpanComputer(
                     bounds = bounds,
                 )
             }
+            is ExpressionSpanKind.GradualTempo -> {
+                val yCenter = -StaffSpace(4.2f)
+                val height = StaffSpace(textSize.value * 1.4f)
+                val bounds = RelativeRect(
+                    origin = RelativePoint(minOf(startX, endX), yCenter - height / 2f),
+                    width = maxOf(startX, endX) - minOf(startX, endX),
+                    height = height,
+                )
+                IntervalAttachmentGeometry(
+                    startX = startX,
+                    endX = endX,
+                    yCenter = yCenter,
+                    lineStyle = SpanLineStyle.DASHED,
+                    startContent = SpanEnd.Text(
+                        if (kind.type == TempoMarkType.ACCELERANDO) "accel." else "rit.",
+                        widthFactor = 0.48f,
+                    ),
+                    endContent = SpanEnd.None,
+                    placement = StaffAttachmentPlacement.ABOVE,
+                    thickness = config.hairpinThickness,
+                    textSize = textSize,
+                    textGap = config.hairpinTextGap,
+                    bounds = bounds,
+                )
+            }
+            is ExpressionSpanKind.Ornament -> {
+                val yCenter = -StaffSpace(4.2f)
+                val height = StaffSpace(textSize.value * 1.4f)
+                val bounds = RelativeRect(
+                    origin = RelativePoint(minOf(startX, endX), yCenter - height / 2f),
+                    width = maxOf(startX, endX) - minOf(startX, endX),
+                    height = height,
+                )
+                IntervalAttachmentGeometry(
+                    startX = startX,
+                    endX = endX,
+                    yCenter = yCenter,
+                    lineStyle = SpanLineStyle.WAVY_TRILL,
+                    startContent = SpanEnd.Ornament(OrnamentGlyphs.glyphFor(kind.kind), null, null),
+                    endContent = SpanEnd.None,
+                    placement = StaffAttachmentPlacement.ABOVE,
+                    thickness = config.hairpinThickness,
+                    textSize = textSize,
+                    textGap = config.hairpinTextGap,
+                    bounds = bounds,
+                )
+            }
         }
 
         val commands = geometry.draw(RelativePoint(StaffSpace.ZERO, centerY), transformer)
+        val handleY = centerY + when (kind) {
+            is ExpressionSpanKind.Hairpin -> StaffSpace(3.8f)
+            is ExpressionSpanKind.Octave -> if (kind.type == OctaveShiftType.OTTAVA) {
+                -StaffSpace(4.2f)
+            } else {
+                StaffSpace(4.2f)
+            }
+            is ExpressionSpanKind.GradualTempo,
+            is ExpressionSpanKind.Ornament -> -StaffSpace(4.2f)
+        }
         return GhostExpressionSpan(
             staffTrackId = staffTrackId,
             start = start,
             end = end,
             commands = commands,
             anchor = transformer.toAbsolute(RelativePoint(startX, centerY)),
+            startHandle = transformer.toAbsolute(RelativePoint(startX, handleY)),
+            endHandle = transformer.toAbsolute(RelativePoint(endX, handleY)),
         )
     }
 }

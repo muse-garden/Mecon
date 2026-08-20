@@ -75,6 +75,10 @@ data class ResolvedTimeAxis(
         return left.x + (right.x - left.x) * ratio
     }
 
+    /** Canonical measure-local spelling of [time], including positions exactly on a barline. */
+    fun canonicalTimeAt(time: TimeCode): TimeCode =
+        scoreTimeMap.timeCodeAt(scoreTimeMap.absolute(time))
+
     fun timeAt(x: StaffSpace): TimeCode {
         val (left, right) = surroundingByX(x)
         if (left.x == right.x) return left.time

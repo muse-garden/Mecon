@@ -337,6 +337,7 @@ internal class RenderResultAssembler(
         val _tBuildResult = kotlin.time.TimeSource.Monotonic.markNow()
         val _tMeasureBounds = kotlin.time.TimeSource.Monotonic.markNow()
         val measureBounds = computeRenderedMeasureBounds(layoutResult)
+        val measureEntryXs = computeMeasureEntryXs(layoutResult, measureBounds)
         com.mecon.renderer.debug.PerfLog.log("render.stage") {
             "assemble.measureBounds=${_tMeasureBounds.elapsedNow().inWholeMilliseconds}ms measures=${measureBounds.size}"
         }
@@ -350,7 +351,12 @@ internal class RenderResultAssembler(
             sectionIndex = sectionIndex,
             elementIndex = elementIndex,
             timeCodePositions = timeCodePositions,
+            measureEntryXs = measureEntryXs,
             resolvedTimeAxis = layoutResult.resolvedTimeAxis,
+            scoreTimeMap = layoutResult.scoreTimeMap,
+            eventVoiceTrackIds = layoutResult.voiceEventLayouts.all().associate {
+                it.eventId to it.voiceTrackId
+            },
             spatialIndex = spatialIndex,
             transformerSnapshot = transformerSnapshot,
             paginated = paginated,
@@ -362,6 +368,31 @@ internal class RenderResultAssembler(
             "assemble.buildResult=${_tBuildResult.elapsedNow().inWholeMilliseconds}ms elements=${elements.size}"
         }
         return result
+    }
+
+    /**
+     * Resolve the start of writable measure content from the laid-out opening slot. In particular,
+     * system-start clef/key/meter clusters can extend far past [RenderedMeasureBounds.leftX]; using
+     * the bare boundary there places an empty-measure caret underneath the header glyphs.
+     */
+    private fun computeMeasureEntryXs(
+        layout: UnifiedLayoutResult,
+        bounds: List<RenderedMeasureBounds>,
+    ): Map<Int, StaffSpace> {
+        if (bounds.isEmpty()) return emptyMap()
+        val slotsByMeasure = layout.timeSlotMap.all().groupBy { it.time.measure }
+        return bounds.associate { measure ->
+            val opening = slotsByMeasure[measure.measureNumber]
+                .orEmpty()
+                .filter { (it.time.beat ?: com.mecon.api.primitive.Fraction.ZERO).isZero }
+                .filter { it.systemIndex == measure.systemIndex }
+                .maxOfOrNull { it.x.value }
+            val minimum = measure.leftX.value + 0.75f
+            val maximum = (measure.rightX.value - 0.55f).coerceAtLeast(minimum)
+            measure.measureNumber to StaffSpace(
+                ((opening ?: minimum) + 0.75f).coerceIn(minimum, maximum),
+            )
+        }
     }
 
     /**

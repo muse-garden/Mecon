@@ -342,7 +342,6 @@ internal object NoteInsertion {
         val existing = voice.events.toList()
             .filter { !it.isRest && it.onset >= regionStart && it.onset < regionEnd }
             .sortedBy { it.onset }
-        if (existing.isEmpty()) return null
 
         val displayedDuration = insertion.duration.copy(tuplet = null)
         val newEvent = createVoiceEvent(

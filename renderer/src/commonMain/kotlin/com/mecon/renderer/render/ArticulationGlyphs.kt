@@ -11,7 +11,7 @@ import com.mecon.api.storage.tracks.FermataShape
  * Kept separate from [ArticulationLayoutComputer] so the (pure) mapping can be
  * unit-tested without the full layout pipeline.
  */
-internal object ArticulationGlyphs {
+object ArticulationGlyphs {
 
     /** The above/below SMuFL glyph for an articulation and fermata shape. */
     fun glyphFor(

@@ -9,6 +9,7 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TimeRange
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.api.runtime.ScoreTimeMap
 import com.mecon.api.runtime.toStorage
 import com.mecon.api.state.EditorStateController
 import com.mecon.api.state.RenderHint
@@ -153,7 +154,11 @@ class ScoreEditingSession private constructor(
     private fun advanceInputPositionTo(eventId: EventId?) {
         val event = eventId?.let { manager.currentState.computedScore.getComputedEvent(it) } ?: return
         if (event.onset.grace?.isZero == false) return
-        nextInputPosition = event.endTime
+        val runtime = manager.currentState.runtimeScore
+        val timeMap = ScoreTimeMap.from(runtime)
+        nextInputPosition = timeMap.timeCodeAt(
+            timeMap.absolute(event.onset) + event.duration.toFraction(),
+        )
     }
 
     fun initialUpdate(): ScoreEditUpdate = wireUpdate(
@@ -235,6 +240,7 @@ class ScoreEditingSession private constructor(
             }
             is ScoreEditIntent.InsertNote -> insert(intent, baseRevision)
             is ScoreEditIntent.InsertChord -> insertChord(intent, baseRevision)
+            is ScoreEditIntent.CreateTupletRegion -> createTupletRegion(intent, baseRevision)
             is ScoreEditIntent.CopyNotes -> copy(intent, baseRevision)
             is ScoreEditIntent.CutNotes -> cut(intent, baseRevision)
             is ScoreEditIntent.PasteNotes -> paste(intent, baseRevision)
@@ -422,13 +428,7 @@ class ScoreEditingSession private constructor(
                     },
                 ),
             )
-            is ScoreEditIntent.CreateSmallNoteRegions -> propertyEdit(
-                baseRevision,
-                NoteEditEngine.createSmallNoteRegions(
-                    manager.currentState.runtimeScore,
-                    intent.targets.map { NoteEditEngine.SmallNoteEdit(it.voiceTrackId, it.eventIds) },
-                ),
-            )
+            is ScoreEditIntent.CreateSmallNoteRegions -> createSmallNoteRegions(intent, baseRevision)
             is ScoreEditIntent.SetArpeggio -> expression(
                 baseRevision,
                 ExpressionEditEngine.setArpeggio(
@@ -557,6 +557,32 @@ class ScoreEditingSession private constructor(
         selection = result.insertedEventId?.let { listOf(selectionTarget(it, intent.voiceTrackId)) }.orEmpty()
         advanceInputPositionTo(result.insertedEventId)
         return applied(baseRevision, noteInputTransition(intent.duration, intent.tupletCount))
+    }
+
+    private fun createTupletRegion(
+        intent: ScoreEditIntent.CreateTupletRegion,
+        baseRevision: Long,
+    ): ScoreEditDispatchResult {
+        val result = NoteEditEngine.insert(
+            manager.currentState.runtimeScore,
+            NoteEditEngine.Insertion(
+                voiceTrackId = intent.voiceTrackId,
+                start = intent.start,
+                duration = intent.totalDuration,
+                pitch = null,
+                isRest = true,
+                staffTrackId = intent.staffTrackId,
+                voiceNumber = intent.voiceNumber,
+                tupletCount = intent.count,
+            ),
+        ) ?: return noOp(baseRevision)
+        commit(result.score, listOf(result.editInterval))
+        selection = result.insertedEventId
+            ?.let { listOf(selectionTarget(it, intent.voiceTrackId)) }
+            .orEmpty()
+        // The group is empty: entry starts at its first member, not after that placeholder rest.
+        nextInputPosition = intent.start
+        return applied(baseRevision, noteInputTransition(intent.totalDuration, intent.count))
     }
 
     private fun copy(intent: ScoreEditIntent.CopyNotes, baseRevision: Long): ScoreEditDispatchResult {
@@ -1102,6 +1128,43 @@ class ScoreEditingSession private constructor(
             commit(outcome.score, outcome.intervals)
             selection = outcome.resultEventIds.map { selectionTarget(it) }
             applied(baseRevision)
+        }
+    }
+
+    private fun createSmallNoteRegions(
+        intent: ScoreEditIntent.CreateSmallNoteRegions,
+        baseRevision: Long,
+    ): ScoreEditDispatchResult {
+        val outcome = NoteEditEngine.createSmallNoteRegions(
+            manager.currentState.runtimeScore,
+            intent.targets.map { NoteEditEngine.SmallNoteEdit(it.voiceTrackId, it.eventIds) },
+        )
+        return when (outcome) {
+            NoteEditEngine.EditOutcome.Conflict -> result(
+                baseRevision,
+                ScoreEditEffect(ScoreEditEffectKind.CONFLICT, "scoreEditing.editConflict"),
+            )
+            NoteEditEngine.EditOutcome.NoOp -> noOp(baseRevision)
+            is NoteEditEngine.EditOutcome.Changed -> {
+                commit(outcome.score, outcome.intervals)
+                val resultIds = outcome.resultEventIds.toSet()
+                val anchors = manager.currentState.runtimeScore.voiceTracks.values
+                    .flatMap { voice -> voice.events.toList() }
+                    .filter { event -> event.id in resultIds && event.tupletSpan?.smallNotes == true }
+                    .sortedBy { it.onset }
+                selection = anchors.map { selectionTarget(it.id) }
+                val anchor = anchors.firstOrNull()
+                if (anchor != null) nextInputPosition = anchor.onset
+                applied(
+                    baseRevision,
+                    anchor?.let {
+                        ScoreNoteInputTransition(
+                            duration = Duration(it.tupletSpan!!.beatUnit),
+                            smallNoteAppendStartEventId = it.id,
+                        )
+                    },
+                )
+            }
         }
     }
 

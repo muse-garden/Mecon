@@ -29,6 +29,8 @@ import com.mecon.desktop.ui.components.toolstate.NotationToolState
 import com.mecon.desktop.ui.components.toolstate.StructureToolState
 import com.mecon.api.storage.events.OrnamentKind
 import com.mecon.api.storage.ArpeggioType
+import com.mecon.features.scoreediting.ScoreInteractionCatalog
+import com.mecon.features.scoreediting.ScoreInteractionSpec
 
 enum class PauseMarkKind { FERMATA, BREATH }
 enum class NoteEntryKind { NORMAL, GRACE }
@@ -74,6 +76,21 @@ enum class EditTool {
     REPEAT_STRUCTURE,
 }
 
+/** Desktop presentation adapter into the shared interaction-family vocabulary. */
+val EditTool.interactionSpec: ScoreInteractionSpec
+    get() = ScoreInteractionCatalog.spec(
+        when (this) {
+            EditTool.SELECT, EditTool.MARQUEE -> ScoreInteractionCatalog.NAVIGATION
+            EditTool.NOTE -> ScoreInteractionCatalog.ENTRY_NOTE
+            EditTool.CLEF, EditTool.TIME, EditTool.KEY, EditTool.DYNAMIC, EditTool.PAUSE,
+            EditTool.TEMPO, EditTool.ORNAMENT -> ScoreInteractionCatalog.POINT_SYMBOL
+            EditTool.HAIRPIN, EditTool.OCTAVE, EditTool.TEMPO_SPAN,
+            EditTool.ORNAMENT_SPAN -> ScoreInteractionCatalog.SPAN_SYMBOL
+            EditTool.ARPEGGIO -> ScoreInteractionCatalog.TRANSFORM_SELECTION
+            EditTool.BARLINE, EditTool.REPEAT_STRUCTURE -> ScoreInteractionCatalog.STRUCTURE
+        },
+    )
+
 /**
  * Compose state holder for the note-editing toolbar (left sidebar) and the canvas interaction.
  *
@@ -93,6 +110,9 @@ class NoteToolState {
      * switching to SELECT/MARQUEE keeps palettes open so they can edit the current selection.
      */
     var tool by mutableStateOf(EditTool.SELECT)
+
+    val activeInteractionSpec: ScoreInteractionSpec
+        get() = tool.interactionSpec
 
     /**
      * Whether the note palette (right column) is shown. Independent of [tool]: in NOTE mode the

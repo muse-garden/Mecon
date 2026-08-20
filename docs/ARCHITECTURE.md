@@ -12,7 +12,7 @@ Mecon 是一款基于 Kotlin Multiplatform 的专业音乐分析应用。当前�
 | 不可变集合 | `kotlinx.collections.immutable` |
 | 异步 | Kotlin Coroutines + Flow |
 | 音频 | JVM Sound API / MIDI (Desktop) |
-| 构建 | Gradle 8.x + Version Catalogs |
+| 构建 | Gradle 9.0 + Version Catalogs |
 
 ## 2. 模块划分
 
@@ -26,6 +26,8 @@ theory/                    乐理库（骨架）
 features/score-editing/    跨端编辑协议、会话、历史与选择语义
 bridge/web-engine/         Kotlin/JS 字符串 facade（共享编辑与完整排版）
 apps/desktop/              桌面应用入口（Compose UI 主壳）
+apps/mobile/               Android-first 的可移植移动工作流与呈现状态
+apps/mobile-android/       Android Compose 应用壳（M0）
 web/apps/free-practice/    React 轻量壳层 + Worker
 web/packages/              冻结命令重放与 Kotlin/JS npm 包装
 apps/desktop-ui-kit/       桌面 UI 共享库（主题 / i18n / 面板 SPI），插件可消费
@@ -43,6 +45,8 @@ apps/desktop → theory   → api
 apps/desktop → apps/desktop-ui-kit → api
 apps/desktop → plugins/*/desktop → plugins/*/core → api, theory
 apps/desktop → features/score-editing → core → api
+apps/mobile  → features/score-editing, renderer → core → api
+apps/mobile-android → apps/mobile → features/score-editing, renderer
 web/apps/free-practice → bridge/web-engine → features/score-editing, renderer
 core         → api
 ```
@@ -165,6 +169,12 @@ apps/desktop-ui-kit/
     ├── components/   CollapsiblePanelItem / ResizablePanelItem / Deferred*ResizeHandle / ...
     └── plugin/       PluginPanel / PluginPanelContext / PluginPanelDescriptor
 
+apps/mobile/
+└── src/commonMain/   活动、常驻工具组、输入能力、共享 renderer session 与编辑 adapter
+
+apps/mobile-android/
+└── src/main/         Android Activity、Compose 自适应壳、RenderCommand 重放与平台输入入口
+
 plugins/chord-analysis/core/
 └── src/commonMain/kotlin/com/mecon/plugins/chord/
     ├── StorageChordEvent.kt   @Serializable @SerialName("mecon.chord_analysis.chord")
@@ -191,10 +201,10 @@ plugins/theory-analysis/desktop/
 
 ## 6. 计划扩展
 
-以下目标模块尚未加入 `settings.gradle.kts`；移植前先让现有共享模块通过对应 target 编译：
+移动 common workflow 与 Android M0 壳已加入 `settings.gradle.kts`；以下平台壳/target 尚未接入：
 
 ```
-apps/android, ios         — 后续移动端应用与绘制/音频 backend
+apps/mobile iOS           — Compose/原生壳与绘制、文件、音频 backend
 apps/harmony              — ArkUI 外壳与待验证的本地引擎 bridge
 ```
 

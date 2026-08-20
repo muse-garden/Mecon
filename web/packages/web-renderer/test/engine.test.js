@@ -46,6 +46,9 @@ test("score editor facade keeps intents and updates on the JSON boundary", async
     initialUpdateJson() {
       return JSON.stringify({ revision: 0, score: { id: "score" } });
     }
+    interactionCatalogJson() {
+      return JSON.stringify([{ commandId: "entry.note", family: "E" }]);
+    }
     dispatchJson(intentJson) {
       received.push(JSON.parse(intentJson));
       return JSON.stringify({ revision: 1, effect: { kind: "APPLIED" } });
@@ -60,6 +63,7 @@ test("score editor facade keeps intents and updates on the JSON boundary", async
   });
   assert.ok(editor instanceof ScoreEditorFacade);
   assert.equal(editor.initialUpdate().revision, 0);
+  assert.equal(editor.interactionCatalog()[0].family, "E");
   assert.equal(editor.dispatch({ type: "undo", expectedRevision: 0 }).revision, 1);
   editor.close();
   assert.deepEqual(received, [{ type: "undo", expectedRevision: 0 }, "closed"]);

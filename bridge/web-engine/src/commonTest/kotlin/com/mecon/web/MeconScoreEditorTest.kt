@@ -12,6 +12,7 @@ import com.mecon.features.scoreediting.ScoreEditIntent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class MeconScoreEditorTest {
     @Test
@@ -20,6 +21,7 @@ class MeconScoreEditorTest {
         val voiceId = score.voiceTracks.keys.single()
         val editor = MeconScoreEditor(ScoreSerializer.toJson(score))
         assertEquals(0, ScoreEditCodec.decodeUpdate(editor.initialUpdateJson()).revision)
+        assertTrue(editor.interactionCatalogJson().contains("\"commandId\":\"entry.note\""))
 
         val update = ScoreEditCodec.decodeUpdate(
             editor.dispatchJson(

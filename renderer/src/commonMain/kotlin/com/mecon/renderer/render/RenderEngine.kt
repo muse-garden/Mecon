@@ -1042,6 +1042,15 @@ class RenderEngine(
     ): com.mecon.renderer.render.edit.GhostExpressionSpan? =
         editPreviewFacade.expressionSpan.compute(result, runtime, staffTrackId, start, end, kind)
 
+    fun computePointSymbolGhost(
+        result: RenderResult,
+        runtime: RuntimeScore,
+        staffTrackId: com.mecon.api.primitive.TrackId,
+        onset: com.mecon.api.primitive.TimeCode,
+        kind: com.mecon.renderer.render.edit.PointSymbolKind,
+    ): com.mecon.renderer.render.edit.GhostPointSymbol? =
+        editPreviewFacade.pointSymbol.compute(result, runtime, staffTrackId, onset, kind)
+
     fun computeTransposePreview(
         result: RenderResult,
         runtime: RuntimeScore,
