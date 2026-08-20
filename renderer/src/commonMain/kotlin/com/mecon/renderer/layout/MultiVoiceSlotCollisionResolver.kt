@@ -98,12 +98,14 @@ internal class MultiVoiceSlotCollisionResolver(
         )
 
         val clusterLeft = withSharedAccidentals.indices.minOf { index ->
-            offsets[index] + withSharedAccidentals[index].noteBody.leftExtent.value
+            val event = withSharedAccidentals[index]
+            offsets[index] + event.noteBody.leftExtent.value -
+                if (event.arpeggioType != null) 1.25f else 0f
         }
         val clusterRight = withSharedAccidentals.indices.maxOf { index ->
             offsets[index] + withSharedAccidentals[index].noteBody.rightExtent.value
         }
-        val clusterWidth = clusterRight - clusterLeft
+        val clusterLeftOverhang = (-clusterLeft).coerceAtLeast(0f)
 
         return withSharedAccidentals.mapIndexed { index, event ->
             val body = event.noteBody
@@ -114,8 +116,9 @@ internal class MultiVoiceSlotCollisionResolver(
                 // every head on this staff away from simultaneous heads on other staves.
                 relativeX = StaffSpace(offsets[index]),
                 multiVoiceWidthExtension = StaffSpace(
-                    (clusterWidth - body.width.value).coerceAtLeast(0f)
+                    (clusterRight - body.rightExtent.value).coerceAtLeast(0f)
                 ),
+                multiVoiceLeftOverhang = StaffSpace(clusterLeftOverhang),
             )
         }
     }

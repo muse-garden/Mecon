@@ -339,7 +339,12 @@ internal class SystemBreaker(
             val prevLo = lineLo[li]
             if (prevLo == null || x < prevLo) {
                 lineLo[li] = x
-                lineHeadInset[li] = -(slots[i].events.minOfOrNull { it.relativeX.value } ?: 0f)
+                // relativeX reaches the event origin, while accidentals/grace clusters can extend
+                // farther left. Include that overhang when pinning a non-first line after its
+                // restated clef/key header, otherwise the first accidental can enter the key.
+                lineHeadInset[li] = -(slots[i].events.minOfOrNull {
+                    it.relativeX.value - it.leftOverhang.value
+                } ?: 0f)
             }
             lineHi[li] = maxOf(lineHi[li] ?: x, x)
         }

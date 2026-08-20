@@ -276,6 +276,49 @@ class MultiVoiceSlotCollisionResolverTest {
     }
 
     @Test
+    fun accidentalAvoidanceKeepsRightmostInkAtSlotEdge() = withFont {
+        val slot = slots(
+            note("sharp", 1, StemDirection.UP, listOf(pitch(0, Accidental.SHARP))),
+            note("natural", 2, StemDirection.DOWN, listOf(pitch(0, Accidental.NATURAL))),
+        )
+        val notes = slot.noteEvents()
+        val rightmostInk = notes.maxOf { note ->
+            note.relativeX.value + note.noteBody.geometryList.maxOf { it.bounds.right.value }
+        }
+
+        assertTrue(
+            kotlin.math.abs(rightmostInk) < 0.0001f,
+            "left-side accidental columns must not create a blank strip at the slot's right edge: $rightmostInk",
+        )
+        assertTrue(notes.all { it.leftOverhang > StaffSpace.ZERO })
+    }
+
+    @Test
+    fun shiftedVoiceLocalAccidentalDoesNotInflateClusterOverhang() = withFont {
+        val slot = slots(
+            note("anchoredNatural", 2, StemDirection.DOWN, listOf(pitch(0, Accidental.NATURAL))),
+            note("shiftedSharp", 1, StemDirection.UP, listOf(pitch(0, Accidental.SHARP))),
+        )
+        val notes = slot.noteEvents()
+        assertTrue(notes.map { it.relativeX }.distinct().size > 1, "fixture must shift one voice")
+
+        val slotWidth = notes.maxOf { it.minimumWidth.value }
+        val sharedOriginX = -slotWidth
+        val actualClusterLeft = notes.minOf { note ->
+            note.relativeX.value + note.noteBody.geometryList.minOf { it.bounds.left.value }
+        }
+        val actualOverhang = sharedOriginX - actualClusterLeft
+
+        for (note in notes) {
+            assertTrue(
+                kotlin.math.abs(note.leftOverhang.value - actualOverhang) < 0.0001f,
+                "voice ${note.voiceNumber} must use global cluster overhang=$actualOverhang, " +
+                    "not its shifted local extent=${note.leftOverhang.value}",
+            )
+        }
+    }
+
+    @Test
     fun threeVoicesUseGlobalTwoColumnSolution() = withFont {
         val notes = slots(
             note("up1", 1, StemDirection.UP, listOf(pitch(0, Accidental.SHARP))),

@@ -213,7 +213,12 @@ class GhostNoteComputerTest {
             val rightHead = result.elementsForEvent(rightEventId)
                 .single { it.type == RenderElementType.NOTEHEAD }
             val slotRight = assertNotNull(result.timeCodePositions[onset]).x
-            assertTrue(slotRight > noteheadRight(rightHead), "right-hand accidental must expand the slot")
+            assertEquals(
+                noteheadRight(rightHead),
+                slotRight,
+                absoluteTolerance = 0.01f,
+                message = "a left-side accidental must not leave blank space at the slot's right edge",
+            )
             assertNull(
                 result.noteheadRightPositions[onset]?.get(1 to 1),
                 "left hand must have no local notehead anchor in this fixture",

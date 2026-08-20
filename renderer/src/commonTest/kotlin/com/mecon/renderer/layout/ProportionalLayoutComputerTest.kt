@@ -3,8 +3,14 @@ package com.mecon.renderer.layout
 import com.mecon.api.computed.ComputedPitchData
 import com.mecon.api.primitive.*
 import com.mecon.renderer.geometry.StaffSpace
+import com.mecon.renderer.geometry.GlyphGeometry
+import com.mecon.renderer.geometry.RelativePoint
+import com.mecon.renderer.geometry.RelativeRect
 import com.mecon.renderer.elements.BarlineElement
+import com.mecon.renderer.elements.NoteBodyElement
+import com.mecon.renderer.elements.NoteheadRenderInfo
 import com.mecon.renderer.elements.NoteElement
+import com.mecon.renderer.smufl.SmuflGlyphs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -84,6 +90,40 @@ class ProportionalLayoutComputerTest {
         val x1 = result[event1.time]!!
         val x2 = result[event2.time]!!
         assertTrue(x2 > x1, "Second event should be to the right of first")
+    }
+
+    @Test
+    fun accidentalOverhangDoesNotLeaveTrailingBlankSpace() {
+        val t0 = TimeCode.of(1, Fraction.ZERO)
+        val t1 = TimeCode.of(1, Fraction.QUARTER)
+        val t2 = TimeCode.of(1, Fraction.HALF)
+        val plain0 = createNoteEvent(t0, Duration.QUARTER, eventId = "plain0")
+            .copy(noteBody = noteBody(left = 0f, right = 1.5f))
+        val altered = createNoteEvent(t1, Duration.QUARTER, eventId = "altered")
+            .copy(noteBody = noteBody(left = -4f, right = 1.5f))
+        val plain2 = createNoteEvent(t2, Duration.QUARTER, eventId = "plain2")
+            .copy(noteBody = noteBody(left = 0f, right = 1.5f))
+
+        val result = computer.computeXPositions(listOf(plain0, altered, plain2), StaffSpace.ZERO)
+        val baseline = computer.computeXPositions(
+            listOf(
+                plain0,
+                altered.copy(noteBody = noteBody(left = 0f, right = 1.5f)),
+                plain2,
+            ),
+            StaffSpace.ZERO,
+        )
+
+        val trailingGap = result.getValue(t2).value - result.getValue(t1).value
+        val baselineTrailingGap = baseline.getValue(t2).value - baseline.getValue(t1).value
+        assertEquals(
+            baselineTrailingGap,
+            trailingGap,
+            absoluteTolerance = 0.0001f,
+            message = "a left accidental overhang must reserve room before its note, not after it",
+        )
+        assertEquals(StaffSpace(1.5f), altered.minimumWidth)
+        assertEquals(StaffSpace(4f), altered.leftOverhang)
     }
 
     @Test
@@ -255,6 +295,26 @@ class ProportionalLayoutComputerTest {
     fun testEmptyEventsReturnsEmptyMap() {
         val result = computer.computeXPositions(emptyList(), StaffSpace(10f))
         assertTrue(result.isEmpty())
+    }
+
+    private fun noteBody(left: Float, right: Float): NoteBodyElement {
+        val bounds = RelativeRect(
+            origin = RelativePoint(StaffSpace.ZERO, StaffSpace.ZERO),
+            width = StaffSpace(right),
+            height = StaffSpace.ONE,
+        )
+        val head = GlyphGeometry(
+            glyph = SmuflGlyphs.noteheadBlack,
+            position = RelativePoint.ZERO,
+            bounds = bounds,
+        )
+        return NoteBodyElement(
+            noteheads = listOf(NoteheadRenderInfo(0, 0, head)),
+            stemUpAttachment = RelativePoint.ZERO,
+            stemDownAttachment = RelativePoint.ZERO,
+            leftExtent = StaffSpace(left),
+            rightExtent = StaffSpace(right),
+        )
     }
 
     @Test
