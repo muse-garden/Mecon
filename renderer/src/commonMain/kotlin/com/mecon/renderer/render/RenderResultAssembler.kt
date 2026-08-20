@@ -34,7 +34,25 @@ internal data class IncrementalGeometryCapture(
 private data class TimeCodeGeometry(
     val positions: Map<TimeCode, TimeCodePosition>,
     val noteheadRights: Map<TimeCode, Map<Pair<Int, Int>, Float>>,
+    val sharedNoteheadRightsByVoice: Map<TimeCode, Map<Int, Float>>,
+    val sharedNoteheadRights: Map<TimeCode, Float>,
 )
+
+/** Most common rendered column; stable top-to-bottom insertion order breaks ties. */
+private fun representativeNoteheadRight(values: Iterable<Float>): Float? {
+    val counts = linkedMapOf<Float, Int>()
+    var best: Float? = null
+    var bestCount = 0
+    for (value in values) {
+        val count = (counts[value] ?: 0) + 1
+        counts[value] = count
+        if (count > bestCount) {
+            best = value
+            bestCount = count
+        }
+    }
+    return best
+}
 
 /**
  * Assembles render elements into immutable [RenderResult]s, including section/spatial indexes and pages.
@@ -87,6 +105,8 @@ internal class RenderResultAssembler(
                 elementIndex = elementIndexBuilder.build(),
                 timeCodePositions = timeCodeGeometry.positions,
                 noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = hierarchicalIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = pages,
@@ -136,6 +156,8 @@ internal class RenderResultAssembler(
                 elementIndex = elementIndex,
                 timeCodePositions = timeCodeGeometry.positions,
                 noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = spatialIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = emptyList(),
@@ -235,6 +257,8 @@ internal class RenderResultAssembler(
                 elementIndex = elementIndex,
                 timeCodePositions = timeCodeGeometry.positions,
                 noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = spatialIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = pages,
@@ -342,9 +366,24 @@ internal class RenderResultAssembler(
                 leftX = leftAbsX,
             )
         }
+        val immutableNoteheadRights = noteheadRightPositions.mapValues { (_, byStaffVoice) ->
+            byStaffVoice.toMap()
+        }
+        val sharedByVoice = immutableNoteheadRights.mapValues { (_, byStaffVoice) ->
+            byStaffVoice.entries
+                .groupBy { (staffVoice, _) -> staffVoice.second }
+                .mapValues { (_, entries) ->
+                    checkNotNull(representativeNoteheadRight(entries.map { it.value }))
+                }
+        }
+        val shared = immutableNoteheadRights.mapValues { (_, byStaffVoice) ->
+            checkNotNull(representativeNoteheadRight(byStaffVoice.values))
+        }
         return TimeCodeGeometry(
             positions = timeCodePositions,
-            noteheadRights = noteheadRightPositions.mapValues { (_, byStaffVoice) -> byStaffVoice.toMap() },
+            noteheadRights = immutableNoteheadRights,
+            sharedNoteheadRightsByVoice = sharedByVoice,
+            sharedNoteheadRights = shared,
         )
     }
 
@@ -356,6 +395,8 @@ internal class RenderResultAssembler(
         elementIndex: Map<RenderElementId, RenderElement>,
         timeCodePositions: Map<TimeCode, TimeCodePosition>,
         noteheadRightPositions: Map<TimeCode, Map<Pair<Int, Int>, Float>>,
+        sharedNoteheadRightPositionsByVoice: Map<TimeCode, Map<Int, Float>>,
+        sharedNoteheadRightPositions: Map<TimeCode, Float>,
         spatialIndex: com.mecon.renderer.render.spatial.HierarchicalSpatialIndex,
         transformerSnapshot: CoordinateTransformer,
         pages: List<RenderPage>,
@@ -379,6 +420,8 @@ internal class RenderResultAssembler(
             elementIndex = elementIndex,
             timeCodePositions = timeCodePositions,
             noteheadRightPositions = noteheadRightPositions,
+            sharedNoteheadRightPositionsByVoice = sharedNoteheadRightPositionsByVoice,
+            sharedNoteheadRightPositions = sharedNoteheadRightPositions,
             resolvedTimeAxis = layoutResult.resolvedTimeAxis,
             spatialIndex = spatialIndex,
             transformerSnapshot = transformerSnapshot,

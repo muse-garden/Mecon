@@ -156,7 +156,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             runtime = runtime,
             voice = voice,
             staffIndex = staffHit.staffIndex,
-            noteheadVoiceNumber = voiceNumber.takeIf { targetVoice != null },
+            noteheadVoiceNumber = voiceNumber,
             targetAbsX = point.x.value,
             targetAbsY = point.y.value,
             systemY = absCenterY,
@@ -397,7 +397,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         runtime: RuntimeScore,
         voice: RuntimeVoiceTrack,
         staffIndex: Int,
-        noteheadVoiceNumber: Int?,
+        noteheadVoiceNumber: Int,
         targetAbsX: Float,
         targetAbsY: Float,
         systemY: Float,
@@ -492,8 +492,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         fun previewXForTimeCode(tc: TimeCode): Float? {
             val timeX = xForTimeCode(tc) ?: return null
             if (config.alignedTimeAxisRequest != null) return timeX
-            val targetNumber = noteheadVoiceNumber ?: return timeX
-            return result.noteheadRightX(tc, staffIndex, targetNumber) ?: timeX
+            return result.noteheadRightX(tc, staffIndex, noteheadVoiceNumber) ?: timeX
         }
 
         // Clicking a real notehead is an unambiguous request to edit that event (normally add a

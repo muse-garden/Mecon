@@ -10,6 +10,7 @@ import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.storage.Articulation
+import com.mecon.api.storage.StaffLayoutPreset
 import com.mecon.api.storage.StorageScore
 import com.mecon.api.storage.tracks.Clef
 import com.mecon.api.storage.tracks.StorageClefChange
@@ -170,6 +171,110 @@ class GhostNoteComputerTest {
                 ghostNoteheadRight(ghost),
                 absoluteTolerance = 0.01f,
                 message = "voice-2 ghost must use voice 2's collision-resolved note column",
+            )
+        }
+    }
+
+    @Test
+    fun emptyLeftHandGhostBorrowsRightHandAccidentalNoteColumn() {
+        val font = loadFont() ?: return
+        val initial = RuntimeScore.fromStorage(
+            StorageScore.create(
+                StorageScore.CreationOptions(
+                    title = "Grand staff ghost",
+                    layout = StaffLayoutPreset.PIANO_GRAND,
+                ),
+            ),
+        )
+        val staffs = initial.orderedStaffs()
+        val rightHand = staffs[0]
+        val leftHand = staffs[1]
+        val onset = com.mecon.api.primitive.TimeCode.of(1, com.mecon.api.primitive.Fraction.ZERO)
+        val inserted = assertNotNull(
+            com.mecon.core.engine.edit.NoteEditEngine.insert(
+                initial,
+                com.mecon.core.engine.edit.NoteEditEngine.Insertion(
+                    voiceTrackId = rightHand.voiceTracks.single().id,
+                    staffTrackId = rightHand.id,
+                    // Deliberately place the only visible right-hand note in voice 2. The left-hand
+                    // voice-1 ghost therefore exercises the score-wide, voice-independent fallback.
+                    voiceNumber = 2,
+                    start = onset,
+                    duration = Duration.QUARTER,
+                    pitch = Pitch(diatonicSteps = 6, chromaticOffset = 1),
+                ),
+            ),
+        )
+        val rightEventId = assertNotNull(inserted.insertedEventId)
+
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(inserted.score)
+            val rightHead = result.elementsForEvent(rightEventId)
+                .single { it.type == RenderElementType.NOTEHEAD }
+            val slotRight = assertNotNull(result.timeCodePositions[onset]).x
+            assertTrue(slotRight > noteheadRight(rightHead), "right-hand accidental must expand the slot")
+            assertNull(
+                result.noteheadRightPositions[onset]?.get(1 to 1),
+                "left hand must have no local notehead anchor in this fixture",
+            )
+            assertNull(
+                result.sharedNoteheadRightPositionsByVoice[onset]?.get(1),
+                "no staff may provide a voice-1 notehead; this fixture must exercise global fallback",
+            )
+            assertEquals(
+                noteheadRight(rightHead),
+                assertNotNull(result.sharedNoteheadRightPositions[onset]),
+                absoluteTolerance = 0.01f,
+            )
+            val leftStaffElement = result.elements.first {
+                it.type == RenderElementType.STAFF && it.staffIndex == 1
+            }
+
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = inserted.score,
+                    point = com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(slotRight),
+                        leftStaffElement.hitBox.center.y,
+                    ),
+                    duration = Duration.QUARTER,
+                    accidental = null,
+                    restMode = false,
+                    voiceNumber = 1,
+                ),
+            )
+
+            assertEquals(leftHand.id, ghost.staffTrackId)
+            assertEquals(onset, ghost.onset)
+            assertEquals(
+                noteheadRight(rightHead),
+                ghostNoteheadRight(ghost),
+                absoluteTolerance = 0.01f,
+                message = "empty left-hand ghost must align to the right-hand note column",
+            )
+
+            val missingVoiceGhost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = inserted.score,
+                    point = com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(slotRight),
+                        leftStaffElement.hitBox.center.y,
+                    ),
+                    duration = Duration.QUARTER,
+                    accidental = null,
+                    restMode = false,
+                    voiceNumber = 2,
+                ),
+            )
+            assertEquals(2, missingVoiceGhost.voiceNumber)
+            assertEquals(
+                noteheadRight(rightHead),
+                ghostNoteheadRight(missingVoiceGhost),
+                absoluteTolerance = 0.01f,
+                message = "a not-yet-created left-hand voice must also use the shared note column",
             )
         }
     }
