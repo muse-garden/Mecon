@@ -40,7 +40,7 @@ internal class CurveHandleDragHandler : ScoreDragHandler {
                 tieStart = section.sourceEvent.id to tie
                 slurStart = null
                 apex = tie.minApex
-                context.previews.curve = CurveDragState(
+                context.previews.curve.value = CurveDragState(
                     kind = CurveKind.TIE,
                     sectionId = section.id,
                     elementIds = elementIds,
@@ -57,7 +57,7 @@ internal class CurveHandleDragHandler : ScoreDragHandler {
                 slurStart = slurId to slur
                 tieStart = null
                 apex = slur.minApex
-                context.previews.curve = CurveDragState(
+                context.previews.curve.value = CurveDragState(
                     kind = CurveKind.SLUR,
                     sectionId = section.id,
                     elementIds = elementIds,
@@ -86,16 +86,16 @@ internal class CurveHandleDragHandler : ScoreDragHandler {
                 val outwardDelta = if (above) startRelY - y else y - startRelY
                 apex = (startApex + outwardDelta)
                     .coerceIn(SlurGeometry.MIN_APEX, SlurGeometry.MAX_APEX)
-                context.previews.curve = context.previews.curve?.copy(currentApex = apex)
+                context.previews.curve.value = context.previews.curve.value?.copy(currentApex = apex)
             }
         }
         change.consume()
     }
 
     override fun end(context: ScoreDragContext) {
-        val changed = context.previews.curve?.let { it.currentApex != it.startApex } == true
+        val changed = context.previews.curve.value?.let { it.currentApex != it.startApex } == true
         if (changed) {
-            context.previews.curve = context.previews.curve?.copy(
+            context.previews.curve.value = context.previews.curve.value?.copy(
                 committing = true,
                 commitBaseline = context.result,
             )
@@ -116,7 +116,7 @@ internal class CurveHandleDragHandler : ScoreDragHandler {
                 )
             }
         }
-        if (!changed) context.previews.curve = null
+        if (!changed) context.previews.curve.value = null
         tieStart = null
         slurStart = null
     }

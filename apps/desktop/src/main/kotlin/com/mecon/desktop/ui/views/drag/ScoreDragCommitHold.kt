@@ -3,7 +3,6 @@ package com.mecon.desktop.ui.views.drag
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import com.mecon.desktop.ui.views.RenderedScoreDragPreviewState
 import com.mecon.renderer.render.RenderResult
 import kotlinx.coroutines.delay
 
@@ -58,7 +57,7 @@ internal data class ScoreDragCommitHold(
  */
 @Composable
 internal fun rememberScoreDragCommitHold(
-    previews: RenderedScoreDragPreviewState,
+    previews: ScoreDragPreviewState,
     renderResult: RenderResult?,
 ): ScoreDragCommitHold = ScoreDragCommitHold(
     transpose = commitHold(

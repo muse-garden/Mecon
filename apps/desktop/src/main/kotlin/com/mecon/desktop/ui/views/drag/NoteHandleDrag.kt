@@ -23,18 +23,18 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
      */
     fun startWithinSelection(context: ScoreDragContext, pick: ScoreDragPick): ScoreDragHandler? {
         if (!pick.grabsMovable) return null
-        if (pick.section !in context.selection.current) return null
-        return engage(context, pick, context.selection.current)
+        if (pick.section !in context.selection) return null
+        return engage(context, pick, context.selection)
     }
 
     /** Select mode: a single grab outside the selection selects just it, then drags it. */
     fun startFromPick(context: ScoreDragContext, pick: ScoreDragPick): ScoreDragHandler? {
         if (!pick.grabsMovable) return null
         val picked = pick.section ?: return null
-        if (picked !in context.selection.current && !context.viewport.shiftHeld) {
+        if (picked !in context.selection && !context.shiftHeld) {
             context.actions.selection.selectionChange(setOf(picked))
         }
-        val sections = resolveMoveSections(picked, context.selection.current, context.viewport.shiftHeld)
+        val sections = resolveMoveSections(picked, context.selection, context.shiftHeld)
         return engage(context, pick, sections)
     }
 
@@ -49,11 +49,11 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
         pick: ScoreDragPick,
         sections: Set<EventSection>,
     ): ScoreDragHandler? {
-        val targets = buildTransposeTargets(sections, context.document.currentScore)
+        val targets = buildTransposeTargets(sections, context.document.score)
         if (targets.isEmpty()) return null
         val point = pick.point ?: return null
         startRelY = context.relativeY(point)
-        context.previews.transpose = TransposeDragState(
+        context.previews.transpose.value = TransposeDragState(
             previewTargets = targets.associate { it.eventId to it.pitchIndices },
             transposeTargets = targets,
             auditionTarget = pick.section?.dragAuditionTarget(targets),
@@ -66,11 +66,11 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
         pick: ScoreDragPick,
         sections: Set<EventSection>,
     ): ScoreDragHandler? {
-        val info = buildRestMoveInfo(sections, context.document.currentScore)
+        val info = buildRestMoveInfo(sections, context.document.score)
         if (info.targets.isEmpty()) return null
         val point = pick.point ?: return null
         startRelY = context.relativeY(point)
-        context.previews.transpose = TransposeDragState(
+        context.previews.transpose.value = TransposeDragState(
             previewTargets = info.targets.associate { it.eventId to null },
             transposeTargets = emptyList(),
             restMove = info,
@@ -79,17 +79,17 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        if (context.previews.transpose?.restMove != null) dragRest(context, change)
+        if (context.previews.transpose.value?.restMove != null) dragRest(context, change)
         else dragTranspose(context, change)
         change.consume()
     }
 
     private fun dragTranspose(context: ScoreDragContext, change: PointerInputChange) {
-        val current = context.previews.transpose ?: return
+        val current = context.previews.transpose.value ?: return
         val point = context.toAbsolute(change.position) ?: return
         val delta = stepDelta(context, point)
         if (delta == current.stepDelta) return
-        val runtime = context.document.currentScore
+        val runtime = context.document.score
         val computed = context.document.computed
         val engine = context.document.engine
         val preview = if (delta != 0 && runtime != null && computed != null && engine != null) {
@@ -100,7 +100,7 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
         val effectiveDelta = if (runtime != null && computed != null) {
             clampTransposeDelta(runtime, computed, current.previewTargets, delta)
         } else delta
-        context.previews.transpose = current.copy(
+        context.previews.transpose.value = current.copy(
             stepDelta = delta,
             preview = preview,
             auditionStepDelta = effectiveDelta,
@@ -118,7 +118,7 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
     }
 
     private fun dragRest(context: ScoreDragContext, change: PointerInputChange) {
-        val current = context.previews.transpose ?: return
+        val current = context.previews.transpose.value ?: return
         val info = current.restMove ?: return
         val point = context.toAbsolute(change.position) ?: return
         val delta = stepDelta(context, point)
@@ -132,7 +132,7 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
                 info.targets.associate { it.eventId to (it.startPosition + delta) },
             )
         } else null
-        context.previews.transpose = current.copy(stepDelta = delta, preview = preview)
+        context.previews.transpose.value = current.copy(stepDelta = delta, preview = preview)
     }
 
     /** One staff position step per half staff space (positive = up). */
@@ -140,15 +140,15 @@ internal class NoteHandleDragHandler : ScoreDragHandler {
         ((startRelY - context.relativeY(point)) * 2f).roundToInt()
 
     override fun end(context: ScoreDragContext) {
-        val drag = context.previews.transpose
+        val drag = context.previews.transpose.value
         if (drag == null || drag.stepDelta == 0 || drag.preview == null) {
-            context.previews.transpose = null
+            context.previews.transpose.value = null
             return
         }
         val restMove = drag.restMove
         // Capture the displayed frame before starting the edit. A fast render can otherwise land
         // before the committing LaunchedEffect starts.
-        context.previews.transpose = drag.copy(
+        context.previews.transpose.value = drag.copy(
             committing = true,
             commitBaseline = context.result,
             commitStartedAtNanos = System.nanoTime(),

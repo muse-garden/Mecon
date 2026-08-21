@@ -29,13 +29,13 @@ internal class MarqueeSelectDragHandler : ScoreDragHandler {
     fun start(context: ScoreDragContext, raw: Offset): ScoreDragHandler {
         startRaw = raw
         lastRaw = raw
-        context.selection.marquee = Rect(raw.x, raw.y, raw.x, raw.y)
+        context.marquee = Rect(raw.x, raw.y, raw.x, raw.y)
         return this
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
         lastRaw = change.position
-        context.selection.marquee = Rect(
+        context.marquee = Rect(
             min(startRaw.x, lastRaw.x), min(startRaw.y, lastRaw.y),
             max(startRaw.x, lastRaw.x), max(startRaw.y, lastRaw.y),
         )
@@ -84,10 +84,10 @@ internal class MarqueeSelectDragHandler : ScoreDragHandler {
                 ),
             )
         }
-        context.selection.marquee = null
+        context.marquee = null
         // Shift unions with the existing selection; otherwise it replaces.
         context.actions.selection.selectionChange(
-            if (context.viewport.shiftHeld) context.selection.current + collected else collected
+            if (context.shiftHeld) context.selection + collected else collected
         )
     }
 

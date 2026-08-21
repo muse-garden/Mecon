@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import com.mecon.desktop.ui.views.drag.*
 import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
@@ -20,17 +19,6 @@ internal class RenderedScoreViewportState {
     val shiftHeld = mutableStateOf(false)
     val ctrlHeld = mutableStateOf(false)
     val marqueeRect = mutableStateOf<Rect?>(null)
-}
-
-/** All transient drag previews, kept out of the score/render frame state. */
-internal class RenderedScoreDragPreviewState {
-    val transpose = mutableStateOf<TransposeDragState?>(null)
-    val beam = mutableStateOf<BeamDragState?>(null)
-    val attachment = mutableStateOf<AttachmentDragState?>(null)
-    val volta = mutableStateOf<VoltaDragState?>(null)
-    val navigation = mutableStateOf<NavigationDragState?>(null)
-    val curve = mutableStateOf<CurveDragState?>(null)
-    val annotationRange = mutableStateOf<AnnotationRangeDragState?>(null)
 }
 
 /** Ghost geometry owned only by insertion tools. */

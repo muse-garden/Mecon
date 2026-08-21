@@ -42,7 +42,7 @@ internal class BeamHandleDragHandler : ScoreDragHandler {
         val dragStart = normalizeCrossStaffBeamGeometry(stored, staffCenters)
         context.ensureSelected(section)
         startRelY = context.relativeY(point)
-        context.previews.beam = BeamDragState(
+        context.previews.beam.value = BeamDragState(
             groupId = groupId,
             endpoint = pick.beamEndpoint,
             start = dragStart,
@@ -53,11 +53,11 @@ internal class BeamHandleDragHandler : ScoreDragHandler {
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        val drag = context.previews.beam
+        val drag = context.previews.beam.value
         val point = context.toAbsolute(change.position)
         if (drag != null && point != null) {
             val deltaY = context.relativeY(point) - startRelY
-            context.previews.beam = drag.copy(
+            context.previews.beam.value = drag.copy(
                 current = relocateBeamGeometry(drag.start, drag.endpoint, deltaY, drag.staffCenters),
                 deltaY = deltaY,
             )
@@ -66,12 +66,12 @@ internal class BeamHandleDragHandler : ScoreDragHandler {
     }
 
     override fun end(context: ScoreDragContext) {
-        val drag = context.previews.beam ?: return
+        val drag = context.previews.beam.value ?: return
         if (drag.current == drag.start) {
-            context.previews.beam = null
+            context.previews.beam.value = null
             return
         }
-        context.previews.beam = drag.copy(committing = true, commitBaseline = context.result)
+        context.previews.beam.value = drag.copy(committing = true, commitBaseline = context.result)
         context.actions.notes.moveBeam(drag.groupId, drag.current.copy(manuallyAdjusted = true))
     }
 }

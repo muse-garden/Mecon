@@ -50,12 +50,12 @@ internal class VoltaHandleDragHandler : ScoreDragHandler {
             VoltaEndpoint.START -> line.start
             VoltaEndpoint.END -> line.end
         }
-        val radius = VOLTA_CONTROL_HIT_RADIUS / context.viewport.scale
+        val radius = VOLTA_CONTROL_HIT_RADIUS / context.scale
         if (kotlin.math.abs(point.x.value - handle.x.value) > radius ||
             kotlin.math.abs(point.y.value - handle.y.value) > radius
         ) return null
         context.ensureSelected(section)
-        context.previews.volta = VoltaDragState(
+        context.previews.volta.value = VoltaDragState(
             endpoint = endpoint,
             originalStartMeasure = section.ending.startMeasure,
             currentStartMeasure = section.ending.startMeasure,
@@ -66,7 +66,7 @@ internal class VoltaHandleDragHandler : ScoreDragHandler {
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        val drag = context.previews.volta
+        val drag = context.previews.volta.value
         val point = context.toAbsolute(change.position)
         if (drag != null && point != null) {
             val relativeX = context.toRelative(point).x.value
@@ -86,7 +86,7 @@ internal class VoltaHandleDragHandler : ScoreDragHandler {
                 kotlin.math.abs(handleX.value - relativeX)
             }?.measureNumber
             if (target != null) {
-                context.previews.volta = when (drag.endpoint) {
+                context.previews.volta.value = when (drag.endpoint) {
                     VoltaEndpoint.START -> drag.copy(currentStartMeasure = target)
                     VoltaEndpoint.END -> drag.copy(currentEndMeasure = target)
                 }
@@ -96,7 +96,7 @@ internal class VoltaHandleDragHandler : ScoreDragHandler {
     }
 
     override fun end(context: ScoreDragContext) {
-        context.previews.volta?.let { drag ->
+        context.previews.volta.value?.let { drag ->
             when (drag.endpoint) {
                 VoltaEndpoint.START -> if (drag.currentStartMeasure != drag.originalStartMeasure) {
                     context.actions.structure.resizeFirstVoltaStart(
@@ -113,6 +113,6 @@ internal class VoltaHandleDragHandler : ScoreDragHandler {
             }
         }
         // The volta drag has no committed-frame hold: the structural edit re-engraves the house.
-        context.previews.volta = null
+        context.previews.volta.value = null
     }
 }

@@ -132,10 +132,10 @@ internal class AnnotationRangeDragHandler : ScoreDragHandler {
             result = context.result,
             point = point,
             resizableEventIds = context.mode.resizableAnnotationEventIds,
-            radius = ANNOTATION_ENDPOINT_HIT_RADIUS / context.viewport.scale,
+            radius = ANNOTATION_ENDPOINT_HIT_RADIUS / context.scale,
         ) ?: return null
         endpointHit = endpoint
-        context.previews.annotationRange = AnnotationRangeDragState(
+        context.previews.annotationRange.value = AnnotationRangeDragState(
             eventId = endpoint.eventId,
             endpoint = endpoint.endpoint,
             originalPoint = endpoint.point,
@@ -149,7 +149,7 @@ internal class AnnotationRangeDragHandler : ScoreDragHandler {
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
         val point = context.toAbsolute(change.position)
         if (point != null) {
-            val drag = context.previews.annotationRange
+            val drag = context.previews.annotationRange.value
             val targetSystem = drag?.let {
                 annotationDragTargetSystem(
                     sourceSystemIndex = it.sourceSystemIndex,
@@ -157,11 +157,11 @@ internal class AnnotationRangeDragHandler : ScoreDragHandler {
                     pointerRawY = change.position.y,
                     nearestSystemIndex = context.nearestSystem(change.position),
                     sourceRowLockPx = ANNOTATION_SOURCE_ROW_LOCK_DP * context.density *
-                        context.viewport.scale,
+                        context.scale,
                 )
             } ?: context.nearestSystem(change.position)
             val snap = resolveAnnotationBoundarySnap(context.result, point.x.value, targetSystem)
-            context.previews.annotationRange = drag?.copy(
+            context.previews.annotationRange.value = drag?.copy(
                 currentPoint = AbsolutePoint(Pixels(snap?.absoluteX ?: point.x.value), point.y),
                 candidateTime = snap?.time,
             )
@@ -176,16 +176,16 @@ internal class AnnotationRangeDragHandler : ScoreDragHandler {
                 origin.x.value, origin.y.value, context.frame.pages, context.frame.pageSlots,
             )?.y
         } else origin.y.value
-        return designY?.let { it * context.density * context.viewport.scale + context.viewport.offset.y }
+        return designY?.let { it * context.density * context.scale + context.offset.y }
     }
 
     override fun end(context: ScoreDragContext) {
         val endpoint = endpointHit
-        val time = context.previews.annotationRange?.candidateTime
+        val time = context.previews.annotationRange.value?.candidateTime
         if (endpoint != null && time != null) {
             context.actions.selection.resizeAnnotationRange(endpoint.eventId, endpoint.endpoint, time)
         }
-        context.previews.annotationRange = null
+        context.previews.annotationRange.value = null
         endpointHit = null
     }
 

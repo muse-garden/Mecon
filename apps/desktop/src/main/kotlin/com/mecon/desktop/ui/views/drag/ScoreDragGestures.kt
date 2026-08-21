@@ -52,7 +52,7 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier =
         onDragCancel = {
             active?.cancel(context)
             context.previews.clearAll()
-            context.selection.marquee = null
+            context.marquee = null
             active = null
         },
         onDragEnd = {
@@ -95,8 +95,8 @@ private fun ScoreDragHandlers.resolve(
     raw: Offset,
 ): ScoreDragHandler? {
     val marqueeMode = when (context.mode.noteTool?.tool) {
-        EditTool.MARQUEE -> !context.viewport.ctrlHeld
-        EditTool.SELECT -> context.viewport.ctrlHeld
+        EditTool.MARQUEE -> !context.ctrlHeld
+        EditTool.SELECT -> context.ctrlHeld
         else -> false
     }
     val engaged = if (marqueeMode) {

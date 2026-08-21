@@ -68,7 +68,7 @@ internal class AttachmentHandleDragHandler : ScoreDragHandler {
         ) return null
 
         val endpoint = if (!attachment.isSpan) "start" else {
-            val radius = ATTACHMENT_CONTROL_HIT_RADIUS / context.viewport.scale
+            val radius = ATTACHMENT_CONTROL_HIT_RADIUS / context.scale
             when {
                 kotlin.math.abs(point.x.value - element.hitBox.origin.x.value) <= radius -> "start"
                 kotlin.math.abs(point.x.value - element.hitBox.bottomRight.x.value) <= radius -> "end"
@@ -87,7 +87,7 @@ internal class AttachmentHandleDragHandler : ScoreDragHandler {
         startRelY = relative.y.value
         val (topLimit, bottomLimit) = safeBandLimits(context, section, element)
         val endTime = attachment.spanEndTime
-        context.previews.attachment = AttachmentDragState(
+        context.previews.attachment.value = AttachmentDragState(
             id = attachment.id,
             endpoint = endpoint,
             isHairpin = (attachment as? ComputedHairpin)?.style == HairpinStyle.WEDGE,
@@ -143,7 +143,7 @@ internal class AttachmentHandleDragHandler : ScoreDragHandler {
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        val drag = context.previews.attachment
+        val drag = context.previews.attachment.value
         val point = context.toAbsolute(change.position)
         if (drag != null && point != null) {
             val relative = context.toRelative(point)
@@ -152,7 +152,7 @@ internal class AttachmentHandleDragHandler : ScoreDragHandler {
             val moved = drag.start.movedBy(drag.endpoint, drag.isHairpin, dx, dy)
                 .constrainedToSafeBand(drag.endpoint, drag.isHairpin, drag.topLimit, drag.bottomLimit)
             val (newStart, newEnd) = resolveTimes(context, drag, point, dx)
-            context.previews.attachment = drag.copy(
+            context.previews.attachment.value = drag.copy(
                 current = compensateAnchorShift(context, drag, moved, dx, newStart, newEnd, point),
                 startTime = newStart,
                 endTime = newEnd,
@@ -253,15 +253,15 @@ internal class AttachmentHandleDragHandler : ScoreDragHandler {
     }
 
     override fun end(context: ScoreDragContext) {
-        val drag = context.previews.attachment ?: return
+        val drag = context.previews.attachment.value ?: return
         val changed = drag.current != drag.start ||
             drag.startTime != drag.originalStartTime ||
             drag.endTime != drag.originalEndTime
         if (!changed) {
-            context.previews.attachment = null
+            context.previews.attachment.value = null
             return
         }
-        context.previews.attachment = drag.copy(committing = true, commitBaseline = context.result)
+        context.previews.attachment.value = drag.copy(committing = true, commitBaseline = context.result)
         context.actions.expressions.moveAttachment(
             drag.id, drag.current, drag.startTime, drag.endTime,
         )

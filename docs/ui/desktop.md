@@ -231,10 +231,22 @@ NewScoreDialog.kt 使用接近全屏的四栏布局：原有的类别→预制�
   `ScoreSessionExpressionEditing.kt`；session 本体保留乐谱状态和需要共享私有事务的编辑流程。
 - `RenderedScoreView` 的入口为 `RenderedScoreViewConfig + Modifier`。配置按 source、selection、
   display、edit（notation / expression / movement）和 lifecycle 分组，定义在
-  `RenderedScoreViewConfig.kt`；配置不再暴露把这些分组重新摊平的转发 getter。
-- 画布的 viewport、拖拽预览和插入 ghost 状态由 `RenderedScoreInteractionState.kt` 分开持有；
-  拖拽动作按选择、音符移动、表情移动和结构移动分组。Canvas 请求契约位于
-  `RenderedScoreCanvasContract.kt`，绘制实现不再同时声明宿主契约。
+  `RenderedScoreViewConfig.kt`；配置不再暴露把这些分组重新摊平的转发 getter，视图内部也不再把
+  它们逐字段摊成局部变量。
+- **`RenderedScoreView` 只负责 composition 本身**（有哪些状态、以什么顺序派生、界面怎么摆），
+  各关注点分别位于：`ScoreRenderFrameState.kt`（引擎 + 流式渲染 + 分页 slot，产出
+  `ScoreRenderFrame`；`identityKey` 是唯一允许的 effect key）、`ScoreSelectionOverlayState.kt`
+  （选中对象的手柄与画布装饰，逐帧解析一次）、`ScoreSelectionStyleTracks.kt`（选择配色的
+  style track 生命周期）、`ScorePlaybackOverlayState.kt`（playhead 映射与跟随，全部在后台线程）、
+  `RenderedScoreViewWiring.kt`（视图状态 → 各子系统 request 的装配）。
+  新增能力请落到对应邻居文件，不要让视图重新长回上千行。
+- 画布的 viewport 与插入 ghost 状态由 `RenderedScoreInteractionState.kt` 持有，拖拽预览由
+  `views/drag/ScoreDragPreviewState.kt` 持有；需要跨 composition 存活的指针协程一律接收
+  **holder 或 getter**，不接收拷贝快照。Canvas 请求契约位于 `RenderedScoreCanvasContract.kt`，
+  绘制实现不再同时声明宿主契约。
+- 画布上共有四层指针 modifier，由外到内固定顺序：`scoreAmbientGestures`（缩放、修饰键、谱表
+  选择器、右键菜单）、`scoreDragGestures`、`scoreSelectionGestures`、`scoreInsertionGestures`。
+  插入工具激活时中间两层整体让位，判据集中在 `INSERTION_TOOLS`。
 - Canvas 绘制、统一拖拽、点击选择和插入工具手势分别位于
   `RenderedScoreCanvasDraw.kt`、`views/drag/`（见下条）、
   `RenderedScoreSelectionGestures.kt`、`RenderedScoreInsertionGestures.kt`。命中优先级位于

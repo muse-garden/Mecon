@@ -59,7 +59,7 @@ internal class NavigationHandleDragHandler : ScoreDragHandler {
         val visualCenter = context.toRelative(element.center)
         startRelX = relative.x.value
         startRelY = relative.y.value
-        context.previews.navigation = NavigationDragState(
+        context.previews.navigation.value = NavigationDragState(
             sectionId = section.id,
             elementId = element.id,
             boundaryMeasure = section.navigation.boundaryMeasure,
@@ -75,7 +75,7 @@ internal class NavigationHandleDragHandler : ScoreDragHandler {
     }
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        val drag = context.previews.navigation
+        val drag = context.previews.navigation.value
         val point = context.toAbsolute(change.position)
         if (drag != null && point != null) {
             val relative = context.toRelative(point)
@@ -84,7 +84,7 @@ internal class NavigationHandleDragHandler : ScoreDragHandler {
                 .asSequence()
                 .filter { nearestSystem == null || it.systemIndex == nearestSystem }
                 .minByOrNull { kotlin.math.abs(it.rightX.value - relative.x.value) }
-            context.previews.navigation = drag.copy(
+            context.previews.navigation.value = drag.copy(
                 current = NavigationMarkOffset(
                     dx = drag.start.dx + relative.x.value - startRelX,
                     dy = drag.start.dy + relative.y.value - startRelY,
@@ -101,9 +101,9 @@ internal class NavigationHandleDragHandler : ScoreDragHandler {
     }
 
     override fun end(context: ScoreDragContext) {
-        val drag = context.previews.navigation ?: return
+        val drag = context.previews.navigation.value ?: return
         if (drag.previewDx == 0f && drag.previewDy == 0f) {
-            context.previews.navigation = null
+            context.previews.navigation.value = null
             return
         }
         val committedOffset = NavigationMarkOffset(
@@ -116,7 +116,7 @@ internal class NavigationHandleDragHandler : ScoreDragHandler {
                 targetAnchorY = drag.targetAnchorY,
             ),
         )
-        context.previews.navigation = drag.copy(
+        context.previews.navigation.value = drag.copy(
             current = committedOffset,
             previewDx = drag.targetAnchorX - drag.startVisualCenterX,
             committing = true,

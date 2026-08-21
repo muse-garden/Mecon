@@ -1,6 +1,7 @@
 package com.mecon.desktop.ui.views.drag
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerInputChange
 import com.mecon.api.interaction.EventSection
 import com.mecon.api.interaction.NavigationMarkSection
@@ -34,22 +35,37 @@ internal class ScoreDragContext(
     val document: DragGestureDocument get() = request.document
     val mode: DragGestureMode get() = request.mode
     val actions: DragGestureActions get() = request.actions
-    val viewport: DragViewportState get() = request.state.viewport
-    val selection: DragSelectionState get() = request.state.selection
-    val previews: DragPreviewState get() = request.state.previews
+    val previews: ScoreDragPreviewState get() = request.state.previews
 
     val readOnly: Boolean get() = mode.readOnly
 
+    // Live viewport reads: a gesture handler outlives the composition that installed it.
+    private val viewport get() = request.state.viewport
+    val scale: Float get() = viewport.scale.value
+    val shiftHeld: Boolean get() = viewport.shiftHeld.value
+    val ctrlHeld: Boolean get() = viewport.ctrlHeld.value
+    var offset: Offset
+        get() = viewport.offset.value
+        set(value) { viewport.offset.value = value }
+    var followPlayback: Boolean
+        get() = viewport.followPlayback.value
+        set(value) { viewport.followPlayback.value = value }
+    var marquee: Rect?
+        get() = viewport.marqueeRect.value
+        set(value) { viewport.marqueeRect.value = value }
+
+    val selection: Set<EventSection> get() = request.state.selection()
+
     /** Raw pointer → canvas design space (undo pan, zoom, density). */
     fun toDesign(raw: Offset): Offset {
-        val offset = viewport.offset
-        val scale = viewport.scale
+        val offset = offset
+        val scale = scale
         return Offset((raw.x - offset.x) / scale / density, (raw.y - offset.y) / scale / density)
     }
 
     /** Raw pointer → the global render point the hit index uses; null outside every page. */
     fun toAbsolute(raw: Offset): AbsolutePoint? = rawToAbsolutePoint(
-        raw, viewport.offset, viewport.scale, density,
+        raw, offset, scale, density,
         frame.paginated, frame.pages, frame.pageSlots,
     )
 
@@ -64,13 +80,13 @@ internal class ScoreDragContext(
      * See [nearestDisplayedSystemByStaffCore] for why the expanded system band must not be used.
      */
     fun nearestSystem(raw: Offset): Int? = nearestDisplayedSystemByStaffCore(
-        result, raw, viewport.offset, viewport.scale, density,
+        result, raw, offset, scale, density,
         frame.paginated, frame.pages, frame.pageSlots,
     )
 
     /** Select [section] alone unless it is already part of the current selection. */
     fun ensureSelected(section: EventSection) {
-        if (section !in selection.current) actions.selection.selectionChange(setOf(section))
+        if (section !in selection) actions.selection.selectionChange(setOf(section))
     }
 }
 
@@ -143,7 +159,7 @@ internal class ScoreDragPick private constructor(
             point: AbsolutePoint,
         ): Pair<BeamControlPoints, String>? {
             val result = context.result
-            val radius = BEAM_CONTROL_HIT_RADIUS / context.viewport.scale
+            val radius = BEAM_CONTROL_HIT_RADIUS / context.scale
             val nearby = result.hitTestRegion(
                 AbsoluteRect(
                     AbsolutePoint(

@@ -16,15 +16,15 @@ internal class ViewportPanDragHandler : ScoreDragHandler {
         if (context.mode.panEnabled) this else null
 
     override fun drag(context: ScoreDragContext, change: PointerInputChange, dragAmount: Offset) {
-        context.viewport.followPlayback = false
-        context.viewport.offset += dragAmount
+        context.followPlayback = false
+        context.offset += dragAmount
     }
 
     override fun end(context: ScoreDragContext) {
-        context.viewport.followPlayback = true
+        context.followPlayback = true
     }
 
     override fun cancel(context: ScoreDragContext) {
-        context.viewport.followPlayback = true
+        context.followPlayback = true
     }
 }
