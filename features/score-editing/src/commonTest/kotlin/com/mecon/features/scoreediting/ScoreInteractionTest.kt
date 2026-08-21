@@ -113,6 +113,7 @@ class ScoreInteractionTest {
     @Test
     fun catalogHasUniqueStableCommandsAndClassifiesNewRegionIntentAsEntry() {
         assertEquals(ScoreInteractionCatalog.specs.size, ScoreInteractionCatalog.specs.map { it.commandId }.toSet().size)
+        assertTrue(ScoreInteractionCatalog.specs.all { it.targeting.isNotEmpty() })
         val fixture = sessionFixture()
         val intent = ScoreEditIntent.CreateTupletRegion(
             0,
@@ -122,6 +123,30 @@ class ScoreInteractionTest {
             3,
         )
         assertEquals(ScoreInteractionFamily.E, ScoreInteractionCatalog.family(intent))
+    }
+
+    @Test
+    fun targetingSeparatesSnapTopologyFromCoordinateFreedom() {
+        val fixture = sessionFixture()
+        val staffId = fixture.score.staffTracks.keys.single()
+        val time = TimeCode.of(1, Fraction.ZERO)
+
+        val clef = ScoreInteractionCatalog.targeting(
+            ScoreEditIntent.SetClef(0, staffId, time, com.mecon.api.storage.tracks.Clef.TREBLE),
+        )
+        val breath = ScoreInteractionCatalog.targeting(
+            ScoreEditIntent.AddBreathMark(0, staffId, time),
+        )
+        val fermata = ScoreInteractionCatalog.targeting(ScoreEditIntent.AddFermata(0, time))
+
+        assertEquals(ScoreSnapTopology.INSERTION_BOUNDARY, clef.snapTopology)
+        assertEquals(ScoreCoordinateFreedom.FIXED_XY, clef.coordinateFreedom)
+        assertEquals(ScoreSnapTopology.INSERTION_BOUNDARY, breath.snapTopology)
+        assertEquals(ScoreCoordinateFreedom.ADJUSTABLE_XY, breath.coordinateFreedom)
+        assertEquals(ScoreSnapTopology.EVENT_TIME, fermata.snapTopology)
+        assertEquals(ScoreCoordinateFreedom.FIXED_XY, fermata.coordinateFreedom)
+        assertTrue("snapTopology" in ScoreInteractionCatalog.encodeSpecs())
+        assertTrue("coordinateFreedom" in ScoreInteractionCatalog.encodeSpecs())
     }
 
     @Test

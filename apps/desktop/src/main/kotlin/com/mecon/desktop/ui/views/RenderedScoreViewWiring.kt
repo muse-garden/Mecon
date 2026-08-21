@@ -201,6 +201,7 @@ internal fun insertionGestureRequest(
         clef = { previews.clef.value = it },
         timeSignature = { previews.timeSignature.value = it },
         keySignature = { previews.keySignature.value = it },
+        pointSymbol = { previews.pointSymbol.value = it },
         expressionSpan = { previews.expressionSpan.value = it },
     ),
 )
@@ -261,6 +262,7 @@ internal fun scoreCanvasDrawRequest(
         clef = insertionPreviews.clef.value,
         timeSignature = insertionPreviews.timeSignature.value,
         keySignature = insertionPreviews.keySignature.value,
+        pointSymbol = insertionPreviews.pointSymbol.value,
         expressionSpan = insertionPreviews.expressionSpan.value,
         color = GHOST_COLOR,
     ),

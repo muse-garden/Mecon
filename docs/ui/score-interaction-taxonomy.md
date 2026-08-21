@@ -1,6 +1,6 @@
 # 打谱交互分类与跨设备接口
 
-> 审计日期：2026-08-19；状态：🚧 评审决定已记录，M0 共享交互基础已开始实现。
+> 审计日期：2026-08-19；状态：共享交互基础与两轴目标策略已实现；平台 resolver 继续按能力迁移。
 > 本文只定义交互层。任何持久化修改仍以 `ScoreEditIntent` 进入 `ScoreEditingSession`。
 
 ## 1. 审计范围与结论
@@ -98,10 +98,18 @@ X/Y；这不等于没有吸附。
 | X 固定，Y 可调 | 音符/休止纵向移动、beam、tie/slur 曲率、导航记号 | 固定 onset/端点 X；存谱位、beam Y、曲率或局部 `dy` |
 | X/Y 均可相对锚点调整 | 力度、breath、hairpin、8va、速度、装饰音附件；演奏法几何数据 | 仍保留稳定 event/`TimeCode` 锚点，另存 staff-space `dx/dy`；安全带或端点顺序可继续约束自由度 |
 
-因此结论是：**提交身份与交互生命周期已经统一，吸附算法只部分统一，坐标自由度尚未进入
-`ScoreInteractionSpec` 的声明式契约。** 新功能不得再新增私有“最近 X”算法；应先复用现有 boundary、
-event-slot 或 notehead resolver。后续若把这两条轴加入 descriptor，必须同时覆盖 Desktop/Web/Mobile
-候选适配与共享测试，不能只给枚举命名。
+`ScoreInteractionSpec.targeting` 现已把这两条轴作为共享、可序列化契约：
+`ScoreSnapTopology` 声明语义候选是 measure boundary、event time、insertion boundary、保留原锚点或无吸附；
+`ScoreCoordinateFreedom` 独立声明固定 XY、固定 X/可调 Y、锚点相对 XY 可调或不适用。
+同一家族内用 `ScoreTargetingKind` 区分实际操作，例如 clef 与 breath 都声明
+`INSERTION_BOUNDARY`，但前者 `FIXED_XY`、后者 `ADJUSTABLE_XY`；fermata 则声明
+`EVENT_TIME + FIXED_XY`。`ScoreInteractionCatalog.targetingKind(intent)` 对 sealed intent 穷尽映射，
+新增 intent 若没有目标策略会直接编译失败。
+
+这不表示所有平台像素 resolver 已合并为单一函数：当前 clef/breath 已共用 renderer boundary 候选，
+Desktop 的 fermata/breath hover 与 click 已由 descriptor 选择同一个 resolver。其余 measure/event/handle
+适配仍按表中现有管线逐步收敛。新功能不得新增私有“最近 X”算法，应复用 boundary、event-slot 或
+notehead resolver，并同时覆盖 Desktop/Web/Mobile 候选适配与共享测试。
 
 统一生命周期：
 
@@ -130,6 +138,13 @@ data class ScoreInteractionSpec(
     val topology: ScoreInteractionTopology,
     val toolGroup: ScoreToolGroup,
     val successPolicy: ScoreInteractionSuccessPolicy,
+    val targeting: List<ScoreTargetingSpec>,
+)
+
+data class ScoreTargetingSpec(
+    val kind: ScoreTargetingKind,
+    val snapTopology: ScoreSnapTopology,
+    val coordinateFreedom: ScoreCoordinateFreedom,
 )
 
 sealed interface ScoreInteractionAnchor {
@@ -152,7 +167,8 @@ class ScoreInteractionController {
 }
 ```
 
-`ScoreInteractionCatalog.commandId(intent)` 对 sealed intent 做穷尽映射；新增 intent 若未归类会在编译期失败。
+`ScoreInteractionCatalog.commandId(intent)` 与 `targetingKind(intent)` 都对 sealed intent 做穷尽映射；
+新增 intent 若未归类或未声明吸附/坐标策略会在编译期失败。
 controller 只管理 descriptor、语义锚点和交接策略，intent 仍由各产品 workflow 组装；
 `ScoreEditingSession.dispatch` 独立验证 revision、目标存在性、结构约束和失败原子性。
 

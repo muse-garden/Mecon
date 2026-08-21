@@ -25,6 +25,7 @@ import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
 import com.mecon.renderer.render.edit.GhostNote
+import com.mecon.renderer.render.edit.GhostPointSymbol
 import com.mecon.renderer.render.edit.GhostTimeSignature
 import kotlinx.coroutines.CoroutineScope
 
@@ -76,6 +77,7 @@ internal data class RenderedScoreGhostOverlay(
     val clef: GhostClef?,
     val timeSignature: GhostTimeSignature?,
     val keySignature: GhostKeySignature?,
+    val pointSymbol: GhostPointSymbol?,
     val expressionSpan: GhostExpressionSpan?,
     val color: RenderColor,
 )

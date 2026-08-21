@@ -51,20 +51,29 @@ class GhostPointSymbolComputer {
         staffTrackId: TrackId,
         onset: TimeCode,
         kind: PointSymbolKind,
+        absoluteX: Float? = null,
+        systemIndex: Int? = null,
     ): GhostPointSymbol? {
         val staffIndex = runtime.orderedStaffs().indexOfFirst { it.id == staffTrackId }
         if (staffIndex < 0) return null
-        val position = result.insertionPositionAt(onset) ?: return null
         val transformer = result.transformerSnapshot
-        val positionY = (position.topY + position.bottomY) / 2f
-        val relativeY = transformer.toRelative(
-            AbsolutePoint(Pixels(position.x), Pixels(positionY)),
-        ).y
-        val system = result.spatialIndex.allSystems().firstOrNull { relativeY in it.topY..it.bottomY }
-            ?: return null
+        val position = result.insertionPositionAt(onset)
+        val system = systemIndex?.let { requested ->
+            result.spatialIndex.allSystems().firstOrNull { it.systemIndex == requested }
+        } ?: position?.let {
+            val positionY = (it.topY + it.bottomY) / 2f
+            val relativeY = transformer.toRelative(
+                AbsolutePoint(Pixels(it.x), Pixels(positionY)),
+            ).y
+            result.spatialIndex.allSystems().firstOrNull { candidate ->
+                relativeY in candidate.topY..candidate.bottomY
+            }
+        } ?: return null
         val staffCenter = system.staffRegions.firstOrNull { it.staffIndex == staffIndex }?.centerY
             ?: return null
-        val x = transformer.toRelative(AbsolutePoint(Pixels(position.x), Pixels(positionY))).x
+        val targetX = absoluteX ?: position?.x ?: return null
+        val staffCenterY = transformer.toAbsolute(RelativePoint(StaffSpace.ZERO, staffCenter)).y
+        val x = transformer.toRelative(AbsolutePoint(Pixels(targetX), staffCenterY)).x
         val commands = when (kind) {
             is PointSymbolKind.Dynamic -> glyphCommands(
                 DynamicGlyphs.glyphsFor(kind.level), x, staffCenter + StaffSpace(4f), transformer,

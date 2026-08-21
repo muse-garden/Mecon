@@ -12,6 +12,7 @@ import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.storage.StorageScore
 import com.mecon.api.storage.tracks.Clef
+import com.mecon.api.storage.tracks.BreathMarkShape
 import com.mecon.core.engine.edit.ClefEditEngine
 import com.mecon.core.engine.edit.NoteEditEngine
 import com.mecon.renderer.geometry.AbsolutePoint
@@ -151,6 +152,39 @@ class GhostClefComputerTest {
             assertTrue(
                 clefRight < barlineLeft,
                 "committed clef must be left of the barline (clefRight=$clefRight, barlineLeft=$barlineLeft)",
+            )
+        }
+    }
+
+    @Test
+    fun breathPointGhostUsesResolvedInsertionBoundaryInsteadOfNoteColumn() {
+        val font = loadFont() ?: return
+        val runtime = scoreWithNotes()
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT)
+            val result = engine.render(runtime)
+            val boundary = result.insertionBoundariesBySystem.values.flatten()
+                .firstOrNull { it.kind == InsertionBoundaryKind.NOTE_GAP }
+            assertNotNull(boundary, "two note columns should expose one note-gap boundary")
+            val systemIndex = result.insertionBoundariesBySystem.entries
+                .first { boundary in it.value }
+                .key
+            val staffId = runtime.orderedStaffs().single().id
+
+            val ghost = engine.computePointSymbolGhost(
+                result = result,
+                runtime = runtime,
+                staffTrackId = staffId,
+                onset = boundary.time,
+                kind = PointSymbolKind.Breath(BreathMarkShape.COMMA),
+                absoluteX = boundary.absoluteX,
+                systemIndex = systemIndex,
+            )
+
+            assertNotNull(ghost)
+            assertTrue(
+                abs(ghost.anchor.x.value - boundary.absoluteX) < 0.5f,
+                "breath ghost must stay at the resolved boundary rather than the right note column",
             )
         }
     }

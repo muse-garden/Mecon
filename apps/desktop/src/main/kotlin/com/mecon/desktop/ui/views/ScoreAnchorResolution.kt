@@ -6,6 +6,8 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
+import com.mecon.features.scoreediting.ScoreSnapTopology
+import com.mecon.features.scoreediting.ScoreTargetingSpec
 import com.mecon.renderer.geometry.AbsolutePoint
 import com.mecon.renderer.geometry.Pixels
 import com.mecon.renderer.geometry.RelativePoint
@@ -31,6 +33,15 @@ internal fun resolveExpressionAnchor(
     runtime: RuntimeScore,
     point: AbsolutePoint,
 ): Pair<TrackId, TimeCode>? {
+    val resolved = resolveExpressionStaffAnchor(result, runtime, point) ?: return null
+    return resolved.staffTrackId to resolved.time
+}
+
+private fun resolveExpressionStaffAnchor(
+    result: RenderResult,
+    runtime: RuntimeScore,
+    point: AbsolutePoint,
+): ResolvedStaffAnchor? {
     val relative = result.transformerSnapshot.toRelative(point)
     val system = result.spatialIndex.allSystems()
         .filter { relative.y >= it.topY && relative.y <= it.bottomY }
@@ -43,7 +54,76 @@ internal fun resolveExpressionAnchor(
     } ?: return null
     val staffId = runtime.orderedStaffs().getOrNull(staffRegion.staffIndex)?.id ?: return null
     val time = resolveExpressionTime(result, point.x.value, system.systemIndex) ?: return null
-    return staffId to time
+    return ResolvedStaffAnchor(staffId, system.systemIndex, time)
+}
+
+private data class ResolvedStaffAnchor(
+    val staffTrackId: TrackId,
+    val systemIndex: Int,
+    val time: TimeCode,
+)
+
+/** One shared hover/click result for the two pause tools. */
+internal data class PauseInsertionTarget(
+    val staffTrackId: TrackId,
+    /** Storage/session anchor: the time immediately after the affected event(s). */
+    val afterTime: TimeCode,
+    /** Time used to place the glyph; fermata stays over the held event. */
+    val ghostOnset: TimeCode,
+    val absoluteX: Float,
+    val systemIndex: Int,
+)
+
+/**
+ * Resolve pause placement from the shared targeting descriptor. Fermata uses the active voice's
+ * event column; breath uses the same note-gap/barline boundary candidates as clef insertion.
+ */
+internal fun resolvePauseInsertionTarget(
+    result: RenderResult,
+    runtime: RuntimeScore,
+    point: AbsolutePoint,
+    targeting: ScoreTargetingSpec,
+    activeVoiceNumber: Int,
+): PauseInsertionTarget? {
+    val staffAnchor = resolveExpressionStaffAnchor(result, runtime, point) ?: return null
+    return when (targeting.snapTopology) {
+        ScoreSnapTopology.EVENT_TIME -> {
+            val staff = runtime.staffTracks[staffAnchor.staffTrackId] ?: return null
+            val voice = staff.voiceTracks.firstOrNull { it.voiceNumber == activeVoiceNumber }
+                ?: return null
+            val clicked = result.hitTest(point).allSections()
+                .filterIsInstance<VoiceNoteSection>()
+                .firstOrNull { result.eventVoiceTrackIds[it.event.id] == voice.id }
+                ?.event
+            val runtimeEvent = if (clicked == null) {
+                voice.events.at(staffAnchor.time).firstOrNull { !it.isGrace } ?: return null
+            } else null
+            val eventOnset = clicked?.onset ?: runtimeEvent?.onset ?: return null
+            val afterTime = clicked?.endTime
+                ?: runtimeEvent?.let { it.onset + it.duration.toFraction() }
+                ?: return null
+            val visual = result.insertionPositionAt(eventOnset) ?: return null
+            PauseInsertionTarget(
+                staffTrackId = staff.id,
+                afterTime = afterTime,
+                ghostOnset = eventOnset,
+                absoluteX = visual.x,
+                systemIndex = staffAnchor.systemIndex,
+            )
+        }
+        ScoreSnapTopology.INSERTION_BOUNDARY -> {
+            val boundary = result.nearestInsertionBoundary(point.x.value, staffAnchor.systemIndex)
+                ?: return null
+            PauseInsertionTarget(
+                staffTrackId = staffAnchor.staffTrackId,
+                afterTime = boundary.time,
+                ghostOnset = boundary.time,
+                absoluteX = boundary.absoluteX,
+                systemIndex = staffAnchor.systemIndex,
+            )
+        }
+        else -> null
+    }
 }
 
 /** Resolve X against one fixed system, independent of pointer Y during an attachment drag. */

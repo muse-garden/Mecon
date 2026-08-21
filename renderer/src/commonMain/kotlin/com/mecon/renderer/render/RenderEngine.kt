@@ -1048,8 +1048,12 @@ class RenderEngine(
         staffTrackId: com.mecon.api.primitive.TrackId,
         onset: com.mecon.api.primitive.TimeCode,
         kind: com.mecon.renderer.render.edit.PointSymbolKind,
+        absoluteX: Float? = null,
+        systemIndex: Int? = null,
     ): com.mecon.renderer.render.edit.GhostPointSymbol? =
-        editPreviewFacade.pointSymbol.compute(result, runtime, staffTrackId, onset, kind)
+        editPreviewFacade.pointSymbol.compute(
+            result, runtime, staffTrackId, onset, kind, absoluteX, systemIndex,
+        )
 
     fun computeTransposePreview(
         result: RenderResult,

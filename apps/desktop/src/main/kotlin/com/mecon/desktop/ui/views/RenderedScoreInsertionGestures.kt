@@ -18,6 +18,8 @@ import com.mecon.desktop.ui.components.NoteToolState
 import com.mecon.desktop.ui.components.NoteEntryKind
 import com.mecon.desktop.ui.components.PauseMarkKind
 import com.mecon.api.primitive.EventId
+import com.mecon.features.scoreediting.ScoreInteractionCatalog
+import com.mecon.features.scoreediting.ScoreTargetingKind
 import com.mecon.api.storage.events.OrnamentAnchor
 import com.mecon.api.storage.events.OrnamentKind
 import com.mecon.renderer.geometry.AbsolutePoint
@@ -30,7 +32,9 @@ import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
 import com.mecon.renderer.render.edit.GhostNote
+import com.mecon.renderer.render.edit.GhostPointSymbol
 import com.mecon.renderer.render.edit.GhostTimeSignature
+import com.mecon.renderer.render.edit.PointSymbolKind
 
 internal data class InsertionGestureEnvironment(
     val resultIdentityKey: Long,
@@ -67,6 +71,7 @@ internal data class InsertionGesturePreviews(
     val clef: (GhostClef?) -> Unit,
     val timeSignature: (GhostTimeSignature?) -> Unit,
     val keySignature: (GhostKeySignature?) -> Unit,
+    val pointSymbol: (GhostPointSymbol?) -> Unit,
     val expressionSpan: (GhostExpressionSpan?) -> Unit,
 )
 
@@ -210,8 +215,73 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
         }
         .pointerInput(
             environment.resultIdentityKey,
-            dynamicActive,
             pauseActive,
+            environment.paginated,
+            tool?.activeVoiceNumber,
+            tool?.selectedPauseKind,
+            tool?.selectedFermataShape,
+            tool?.selectedBreathShape,
+        ) {
+            if (!pauseActive) {
+                previews.pointSymbol(null)
+                return@pointerInput
+            }
+            val result = environment.result ?: return@pointerInput
+            val runtime = environment.runtime ?: return@pointerInput
+            val engine = environment.engine ?: return@pointerInput
+            val activeTool = tool ?: return@pointerInput
+            val targeting = ScoreInteractionCatalog.targeting(
+                when (activeTool.selectedPauseKind) {
+                    PauseMarkKind.FERMATA -> ScoreTargetingKind.FERMATA
+                    PauseMarkKind.BREATH -> ScoreTargetingKind.BREATH
+                },
+            )
+            val symbolKind = when (activeTool.selectedPauseKind) {
+                PauseMarkKind.FERMATA -> PointSymbolKind.Fermata(activeTool.selectedFermataShape)
+                PauseMarkKind.BREATH -> PointSymbolKind.Breath(activeTool.selectedBreathShape)
+            }
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull() ?: continue
+                    val target = absolutePoint(change.position)?.let { point ->
+                        resolvePauseInsertionTarget(
+                            result = result,
+                            runtime = runtime,
+                            point = point,
+                            targeting = targeting,
+                            activeVoiceNumber = activeTool.activeVoiceNumber,
+                        )
+                    }?.takeUnless {
+                        runtime.staffTracks[it.staffTrackId]?.isHidden(it.afterTime.measure) == true
+                    }
+                    val ghost = target?.let {
+                        engine.computePointSymbolGhost(
+                            result = result,
+                            runtime = runtime,
+                            staffTrackId = it.staffTrackId,
+                            onset = it.ghostOnset,
+                            kind = symbolKind,
+                            absoluteX = it.absoluteX,
+                            systemIndex = it.systemIndex,
+                        )
+                    }
+                    when (event.type) {
+                        PointerEventType.Move, PointerEventType.Enter -> previews.pointSymbol(ghost)
+                        PointerEventType.Exit -> previews.pointSymbol(null)
+                        PointerEventType.Press -> if (target != null && ghost != null) {
+                            previews.pointSymbol(ghost)
+                            actions.insertPauseMark(target.staffTrackId, target.afterTime)
+                            change.consume()
+                        }
+                        else -> Unit
+                    }
+                }
+            }
+        }
+        .pointerInput(
+            environment.resultIdentityKey,
+            dynamicActive,
             tempoActive,
             ornamentActive,
             arpeggioActive,
@@ -222,7 +292,7 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
             tool?.selectedOctaveShift,
             tool?.selectedOrnamentKind,
         ) {
-            if (!dynamicActive && !pauseActive && !tempoActive && !ornamentActive &&
+            if (!dynamicActive && !tempoActive && !ornamentActive &&
                 !arpeggioActive && !expressionSpanActive) return@pointerInput
             val result = environment.result ?: return@pointerInput
             val runtime = environment.runtime ?: return@pointerInput
@@ -244,42 +314,7 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
                     .filterIsInstance<com.mecon.api.interaction.VoiceNoteSection>()
                     .firstOrNull()
                     ?.event
-                val start = if (pauseActive) {
-                    when (activeTool.selectedPauseKind) {
-                        PauseMarkKind.FERMATA -> {
-                            val clicked = result.hitTest(startAbs).allSections()
-                                .filterIsInstance<com.mecon.api.interaction.VoiceNoteSection>()
-                                .firstOrNull()
-                                ?.event
-                            baseStart.first to (
-                                clicked?.let { it.onset + it.duration.toFraction() }
-                                    ?: runtime.staffTracks[baseStart.first]
-                                        ?.voiceTracks
-                                        ?.asSequence()
-                                        ?.mapNotNull { runtime.voiceTracks[it.id] }
-                                        ?.flatMap { it.events.toList().asSequence() }
-                                        ?.firstOrNull { it.onset == baseStart.second && !it.isGrace }
-                                        ?.endTime
-                                    ?: baseStart.second
-                                )
-                        }
-                        PauseMarkKind.BREATH -> {
-                            val relative = result.transformerSnapshot.toRelative(startAbs)
-                            val systemIndex = result.spatialIndex.allSystems()
-                                .filter { relative.y >= it.topY && relative.y <= it.bottomY }
-                                .minByOrNull { system ->
-                                    system.staffRegions.minOfOrNull {
-                                        kotlin.math.abs(it.centerY.value - relative.y.value)
-                                    } ?: Float.MAX_VALUE
-                                }
-                                ?.systemIndex
-                            baseStart.first to (
-                                resolveBreathBoundaryTime(result, startAbs.x.value, systemIndex)
-                                    ?: baseStart.second
-                                )
-                        }
-                    }
-                } else baseStart
+                val start = baseStart
                 down.consume()
                 if (arpeggioActive) {
                     clickedNote?.takeIf { it.pitchData.size >= 2 }?.let { actions.insertArpeggio(it.id) }
@@ -312,10 +347,6 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
                 }
                 if (dynamicActive) {
                     actions.insertDynamic(start.first, start.second)
-                    return@awaitEachGesture
-                }
-                if (pauseActive) {
-                    actions.insertPauseMark(start.first, start.second)
                     return@awaitEachGesture
                 }
                 if (tempoActive) {

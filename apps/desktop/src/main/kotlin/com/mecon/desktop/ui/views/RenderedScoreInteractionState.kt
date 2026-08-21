@@ -8,6 +8,7 @@ import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
 import com.mecon.renderer.render.edit.GhostNote
+import com.mecon.renderer.render.edit.GhostPointSymbol
 import com.mecon.renderer.render.edit.GhostTimeSignature
 
 /** Viewport and pointer-modifier state; independent of score content. */
@@ -27,5 +28,6 @@ internal class RenderedScoreInsertionPreviewState {
     val clef = mutableStateOf<GhostClef?>(null)
     val timeSignature = mutableStateOf<GhostTimeSignature?>(null)
     val keySignature = mutableStateOf<GhostKeySignature?>(null)
+    val pointSymbol = mutableStateOf<GhostPointSymbol?>(null)
     val expressionSpan = mutableStateOf<GhostExpressionSpan?>(null)
 }

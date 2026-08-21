@@ -22,6 +22,10 @@ Storage/Runtime/Computed 层决定，Renderer 只消费已有的 `ComputedStaffA
 - breath 的点选、虚线指引和拖动统一使用 `InsertionBoundaryResolver` 的边界候选：实际小节线或相邻
   音符列中点，而不是符头位置；谱号输入复用同一候选本体。
   单声部、单谱表与全谱 breath 均可拖动并重新吸附；全谱 breath 改变时间时联动所有谱表。
+- 无选区选择 fermata 或 breath 后，鼠标移动即显示 `GhostPointSymbolComputer` 生成的灰色候选。
+  hover 与 click 共用同一个 `PauseInsertionTarget`：fermata 只取当前活动声部的事件并在该音上方预览，
+  breath 使用 `InsertionBoundaryResolver` 的精确 X；ghost 始终只绘制悬停谱表上的一个活动声部候选，
+  不按 fermata/global breath 的最终作用域复制到全谱。
 - 点力度：选择音符后按 `(staff, TimeCode)` 去重批量添加；无选区时点击按钮进入点选模式。
 - 区间记号：选择音符后按谱表分别取最左、最右 onset；无选区时拖动画出区间。
 - 无选区拖动区间记号时，拖动过程中使用同一套 `HairpinGeometry` /

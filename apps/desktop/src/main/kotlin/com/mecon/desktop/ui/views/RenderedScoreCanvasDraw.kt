@@ -40,6 +40,7 @@ import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
 import com.mecon.renderer.render.edit.GhostNote
+import com.mecon.renderer.render.edit.GhostPointSymbol
 import com.mecon.renderer.render.edit.GhostTimeSignature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -71,6 +72,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     val clefGhost = request.ghosts.clef
     val timeGhost = request.ghosts.timeSignature
     val keyGhost = request.ghosts.keySignature
+    val pointSymbolGhost = request.ghosts.pointSymbol
     val expressionSpanGhost = request.ghosts.expressionSpan
     val ghostColor = request.ghosts.color
     val annotationRangeDrag = request.drags.annotationRange
@@ -680,6 +682,21 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     }
 
     keyGhost?.let { g ->
+        if (paginatedView) {
+            val designAnchor = globalToDesign(
+                g.anchor.x.value, g.anchor.y.value, pages, pageSlots
+            ) ?: return@let
+            val dx = designAnchor.x - g.anchor.x.value
+            val dy = designAnchor.y - g.anchor.y.value
+            translate(left = dx * density, top = dy * density) {
+                composeRenderer.renderCommandsTinted(this, g.commands, textMeasurer, ghostColor)
+            }
+        } else {
+            composeRenderer.renderCommandsTinted(this, g.commands, textMeasurer, ghostColor)
+        }
+    }
+
+    pointSymbolGhost?.let { g ->
         if (paginatedView) {
             val designAnchor = globalToDesign(
                 g.anchor.x.value, g.anchor.y.value, pages, pageSlots

@@ -30,6 +30,59 @@ enum class ScoreInteractionTopology {
     PROPERTY_DRAFT,
 }
 
+/** Semantic candidates an adapter may retarget to before it creates an intent. */
+@Serializable
+enum class ScoreSnapTopology {
+    NONE,
+    MEASURE_BOUNDARY,
+    EVENT_TIME,
+    INSERTION_BOUNDARY,
+    PRESERVE_SEMANTIC_ANCHOR,
+}
+
+/** Geometry that remains editable after the semantic anchor has been chosen. */
+@Serializable
+enum class ScoreCoordinateFreedom {
+    NOT_APPLICABLE,
+    FIXED_XY,
+    FIXED_X_ADJUSTABLE_Y,
+    ADJUSTABLE_XY,
+}
+
+/** Stable operation variants whose targeting policy differs inside one interaction family. */
+@Serializable
+enum class ScoreTargetingKind {
+    DEFAULT,
+    NOTE_ENTRY,
+    TUPLET_REGION,
+    CLEF,
+    KEY_SIGNATURE,
+    TIME_SIGNATURE,
+    DYNAMIC,
+    TEMPO,
+    FERMATA,
+    BREATH,
+    ORNAMENT,
+    SPAN,
+    EVENT_GROUP,
+    SELECTION_TRANSFORM,
+    VERTICAL_TRANSFORM,
+    STRUCTURE,
+    VERTICAL_HANDLE,
+    FREE_HANDLE,
+    ATTACHMENT_HANDLE,
+    BOUNDARY_HANDLE,
+    NAVIGATION_HANDLE,
+    PROPERTY,
+}
+
+@Serializable
+data class ScoreTargetingSpec(
+    val kind: ScoreTargetingKind,
+    val snapTopology: ScoreSnapTopology,
+    val coordinateFreedom: ScoreCoordinateFreedom,
+)
+
 @Serializable
 enum class ScoreInteractionSuccessPolicy {
     /** Keep the tool group active, but require a fresh point/span for the next operation. */
@@ -67,6 +120,8 @@ data class ScoreInteractionSpec(
     val topology: ScoreInteractionTopology,
     val toolGroup: ScoreToolGroup,
     val successPolicy: ScoreInteractionSuccessPolicy,
+    /** Independent of [topology]: where the target snaps and which geometry may later move. */
+    val targeting: List<ScoreTargetingSpec>,
 )
 
 /** Semantic anchors only. Platform pixels are discarded before entering this model. */
@@ -325,18 +380,86 @@ object ScoreInteractionCatalog {
     const val HANDLE = "engraving.handle"
     const val PROPERTY = "property.edit"
 
+    private fun targeting(
+        kind: ScoreTargetingKind,
+        snap: ScoreSnapTopology,
+        coordinates: ScoreCoordinateFreedom,
+    ) = ScoreTargetingSpec(kind, snap, coordinates)
+
     val specs: List<ScoreInteractionSpec> = listOf(
-        ScoreInteractionSpec(NAVIGATION, ScoreInteractionFamily.N, ScoreInteractionTopology.NONE, ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
-        ScoreInteractionSpec(ENTRY_NOTE, ScoreInteractionFamily.E, ScoreInteractionTopology.INSERTION_CURSOR, ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.KEEP_ENTRY_ADVANCE_CURSOR),
-        ScoreInteractionSpec(ENTRY_TUPLET_REGION, ScoreInteractionFamily.E, ScoreInteractionTopology.INSERTION_CURSOR, ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.SWITCH_TO_ENTRY),
-        ScoreInteractionSpec(POINT_SYMBOL, ScoreInteractionFamily.P, ScoreInteractionTopology.POINT, ScoreToolGroup.POINT_SYMBOLS, ScoreInteractionSuccessPolicy.KEEP_TOOL_RESET_TARGET),
-        ScoreInteractionSpec(SPAN_SYMBOL, ScoreInteractionFamily.S, ScoreInteractionTopology.ORDERED_SPAN, ScoreToolGroup.SPANS, ScoreInteractionSuccessPolicy.KEEP_TOOL_RESET_TARGET),
-        ScoreInteractionSpec(GROUP_EVENTS, ScoreInteractionFamily.G, ScoreInteractionTopology.EVENT_GROUP, ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
-        ScoreInteractionSpec(GROUP_SMALL_NOTES, ScoreInteractionFamily.G, ScoreInteractionTopology.EVENT_GROUP, ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.SWITCH_TO_ENTRY),
-        ScoreInteractionSpec(TRANSFORM_SELECTION, ScoreInteractionFamily.T, ScoreInteractionTopology.SELECTION, ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
-        ScoreInteractionSpec(STRUCTURE, ScoreInteractionFamily.B, ScoreInteractionTopology.MEASURE_BOUNDARY_OR_RANGE, ScoreToolGroup.STRUCTURE, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
-        ScoreInteractionSpec(HANDLE, ScoreInteractionFamily.H, ScoreInteractionTopology.SEMANTIC_HANDLE, ScoreToolGroup.ENGRAVING, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
-        ScoreInteractionSpec(PROPERTY, ScoreInteractionFamily.F, ScoreInteractionTopology.PROPERTY_DRAFT, ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND),
+        ScoreInteractionSpec(
+            NAVIGATION, ScoreInteractionFamily.N, ScoreInteractionTopology.NONE,
+            ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(targeting(ScoreTargetingKind.DEFAULT, ScoreSnapTopology.NONE, ScoreCoordinateFreedom.NOT_APPLICABLE)),
+        ),
+        ScoreInteractionSpec(
+            ENTRY_NOTE, ScoreInteractionFamily.E, ScoreInteractionTopology.INSERTION_CURSOR,
+            ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.KEEP_ENTRY_ADVANCE_CURSOR,
+            listOf(targeting(ScoreTargetingKind.NOTE_ENTRY, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.FIXED_X_ADJUSTABLE_Y)),
+        ),
+        ScoreInteractionSpec(
+            ENTRY_TUPLET_REGION, ScoreInteractionFamily.E, ScoreInteractionTopology.INSERTION_CURSOR,
+            ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.SWITCH_TO_ENTRY,
+            listOf(targeting(ScoreTargetingKind.TUPLET_REGION, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.FIXED_XY)),
+        ),
+        ScoreInteractionSpec(
+            POINT_SYMBOL, ScoreInteractionFamily.P, ScoreInteractionTopology.POINT,
+            ScoreToolGroup.POINT_SYMBOLS, ScoreInteractionSuccessPolicy.KEEP_TOOL_RESET_TARGET,
+            listOf(
+                targeting(ScoreTargetingKind.CLEF, ScoreSnapTopology.INSERTION_BOUNDARY, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.KEY_SIGNATURE, ScoreSnapTopology.MEASURE_BOUNDARY, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.TIME_SIGNATURE, ScoreSnapTopology.MEASURE_BOUNDARY, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.DYNAMIC, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+                targeting(ScoreTargetingKind.TEMPO, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+                targeting(ScoreTargetingKind.FERMATA, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.BREATH, ScoreSnapTopology.INSERTION_BOUNDARY, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+                targeting(ScoreTargetingKind.ORNAMENT, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+            ),
+        ),
+        ScoreInteractionSpec(
+            SPAN_SYMBOL, ScoreInteractionFamily.S, ScoreInteractionTopology.ORDERED_SPAN,
+            ScoreToolGroup.SPANS, ScoreInteractionSuccessPolicy.KEEP_TOOL_RESET_TARGET,
+            listOf(targeting(ScoreTargetingKind.SPAN, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.ADJUSTABLE_XY)),
+        ),
+        ScoreInteractionSpec(
+            GROUP_EVENTS, ScoreInteractionFamily.G, ScoreInteractionTopology.EVENT_GROUP,
+            ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(targeting(ScoreTargetingKind.EVENT_GROUP, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.FIXED_XY)),
+        ),
+        ScoreInteractionSpec(
+            GROUP_SMALL_NOTES, ScoreInteractionFamily.G, ScoreInteractionTopology.EVENT_GROUP,
+            ScoreToolGroup.NOTES, ScoreInteractionSuccessPolicy.SWITCH_TO_ENTRY,
+            listOf(targeting(ScoreTargetingKind.EVENT_GROUP, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.FIXED_XY)),
+        ),
+        ScoreInteractionSpec(
+            TRANSFORM_SELECTION, ScoreInteractionFamily.T, ScoreInteractionTopology.SELECTION,
+            ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(
+                targeting(ScoreTargetingKind.SELECTION_TRANSFORM, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.VERTICAL_TRANSFORM, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.FIXED_X_ADJUSTABLE_Y),
+            ),
+        ),
+        ScoreInteractionSpec(
+            STRUCTURE, ScoreInteractionFamily.B, ScoreInteractionTopology.MEASURE_BOUNDARY_OR_RANGE,
+            ScoreToolGroup.STRUCTURE, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(targeting(ScoreTargetingKind.STRUCTURE, ScoreSnapTopology.MEASURE_BOUNDARY, ScoreCoordinateFreedom.FIXED_XY)),
+        ),
+        ScoreInteractionSpec(
+            HANDLE, ScoreInteractionFamily.H, ScoreInteractionTopology.SEMANTIC_HANDLE,
+            ScoreToolGroup.ENGRAVING, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(
+                targeting(ScoreTargetingKind.VERTICAL_HANDLE, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.FIXED_X_ADJUSTABLE_Y),
+                targeting(ScoreTargetingKind.FREE_HANDLE, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+                targeting(ScoreTargetingKind.ATTACHMENT_HANDLE, ScoreSnapTopology.EVENT_TIME, ScoreCoordinateFreedom.ADJUSTABLE_XY),
+                targeting(ScoreTargetingKind.BOUNDARY_HANDLE, ScoreSnapTopology.MEASURE_BOUNDARY, ScoreCoordinateFreedom.FIXED_XY),
+                targeting(ScoreTargetingKind.NAVIGATION_HANDLE, ScoreSnapTopology.MEASURE_BOUNDARY, ScoreCoordinateFreedom.FIXED_X_ADJUSTABLE_Y),
+            ),
+        ),
+        ScoreInteractionSpec(
+            PROPERTY, ScoreInteractionFamily.F, ScoreInteractionTopology.PROPERTY_DRAFT,
+            ScoreToolGroup.SELECTION, ScoreInteractionSuccessPolicy.KEEP_SELECTION_COMMAND,
+            listOf(targeting(ScoreTargetingKind.PROPERTY, ScoreSnapTopology.PRESERVE_SEMANTIC_ANCHOR, ScoreCoordinateFreedom.NOT_APPLICABLE)),
+        ),
     )
     private val byId = specs.associateBy { it.commandId }
 
@@ -349,6 +472,70 @@ object ScoreInteractionCatalog {
     fun spec(intent: ScoreEditIntent): ScoreInteractionSpec = spec(commandId(intent))
 
     fun family(intent: ScoreEditIntent): ScoreInteractionFamily = spec(intent).family
+
+    fun targeting(kind: ScoreTargetingKind): ScoreTargetingSpec = specs.asSequence()
+        .flatMap { it.targeting.asSequence() }
+        .firstOrNull { it.kind == kind }
+        ?: error("Unknown score targeting kind: $kind")
+
+    fun targeting(intent: ScoreEditIntent): ScoreTargetingSpec = targeting(targetingKind(intent))
+
+    /** Exhaustive targeting classification, independent of the broader interaction family. */
+    fun targetingKind(intent: ScoreEditIntent): ScoreTargetingKind = when (intent) {
+        is ScoreEditIntent.SetSelection, is ScoreEditIntent.Undo, is ScoreEditIntent.Redo -> ScoreTargetingKind.DEFAULT
+        is ScoreEditIntent.InsertNote, is ScoreEditIntent.InsertChord, is ScoreEditIntent.PasteNotes -> ScoreTargetingKind.NOTE_ENTRY
+        is ScoreEditIntent.CreateTupletRegion -> ScoreTargetingKind.TUPLET_REGION
+        is ScoreEditIntent.SetClef -> ScoreTargetingKind.CLEF
+        is ScoreEditIntent.SetKeySignature -> ScoreTargetingKind.KEY_SIGNATURE
+        is ScoreEditIntent.SetTimeSignature -> ScoreTargetingKind.TIME_SIGNATURE
+        is ScoreEditIntent.AddDynamic -> ScoreTargetingKind.DYNAMIC
+        is ScoreEditIntent.AddTempoMark -> ScoreTargetingKind.TEMPO
+        is ScoreEditIntent.AddFermata -> ScoreTargetingKind.FERMATA
+        is ScoreEditIntent.AddBreathMark -> ScoreTargetingKind.BREATH
+        is ScoreEditIntent.AddOrnament -> if (intent.endOnset == null) ScoreTargetingKind.ORNAMENT else ScoreTargetingKind.SPAN
+        is ScoreEditIntent.AddSlurs,
+        is ScoreEditIntent.AddHairpin,
+        is ScoreEditIntent.AddOctaveShift,
+        is ScoreEditIntent.AddGradualTempo -> ScoreTargetingKind.SPAN
+        is ScoreEditIntent.ApplyTuplets,
+        is ScoreEditIntent.SetGraceGroups,
+        is ScoreEditIntent.CreateSmallNoteRegions -> ScoreTargetingKind.EVENT_GROUP
+        is ScoreEditIntent.MoveRests -> ScoreTargetingKind.VERTICAL_TRANSFORM
+        is ScoreEditIntent.CopyNotes,
+        is ScoreEditIntent.CutNotes,
+        is ScoreEditIntent.MoveVoices,
+        is ScoreEditIntent.DeleteNotes,
+        is ScoreEditIntent.TransposeNotes,
+        is ScoreEditIntent.SetDurations,
+        is ScoreEditIntent.SetAccidentals,
+        is ScoreEditIntent.SetTies,
+        is ScoreEditIntent.SetBeaming,
+        is ScoreEditIntent.ToggleArticulation,
+        is ScoreEditIntent.SetArpeggio,
+        is ScoreEditIntent.DeleteSlurs,
+        is ScoreEditIntent.DeleteExpressions -> ScoreTargetingKind.SELECTION_TRANSFORM
+        is ScoreEditIntent.InsertMeasures,
+        is ScoreEditIntent.DeleteMeasures,
+        is ScoreEditIntent.SetBarline,
+        is ScoreEditIntent.SetBarlineRepeatCount,
+        is ScoreEditIntent.ToggleVoltaPair,
+        is ScoreEditIntent.DeleteVolta,
+        is ScoreEditIntent.ToggleNavigationMark,
+        is ScoreEditIntent.DeleteNavigationMark,
+        is ScoreEditIntent.SetLayoutBreak,
+        is ScoreEditIntent.SetStaffVisibility -> ScoreTargetingKind.STRUCTURE
+        is ScoreEditIntent.SetSlurGeometry,
+        is ScoreEditIntent.SetTieGeometry,
+        is ScoreEditIntent.SetBeamGeometry -> ScoreTargetingKind.VERTICAL_HANDLE
+        is ScoreEditIntent.SetArticulationGeometry -> ScoreTargetingKind.FREE_HANDLE
+        is ScoreEditIntent.MoveAttachment -> ScoreTargetingKind.ATTACHMENT_HANDLE
+        is ScoreEditIntent.ResizeSecondVolta,
+        is ScoreEditIntent.ResizeFirstVoltaStart -> ScoreTargetingKind.BOUNDARY_HANDLE
+        is ScoreEditIntent.MoveNavigationMark -> ScoreTargetingKind.NAVIGATION_HANDLE
+        is ScoreEditIntent.UpdateOrnament,
+        is ScoreEditIntent.UpdateTempo,
+        is ScoreEditIntent.UpdatePerformanceMark -> ScoreTargetingKind.PROPERTY
+    }
 
     /** Exhaustive by construction: adding an intent forces this mapping to be updated. */
     fun commandId(intent: ScoreEditIntent): String = when (intent) {
