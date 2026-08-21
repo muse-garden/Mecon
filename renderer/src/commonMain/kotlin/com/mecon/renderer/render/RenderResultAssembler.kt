@@ -1,15 +1,16 @@
 package com.mecon.renderer.render
 
 import com.mecon.api.primitive.TimeCode
+import com.mecon.renderer.elements.NoteElement
 import com.mecon.renderer.geometry.AbsoluteRect
 import com.mecon.renderer.geometry.RelativePoint
 import com.mecon.renderer.geometry.StaffSpace
 import com.mecon.renderer.interaction.SectionIndex
 import com.mecon.renderer.interaction.SectionIndexBuilder
-import com.mecon.renderer.layout.UnifiedLayoutResult
 import com.mecon.renderer.layout.ArticulationLayout
 import com.mecon.renderer.layout.SlurLayout
 import com.mecon.renderer.layout.TieLayout
+import com.mecon.renderer.layout.UnifiedLayoutResult
 import com.mecon.renderer.render.spatial.ScoreSpatialAdapter
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -29,6 +30,29 @@ internal data class IncrementalGeometryCapture(
     val ties: List<TieLayout>,
     val slurs: List<SlurLayout>,
 )
+
+private data class TimeCodeGeometry(
+    val positions: Map<TimeCode, TimeCodePosition>,
+    val noteheadRights: Map<TimeCode, Map<Pair<Int, Int>, Float>>,
+    val sharedNoteheadRightsByVoice: Map<TimeCode, Map<Int, Float>>,
+    val sharedNoteheadRights: Map<TimeCode, Float>,
+)
+
+/** Most common rendered column; stable top-to-bottom insertion order breaks ties. */
+private fun representativeNoteheadRight(values: Iterable<Float>): Float? {
+    val counts = linkedMapOf<Float, Int>()
+    var best: Float? = null
+    var bestCount = 0
+    for (value in values) {
+        val count = (counts[value] ?: 0) + 1
+        counts[value] = count
+        if (count > bestCount) {
+            best = value
+            bestCount = count
+        }
+    }
+    return best
+}
 
 /**
  * Assembles render elements into immutable [RenderResult]s, including section/spatial indexes and pages.
@@ -61,7 +85,7 @@ internal class RenderResultAssembler(
         val barlines = layoutResult.barlineLayouts.all()
         val measureBoundaries = ScoreSpatialAdapter.computeMeasureBoundaries(barlines, layoutResult.width)
         val bounds = summary.bounds
-        val timeCodePositions = computeTimeCodePositions(layoutResult, bounds)
+        val timeCodeGeometry = computeTimeCodeGeometry(layoutResult, bounds)
 
         isCancelled.throwIfCancelled() // before the whole-score spatial index rebuild (O(N), the heaviest step)
         val hierarchicalIndex = scoreSpatialAdapter.buildIndex(
@@ -79,7 +103,10 @@ internal class RenderResultAssembler(
                 layoutResult = layoutResult,
                 sectionIndex = sectionBuilder.build(),
                 elementIndex = elementIndexBuilder.build(),
-                timeCodePositions = timeCodePositions,
+                timeCodePositions = timeCodeGeometry.positions,
+                noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = hierarchicalIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = pages,
@@ -117,7 +144,7 @@ internal class RenderResultAssembler(
         val summary = buildPaginatedRichSummary(richElements, layoutResult)
         val elements = summary.elements
         val bounds = summary.bounds
-        val timeCodePositions = computeTimeCodePositions(layoutResult, bounds)
+        val timeCodeGeometry = computeTimeCodeGeometry(layoutResult, bounds)
         val transformerSnapshot = transformer.copy()
 
         return RenderAssembly(
@@ -127,7 +154,10 @@ internal class RenderResultAssembler(
                 layoutResult = layoutResult,
                 sectionIndex = sectionIndex,
                 elementIndex = elementIndex,
-                timeCodePositions = timeCodePositions,
+                timeCodePositions = timeCodeGeometry.positions,
+                noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = spatialIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = emptyList(),
@@ -189,9 +219,9 @@ internal class RenderResultAssembler(
         }
         val bounds = summary.bounds
         val _tTimeCodes = kotlin.time.TimeSource.Monotonic.markNow()
-        val timeCodePositions = computeTimeCodePositions(layoutResult, bounds)
+        val timeCodeGeometry = computeTimeCodeGeometry(layoutResult, bounds)
         com.mecon.renderer.debug.PerfLog.log("render.stage") {
-            "assemble.timeCodes=${_tTimeCodes.elapsedNow().inWholeMilliseconds}ms slots=${timeCodePositions.size}"
+            "assemble.timeCodes=${_tTimeCodes.elapsedNow().inWholeMilliseconds}ms slots=${timeCodeGeometry.positions.size}"
         }
         com.mecon.renderer.debug.PerfLog.log("render.stage") {
             "assemble.paginated index+section+bounds+tcp=${_tIndex.elapsedNow().inWholeMilliseconds}ms elements=${elements.size}"
@@ -225,7 +255,10 @@ internal class RenderResultAssembler(
                 layoutResult = layoutResult,
                 sectionIndex = sectionIndex,
                 elementIndex = elementIndex,
-                timeCodePositions = timeCodePositions,
+                timeCodePositions = timeCodeGeometry.positions,
+                noteheadRightPositions = timeCodeGeometry.noteheadRights,
+                sharedNoteheadRightPositionsByVoice = timeCodeGeometry.sharedNoteheadRightsByVoice,
+                sharedNoteheadRightPositions = timeCodeGeometry.sharedNoteheadRights,
                 spatialIndex = spatialIndex,
                 transformerSnapshot = transformerSnapshot,
                 pages = pages,
@@ -268,11 +301,12 @@ internal class RenderResultAssembler(
         return builder.build()
     }
 
-    private fun computeTimeCodePositions(
+    private fun computeTimeCodeGeometry(
         layoutResult: UnifiedLayoutResult,
         bounds: AbsoluteRect,
-    ): Map<TimeCode, TimeCodePosition> {
+    ): TimeCodeGeometry {
         val timeCodePositions = mutableMapOf<TimeCode, TimeCodePosition>()
+        val noteheadRightPositions = mutableMapOf<TimeCode, MutableMap<Pair<Int, Int>, Float>>()
         val fullTopY = bounds.origin.y.value
         val fullBottomY = fullTopY + bounds.height.value
         val systemBands: Map<Int, Pair<Float, Float>> = layoutResult.systems.associate { sys ->
@@ -300,6 +334,20 @@ internal class RenderResultAssembler(
                 currentSystem = slot.systemIndex
                 pendingLeftRel = Float.POSITIVE_INFINITY
             }
+            // Capture the final note column in the same whole-layout pass as the time positions.
+            // `slot.x` encloses all slot content; the head bounds retain the collision-resolved local
+            // offset after accidentals, dots and simultaneous voices have expanded that content.
+            for (event in slot.events) {
+                if (event !is NoteElement || event.isRest || event.noteBody.noteheads.isEmpty()) continue
+                val noteheadRight = event.noteBody.noteheads.maxOf { notehead ->
+                    notehead.geometry.bounds.origin.x.value + notehead.geometry.bounds.width.value
+                }
+                val relativeX = slot.x + event.relativeX + StaffSpace(noteheadRight)
+                val absoluteX = transformer.toAbsolute(RelativePoint(relativeX, StaffSpace.ZERO)).x.value
+                val byStaffVoice = noteheadRightPositions.getOrPut(slot.time) { mutableMapOf() }
+                val key = event.staffIndex to event.voiceNumber
+                byStaffVoice[key] = maxOf(byStaffVoice[key] ?: Float.NEGATIVE_INFINITY, absoluteX)
+            }
             val slotLeftRel = slot.x.value + (slot.events.minOfOrNull { it.relativeX.value } ?: 0f)
             if (!slot.hasNotes()) {
                 pendingLeftRel = minOf(pendingLeftRel, slotLeftRel)
@@ -318,7 +366,25 @@ internal class RenderResultAssembler(
                 leftX = leftAbsX,
             )
         }
-        return timeCodePositions
+        val immutableNoteheadRights = noteheadRightPositions.mapValues { (_, byStaffVoice) ->
+            byStaffVoice.toMap()
+        }
+        val sharedByVoice = immutableNoteheadRights.mapValues { (_, byStaffVoice) ->
+            byStaffVoice.entries
+                .groupBy { (staffVoice, _) -> staffVoice.second }
+                .mapValues { (_, entries) ->
+                    checkNotNull(representativeNoteheadRight(entries.map { it.value }))
+                }
+        }
+        val shared = immutableNoteheadRights.mapValues { (_, byStaffVoice) ->
+            checkNotNull(representativeNoteheadRight(byStaffVoice.values))
+        }
+        return TimeCodeGeometry(
+            positions = timeCodePositions,
+            noteheadRights = immutableNoteheadRights,
+            sharedNoteheadRightsByVoice = sharedByVoice,
+            sharedNoteheadRights = shared,
+        )
     }
 
     private fun buildResult(
@@ -328,6 +394,9 @@ internal class RenderResultAssembler(
         sectionIndex: SectionIndex,
         elementIndex: Map<RenderElementId, RenderElement>,
         timeCodePositions: Map<TimeCode, TimeCodePosition>,
+        noteheadRightPositions: Map<TimeCode, Map<Pair<Int, Int>, Float>>,
+        sharedNoteheadRightPositionsByVoice: Map<TimeCode, Map<Int, Float>>,
+        sharedNoteheadRightPositions: Map<TimeCode, Float>,
         spatialIndex: com.mecon.renderer.render.spatial.HierarchicalSpatialIndex,
         transformerSnapshot: CoordinateTransformer,
         pages: List<RenderPage>,
@@ -352,6 +421,9 @@ internal class RenderResultAssembler(
             elementIndex = elementIndex,
             timeCodePositions = timeCodePositions,
             measureEntryXs = measureEntryXs,
+            noteheadRightPositions = noteheadRightPositions,
+            sharedNoteheadRightPositionsByVoice = sharedNoteheadRightPositionsByVoice,
+            sharedNoteheadRightPositions = sharedNoteheadRightPositions,
             resolvedTimeAxis = layoutResult.resolvedTimeAxis,
             scoreTimeMap = layoutResult.scoreTimeMap,
             eventVoiceTrackIds = layoutResult.voiceEventLayouts.all().associate {

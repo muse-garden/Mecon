@@ -3709,6 +3709,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-rh-8"
       }
     },
@@ -3786,6 +3788,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "letRing": "true"
       }
     },
@@ -3865,7 +3869,9 @@
         "slurId": "slur:ve-lh-10->ve-lh-11:0",
         "startEventId": "ve-lh-10",
         "endEventId": "ve-lh-11",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     }
   ],

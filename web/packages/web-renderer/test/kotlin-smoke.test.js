@@ -453,11 +453,13 @@ test("generated Kotlin/JS score editor applies structural intents", {
     type: "setClef",
     expectedRevision: 0,
     staffTrackId: "staff",
-    onset: { measure: 0, beat: { numerator: 0, denominator: 1 } },
+    // The pointer-facing first slot is 1:0; shared core normalizes it to initial state 0:0.
+    onset: { measure: 1, beat: { numerator: 0, denominator: 1 } },
     clef: "BASS",
   })));
   assert.equal(clef.effect.kind, "APPLIED");
   assert.equal(clef.score.staffTracks.staff.clef, "BASS");
+  assert.deepEqual(clef.score.staffTracks.staff.clefChanges, []);
   assert.equal(clef.selection[0].type, "clef");
   const key = JSON.parse(editor.dispatchJson(JSON.stringify({
     type: "setKeySignature",

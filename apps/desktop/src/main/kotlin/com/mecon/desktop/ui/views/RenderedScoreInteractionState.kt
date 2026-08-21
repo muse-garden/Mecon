@@ -29,6 +29,7 @@ internal class RenderedScoreDragPreviewState {
     val volta = mutableStateOf<VoltaDragState?>(null)
     val navigation = mutableStateOf<NavigationDragState?>(null)
     val curve = mutableStateOf<CurveDragState?>(null)
+    val annotationRange = mutableStateOf<AnnotationRangeDragState?>(null)
 }
 
 /** Ghost geometry owned only by insertion tools. */

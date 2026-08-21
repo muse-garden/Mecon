@@ -48,6 +48,8 @@ deflate 条目；缺少冻结几何时明确报错，不在轻量包中偷偷执
 命中测试按绘制顺序逆序查询，因此重叠区域返回视觉上最上层的元素。当前 `RenderElement` 已保存
 `hitBox`、事件/轨道 ID、measure/system/staff 索引与开放 metadata，足以支持点击、选择、
 播放高亮和简单上下文菜单；拖拽编辑仍应由完整引擎根据编辑命令重新排版。
+其中带 `hitShape=filledPath` 的 tie/slur 会从冻结的 `DrawPath` 做填充路径 + 小容差命中，
+`hitBox` 只负责候选粗筛，避免弧线 AABB 内的大块空白误选。
 
 React：
 

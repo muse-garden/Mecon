@@ -86,6 +86,39 @@ test("hit testing returns the topmost selectable element", () => {
   assert.equal(hitTest(bundle, 0, 150, 50), null);
 });
 
+test("filled curve hit testing follows painted slur instead of its bounding box", () => {
+  const curveBundle = {
+    schemaVersion: 1,
+    bounds: box(0, 0, 100, 60),
+    surfaces: [{
+      index: 0,
+      width: 100,
+      height: 60,
+      elements: [{
+        id: "slur-1",
+        type: "SLUR",
+        hitBox: box(10, 20, 80, 30),
+        metadata: { hitShape: "filledPath", hitTolerancePx: "3" },
+        commands: [{
+          type: "com.mecon.renderer.render.DrawPath",
+          path: { segments: [
+            { type: "MoveTo", point: point(10, 50) },
+            { type: "CubicTo", control1: point(35, 20), control2: point(65, 20), end: point(90, 50) },
+            { type: "CubicTo", control1: point(65, 24), control2: point(35, 24), end: point(10, 50) },
+            { type: "Close" },
+          ] },
+          fillColor: black,
+          bounds: box(10, 20, 80, 30),
+        }],
+      }],
+    }],
+  };
+
+  assert.equal(hitTest(curveBundle, 0, 50, 28)?.id, "slur-1");
+  assert.equal(hitTest(curveBundle, 0, 50, 45), null);
+  assert.equal(hitTest(curveBundle, 0, 50, 34, { padding: 4 })?.id, "slur-1");
+});
+
 test("loads geometry through manifest paths in a .mecon ZIP", async () => {
   const manifest = {
     activeScoreId: "score-a",

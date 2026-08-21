@@ -88,19 +88,70 @@ object TonalRegionKeyInference {
 
 /** Immutable insertion semantics shared by the desktop adapter and common tests. */
 object TonalRegionEditPolicy {
+    enum class Endpoint { START, END }
+
+    /** New score-analysis regions follow the editable timeline's open-tail default. */
+    fun defaultInsertionEnd(
+        start: com.mecon.api.primitive.TimeCode,
+        selectedEnd: com.mecon.api.primitive.TimeCode,
+        scoreEnd: com.mecon.api.primitive.TimeCode?,
+    ): com.mecon.api.primitive.TimeCode =
+        scoreEnd?.takeIf { it > start } ?: selectedEnd
+
+    /** Shared half-open interval validation for panel edits and score-line endpoint drags. */
+    fun resize(
+        region: StorageTonalRegionEvent,
+        endpoint: Endpoint,
+        time: com.mecon.api.primitive.TimeCode,
+    ): StorageTonalRegionEvent = when (endpoint) {
+        Endpoint.START -> if (
+            region.role != TonalRegionRole.SCORE_KEY_BASELINE && time < region.endOnset
+        ) {
+            region.copy(onset = time)
+        } else {
+            region
+        }
+        Endpoint.END -> if (time > region.onset) region.copy(endOnset = time) else region
+    }
+
     fun insert(
         existing: List<StorageTonalRegionEvent>,
         region: StorageTonalRegionEvent,
         terminatePrevious: Boolean,
+        terminatePreviousAt: com.mecon.api.primitive.TimeCode = region.endOnset,
+        fallbackPrevious: StorageTonalRegionEvent? = null,
     ): List<StorageTonalRegionEvent> {
         require(existing.none { it.id == region.id }) { "Duplicate tonal-region id ${region.id.value}" }
-        val prepared = if (!terminatePrevious) {
-            existing
+        require(fallbackPrevious == null || existing.none { it.id == fallbackPrevious.id }) {
+            "Duplicate fallback tonal-region id ${fallbackPrevious?.id?.value}"
+        }
+        require(
+            fallbackPrevious == null ||
+                fallbackPrevious.role == TonalRegionRole.SCORE_KEY_BASELINE
+        ) {
+            "The fallback tonal region must represent the score-key baseline"
+        }
+        require(terminatePreviousAt > region.onset && terminatePreviousAt <= region.endOnset) {
+            "Previous tonal-region termination must be inside the inserted region"
+        }
+        val withFallback = if (
+            fallbackPrevious != null &&
+            existing.none { it.onset <= region.onset && it.contains(region.onset) }
+        ) {
+            existing + fallbackPrevious
         } else {
-            existing.map { previous ->
-                if (previous.onset < region.onset && previous.contains(region.onset)) {
+            existing
+        }
+        val prepared = if (!terminatePrevious) {
+            withFallback
+        } else {
+            withFallback.map { previous ->
+                if (
+                    previous.onset <= region.onset &&
+                    previous.contains(region.onset)
+                ) {
                     previous.copy(
-                        endOnset = minOf(previous.endOnset, region.endOnset),
+                        endOnset = minOf(previous.endOnset, terminatePreviousAt),
                         resolvedKey = null,
                     )
                 } else {

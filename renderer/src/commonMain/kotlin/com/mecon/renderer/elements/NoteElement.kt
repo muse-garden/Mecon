@@ -98,19 +98,30 @@ data class NoteElement(
      */
     @Transient val extraLeftOverhang: StaffSpace = StaffSpace.ZERO,
     /**
-     * Extra slot width reserved by the same-time multi-voice solver. The solver stores each voice's
-     * local offset in [relativeX] and fills each event's width to the complete staff-local cluster
-     * width here, so proportional spacing includes the expanded cluster. Not stored — recomputed
-     * with every affected time slot.
+     * Extra right-side slot width reserved by the same-time multi-voice solver. The solver stores
+     * each voice's local offset in [relativeX] and extends every event to the complete staff-local
+     * cluster's right edge, so proportional spacing includes displaced notehead columns without
+     * folding left-side accidental ink into the slot width. Not stored — recomputed with every
+     * affected time slot.
      */
     @Transient val multiVoiceWidthExtension: StaffSpace = StaffSpace.ZERO,
+    /**
+     * Left ink extent of the complete staff-local same-time voice cluster, measured from the
+     * score-wide zero notehead column. A resolved multi-voice accidental may belong to a voice whose
+     * notehead is shifted right, so its own [NoteBodyElement.leftExtent] is not sufficient to describe
+     * the cluster overhang. Not stored — recomputed with every affected time slot.
+     */
+    @Transient val multiVoiceLeftOverhang: StaffSpace? = null,
 ) : LayoutElement, RenderableElement {
     override val priority: Int = LayoutElement.PRIORITY_NOTE
 
     /** Minimum width computed from note body geometry */
     override val minimumWidth: StaffSpace
         get() = if (noteBody.noteheads.isNotEmpty() || isRest) {
-            noteBody.width + multiVoiceWidthExtension
+            // Slot width is the distance from the shared notehead origin to the rightmost ink.
+            // Accidentals extend left of that origin and belong in leftOverhang; including them here
+            // leaves an equal-sized blank strip after the note and visibly widens both neighbours.
+            noteBody.rightExtent + multiVoiceWidthExtension
         } else {
             StaffSpace(2.5f) // Fallback for legacy construction
         }
@@ -119,7 +130,11 @@ data class NoteElement(
         get() {
             val bodyOverhang = if (noteBody.leftExtent < StaffSpace.ZERO) -noteBody.leftExtent else StaffSpace.ZERO
             val arpeggioOverhang = if (arpeggioType != null) bodyOverhang + StaffSpace(1.25f) else bodyOverhang
-            return maxOf(extraLeftOverhang, arpeggioOverhang)
+            // After multi-voice resolution, a shifted voice's accidental coordinates are local to
+            // that shifted head and can be much more negative than the staff-wide cluster boundary.
+            // The resolver's global overhang replaces (rather than augments) that local extent.
+            val bodyOrClusterOverhang = multiVoiceLeftOverhang ?: arpeggioOverhang
+            return maxOf(extraLeftOverhang, bodyOrClusterOverhang)
         }
 
     /** Stem attachment point for stem-up (at lowest notehead, right side) */

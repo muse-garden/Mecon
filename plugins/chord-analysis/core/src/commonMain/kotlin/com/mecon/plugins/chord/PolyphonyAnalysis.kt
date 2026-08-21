@@ -71,6 +71,7 @@ object PolyphonyTonalContextResolver {
     internal data class Projection(
         val timeMap: ScoreTimeMap,
         val ranges: List<HarmonyTonalRange>,
+        val hasScoreKeyBaseline: Boolean,
     )
 
     internal fun projection(
@@ -89,6 +90,9 @@ object PolyphonyTonalContextResolver {
                     resolvedKey = region.resolvedKey?.toModulationKey(),
                     priority = 10,
                 )
+            },
+            hasScoreKeyBaseline = regions.any {
+                it.role == TonalRegionRole.SCORE_KEY_BASELINE
             },
         )
     }
@@ -124,6 +128,9 @@ object PolyphonyTonalContextResolver {
                 fifths = signature.fifths,
                 mode = KeySignatureMode.fromApiMode(signature.mode),
             ),
+            includeDefaultKeyWithActive = regions.none {
+                it.role == TonalRegionRole.SCORE_KEY_BASELINE
+            },
         )
     }
 
@@ -138,8 +145,22 @@ object PolyphonyTonalContextResolver {
     ): List<ModulationKey> {
         val active = regions.asSequence()
             .filter { it.onset <= time && time < it.endOnset && it.keys.isNotEmpty() }
-            .maxWithOrNull(compareBy<StorageTonalRegionEvent> { it.onset }.thenBy { it.id.value })
-        if (active != null) return active.keys.map(PolyphonyTonalKey::toModulationKey)
+            .sortedWith(compareBy<StorageTonalRegionEvent> { it.onset }.thenBy { it.id.value })
+            .flatMap { it.keys.asSequence() }
+            .map(PolyphonyTonalKey::toModulationKey)
+            .distinct()
+            .toList()
+        if (active.isNotEmpty()) {
+            if (regions.any { it.role == TonalRegionRole.SCORE_KEY_BASELINE }) {
+                return active
+            }
+            val signature = score.getKeySignatureAt(time.measure)
+            val defaultKey = ModulationKey(
+                fifths = signature.fifths,
+                mode = KeySignatureMode.fromApiMode(signature.mode),
+            )
+            return (listOf(defaultKey) + active).distinct()
+        }
 
         val continuation = regions.asSequence()
             .filter { it.endOnset <= time && it.resolvedKey != null }
@@ -171,6 +192,7 @@ object PolyphonyTonalContextResolver {
             time = projection.timeMap.absolute(time),
             ranges = projection.ranges,
             defaultKey = defaultKey,
+            includeDefaultKeyWithActive = !projection.hasScoreKeyBaseline,
         )
     }
 }

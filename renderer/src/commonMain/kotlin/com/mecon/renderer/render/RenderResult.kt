@@ -45,6 +45,20 @@ data class RenderResult(
      * renderer-owned position rather than guessing from the raw measure edge.
      */
     internal val measureEntryXs: Map<Int, StaffSpace> = emptyMap(),
+    /**
+     * Final rendered right edge of the rightmost notehead for each
+     * `time -> (staffIndex, voiceNumber)` tuple.
+     *
+     * A time-slot X is the right edge of the complete slot, not necessarily a notehead: accidentals,
+     * augmentation dots, chord seconds and same-time voice collision offsets can all move the heads
+     * left inside that slot. Note-input previews use this render-frame metadata so they snap to the
+     * note column that is actually on screen instead of reconstructing an anchor from slot width.
+     */
+    internal val noteheadRightPositions: Map<TimeCode, Map<Pair<Int, Int>, Float>> = emptyMap(),
+    /** Score-wide representative notehead column for each voice number at an onset. */
+    internal val sharedNoteheadRightPositionsByVoice: Map<TimeCode, Map<Int, Float>> = emptyMap(),
+    /** Score-wide representative notehead column at an onset, independent of voice number. */
+    internal val sharedNoteheadRightPositions: Map<TimeCode, Float> = emptyMap(),
     /** Collision-safe continuous time projection from the same complete render generation. */
     val resolvedTimeAxis: ResolvedTimeAxis? = null,
     /** Musical-time canonicalizer from the same complete render generation. */
@@ -105,6 +119,20 @@ data class RenderResult(
      */
     fun elementsForEvent(eventId: EventId): List<RenderElement> =
         elements.filter { it.eventId == eventId }
+
+    /**
+     * Final on-screen notehead anchor for one staff voice at [time]. If that staff has no note at
+     * the onset, use the precomputed score-wide anchor for the same voice number, then the global
+     * onset anchor regardless of voice. Simultaneous staves share a rhythmic column, while accidental
+     * and dot ink can leave the slot edge to the right of every visible head (notably in grand staff).
+     * All fallbacks are assembled once with the render frame, keeping pointer-time lookup O(1).
+     */
+    internal fun noteheadRightX(time: TimeCode, staffIndex: Int, voiceNumber: Int): Float? {
+        val atTime = noteheadRightPositions[time] ?: return null
+        atTime[staffIndex to voiceNumber]?.let { return it }
+        sharedNoteheadRightPositionsByVoice[time]?.get(voiceNumber)?.let { return it }
+        return sharedNoteheadRightPositions[time]
+    }
 
     /**
      * Get elements in a measure.

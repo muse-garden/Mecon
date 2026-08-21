@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.isCtrlPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -64,6 +66,7 @@ import com.mecon.renderer.render.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.awt.Cursor
 
 internal fun shouldPublishResolvedTimeAxis(
     request: AlignedTimeAxisRequest?,
@@ -93,6 +96,8 @@ fun RenderedScoreView(
     val selection = selectionConfig.selection
     val onSelectionChange = selectionConfig.onSelectionChange
     val onSelectAnnotationEvent = selectionConfig.onSelectAnnotationEvent
+    val resizableAnnotationEventIds = selectionConfig.resizableAnnotationEventIds
+    val onResizeAnnotationRange = selectionConfig.onResizeAnnotationRange
     val marqueeSelectableTypes = selectionConfig.marqueeSelectableTypes
     val selectedAnnotationEventId = selectionConfig.selectedAnnotationEventId
     val highlightedElements = selectionConfig.highlightedElements
@@ -401,6 +406,7 @@ fun RenderedScoreView(
     var voltaDrag by dragPreviews.volta
     var navigationDrag by dragPreviews.navigation
     var curveDrag by dragPreviews.curve
+    var annotationRangeDrag by dragPreviews.annotationRange
     // Always-fresh views for the long-lived pointer coroutines (avoid stale captures).
     // Large immutable frames must use referential equality here. rememberUpdatedState's default
     // structural comparison turns a one-note late-score edit into an O(score) UI-thread pause.
@@ -659,6 +665,7 @@ fun RenderedScoreView(
     var ctrlHeld by viewport.ctrlHeld
     // The in-progress marquee rectangle in raw pointer coordinates (for drawing the overlay).
     var marqueeRect by viewport.marqueeRect
+    var annotationResizeHovered by remember { mutableStateOf(false) }
     // Always-fresh views of the selection inputs so the long-lived pointer coroutines don't act on
     // a stale snapshot captured when the gesture started.
     val currentSelection by rememberUpdatedState(selection)
@@ -858,6 +865,56 @@ fun RenderedScoreView(
                         .padding(contentPadding)
                         .clipToBounds()
                         .onSizeChanged { viewportSize = Size(it.width.toFloat(), it.height.toFloat()) }
+                        .pointerHoverIcon(
+                            PointerIcon(
+                                Cursor(
+                                    if (annotationResizeHovered || annotationRangeDrag != null) {
+                                        Cursor.E_RESIZE_CURSOR
+                                    } else {
+                                        Cursor.DEFAULT_CURSOR
+                                    }
+                                )
+                            )
+                        )
+                        .pointerInput(
+                            renderResultIdentityKey,
+                            paginatedView,
+                            resizableAnnotationEventIds,
+                        ) {
+                            val result = renderResult ?: run {
+                                annotationResizeHovered = false
+                                return@pointerInput
+                            }
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Main)
+                                    if (event.type == PointerEventType.Exit) {
+                                        annotationResizeHovered = false
+                                        continue
+                                    }
+                                    if (event.type != PointerEventType.Move) continue
+                                    val raw = event.changes.firstOrNull()?.position ?: continue
+                                    val point = rawToAbsolutePoint(
+                                        raw,
+                                        offset,
+                                        scale,
+                                        density,
+                                        paginatedView,
+                                        pages,
+                                        pageSlots,
+                                    )
+                                    val hovered = point != null && annotationRangeEndpointAt(
+                                        result = result,
+                                        point = point,
+                                        resizableEventIds = resizableAnnotationEventIds,
+                                        radius = 10f / scale,
+                                    ) != null
+                                    if (hovered != annotationResizeHovered) {
+                                        annotationResizeHovered = hovered
+                                    }
+                                }
+                            }
+                        }
                         // Scroll-wheel zoom (zoom towards pointer position)
                         .pointerInput(zoomEnabled) {
                             if (!zoomEnabled) return@pointerInput
@@ -974,11 +1031,14 @@ fun RenderedScoreView(
                                     readOnly = readOnly,
                                     noteTool = noteTool,
                                     marqueeSelectableTypes = marqueeSelectableTypes,
+                                    resizableAnnotationEventIds = resizableAnnotationEventIds,
                                 ),
                                 actions = DragGestureActions(
                                     selection = DragSelectionActions(
                                         selectionChange = currentOnSelectionChange,
                                         auditionNote = currentOnAuditionNote,
+                                        selectAnnotationEvent = onSelectAnnotationEvent,
+                                        resizeAnnotationRange = onResizeAnnotationRange,
                                     ),
                                     notes = DragNoteMovementActions(
                                         transpose = currentOnTranspose,
@@ -1024,6 +1084,8 @@ fun RenderedScoreView(
                                         setNavigation = { navigationDrag = it },
                                         getCurve = { curveDrag },
                                         setCurve = { curveDrag = it },
+                                        getAnnotationRange = { annotationRangeDrag },
+                                        setAnnotationRange = { annotationRangeDrag = it },
                                     ),
                                 ),
                             )
@@ -1132,6 +1194,7 @@ fun RenderedScoreView(
                                 selection = selection,
                                 highlightedElements = highlightedElements,
                                 selectedAnnotationEventId = selectedAnnotationEventId,
+                                resizableAnnotationEventIds = resizableAnnotationEventIds,
                                 selectedBeamSection = selectedBeamSection,
                                 selectedBeamControls = selectedBeamControls,
                                 selectedVoltaSection = selectedVoltaSection,
@@ -1163,6 +1226,7 @@ fun RenderedScoreView(
                                 navigationCommitted = navigationCommittedFrameDisplayed,
                                 curve = curveDrag,
                                 curveCommitted = curveCommittedFrameDisplayed,
+                                annotationRange = annotationRangeDrag,
                                 selectionColor = selectionFillColor,
                             ),
                             playback = RenderedScorePlaybackOverlay(

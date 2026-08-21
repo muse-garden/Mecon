@@ -8918,6 +8918,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-vln-09a"
       }
     },
@@ -8995,6 +8997,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-vln-09a"
       }
     },
@@ -9284,7 +9288,9 @@
         "slurId": "slur:ve-vln-16a->ve-vln-17a:0",
         "startEventId": "ve-vln-16a",
         "endEventId": "ve-vln-17a",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     },
     {
@@ -9363,7 +9369,9 @@
         "slurId": "slur:ve-vln-16a->ve-vln-17a:0",
         "startEventId": "ve-vln-16a",
         "endEventId": "ve-vln-17a",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     },
     {

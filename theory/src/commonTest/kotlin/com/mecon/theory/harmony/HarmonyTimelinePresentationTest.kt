@@ -59,6 +59,27 @@ class HarmonyTimelinePresentationTest {
     }
 
     @Test
+    fun scoreTimelineCanRetainTheDefaultKeyBesideAnExplicitContext() {
+        val explicit = HarmonyTonalRange(
+            id = "explicit",
+            start = Fraction.ZERO,
+            end = Fraction.ONE,
+            keys = listOf(gMajor),
+            priority = 10,
+        )
+
+        assertEquals(
+            listOf(cMajor, gMajor),
+            HarmonyTonalTimeline.keysAt(
+                time = Fraction.HALF,
+                ranges = listOf(explicit),
+                defaultKey = cMajor,
+                includeDefaultKeyWithActive = true,
+            ),
+        )
+    }
+
+    @Test
     fun resolvedContextContinuesAcrossAnActiveBaselineRange() {
         val ranges = listOf(
             HarmonyTonalRange(
@@ -103,6 +124,41 @@ class HarmonyTimelinePresentationTest {
 
         assertTrue(readings.any { it.key == cMajor && it.functionalSymbol == "I" })
         assertTrue(readings.any { it.key == gMajor && it.functionalSymbol == "IV" })
+    }
+
+    @Test
+    fun chordReadingUsesTheCatalogsCanonicalChoiceInsteadOfEverySecondaryAlias() {
+        val readings = HarmonyTimelineReadingProjector.readings(
+            Chord(PitchClass.C, ChordQuality.MAJOR),
+            listOf(cMajor),
+        )
+
+        assertEquals(listOf("I"), readings.map(HarmonyTimelineReading::functionalSymbol))
+    }
+
+    @Test
+    fun overlappingExplicitRangesExposeEveryKeyInStartOrder() {
+        val ranges = listOf(
+            HarmonyTonalRange(
+                id = "later",
+                start = Fraction.QUARTER,
+                end = Fraction.ONE,
+                keys = listOf(gMajor),
+                priority = 10,
+            ),
+            HarmonyTonalRange(
+                id = "earlier",
+                start = Fraction.ZERO,
+                end = Fraction.ONE,
+                keys = listOf(cMajor),
+                priority = 10,
+            ),
+        )
+
+        assertEquals(
+            listOf(cMajor, gMajor),
+            HarmonyTonalTimeline.keysAt(Fraction.HALF, ranges, cMajor),
+        )
     }
 
     @Test

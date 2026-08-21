@@ -6,8 +6,8 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
+import com.mecon.core.engine.StaffPitchContext
 import com.mecon.renderer.elements.KeySignatureElement
-import com.mecon.renderer.enums.toClefType
 import com.mecon.renderer.geometry.AbsolutePoint
 import com.mecon.renderer.geometry.Pixels
 import com.mecon.renderer.geometry.RelativeLine
@@ -68,16 +68,13 @@ class GhostKeySignatureComputer(private val config: RenderLayoutConfig = RenderL
             bounds = RenderHelpers.calculateLineBounds(absLine),
         )
 
-        val activeClef = staffTrack.clefChanges
-            .filter { it.onset <= onset }
-            .maxByOrNull { it.onset }
-            ?.clef ?: staffTrack.clef
+        val activeClef = StaffPitchContext.timeline(staffTrack).at(onset).clef
         val element = KeySignatureElement.create(
             time = onset,
             staffIndex = staffHit.staffIndex,
             keySignature = keySignature,
             isInitial = false,
-            clefType = activeClef.toClefType(),
+            clef = activeClef,
             staffTrackId = staffTrack.id,
         )
         val drawOffset = RelativePoint(snapRelX + StaffSpace(0.6f), centerY)

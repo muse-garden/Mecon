@@ -9,6 +9,7 @@ import com.mecon.api.primitive.TrackId
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.renderer.elements.*
 import com.mecon.renderer.enums.toClefType
+import com.mecon.core.engine.StaffPitchContext
 import com.mecon.renderer.layout.stem.StemDirectionResolver
 import com.mecon.renderer.layout.stem.StemResolutionInput
 import com.mecon.renderer.layout.stem.VoiceContext
@@ -204,20 +205,23 @@ internal class EventCollector(
             )
         }
 
-        // Track current clef for each staff (needed for key signature positioning)
-        val staffClefTypes = staffTracks.mapValues { (_, info) ->
-            info.clef.toClefType()
-        }.toMutableMap()
+        // One immutable time sequence per staff. Key signatures must query the clef in force at
+        // their own onset; advancing a mutable "current clef" over a separate pass incorrectly
+        // positioned every earlier key signature with the score's final clef.
+        val staffPitchTimelines = staffTracks.mapValues { (trackId, info) ->
+            StaffPitchContext.timeline(
+                initialClef = info.clef,
+                changes = computed.clefs
+                    .filter { it.staffTrackId == trackId && !it.isInitial }
+                    .map { it.time to it.clef },
+            )
+        }
 
-        // Collect clefs from computed score - use factory method. Advance [staffClefTypes] over ALL clefs
-        // (even out-of-window) so the key-signature pass below sees the same final clef state as a full
-        // collect; only emit the clefs whose measure is in the window.
+        // Collect clefs from computed score - use factory method.
         for (clef in computed.allClefsSorted()) {
             val staffInfo = staffTracks[clef.staffTrackId] ?: continue
             val clefType = clef.clef.toClefType()
 
-            // Update tracking
-            staffClefTypes[clef.staffTrackId] = clefType
             if (!inWindow(clef.time.measure)) continue
             val isInlineClefChange = !clef.isInitial &&
                 clef.time !in barlineTimes &&
@@ -244,9 +248,10 @@ internal class EventCollector(
         for (keySignature in computed.allKeySignaturesSorted()) {
             if (!inWindow(keySignature.time.measure)) continue
             val staffInfo = staffTracks[keySignature.staffTrackId] ?: continue
-            // Use the current clef type for this staff
-            val clefType = staffClefTypes[keySignature.staffTrackId]
-                ?: staffInfo.clef.toClefType()
+            val clef = staffPitchTimelines[keySignature.staffTrackId]
+                ?.at(keySignature.time)
+                ?.clef
+                ?: staffInfo.clef
 
             events.add(
                 KeySignatureElement.create(
@@ -254,7 +259,7 @@ internal class EventCollector(
                     staffIndex = staffInfo.staffIndex,
                     keySignature = keySignature.keySignature,
                     isInitial = keySignature.isInitial,
-                    clefType = clefType,
+                    clef = clef,
                     staffTrackId = keySignature.staffTrackId,
                     cancellationNaturals = keySignature.cancellationNaturals
                 )

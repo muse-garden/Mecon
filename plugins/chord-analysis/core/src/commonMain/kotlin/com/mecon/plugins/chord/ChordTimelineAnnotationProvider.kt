@@ -7,6 +7,7 @@ import com.mecon.api.plugin.AnnotationStaffProvider
 import com.mecon.api.plugin.AnnotationTextLine
 import com.mecon.api.plugin.PluginStaffId
 import com.mecon.api.plugin.StaffAnchor
+import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
@@ -22,11 +23,14 @@ import com.mecon.theory.harmony.HarmonyTonalRange
 import com.mecon.theory.harmony.HarmonyTonalTimeline
 import com.mecon.theory.harmony.timelineLabel
 
-/** Read-only harmony timeline mixed into the score above every rendered system. */
+/** Harmony timeline mixed into the score above every rendered system. */
 object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
     override val staffId = PluginStaffId("mecon.chord_analysis.timeline")
     override val anchor: StaffAnchor = StaffAnchor.AboveAllStaves
-    override val pluginTrackTypes: Set<String> = setOf(StorageChordEvent.TRACK_TYPE)
+    override val pluginTrackTypes: Set<String> = setOf(
+        StorageChordEvent.TRACK_TYPE,
+        StorageTonalRegionEvent.TRACK_TYPE,
+    )
 
     override fun layout(ctx: AnnotationLayoutContext): List<AnnotationElement> {
         if (ChordSymbolDisplaySettings.scoreDisplayMode != ChordAnalysisScoreDisplayMode.TIMELINE) {
@@ -37,8 +41,26 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
         val lastMeasure = score.runtime.measures.map { it.key }.maxOrNull() ?: 1
         val scoreEnd = TimeCode.of(lastMeasure + 1, Fraction.ZERO)
         val scoreEndAbsolute = timeMap.absolute(scoreEnd)
-        val tonalRanges = tonalRanges(ctx, timeMap, lastMeasure, scoreEndAbsolute)
-        val lanes = HarmonyTonalTimeline.lanes(tonalRanges, scoreEndAbsolute)
+        val tonalProjection = tonalRanges(ctx, timeMap, lastMeasure, scoreEndAbsolute)
+        val tonalRanges = tonalProjection.ranges
+        val displayRanges = displayTonalRanges(
+            tonalRanges,
+            scoreEndAbsolute,
+            tonalProjection.baselineEventIds,
+        )
+        // The score key-signature is the visual baseline and must never be displaced by an
+        // explicit region. Pack only explicit tonalities, starting below that fixed first lane.
+        val explicitRanges = displayRanges.filterNot(TimelineTonalRange::baseline)
+        val explicitLanes = HarmonyTonalTimeline.lanes(
+            explicitRanges.map(TimelineTonalRange::range),
+            scoreEndAbsolute,
+        )
+        val explicitLaneByRangeId = explicitRanges.indices.associate { index ->
+            explicitRanges[index].range.id to explicitLanes[index] + 1
+        }
+        val lanes = displayRanges.map { display ->
+            if (display.baseline) 0 else explicitLaneByRangeId.getValue(display.range.id)
+        }
         val laneCount = (lanes.maxOrNull() ?: -1) + 1
         val chordTop = laneCount * TONAL_LANE_HEIGHT
 
@@ -46,10 +68,10 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
             .sortedWith(compareBy<StorageChordEvent>(StorageChordEvent::onset, { it.id.value }))
             .groupBy(StorageChordEvent::onset)
             .map { (_, atOnset) -> atOnset.last() }
-        if (chords.isEmpty()) return emptyList()
 
         return buildList {
-            tonalRanges.forEachIndexed { index, range ->
+            displayRanges.forEachIndexed { index, display ->
+                val range = display.range
                 val end = range.end ?: scoreEndAbsolute
                 if (end <= range.start) return@forEachIndexed
                 val accent = tonalAccent(range.keys.first())
@@ -63,18 +85,18 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
                         lines = listOf(
                             AnnotationTextLine(
                                 content = FormattedText.plain(
-                                    range.keys.joinToString(" · ") { it.timelineLabel() } +
-                                        if (range.derived) " · 自动" else "",
+                                    if (display.showLabel) range.keys.single().timelineLabel() else "",
                                 ),
                                 fontSize = 9f,
-                                color = accent,
+                                color = accent.withAlpha(if (display.dimmed) 105 else 255),
                             )
                         ),
-                        fillColor = accent.withAlpha(if (range.derived) 18 else 34),
-                        strokeColor = accent.withAlpha(if (range.derived) 150 else 220),
+                        fillColor = accent.withAlpha(if (display.dimmed) 10 else 34),
+                        strokeColor = accent.withAlpha(if (display.dimmed) 70 else 220),
                         strokeWidth = 1f,
                         horizontalInset = 0.15f,
-                        interactive = false,
+                        sourceEventId = display.sourceEventId,
+                        interactive = display.sourceEventId != null,
                     )
                 )
             }
@@ -87,6 +109,7 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
                     time = timeMap.absolute(storage.onset),
                     ranges = tonalRanges,
                     defaultKey = score.runtime.getKeySignatureAt(storage.onset.measure).toModulationKey(),
+                    includeDefaultKeyWithActive = tonalProjection.baselineEventIds.isEmpty(),
                 )
                 val readings = HarmonyTimelineReadingProjector.readings(computed.chord, keys)
                 val lines = cardLines(computed, readings, keys)
@@ -115,7 +138,7 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
         timeMap: ScoreTimeMap,
         lastMeasure: Int,
         scoreEnd: Fraction,
-    ): List<HarmonyTonalRange> {
+    ): TonalProjection {
         val baselines = mutableListOf<HarmonyTonalRange>()
         var startMeasure = 1
         var key = ctx.computedScore.runtime.getKeySignatureAt(1).toModulationKey()
@@ -137,8 +160,12 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
                 }
             }
         }
-        val regions = ctx.computedScore
+        val storageRegions = ctx.computedScore
             .pluginEventsOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
+        val baselineEventIds = storageRegions
+            .filter { it.role == TonalRegionRole.SCORE_KEY_BASELINE }
+            .mapTo(linkedSetOf()) { it.id.value }
+        val regions = storageRegions
             .mapNotNull { region ->
                 // Clipping to the score end collapses regions left behind by a measure deletion.
                 HarmonyTonalRange.clippedOrNull(
@@ -150,7 +177,86 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
                     priority = 10,
                 )
             }
-        return baselines + regions
+        val controlledBaselines = regions.filter { it.id in baselineEventIds }
+        val retainedNativeBaselines = baselines.filterNot { native ->
+            controlledBaselines.any { controlled ->
+                controlled.start == native.start && controlled.keys == native.keys
+            }
+        }
+        return TonalProjection(
+            ranges = retainedNativeBaselines + regions,
+            baselineEventIds = baselineEventIds,
+        )
+    }
+
+    /**
+     * Keeps the key-signature baseline in the fixed top lane. A persisted score-key baseline owns
+     * its own endpoints; legacy scores keep using covered native pieces as resize proxies for the
+     * explicit region. Each explicit key gets one line below it, matching free practice.
+     */
+    private fun displayTonalRanges(
+        ranges: List<HarmonyTonalRange>,
+        scoreEnd: Fraction,
+        baselineEventIds: Set<String>,
+    ): List<TimelineTonalRange> {
+        val baselines = ranges.filter { it.priority == 0 || it.id in baselineEventIds }
+        val explicit = ranges.filterNot { it.priority == 0 || it.id in baselineEventIds }
+        val baselineSegments = baselines.flatMap { baseline ->
+            val baselineEnd = baseline.end ?: scoreEnd
+            val cuts = buildSet {
+                add(baseline.start)
+                add(baselineEnd)
+                explicit.forEach { region ->
+                    val regionEnd = region.end ?: scoreEnd
+                    if (region.start > baseline.start && region.start < baselineEnd) add(region.start)
+                    if (regionEnd > baseline.start && regionEnd < baselineEnd) add(regionEnd)
+                }
+            }.sorted()
+            cuts.zipWithNext().mapNotNull { (start, end) ->
+                if (end <= start) return@mapNotNull null
+                val coveringRegion = explicit
+                    .asSequence()
+                    .filter { region ->
+                        val regionEnd = region.end ?: scoreEnd
+                        region.start < end && regionEnd > start
+                    }
+                    .sortedWith(compareBy<HarmonyTonalRange>({ it.start }, { it.id }))
+                    .firstOrNull()
+                TimelineTonalRange(
+                    range = baseline.copy(
+                        id = "${baseline.id}:$start",
+                        start = start,
+                        end = end,
+                    ),
+                    // Covered baseline pieces are interactive proxies for the explicit range.
+                    // This makes the exact point where the score key turns light draggable too.
+                    sourceEventId = if (baseline.id in baselineEventIds) {
+                        EventId(baseline.id)
+                    } else {
+                        coveringRegion?.let { EventId(it.id) }
+                    },
+                    dimmed = coveringRegion != null,
+                    showLabel = start == baseline.start,
+                    baseline = true,
+                )
+            }
+        }
+        val explicitLines = explicit.flatMap { region ->
+            region.keys.mapIndexed { index, key ->
+                TimelineTonalRange(
+                    range = region.copy(
+                        id = "${region.id}:key:$index",
+                        keys = listOf(key),
+                        resolvedKey = key.takeIf { region.resolvedKey == key },
+                    ),
+                    sourceEventId = EventId(region.id),
+                    dimmed = false,
+                    showLabel = true,
+                    baseline = false,
+                )
+            }
+        }
+        return baselineSegments + explicitLines
     }
 
     private fun cardLines(
@@ -158,6 +264,32 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
         readings: List<com.mecon.theory.harmony.HarmonyTimelineReading>,
         keys: List<ModulationKey>,
     ): List<AnnotationTextLine> {
+        if (readings.size > 1) {
+            val useRelativeTones =
+                ChordSymbolDisplaySettings.style == ChordSymbolDisplayStyle.SCALE_DEGREE
+            return readings.take(MAX_CARD_LINES).map { reading ->
+                AnnotationTextLine(
+                    FormattedText.plain(
+                        buildString {
+                            val tones = if (useRelativeTones) {
+                                reading.relativeTones
+                            } else {
+                                reading.absoluteTones
+                            }
+                            append(reading.key.timelineLabel())
+                            append(": ")
+                            append(reading.functionalSymbol)
+                            if (tones.isNotEmpty()) {
+                                append(" · ")
+                                append(tones.joinToString("–"))
+                            }
+                        },
+                    ),
+                    fontSize = 9f,
+                    color = CARD_TEXT,
+                )
+            }
+        }
         if (ChordSymbolDisplaySettings.style == ChordSymbolDisplayStyle.SCALE_DEGREE && readings.isNotEmpty()) {
             return readings.take(MAX_CARD_LINES).map { reading ->
                 val prefix = if (readings.size > 1) "${reading.key.timelineLabel()}: " else ""
@@ -206,6 +338,19 @@ object ChordTimelineAnnotationProvider : AnnotationStaffProvider {
     }
 
     private fun RenderColor.withAlpha(alpha: Int): RenderColor = copy(alpha = alpha)
+
+    private data class TimelineTonalRange(
+        val range: HarmonyTonalRange,
+        val sourceEventId: EventId?,
+        val dimmed: Boolean,
+        val showLabel: Boolean,
+        val baseline: Boolean,
+    )
+
+    private data class TonalProjection(
+        val ranges: List<HarmonyTonalRange>,
+        val baselineEventIds: Set<String>,
+    )
 
     private const val TONAL_LANE_HEIGHT = 2.75f
     private const val TONAL_BAR_HEIGHT = 2.2f

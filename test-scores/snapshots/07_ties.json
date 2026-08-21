@@ -4002,6 +4002,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v1-m2-1"
       }
     },
@@ -4079,6 +4081,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v2-m3-1"
       }
     },
@@ -4156,6 +4160,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v1-m4-1"
       }
     },
@@ -4233,6 +4239,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "1",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v1-m4-1"
       }
     },
@@ -4310,6 +4318,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "2",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v1-m4-1"
       }
     },
@@ -4387,6 +4397,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v2-m4-2"
       }
     },
@@ -4464,6 +4476,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v2-m4-3"
       }
     },
@@ -4541,6 +4555,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "1",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v1-m5-1"
       }
     },
@@ -4618,6 +4634,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v2-m4-5"
       }
     },
@@ -4695,6 +4713,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-v2-m4-6"
       }
     },
@@ -4772,6 +4792,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "letRing": "true"
       }
     },
@@ -4849,6 +4871,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "letRing": "true"
       }
     },
@@ -4926,6 +4950,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "1",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "letRing": "true"
       }
     },
@@ -5003,6 +5029,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "2",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "letRing": "true"
       }
     }

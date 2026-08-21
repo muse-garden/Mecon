@@ -6,13 +6,14 @@ import com.mecon.api.primitive.Duration
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
+import com.mecon.api.primitive.DiatonicTranspose
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
 import com.mecon.api.render.RenderColor
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.runtime.tracks.RuntimeVoiceTrack
-import com.mecon.api.storage.tracks.Clef
+import com.mecon.core.engine.StaffPitchContext
 import com.mecon.core.engine.edit.NoteEditEngine
 import com.mecon.renderer.elements.FlagElement
 import com.mecon.renderer.elements.NoteElement
@@ -144,7 +145,6 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
 
         // --- Y → staff position (0.5 staff space per diatonic step; 0 = middle line) ---
         val staffPos = ((centerY.value - relPoint.y.value) / 0.5f).roundToInt()
-        val diatonicSteps = staffPos + middleLineDiatonicSteps(staffTrack.clef)
 
         // --- X → snapped onset (absolute), then to relative for geometry placement ---
         // The snap is constrained to the hovered system's vertical band: in 分行/paginated layouts
@@ -155,6 +155,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             result = result,
             runtime = runtime,
             voice = voice,
+            staffIndex = staffHit.staffIndex,
+            noteheadVoiceNumber = voiceNumber,
             targetAbsX = point.x.value,
             targetAbsY = point.y.value,
             systemY = absCenterY,
@@ -163,6 +165,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             smallNoteDuration = duration.takeIf { targetVoice != null },
         ) ?: return null
         val onset = snap.onset
+        val pitchTimeline = StaffPitchContext.timeline(staffTrack)
+        val diatonicSteps = StaffPitchContext.diatonicStepsAt(staffPos, onset, pitchTimeline)
         val snapAbsX = snap.absoluteX
         val snapRelX = transformer.toRelative(AbsolutePoint(Pixels(snapAbsX), Pixels(0f))).x
         val measureNumber = onset.measure
@@ -174,7 +178,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         // glyph — exactly how the committed note will engrave via EffectiveAccidentalComputer.
         val chromaticOffset = accidental?.offset
             ?: carriedAccidentalOffset(voice, onset, diatonicSteps)
-            ?: 0
+            ?: DiatonicTranspose.spell(runtime.getKeySignatureAt(onset.measure), diatonicSteps).chromaticOffset
         val pitch = Pitch(diatonicSteps = diatonicSteps, chromaticOffset = chromaticOffset)
 
         val onsetAbs = absoluteWholeNotes(onset, runtime)
@@ -392,6 +396,8 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         result: RenderResult,
         runtime: RuntimeScore,
         voice: RuntimeVoiceTrack,
+        staffIndex: Int,
+        noteheadVoiceNumber: Int,
         targetAbsX: Float,
         targetAbsY: Float,
         systemY: Float,
@@ -478,28 +484,31 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             return known.last().second
         }
 
+        // Ordinary score layout stores a slot's complete right edge in TimeCodePosition.x. The
+        // visible note column may be farther left after accidentals, dots, chord seconds or
+        // same-time voice collision avoidance have expanded that slot. Prefer the final notehead
+        // anchor emitted by this exact render frame. Aligned score/timeline mode deliberately uses
+        // the shared time boundary plus notationContentStartGap, so it must retain the axis X.
+        fun previewXForTimeCode(tc: TimeCode): Float? {
+            val timeX = xForTimeCode(tc) ?: return null
+            if (config.alignedTimeAxisRequest != null) return timeX
+            return result.noteheadRightX(tc, staffIndex, noteheadVoiceNumber) ?: timeX
+        }
+
         // Clicking a real notehead is an unambiguous request to edit that event (normally add a
         // chord tone). Resolve it before the preceding small-note append gap because a notehead can
         // visually extend left of its onset at the small-note span's exclusive endpoint.
-        voiceEvents
-            .asSequence()
-            .filter { !it.isRest && it.onset.measure in firstM..lastM }
-            .firstOrNull { event ->
-                result.elementsForEvent(event.id)
-                    .asSequence()
-                    .filter { it.type == RenderElementType.NOTEHEAD }
-                    .any { element ->
-                        val box = element.hitBox
-                        targetAbsX >= box.origin.x.value &&
-                            targetAbsX <= box.origin.x.value + box.width.value &&
-                            targetAbsY >= box.origin.y.value &&
-                            targetAbsY <= box.origin.y.value + box.height.value
-                    }
-            }
+        val voiceEventsById = voiceEvents.associateBy { it.id }
+        result.hitTest(AbsolutePoint(Pixels(targetAbsX), Pixels(targetAbsY))).elements
+            .asReversed()
+            .firstOrNull { it.type == RenderElementType.NOTEHEAD }
+            ?.let { result.elementById(it.elementId)?.eventId }
+            ?.let(voiceEventsById::get)
+            ?.takeIf { !it.isRest && it.onset.measure in firstM..lastM }
             ?.let { event ->
                 return SnapTarget(
                     onset = event.onset,
-                    absoluteX = xForTimeCode(event.onset) ?: targetAbsX,
+                    absoluteX = previewXForTimeCode(event.onset) ?: targetAbsX,
                 )
             }
 
@@ -552,7 +561,7 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
             }
 
         return candidates
-            .mapNotNull { tc -> xForTimeCode(tc)?.let { tc to it } }
+            .mapNotNull { tc -> previewXForTimeCode(tc)?.let { tc to it } }
             .minByOrNull { abs(it.second - targetAbsX) }
             ?.let { (onset, x) -> SnapTarget(onset, x) }
     }
@@ -610,14 +619,5 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         private const val MIN_APPEND_PREVIEW_GAP_PX = 8f
         /** Synthetic id for the (uncommitted) ghost note; never registered in any computed score. */
         private val GHOST_EVENT_ID = EventId("__ghost__")
-
-        /** Diatonic step of the middle staff line per clef (inverse of core's StaffPositionComputer). */
-        private fun middleLineDiatonicSteps(clef: Clef): Int = when (clef) {
-            Clef.TREBLE -> 6   // B4
-            Clef.BASS -> -6    // D3
-            Clef.ALTO -> 0     // C4
-            Clef.TENOR -> -2   // A3
-            Clef.PERCUSSION -> 0
-        }
     }
 }

@@ -50,6 +50,8 @@ data class RenderedScoreSelectionConfig(
     val selection: Set<EventSection> = emptySet(),
     val onSelectionChange: (Set<EventSection>) -> Unit = {},
     val onSelectAnnotationEvent: (EventId?) -> Unit = {},
+    val resizableAnnotationEventIds: Set<EventId> = emptySet(),
+    val onResizeAnnotationRange: (EventId, AnnotationRangeEndpoint, TimeCode) -> Unit = { _, _, _ -> },
     val marqueeSelectableTypes: Set<RenderElementType> = DEFAULT_MARQUEE_TYPES,
     val selectedAnnotationEventId: EventId? = null,
     val highlightedElements: Set<RenderElementId> = emptySet(),
@@ -74,6 +76,8 @@ data class RenderedScoreSelectionConfig(
         )
     }
 }
+
+enum class AnnotationRangeEndpoint { START, END }
 
 data class RenderedScoreNoteheadBackgroundGroup(
     val notes: Set<NoteRef>,

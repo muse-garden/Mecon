@@ -1,12 +1,19 @@
 package com.mecon.renderer.render.edit
 
+import com.mecon.api.primitive.Accidental
 import com.mecon.api.primitive.Duration
+import com.mecon.api.primitive.DurationBase
 import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.KeySignature
+import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeSignature
 import com.mecon.api.runtime.RuntimeScore
 import com.mecon.api.runtime.orderedStaffs
+import com.mecon.api.storage.Articulation
+import com.mecon.api.storage.StaffLayoutPreset
 import com.mecon.api.storage.StorageScore
+import com.mecon.api.storage.tracks.Clef
+import com.mecon.api.storage.tracks.StorageClefChange
 import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.computeScoreIncremental
 import com.mecon.core.serializer.ScoreSerializer
@@ -28,6 +35,311 @@ class GhostNoteComputerTest {
 
     private fun emptyScore(): RuntimeScore =
         RuntimeScore.fromStorage(StorageScore.create(StorageScore.CreationOptions("T", TimeSignature.COMMON, KeySignature.C_MAJOR)))
+
+    private fun noteheadRight(element: com.mecon.renderer.render.RenderElement): Float =
+        element.hitBox.bottomRight.x.value
+
+    private fun ghostNoteheadRight(ghost: GhostNote): Float = ghost.commands
+        .filterIsInstance<DrawGlyph>()
+        .first { it.glyph.name.startsWith("notehead") }
+        .bounds.bottomRight.x.value
+
+    @Test
+    fun ghostAlignsToRenderedNoteheadWithAccidentalDotAndArticulation() {
+        val font = loadFont() ?: return
+        val initial = emptyScore()
+        val staff = initial.orderedStaffs().single()
+        val voice = staff.voiceTracks.single()
+        val onset = com.mecon.api.primitive.TimeCode.of(1, com.mecon.api.primitive.Fraction.ZERO)
+        val dottedEighth = Duration(DurationBase.EIGHTH, dots = 1)
+        val inserted = assertNotNull(
+            com.mecon.core.engine.edit.NoteEditEngine.insert(
+                initial,
+                com.mecon.core.engine.edit.NoteEditEngine.Insertion(
+                    voiceTrackId = voice.id,
+                    staffTrackId = staff.id,
+                    start = onset,
+                    duration = dottedEighth,
+                    pitch = Pitch(diatonicSteps = 6, chromaticOffset = 1),
+                    articulations = listOf(Articulation.STACCATO),
+                ),
+            ),
+        )
+        val eventId = assertNotNull(inserted.insertedEventId)
+
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(inserted.score)
+            val rendered = result.elementsForEvent(eventId)
+            assertTrue(rendered.any { it.type == RenderElementType.ACCIDENTAL })
+            assertTrue(rendered.any { it.type == RenderElementType.DOT })
+            assertTrue(rendered.any { it.type == RenderElementType.ARTICULATION })
+            val notehead = rendered.single { it.type == RenderElementType.NOTEHEAD }
+            val slotRight = assertNotNull(result.timeCodePositions[onset]).x
+            assertTrue(
+                slotRight > noteheadRight(notehead),
+                "fixture must put the slot edge to the right of the rendered notehead",
+            )
+
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = inserted.score,
+                    // Hover the time-slot edge, which lies to the right of the visible head in
+                    // this fixture. The snapped preview must still return to the rendered column.
+                    point = com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(slotRight),
+                        notehead.hitBox.center.y,
+                    ),
+                    duration = dottedEighth,
+                    accidental = Accidental.SHARP,
+                    restMode = false,
+                ),
+            )
+
+            assertEquals(onset, ghost.onset)
+            assertEquals(
+                noteheadRight(notehead),
+                ghostNoteheadRight(ghost),
+                absoluteTolerance = 0.01f,
+                message = "ghost must follow the final notehead column, not accidental/dot slot width",
+            )
+        }
+    }
+
+    @Test
+    fun ghostUsesSelectedVoiceNoteColumnAfterSameTimeCollisionAvoidance() {
+        val font = loadFont() ?: return
+        val initial = emptyScore()
+        val staff = initial.orderedStaffs().single()
+        val voice1 = staff.voiceTracks.single()
+        val onset = com.mecon.api.primitive.TimeCode.of(1, com.mecon.api.primitive.Fraction.ZERO)
+        val upper = assertNotNull(
+            com.mecon.core.engine.edit.NoteEditEngine.insert(
+                initial,
+                com.mecon.core.engine.edit.NoteEditEngine.Insertion(
+                    voiceTrackId = voice1.id,
+                    staffTrackId = staff.id,
+                    voiceNumber = 1,
+                    start = onset,
+                    duration = Duration.QUARTER,
+                    pitch = Pitch.D4,
+                ),
+            ),
+        )
+        val lower = assertNotNull(
+            com.mecon.core.engine.edit.NoteEditEngine.insert(
+                upper.score,
+                com.mecon.core.engine.edit.NoteEditEngine.Insertion(
+                    voiceTrackId = voice1.id,
+                    staffTrackId = staff.id,
+                    voiceNumber = 2,
+                    start = onset,
+                    duration = Duration.QUARTER,
+                    pitch = Pitch.C4,
+                ),
+            ),
+        )
+        val upperId = assertNotNull(upper.insertedEventId)
+        val lowerId = assertNotNull(lower.insertedEventId)
+
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(lower.score)
+            val upperHead = result.elementsForEvent(upperId).single { it.type == RenderElementType.NOTEHEAD }
+            val lowerHead = result.elementsForEvent(lowerId).single { it.type == RenderElementType.NOTEHEAD }
+            assertTrue(
+                kotlin.math.abs(noteheadRight(upperHead) - noteheadRight(lowerHead)) > 0.01f,
+                "fixture must trigger separate note columns for the two voices",
+            )
+
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = lower.score,
+                    point = lowerHead.hitBox.center,
+                    duration = Duration.QUARTER,
+                    accidental = null,
+                    restMode = false,
+                    voiceNumber = 2,
+                ),
+            )
+
+            assertEquals(onset, ghost.onset)
+            assertEquals(
+                noteheadRight(lowerHead),
+                ghostNoteheadRight(ghost),
+                absoluteTolerance = 0.01f,
+                message = "voice-2 ghost must use voice 2's collision-resolved note column",
+            )
+        }
+    }
+
+    @Test
+    fun emptyLeftHandGhostBorrowsRightHandAccidentalNoteColumn() {
+        val font = loadFont() ?: return
+        val initial = RuntimeScore.fromStorage(
+            StorageScore.create(
+                StorageScore.CreationOptions(
+                    title = "Grand staff ghost",
+                    layout = StaffLayoutPreset.PIANO_GRAND,
+                ),
+            ),
+        )
+        val staffs = initial.orderedStaffs()
+        val rightHand = staffs[0]
+        val leftHand = staffs[1]
+        val onset = com.mecon.api.primitive.TimeCode.of(1, com.mecon.api.primitive.Fraction.ZERO)
+        val inserted = assertNotNull(
+            com.mecon.core.engine.edit.NoteEditEngine.insert(
+                initial,
+                com.mecon.core.engine.edit.NoteEditEngine.Insertion(
+                    voiceTrackId = rightHand.voiceTracks.single().id,
+                    staffTrackId = rightHand.id,
+                    // Deliberately place the only visible right-hand note in voice 2. The left-hand
+                    // voice-1 ghost therefore exercises the score-wide, voice-independent fallback.
+                    voiceNumber = 2,
+                    start = onset,
+                    duration = Duration.QUARTER,
+                    pitch = Pitch(diatonicSteps = 6, chromaticOffset = 1),
+                ),
+            ),
+        )
+        val rightEventId = assertNotNull(inserted.insertedEventId)
+
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(inserted.score)
+            val rightHead = result.elementsForEvent(rightEventId)
+                .single { it.type == RenderElementType.NOTEHEAD }
+            val slotRight = assertNotNull(result.timeCodePositions[onset]).x
+            assertEquals(
+                noteheadRight(rightHead),
+                slotRight,
+                absoluteTolerance = 0.01f,
+                message = "a left-side accidental must not leave blank space at the slot's right edge",
+            )
+            assertNull(
+                result.noteheadRightPositions[onset]?.get(1 to 1),
+                "left hand must have no local notehead anchor in this fixture",
+            )
+            assertNull(
+                result.sharedNoteheadRightPositionsByVoice[onset]?.get(1),
+                "no staff may provide a voice-1 notehead; this fixture must exercise global fallback",
+            )
+            assertEquals(
+                noteheadRight(rightHead),
+                assertNotNull(result.sharedNoteheadRightPositions[onset]),
+                absoluteTolerance = 0.01f,
+            )
+            val leftStaffElement = result.elements.first {
+                it.type == RenderElementType.STAFF && it.staffIndex == 1
+            }
+
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = inserted.score,
+                    point = com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(slotRight),
+                        leftStaffElement.hitBox.center.y,
+                    ),
+                    duration = Duration.QUARTER,
+                    accidental = null,
+                    restMode = false,
+                    voiceNumber = 1,
+                ),
+            )
+
+            assertEquals(leftHand.id, ghost.staffTrackId)
+            assertEquals(onset, ghost.onset)
+            assertEquals(
+                noteheadRight(rightHead),
+                ghostNoteheadRight(ghost),
+                absoluteTolerance = 0.01f,
+                message = "empty left-hand ghost must align to the right-hand note column",
+            )
+
+            val missingVoiceGhost = assertNotNull(
+                engine.computeGhost(
+                    result = result,
+                    runtime = inserted.score,
+                    point = com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(slotRight),
+                        leftStaffElement.hitBox.center.y,
+                    ),
+                    duration = Duration.QUARTER,
+                    accidental = null,
+                    restMode = false,
+                    voiceNumber = 2,
+                ),
+            )
+            assertEquals(2, missingVoiceGhost.voiceNumber)
+            assertEquals(
+                noteheadRight(rightHead),
+                ghostNoteheadRight(missingVoiceGhost),
+                absoluteTolerance = 0.01f,
+                message = "a not-yet-created left-hand voice must also use the shared note column",
+            )
+        }
+    }
+
+    @Test
+    fun ghostUsesKeySignatureWhenNoAccidentalIsSelected() {
+        val font = loadFont() ?: return
+        val runtime = RuntimeScore.fromStorage(
+            StorageScore.create(StorageScore.CreationOptions("F major", TimeSignature.COMMON, KeySignature.F_MAJOR)),
+        )
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(runtime)
+            val staff = result.elements.first { it.type == RenderElementType.STAFF }
+            val ghost = assertNotNull(
+                engine.computeGhost(result, runtime, staff.hitBox.center, Duration.QUARTER, null, false),
+            )
+
+            assertEquals(6, ghost.pitch.diatonicSteps, "treble middle line is B4")
+            assertEquals(-1, ghost.pitch.chromaticOffset, "F major defaults B to B-flat")
+        }
+    }
+
+    @Test
+    fun ghostUsesClefTimelineAtSnappedOnset() {
+        val font = loadFont() ?: return
+        val storage = StorageScore.create(StorageScore.CreationOptions("Clef", measureCount = 2))
+        val staffId = storage.staffTracks.keys.single()
+        val bassAtM2 = com.mecon.api.primitive.TimeCode.of(2, com.mecon.api.primitive.Fraction.ZERO)
+        val changed = storage.copy(
+            staffTracks = storage.staffTracks + (
+                staffId to storage.staffTracks.getValue(staffId).copy(
+                    clefChanges = listOf(StorageClefChange(bassAtM2, Clef.BASS)),
+                )
+            ),
+        )
+        val runtime = RuntimeScore.fromStorage(changed)
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(runtime)
+            val x = assertNotNull(result.timeCodePositions[bassAtM2]?.x)
+            val staff = result.elements.first { it.type == RenderElementType.STAFF }
+            val ghost = assertNotNull(
+                engine.computeGhost(
+                    result,
+                    runtime,
+                    com.mecon.renderer.geometry.AbsolutePoint(
+                        com.mecon.renderer.geometry.Pixels(x),
+                        staff.hitBox.center.y,
+                    ),
+                    Duration.QUARTER,
+                    null,
+                    false,
+                ),
+            )
+
+            assertEquals(bassAtM2, ghost.onset)
+            assertEquals(-6, ghost.pitch.diatonicSteps, "bass middle line is D3")
+        }
+    }
 
     /** An empty (rest-only) measure is padded to a usable width only when [padEmptyMeasures] is on. */
     @Test

@@ -3,6 +3,7 @@ package com.mecon.renderer.elements
 import com.mecon.api.interaction.VoiceSlurSection
 import com.mecon.api.render.RenderColor
 import com.mecon.renderer.geometry.SlurCurveBuilder
+import com.mecon.renderer.geometry.createFilledPathHitShape
 import com.mecon.renderer.layout.RenderLayoutConfig
 import com.mecon.renderer.layout.SlurLayout
 import com.mecon.renderer.render.DrawPath
@@ -56,6 +57,8 @@ data class SlurElement(
 
         val absolutePath = context.transformer.toAbsolute(relativePath)
         val absoluteBounds = context.transformer.toAbsolute(relativeBounds)
+        val hitTolerance = SlurCurveBuilder.DEFAULT_HIT_TOLERANCE
+        val hitShape = relativePath.createFilledPathHitShape(hitTolerance)
 
         val command = DrawPath(
             path = absolutePath,
@@ -75,6 +78,8 @@ data class SlurElement(
             .metadata("startEventId", slurLayout.startEventId.value)
             .metadata("endEventId", slurLayout.endEventId.value)
             .metadata("nestingLevel", slurLayout.nestingLevel.toString())
+            .metadata("hitShape", "filledPath")
+            .metadata("hitTolerancePx", context.transformer.toPixels(hitTolerance).value.toString())
             .build()
 
         val startEvent = context.computedScore.getComputedEvent(slurLayout.startEventId)
@@ -91,7 +96,11 @@ data class SlurElement(
         return ElementRenderOutput(
             renderElements = listOf(element),
             sectionRegistrations = sections,
-            hitAreas = listOf(ElementHitArea(elemId, relativeBounds))
+            hitAreas = listOf(ElementHitArea(
+                elementId = elemId,
+                relativeHitBox = hitShape.boundingBox,
+                hitShape = hitShape,
+            ))
         )
     }
 }

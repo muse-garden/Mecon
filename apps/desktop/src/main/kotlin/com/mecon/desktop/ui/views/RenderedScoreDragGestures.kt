@@ -56,6 +56,8 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
     val marqueeSelectableTypes = request.mode.marqueeSelectableTypes
     val currentOnSelectionChange = request.actions.selection.selectionChange
     val currentOnAuditionNote = request.actions.selection.auditionNote
+    val currentOnSelectAnnotationEvent = request.actions.selection.selectAnnotationEvent
+    val currentOnResizeAnnotationRange = request.actions.selection.resizeAnnotationRange
     val currentOnTranspose = request.actions.notes.transpose
     val currentOnMoveRest = request.actions.notes.moveRest
     val currentOnMoveBeam = request.actions.notes.moveBeam
@@ -105,6 +107,10 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
         read = { request.state.previews.curve },
         write = { request.state.previews.curve = it },
     )
+    var annotationRangeDrag by MutableLiveValue(
+        read = { request.state.previews.annotationRange },
+        write = { request.state.previews.annotationRange = it },
+    )
     return this
                         //   Marquee (no Ctrl) → marquee rubber-band, or transpose a selected note.
                         //   Marquee + Ctrl    → pan, or transpose when the drag grabs a note.
@@ -128,6 +134,7 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
         var tieCurveStart: Pair<EventId, com.mecon.api.storage.TieGeometry>? = null
         var slurCurveStart: Pair<EventId, com.mecon.api.storage.SlurGeometry>? = null
         var curveApex = 0f
+        var annotationEndpointHit: AnnotationRangeEndpointHit? = null
         detectDragGestures(
             onDragStart = { raw ->
                 startRaw = raw; lastRaw = raw
@@ -458,10 +465,30 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
                     mode = DragMode.CURVE
                     return true
                 }
+                fun startAnnotationRange(): Boolean {
+                    if (readOnly || abs == null) return false
+                    val endpoint = annotationRangeEndpointAt(
+                        result = result,
+                        point = abs,
+                        resizableEventIds = request.mode.resizableAnnotationEventIds,
+                        radius = 10f / scale,
+                    ) ?: return false
+                    annotationEndpointHit = endpoint
+                    annotationRangeDrag = AnnotationRangeDragState(
+                        eventId = endpoint.eventId,
+                        endpoint = endpoint.endpoint,
+                        originalPoint = endpoint.point,
+                        currentPoint = endpoint.point,
+                        sourceSystemIndex = endpoint.systemIndex,
+                    )
+                    currentOnSelectAnnotationEvent(endpoint.eventId)
+                    mode = DragMode.ANNOTATION_RANGE
+                    return true
+                }
                 if (marqueeMode) {
                     // Grabbing an already-selected note/rest moves the whole selection;
                     // anything else rubber-bands.
-                    if (startCurve() || startNavigation() || startVolta()) {
+                    if (startAnnotationRange() || startCurve() || startNavigation() || startVolta()) {
                         // handled
                     } else if (startAttachment()) {
                         // handled
@@ -478,9 +505,9 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
                     // Direct note/rest manipulation is independent of viewport panning. Embedded
                     // editors commonly disable local pan because a sibling timeline owns the shared
                     // horizontal offset, but their score contents must remain draggable.
-                    val nonNoteDragStarted = panEnabled &&
-                        (startCurve() || startNavigation() || startVolta() ||
-                            startAttachment() || startBeam())
+                    val nonNoteDragStarted = startAnnotationRange() ||
+                        (panEnabled && (startCurve() || startNavigation() || startVolta() ||
+                            startAttachment() || startBeam()))
                     if (!nonNoteDragStarted && (movable || restGrab)) {
                         // Single grab outside the selection: select just it.
                         if (picked !in currentSelection && !shiftHeld) {
@@ -501,6 +528,8 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
                 voltaDrag = null
                 navigationDrag = null
                 curveDrag = null
+                annotationRangeDrag = null
+                annotationEndpointHit = null
                 mode = DragMode.NONE
             },
             onDragEnd = {
@@ -665,6 +694,15 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
                                 navigationDrag = null
                             }
                         }
+                    }
+                    DragMode.ANNOTATION_RANGE -> {
+                        val endpoint = annotationEndpointHit
+                        val time = annotationRangeDrag?.candidateTime
+                        if (endpoint != null && time != null) {
+                            currentOnResizeAnnotationRange(endpoint.eventId, endpoint.endpoint, time)
+                        }
+                        annotationRangeDrag = null
+                        annotationEndpointHit = null
                     }
                     DragMode.MARQUEE -> {
                         val a = toDesign(startRaw)
@@ -1034,6 +1072,63 @@ internal fun Modifier.scoreDragGestures(request: DragGestureRequest): Modifier {
                             targetAnchorY = nearestSystem?.let {
                                 navigationSystemAnchorY(result, it)
                             } ?: drag.targetAnchorY,
+                        )
+                    }
+                    change.consume()
+                }
+                DragMode.ANNOTATION_RANGE -> {
+                    val abs = rawToAbsolutePoint(
+                        change.position,
+                        offset,
+                        scale,
+                        density,
+                        paginatedView,
+                        pages,
+                        pageSlots,
+                    )
+                    if (abs != null) {
+                        val nearestSystem = nearestDisplayedSystemByStaffCore(
+                            result,
+                            change.position,
+                            offset,
+                            scale,
+                            density,
+                            paginatedView,
+                            pages,
+                            pageSlots,
+                        )
+                        val drag = annotationRangeDrag
+                        val sourceDesignY = drag?.originalPoint?.let { point ->
+                            if (paginatedView) {
+                                globalToDesign(
+                                    point.x.value,
+                                    point.y.value,
+                                    pages,
+                                    pageSlots,
+                                )?.y
+                            } else point.y.value
+                        }
+                        val sourceRawY = sourceDesignY?.let { it * density * scale + offset.y }
+                        val targetSystem = drag?.let {
+                            annotationDragTargetSystem(
+                                sourceSystemIndex = it.sourceSystemIndex,
+                                sourceRawY = sourceRawY,
+                                pointerRawY = change.position.y,
+                                nearestSystemIndex = nearestSystem,
+                                sourceRowLockPx = ANNOTATION_SOURCE_ROW_LOCK_DP * density * scale,
+                            )
+                        } ?: nearestSystem
+                        val snap = resolveAnnotationBoundarySnap(
+                            result,
+                            abs.x.value,
+                            targetSystem,
+                        )
+                        annotationRangeDrag = annotationRangeDrag?.copy(
+                            currentPoint = AbsolutePoint(
+                                Pixels(snap?.absoluteX ?: abs.x.value),
+                                abs.y,
+                            ),
+                            candidateTime = snap?.time,
                         )
                     }
                     change.consume()

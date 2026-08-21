@@ -117,7 +117,7 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 
 **为什么右对齐？**
 - 多声部、多 staff 在同一 `TimeCode` 上对齐时，"音符头"的右边缘是稳定参考（左边缘会因和弦展开、临时记号宽度而变）
-- 比例间距以右端为锚，避免和弦右侧的临时记号挤到下一槽
+- 比例间距以右端为锚；附点等右侧 ink 扩大 `minimumWidth`，临时记号等左侧 ink 只扩大 `leftOverhang`
 
 ## 5. 比例布局算法
 
@@ -129,6 +129,7 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 - **跨声部合并**：多个声部对同一 `TimeCode` 的间距取最大值
 - **碰撞检测**：当左右两个槽的元素水平相撞，加入额外补偿
 - **装饰音排除**：装饰音时间槽（`grace != null`）不参与比例计算；主音通过 `NoteElement.extraLeftOverhang` 向算法声明所需左侧空间（见 [grace-notes.md §4](grace-notes.md)）
+- **左右 extent 分治**：`NoteElement.minimumWidth` 只表示共享符头原点到最右 ink 的距离；临时记号列、琶音线和装饰音簇统一走 `leftOverhang`。求解器只在该音符**之前**补足左伸量，槽右端仍贴住最右 ink，避免同一临时记号宽度又变成音符后的空白。
 - **注释右侧预留（trailing，仅记号间）**：注释间距参与者（和弦记号，左对齐、向右延展）作为 `VoiceId.Annotation` 语音加入求解，`VoiceState.lastTrailing` 记录其右侧预留 `labelWidth+gap`。`annotationTrailingFloor(time)` **只在该时刻正好有下一枚记号**时，才把该槽左端下界抬到 `上一记号右端 + labelWidth + gap`——即只有**相邻两枚记号**过近才把音符拉开；单独一枚记号对其后的普通音符不预留（记号在自己的带上自由 overhang）。跨小节由 `annotationCarry`（`AnnotationCarry(lastX, trailing)`）把上一小节末记号带入下一小节求解 seed，保证跨小节线的相邻记号也不相叠。判据只保证「记号不越过下一记号锚点」（宽度变化像临时记号一样可能在分页模式触发 reflow）
 
 ### 5.1 同槽多声部避让
@@ -136,7 +137,10 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 `MultiVoiceSlotCollisionResolver` 是 `UnifiedHorizontalSlotComputer` 的子模块；它在
 `assignRelativeXWithinSlot` 内运行，不在比例排版完成后扫描整小节。处理单位是
 `TimeCode × staff`，结果直接写入各 `NoteElement.relativeX`，并用
-`multiVoiceWidthExtension` 把展开后的簇宽反馈给比例间距。
+`multiVoiceWidthExtension` 反馈簇的右侧展开量、用 `multiVoiceLeftOverhang` 反馈完整簇的左侧
+临时记号 extent。右移声部的临时记号坐标已经扣除了该声部 offset，其局部 `leftExtent` 会比
+整簇真实左边界更负；比例排版必须以 `multiVoiceLeftOverhang` **替换**该局部值，不能再取两者最大值，
+否则会把声部横移距离重复留在整簇左侧。
 
 - 符头 / 附点用 Bravura 实际 bounds 建立横向差分约束。声部按
   「下行符杆 → 较低音域 → 上行符杆 → 较高音域」形成稳定的左右次序；对该有向无环约束图
@@ -169,6 +173,11 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 - 计算符杠分组（这是 Computed 层职责）
 - 推导小节边界
 
+谱号相关的纵向换算统一由 core 的 `StaffPitchContext.Timeline` 提供。每个事件记录 onset、谱号和
+“中央 C 的谱表位置”，音符命中、ghost、Computed 音高与调号排版都按自己的时间点查询该序列；
+平台不得拿谱表初始谱号直接反推音高。调号纵坐标由 `KeySignaturePositionComputer` 把升/降号顺序中的
+音名投影到当前谱号的传统七级音域，再把向上的谱表位置转换为向下的画布 Y，不维护最终坐标表。
+
 详见根 `AGENTS.md` 中"Renderer 与 Computed 层职责划分"。
 
 ## 7. 分行 / 分页（System Break & Pagination）
@@ -186,6 +195,7 @@ TimeSlot(x)  ─┐                   x = 时间槽的"右端"
 3. **逐行纵向堆叠 + 分页**（`SystemVerticalLayoutComputer`，分行决策**之后**）：每行的谱表纵向范围取**本行所含小节**的 per-measure 范围（`preBreakMeasureExtents`，按 staff 取 max）+ 本行附件占位，独立 `stackStaves` → 行高随本行内容变化；按**各行自身行高**累加判溢出，超过 `pageContentHeight` 或命中 `forcedPageBreaks` 即翻页。附件占位在 `applyAttachmentExtents` 中折入并可能重新分页。（旧实现用全局统一行高整体平移，已废弃。）
 4. **行内拉伸**：按 slot.x（簇右端）线性映射填满行宽（末行不拉伸）；回写 `slot.x`，并给每个 `UnifiedTimeSlot` 打 `systemIndex`。**左锚**取每行最左簇的右端 `lo`：首行 `lo` 原位钉住（保持行内起始谱号 / 初始小节线与谱线起点对齐，不被拉伸），其余行从 `systemStartX + headerWidth` 起算。
 5. **行首头**：非首行按活跃谱号 / 调号重排 `LineStartHeader`，并预留与首行等量的 lead-in（初始小节线宽 + `spaceAfterBarline`），使每行谱号相对谱线起点的偏移一致；下一行起始小节线被抑制（小节边界由上一行右端 `closingBarline` 表示）。
+   首槽钉扎的 `headInset` 取 `relativeX - leftOverhang` 的最左值，不只取元素原点；因此首音临时记号、装饰音簇会整体排在重述调号及其 `spaceAfterKeySignature` 之后。
    - **行末警示谱号**：若下一行首小节恰好落有变谱号，本行右端重排一枚小号 `LineEndClef`（警示 / cautionary），并把该变谱号的行内 body clef 记入 `suppressedClefTimes` 由渲染端跳过——变谱号在分行处只画一次（下一行的行首头），不会重复。警示谱号的横向宽度在分行**之后**于对齐阶段预留（`lineParamsFor` 的 `contentEndInset`，内容拉伸止于预留条左侧，警示谱号 + `closingBarline` 占用预留条），不参与贪心分行本身。
 6. **行首竖线**：每个系统左端画一条 system-start 竖线（`SystemRenderer.renderSystemStartLine`，跨该系统谱表上下缘）——非小节线的装饰性起始线；首行由行内初始小节线代替，故仅对 `systemIndex > 0` 绘制。
 7. **最终叠加层（不占位）**：断行与分页全部完成后，`UnifiedLayoutResult.postLayoutMarkers`

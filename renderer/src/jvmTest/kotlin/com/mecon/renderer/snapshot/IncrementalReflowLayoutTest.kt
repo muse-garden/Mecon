@@ -65,37 +65,43 @@ class IncrementalReflowLayoutTest {
         return addPitchEvent(ptId(), pe).addVoiceEvent(vtId(), ve)
     }
 
-    private fun RuntimeScore.editPitch(tag: String, newPitch: Pitch): RuntimeScore {
+    private fun RuntimeScore.editPitches(tag: String, newPitches: List<Pitch>): RuntimeScore {
         val ve = voiceTracks.getValue(vtId()).events.toList().first { it.id == EventId(tag) }
-        val newPe = ve.pitchEvent.copy(pitches = listOf(newPitch))
+        val newPe = ve.pitchEvent.copy(pitches = newPitches)
         return removeVoiceEvent(vtId(), EventId(tag))
             .removePitchEvent(ptId(), ve.pitchEvent.id)
             .addPitchEvent(ptId(), newPe)
             .addVoiceEvent(vtId(), ve.copy(pitchEvent = newPe))
     }
 
-    // Eight eighth notes per measure on eight distinct staff steps (C4..C5). Sharping a whole measure adds
-    // eight distinct accidentals — a decisive width bump (well over one measure's slack) that reliably
-    // moves a line break, independent of exact font metrics.
-    private val NAT = (0..7).map { Pitch(it, 0) }
-    private val SHARP = (0..7).map { Pitch(it, 1) }
+    private fun RuntimeScore.editPitch(tag: String, newPitch: Pitch): RuntimeScore =
+        editPitches(tag, listOf(newPitch))
 
-    private fun buildBase(measures: Int, sharpMeasures: Set<Int> = emptySet()): RuntimeScore {
+    // Eight eighth notes per measure on eight distinct staff steps (C4..C5). The widened form turns each
+    // into a compact four-note chromatic cluster. Its collision-avoiding accidental columns make a
+    // decisive width bump even though left-side accidental ink no longer leaves trailing slot padding.
+    private val NAT = (0..7).map { Pitch(it, 0) }
+    private val SHARP_CLUSTERS = (0..7).map { root ->
+        (0..3).map { offset -> Pitch(root + offset, 1) }
+    }
+
+    private fun buildBase(measures: Int): RuntimeScore {
         var s = emptyScore()
         for (m in 1..measures) {
-            val pitches = if (m in sharpMeasures) SHARP else NAT
             for (k in 0..7) {
-                s = s.addNote("n_${m}_$k", TimeCode.of(m, Fraction(k, 8)), pitches[k], Duration.EIGHTH)
+                s = s.addNote("n_${m}_$k", TimeCode.of(m, Fraction(k, 8)), NAT[k], Duration.EIGHTH)
             }
         }
         return s
     }
 
-    /** Sharpen (or naturalize) all eight notes of measure [m]. */
+    /** Expand all eight notes of [m] into sharp clusters, or restore their natural single pitches. */
     private fun RuntimeScore.setMeasureSharp(m: Int, sharp: Boolean): RuntimeScore {
         var s = this
-        val pitches = if (sharp) SHARP else NAT
-        for (k in 0..7) s = s.editPitch("n_${m}_$k", pitches[k])
+        for (k in 0..7) {
+            val pitches = if (sharp) SHARP_CLUSTERS[k] else listOf(NAT[k])
+            s = s.editPitches("n_${m}_$k", pitches)
+        }
         return s
     }
 

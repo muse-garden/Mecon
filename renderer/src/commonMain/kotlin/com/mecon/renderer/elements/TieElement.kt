@@ -3,6 +3,7 @@ package com.mecon.renderer.elements
 import com.mecon.api.interaction.VoiceTieSection
 import com.mecon.api.render.RenderColor
 import com.mecon.renderer.geometry.SlurCurveBuilder
+import com.mecon.renderer.geometry.createFilledPathHitShape
 import com.mecon.renderer.layout.RenderLayoutConfig
 import com.mecon.renderer.layout.TieLayout
 import com.mecon.renderer.render.DrawPath
@@ -55,6 +56,8 @@ data class TieElement(
 
         val absolutePath = context.transformer.toAbsolute(relativePath)
         val absoluteBounds = context.transformer.toAbsolute(relativeBounds)
+        val hitTolerance = SlurCurveBuilder.DEFAULT_HIT_TOLERANCE
+        val hitShape = relativePath.createFilledPathHitShape(hitTolerance)
 
         val command = DrawPath(
             path = absolutePath,
@@ -71,6 +74,8 @@ data class TieElement(
             .measureNumber(tieLayout.measureNumber)
             .staffIndex(tieLayout.staffIndex)
             .metadata("sourcePitchIndex", tieLayout.sourcePitchIndex.toString())
+            .metadata("hitShape", "filledPath")
+            .metadata("hitTolerancePx", context.transformer.toPixels(hitTolerance).value.toString())
         tieLayout.targetEventId?.let { builder.metadata("targetEventId", it.value) }
         if (tieLayout.isLetRing) {
             builder.metadata("letRing", "true")
@@ -92,7 +97,11 @@ data class TieElement(
         return ElementRenderOutput(
             renderElements = listOf(element),
             sectionRegistrations = sections,
-            hitAreas = listOf(ElementHitArea(elemId, relativeBounds))
+            hitAreas = listOf(ElementHitArea(
+                elementId = elemId,
+                relativeHitBox = hitShape.boundingBox,
+                hitShape = hitShape,
+            ))
         )
     }
 }

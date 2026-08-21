@@ -3,10 +3,12 @@ package com.mecon.renderer.elements
 import com.mecon.api.computed.CancellationNatural
 import com.mecon.api.computed.ComputedKeySignature
 import com.mecon.api.primitive.KeySignature
-import com.mecon.api.primitive.NoteName
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.primitive.TrackId
+import com.mecon.api.storage.tracks.Clef
+import com.mecon.core.engine.KeySignaturePositionComputer
 import com.mecon.renderer.enums.ClefType
+import com.mecon.renderer.enums.toClefType
 import com.mecon.renderer.geometry.DrawableGeometry
 import com.mecon.renderer.geometry.GlyphGeometry
 import com.mecon.renderer.geometry.RelativePoint
@@ -93,41 +95,17 @@ data class KeySignatureElement(
         /** Extra gap between cancellation naturals and new accidentals */
         private val CANCELLATION_GAP = StaffSpace(0.5f)
 
-        // Standard positions for sharps (staff positions relative to staff center)
-        // F#, C#, G#, D#, A#, E#, B#
-        // Staff position: 0 = center line (B4 in treble), positive = down, negative = up
-        private val SHARP_POSITIONS_TREBLE = listOf(-2, 1, -3, 0, 3, -1, 2)
-        private val FLAT_POSITIONS_TREBLE = listOf(2, -1, 3, 0, 4, 1, 5)
-
-        // Positions for bass clef (shifted down by 2 staff lines = 4 half-steps)
-        private val SHARP_POSITIONS_BASS = SHARP_POSITIONS_TREBLE.map { it + 2 }
-        private val FLAT_POSITIONS_BASS = FLAT_POSITIONS_TREBLE.map { it + 2 }
-
-        // Note name → index in the sharp/flat ordering (for looking up positions)
-        private val SHARP_ORDER = listOf(
-            NoteName.F, NoteName.C, NoteName.G, NoteName.D,
-            NoteName.A, NoteName.E, NoteName.B
-        )
-        private val FLAT_ORDER = listOf(
-            NoteName.B, NoteName.E, NoteName.A, NoteName.D,
-            NoteName.G, NoteName.C, NoteName.F
-        )
-
         private fun staffPositionForNatural(
             natural: CancellationNatural,
-            clefType: ClefType
-        ): Int? {
-            val isTreble = clefType == ClefType.TREBLE || clefType.name.startsWith("TREBLE")
-            return if (natural.fromSharpKey) {
-                val idx = SHARP_ORDER.indexOf(natural.noteName)
-                if (idx < 0) null
-                else if (isTreble) SHARP_POSITIONS_TREBLE[idx] else SHARP_POSITIONS_BASS[idx]
-            } else {
-                val idx = FLAT_ORDER.indexOf(natural.noteName)
-                if (idx < 0) null
-                else if (isTreble) FLAT_POSITIONS_TREBLE[idx] else FLAT_POSITIONS_BASS[idx]
-            }
-        }
+            clef: Clef,
+        ): Int = KeySignaturePositionComputer.staffPosition(
+            natural.noteName,
+            clef,
+            sharps = natural.fromSharpKey,
+        )
+
+        private fun yOffsetForStaffPosition(staffPosition: Int): StaffSpace =
+            if (staffPosition == 0) StaffSpace.ZERO else StaffSpace(staffPosition * -0.5f)
 
         context(BravuraFont)
         fun create(
@@ -135,7 +113,7 @@ data class KeySignatureElement(
             staffIndex: Int,
             keySignature: KeySignature,
             isInitial: Boolean,
-            clefType: ClefType,
+            clef: Clef,
             staffTrackId: TrackId? = null,
             sectionTime: TimeCode = time,
             cancellationNaturals: List<CancellationNatural> = emptyList()
@@ -149,8 +127,8 @@ data class KeySignatureElement(
                 val naturalBbox = this@BravuraFont.getBBox(naturalGlyph)
 
                 for (natural in cancellationNaturals) {
-                    val staffPos = staffPositionForNatural(natural, clefType) ?: continue
-                    val yOffset = StaffSpace(staffPos * 0.5f)
+                    val staffPos = staffPositionForNatural(natural, clef)
+                    val yOffset = yOffsetForStaffPosition(staffPos)
                     geometryList.add(
                         GlyphGeometry.fromBBox(naturalGlyph, RelativePoint(xCursor, yOffset), naturalBbox)
                     )
@@ -167,22 +145,14 @@ data class KeySignatureElement(
                 val isSharp = keySignature.fifths > 0
                 val count = abs(keySignature.fifths).coerceAtMost(7)
 
-                val positions = when {
-                    isSharp && (clefType == ClefType.TREBLE || clefType.name.startsWith("TREBLE")) ->
-                        SHARP_POSITIONS_TREBLE
-                    isSharp ->
-                        SHARP_POSITIONS_BASS
-                    clefType == ClefType.TREBLE || clefType.name.startsWith("TREBLE") ->
-                        FLAT_POSITIONS_TREBLE
-                    else ->
-                        FLAT_POSITIONS_BASS
-                }
+                val positions = KeySignaturePositionComputer.staffPositions(keySignature, clef)
 
                 val glyph = if (isSharp) SmuflGlyphs.accidentalSharp else SmuflGlyphs.accidentalFlat
                 val bbox = this@BravuraFont.getBBox(glyph)
 
                 for ((index, staffPosition) in positions.take(count).withIndex()) {
-                    val yOffset = StaffSpace(staffPosition * 0.5f)
+                    // Staff positions increase upward; renderer Y increases downward.
+                    val yOffset = yOffsetForStaffPosition(staffPosition)
                     val xOffset = xCursor + ACCIDENTAL_SPACING * index.toFloat()
                     geometryList.add(
                         GlyphGeometry.fromBBox(glyph, RelativePoint(xOffset, yOffset), bbox)
@@ -197,7 +167,7 @@ data class KeySignatureElement(
                 staffTrackId = staffTrackId,
                 sectionTime = sectionTime,
                 isInitial = isInitial,
-                clefType = clefType,
+                clefType = clef.toClefType(),
                 geometryList = geometryList
             )
         }

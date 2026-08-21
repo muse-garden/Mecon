@@ -62,6 +62,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     val selection = request.selection.selection
     val highlightedElements = request.selection.highlightedElements
     val selectedAnnotationEventId = request.selection.selectedAnnotationEventId
+    val resizableAnnotationEventIds = request.selection.resizableAnnotationEventIds
     val selectedBeamSection = request.selection.selectedBeamSection
     val selectedBeamControls = request.selection.selectedBeamControls
     val selectedVoltaSection = request.selection.selectedVoltaSection
@@ -89,6 +90,7 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
     val navigationCommittedFrameDisplayed = request.drags.navigationCommitted
     val curveDrag = request.drags.curve
     val curveCommittedFrameDisplayed = request.drags.curveCommitted
+    val annotationRangeDrag = request.drags.annotationRange
     val selectionFillColor = request.drags.selectionColor
     val playbackState = request.playback.state
     val tickToXMapping = request.playback.tickToX
@@ -551,22 +553,77 @@ internal fun DrawScope.drawRenderedScore(request: RenderedScoreCanvasDrawRequest
         }
     }
 
-    // Draw annotation selection highlight (matches note selection blue)
+    // Draw annotation selection highlight and range endpoint handles.
     if (selectedAnnotationEventId != null) {
         rr.elements
-            .firstOrNull {
+            .filter {
                 it.type == RenderElementType.TEXT_ANNOTATION &&
                 it.eventId == selectedAnnotationEventId
             }
-            ?.let { elem ->
+            .forEach { elem ->
                 val bounds = elem.hitBox
-                val tl = screenTopLeft(bounds) ?: return@let
+                val tl = screenTopLeft(bounds) ?: return@forEach
                 drawRect(
                     color = Color(0x402563EB),
                     topLeft = tl,
                     size = Size(bounds.width.value * density, bounds.height.value * density)
                 )
             }
+        if (selectedAnnotationEventId in resizableAnnotationEventIds) {
+            annotationRangeDrag?.takeIf { it.eventId == selectedAnnotationEventId }?.let { drag ->
+                fun design(point: AbsolutePoint): Offset? = if (paginatedView) {
+                    globalToDesign(point.x.value, point.y.value, pages, pageSlots)
+                } else {
+                    Offset(point.x.value, point.y.value)
+                }
+                val start = design(drag.originalPoint)
+                val current = design(drag.currentPoint)
+                if (start != null && current != null) {
+                    val startPx = start * density
+                    val currentPx = current * density
+                    drawLine(
+                        color = Color(0xFF2563EB),
+                        start = startPx,
+                        end = currentPx,
+                        strokeWidth = 2f * density,
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(5f * density, 3f * density),
+                        ),
+                    )
+                    drawCircle(
+                        color = Color(0x332563EB),
+                        radius = 8f * density,
+                        center = currentPx,
+                    )
+                    drawCircle(
+                        color = Color(0xFF2563EB),
+                        radius = 5f * density,
+                        center = currentPx,
+                        style = Stroke(width = 1.5f * density),
+                    )
+                }
+            }
+            annotationRangeEndpointPoints(rr, selectedAnnotationEventId).forEach { handle ->
+                val design = if (paginatedView) {
+                    globalToDesign(
+                        handle.point.x.value,
+                        handle.point.y.value,
+                        pages,
+                        pageSlots,
+                    )
+                } else {
+                    Offset(handle.point.x.value, handle.point.y.value)
+                } ?: return@forEach
+                val center = Offset(design.x * density, design.y * density)
+                drawCircle(Color.White, radius = 4.5f * density, center = center)
+                drawCircle(
+                    Color(0xFF2563EB),
+                    radius = 4.5f * density,
+                    center = center,
+                    style = Stroke(width = 1.5f * density),
+                )
+            }
+        }
     }
 
     // Draw playhead. Each TimeCodePosition's Y band is confined to its own system

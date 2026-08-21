@@ -120,6 +120,58 @@ const practiceBytes = writeMeconArchive(new Map([
 writeFileSync(practiceOutput, practiceBytes);
 console.log(practiceOutput);
 
+// A production-path pointer fixture: mutate notation only through the shared free-practice/score
+// session, then archive the resulting score and document. The first musical slot intentionally
+// addresses 1:0 so this also protects initial-clef normalization across JVM/JS.
+const pitchContextOutput = resolve(dirname(output), "free-practice-f1-pitch-context.mecon");
+const pitchContextSession = await createMeconFreePractice({ document: preset.document, score: preset.score });
+let pitchContextUpdate = pitchContextSession.initialUpdate();
+pitchContextUpdate = pitchContextSession.dispatch({
+  type: "score",
+  expectedRevision: pitchContextUpdate.revision,
+  inner: {
+    type: "setKeySignature",
+    expectedRevision: pitchContextUpdate.score.revision,
+    onset: { measure: 0, beat: { numerator: 0, denominator: 1 } },
+    keySignature: { root: 5, mode: "MAJOR" },
+  },
+});
+const pitchContextStaffId = Object.keys(pitchContextUpdate.score.score.staffTracks)[0];
+pitchContextUpdate = pitchContextSession.dispatch({
+  type: "score",
+  expectedRevision: pitchContextUpdate.revision,
+  inner: {
+    type: "setClef",
+    expectedRevision: pitchContextUpdate.score.revision,
+    staffTrackId: pitchContextStaffId,
+    onset: { measure: 1, beat: { numerator: 0, denominator: 1 } },
+    clef: "BASS",
+  },
+});
+pitchContextSession.close();
+const pitchContextScore = pitchContextUpdate.score.score;
+const pitchContextManifest = {
+  ...practiceManifest,
+  engineVersion: "free-practice-f1-pitch-context",
+  activeScoreId: pitchContextScore.id,
+  scores: [{ id: pitchContextScore.id, title: "Pitch context", path: `scores/${pitchContextScore.id}.json` }],
+  modules: [practiceManifest.modules[0]],
+  workspace: { activeModuleId: preset.module.id, selectedScoreIds: [pitchContextScore.id] },
+};
+const pitchContextBytes = writeMeconArchive(new Map([
+  ["manifest.json", JSON.stringify(pitchContextManifest)],
+  [`scores/${pitchContextScore.id}.json`, JSON.stringify(pitchContextScore)],
+  [practiceModulePath, JSON.stringify({
+    id: preset.module.id,
+    type: preset.module.type,
+    schemaVersion: preset.module.schemaVersion,
+    scoreId: pitchContextScore.id,
+    payload: pitchContextUpdate.document,
+  })],
+]));
+writeFileSync(pitchContextOutput, pitchContextBytes);
+console.log(pitchContextOutput);
+
 const longPracticeOutput = resolve(dirname(output), "free-practice-f1-64.mecon");
 const longSession = await createMeconFreePractice({ document: preset.document, score: preset.score });
 let longUpdate = longSession.initialUpdate();

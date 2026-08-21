@@ -208,8 +208,10 @@ data class StoragePluginTrack(val type: String, ...) : StorageTrack
 
 - `StorageNonChordToneEvent(onset, endOnset, voiceEventId, pitchIndex)`：半开区间
   `[onset, endOnset)`，可只标记一个音符的一部分；
-- `StorageTonalRegionEvent(onset, endOnset, keys, resolvedKey)`：候选调性可为多个；
-  `resolvedKey` 必须属于 `keys`，表示区间结束后持续生效的调性中心。
+- `StorageTonalRegionEvent(onset, endOnset, keys, resolvedKey, role)`：候选调性可为多个；
+  `resolvedKey` 必须属于 `keys`，表示区间结束后持续生效的调性中心。`role` 默认为
+  `INSERTED`；`SCORE_KEY_BASELINE` 把谱面调号投影为可编辑的初始调性区间，使其与插入调性的
+  交集成为可拖动的双重调性范围。旧文件缺少该字段时按 `INSERTED` 读取。
 
 二者只保存源字段和 ID，不保存 Runtime / Computed 引用；轨道类型分别为
 `mecon.chord_analysis.non_chord_tones` 与 `mecon.chord_analysis.tonal_regions`。

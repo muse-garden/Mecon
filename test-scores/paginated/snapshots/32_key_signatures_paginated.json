@@ -586,7 +586,7 @@
             "y": 1029.3334
           },
           "end": {
-            "x": 563.99976,
+            "x": 525.85583,
             "y": 1029.3334
           },
           "thickness": 1.04,
@@ -595,7 +595,7 @@
               "x": 63.48,
               "y": 1028.8134
             },
-            "width": 501.03976,
+            "width": 462.89584,
             "height": 1.0400391
           }
         },
@@ -606,7 +606,7 @@
             "y": 1037.3334
           },
           "end": {
-            "x": 563.99976,
+            "x": 525.85583,
             "y": 1037.3334
           },
           "thickness": 1.04,
@@ -615,7 +615,7 @@
               "x": 63.48,
               "y": 1036.8134
             },
-            "width": 501.03976,
+            "width": 462.89584,
             "height": 1.0400391
           }
         },
@@ -626,7 +626,7 @@
             "y": 1045.3334
           },
           "end": {
-            "x": 563.99976,
+            "x": 525.85583,
             "y": 1045.3334
           },
           "thickness": 1.04,
@@ -635,7 +635,7 @@
               "x": 63.48,
               "y": 1044.8134
             },
-            "width": 501.03976,
+            "width": 462.89584,
             "height": 1.0400391
           }
         },
@@ -646,7 +646,7 @@
             "y": 1053.3334
           },
           "end": {
-            "x": 563.99976,
+            "x": 525.85583,
             "y": 1053.3334
           },
           "thickness": 1.04,
@@ -655,7 +655,7 @@
               "x": 63.48,
               "y": 1052.8134
             },
-            "width": 501.03976,
+            "width": 462.89584,
             "height": 1.0400391
           }
         },
@@ -666,7 +666,7 @@
             "y": 1061.3334
           },
           "end": {
-            "x": 563.99976,
+            "x": 525.85583,
             "y": 1061.3334
           },
           "thickness": 1.04,
@@ -675,7 +675,7 @@
               "x": 63.48,
               "y": 1060.8134
             },
-            "width": 501.03976,
+            "width": 462.89584,
             "height": 1.0400391
           }
         }
@@ -685,7 +685,7 @@
           "x": 64.0,
           "y": 1029.3334
         },
-        "width": 499.99976,
+        "width": 461.85583,
         "height": 32.0
       },
       "trackId": "st-treble"
@@ -768,7 +768,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 106.11201,
-            "y": 152.44446
+            "y": 144.44446
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -779,7 +779,7 @@
           "bounds": {
             "origin": {
               "x": 106.11201,
-              "y": 141.24446
+              "y": 133.24446
             },
             "width": 7.968,
             "height": 22.335999
@@ -789,7 +789,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 114.11201,
-            "y": 164.44446
+            "y": 156.44446
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -800,7 +800,7 @@
           "bounds": {
             "origin": {
               "x": 114.11201,
-              "y": 153.24446
+              "y": 145.24446
             },
             "width": 7.968,
             "height": 22.335999
@@ -810,7 +810,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 122.11201,
-            "y": 148.44446
+            "y": 140.44446
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -821,7 +821,7 @@
           "bounds": {
             "origin": {
               "x": 122.11201,
-              "y": 137.24446
+              "y": 129.24446
             },
             "width": 7.968,
             "height": 22.335999
@@ -831,7 +831,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 130.112,
-            "y": 160.44446
+            "y": 152.44446
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -842,7 +842,7 @@
           "bounds": {
             "origin": {
               "x": 130.112,
-              "y": 149.24446
+              "y": 141.24446
             },
             "width": 7.968,
             "height": 22.335999
@@ -852,7 +852,7 @@
       "hitBox": {
         "origin": {
           "x": 106.11201,
-          "y": 137.24446
+          "y": 129.24446
         },
         "width": 31.967995,
         "height": 38.336
@@ -921,7 +921,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 173.59021,
+            "x": 174.01796,
             "y": 176.44446
           },
           "glyph": {
@@ -932,7 +932,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 173.59021,
+              "x": 174.01796,
               "y": 172.44446
             },
             "width": 9.44,
@@ -942,7 +942,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 173.59021,
+          "x": 174.01796,
           "y": 172.44446
         },
         "width": 9.440002,
@@ -964,7 +964,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 198.44576,
+            "x": 199.88126,
             "y": 172.44446
           },
           "glyph": {
@@ -975,7 +975,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 198.44576,
+              "x": 199.88126,
               "y": 168.44446
             },
             "width": 9.44,
@@ -985,7 +985,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 198.44576,
+          "x": 199.88126,
           "y": 168.44446
         },
         "width": 9.440002,
@@ -1007,7 +1007,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 223.3013,
+            "x": 225.74455,
             "y": 168.44446
           },
           "glyph": {
@@ -1018,7 +1018,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 223.3013,
+              "x": 225.74455,
               "y": 164.44446
             },
             "width": 9.44,
@@ -1028,7 +1028,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 223.3013,
+          "x": 225.74455,
           "y": 164.44446
         },
         "width": 9.440002,
@@ -1050,7 +1050,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 248.15686,
+            "x": 251.60785,
             "y": 164.44446
           },
           "glyph": {
@@ -1061,7 +1061,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 248.15686,
+              "x": 251.60785,
               "y": 160.44446
             },
             "width": 9.44,
@@ -1071,7 +1071,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 248.15686,
+          "x": 251.60785,
           "y": 160.44446
         },
         "width": 9.440002,
@@ -1093,17 +1093,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 272.49463,
+            "x": 277.06213,
             "y": 144.44446
           },
           "end": {
-            "x": 272.49463,
+            "x": 277.06213,
             "y": 176.44446
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 271.8546,
+              "x": 276.42212,
               "y": 143.80446
             },
             "width": 1.2800293,
@@ -1113,7 +1113,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 271.8546,
+          "x": 276.42212,
           "y": 143.80446
         },
         "width": 1.2800293,
@@ -1128,7 +1128,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 297.4902,
+            "x": 301.82733,
             "y": 172.44446
           },
           "glyph": {
@@ -1139,7 +1139,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 297.4902,
+              "x": 301.82733,
               "y": 168.44446
             },
             "width": 9.44,
@@ -1149,7 +1149,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 297.4902,
+          "x": 301.82733,
           "y": 168.44446
         },
         "width": 9.440002,
@@ -1171,7 +1171,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 288.3862,
+            "x": 292.72333,
             "y": 172.44446
           },
           "glyph": {
@@ -1182,7 +1182,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 288.3862,
+              "x": 292.72333,
               "y": 168.38046
             },
             "width": 7.904,
@@ -1192,7 +1192,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 288.3862,
+          "x": 292.72333,
           "y": 168.38046
         },
         "width": 7.9039917,
@@ -1213,7 +1213,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 331.44974,
+            "x": 327.6906,
             "y": 168.44446
           },
           "glyph": {
@@ -1224,7 +1224,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 331.44974,
+              "x": 327.6906,
               "y": 164.44446
             },
             "width": 9.44,
@@ -1234,7 +1234,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 331.44974,
+          "x": 327.6906,
           "y": 164.44446
         },
         "width": 9.440002,
@@ -1256,7 +1256,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 356.30527,
+            "x": 353.5539,
             "y": 180.44446
           },
           "glyph": {
@@ -1267,7 +1267,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 356.30527,
+              "x": 353.5539,
               "y": 176.44446
             },
             "width": 9.44,
@@ -1277,7 +1277,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 356.30527,
+          "x": 353.5539,
           "y": 176.44446
         },
         "width": 9.440002,
@@ -1299,7 +1299,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 381.93414,
+            "x": 379.41718,
             "y": 184.44446
           },
           "glyph": {
@@ -1310,7 +1310,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 381.93414,
+              "x": 379.41718,
               "y": 180.44446
             },
             "width": 9.44,
@@ -1320,7 +1320,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 381.93414,
+          "x": 379.41718,
           "y": 180.44446
         },
         "width": 9.440002,
@@ -1342,7 +1342,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 375.35815,
+            "x": 372.8412,
             "y": 184.44446
           },
           "glyph": {
@@ -1353,7 +1353,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 375.35815,
+              "x": 372.8412,
               "y": 173.53246
             },
             "width": 5.376,
@@ -1363,7 +1363,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 375.35815,
+          "x": 372.8412,
           "y": 173.53246
         },
         "width": 5.376007,
@@ -1384,17 +1384,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 378.73413,
+            "x": 376.21716,
             "y": 184.44446
           },
           "end": {
-            "x": 394.57416,
+            "x": 392.0572,
             "y": 184.44446
           },
           "thickness": 1.04,
           "bounds": {
             "origin": {
-              "x": 378.21414,
+              "x": 375.69717,
               "y": 183.92445
             },
             "width": 16.880005,
@@ -1404,7 +1404,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 378.21414,
+          "x": 375.69717,
           "y": 183.92445
         },
         "width": 16.880005,
@@ -1422,17 +1422,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 421.69562,
+            "x": 417.1281,
             "y": 144.44446
           },
           "end": {
-            "x": 421.69562,
+            "x": 417.1281,
             "y": 176.44446
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 421.0556,
+              "x": 416.4881,
               "y": 143.80446
             },
             "width": 1.2800293,
@@ -1442,7 +1442,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 421.0556,
+          "x": 416.4881,
           "y": 143.80446
         },
         "width": 1.2800293,
@@ -1457,7 +1457,70 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 434.33563,
+            "x": 429.76813,
+            "y": 144.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 429.76813,
+              "y": 133.53246
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 437.76813,
+            "y": 156.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 437.76813,
+              "y": 145.53246
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 445.76813,
+            "y": 140.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 445.76813,
+              "y": 129.53246
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 453.76813,
             "y": 152.44446
           },
           "glyph": {
@@ -1468,7 +1531,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 434.33563,
+              "x": 453.76813,
               "y": 141.53246
             },
             "width": 5.376,
@@ -1478,73 +1541,31 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 442.33563,
-            "y": 164.44446
+            "x": 465.76813,
+            "y": 160.44446
           },
           "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
           },
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 442.33563,
-              "y": 153.53246
+              "x": 465.76813,
+              "y": 146.39645
             },
-            "width": 5.376,
-            "height": 21.632
+            "width": 7.232,
+            "height": 19.648
           }
         },
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 450.33563,
+            "x": 473.76813,
             "y": 148.44446
           },
           "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 450.33563,
-              "y": 137.53246
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 458.33563,
-            "y": 160.44446
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 458.33563,
-              "y": 149.53246
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 470.33563,
-            "y": 168.44446
-          },
-          "glyph": {
             "name": "accidentalFlat",
             "codepoint": "",
             "description": "Flat"
@@ -1552,8 +1573,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 470.33563,
-              "y": 154.39645
+              "x": 473.76813,
+              "y": 134.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -1562,8 +1583,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 478.33563,
-            "y": 156.44446
+            "x": 481.76813,
+            "y": 164.44446
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -1573,8 +1594,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 478.33563,
-              "y": 142.39645
+              "x": 481.76813,
+              "y": 150.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -1583,8 +1604,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 486.33563,
-            "y": 172.44446
+            "x": 489.76813,
+            "y": 152.44446
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -1594,29 +1615,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 486.33563,
-              "y": 158.39645
-            },
-            "width": 7.232,
-            "height": 19.648
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 494.33563,
-            "y": 160.44446
-          },
-          "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 494.33563,
-              "y": 146.39645
+              "x": 489.76813,
+              "y": 138.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -1625,8 +1625,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 434.33563,
-          "y": 137.53246
+          "x": 429.76813,
+          "y": 129.53246
         },
         "width": 67.231995,
         "height": 40.511993
@@ -1639,7 +1639,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 510.6778,
+            "x": 506.53802,
             "y": 164.44446
           },
           "glyph": {
@@ -1650,7 +1650,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 510.6778,
+              "x": 506.53802,
               "y": 160.44446
             },
             "width": 9.44,
@@ -1660,7 +1660,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 510.6778,
+          "x": 506.53802,
           "y": 160.44446
         },
         "width": 9.440002,
@@ -1682,7 +1682,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 535.5334,
+            "x": 532.4013,
             "y": 160.44446
           },
           "glyph": {
@@ -1693,7 +1693,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 535.5334,
+              "x": 532.4013,
               "y": 156.44446
             },
             "width": 9.44,
@@ -1703,7 +1703,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 535.5334,
+          "x": 532.4013,
           "y": 156.44446
         },
         "width": 9.440002,
@@ -1725,7 +1725,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 560.38885,
+            "x": 558.26465,
             "y": 156.44446
           },
           "glyph": {
@@ -1736,7 +1736,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 560.38885,
+              "x": 558.26465,
               "y": 152.44446
             },
             "width": 9.44,
@@ -1746,7 +1746,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 560.38885,
+          "x": 558.26465,
           "y": 152.44446
         },
         "width": 9.440002,
@@ -1768,7 +1768,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 585.24445,
+            "x": 584.12787,
             "y": 152.44446
           },
           "glyph": {
@@ -1779,7 +1779,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 585.24445,
+              "x": 584.12787,
               "y": 148.44446
             },
             "width": 9.44,
@@ -1789,7 +1789,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 585.24445,
+          "x": 584.12787,
           "y": 148.44446
         },
         "width": 9.440002,
@@ -1811,7 +1811,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 145.344,
+            "x": 159.69598,
             "y": 292.44446
           },
           "glyph": {
@@ -1822,7 +1822,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 145.344,
+              "x": 159.69598,
               "y": 288.44446
             },
             "width": 9.44,
@@ -1832,7 +1832,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 145.344,
+          "x": 159.69598,
           "y": 288.44446
         },
         "width": 9.440002,
@@ -1854,7 +1854,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 130.99199,
+            "x": 145.34398,
             "y": 292.44446
           },
           "glyph": {
@@ -1865,7 +1865,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 130.99199,
+              "x": 145.34398,
               "y": 278.46045
             },
             "width": 13.152,
@@ -1875,7 +1875,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 130.99199,
+          "x": 145.34398,
           "y": 278.46045
         },
         "width": 13.151993,
@@ -1896,7 +1896,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 180.40321,
+            "x": 181.76523,
             "y": 288.44446
           },
           "glyph": {
@@ -1907,7 +1907,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 180.40321,
+              "x": 181.76523,
               "y": 284.44446
             },
             "width": 9.44,
@@ -1917,7 +1917,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 180.40321,
+          "x": 181.76523,
           "y": 284.44446
         },
         "width": 9.440002,
@@ -1939,7 +1939,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 205.29068,
+            "x": 209.34384,
             "y": 276.44446
           },
           "glyph": {
@@ -1950,7 +1950,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 205.29068,
+              "x": 209.34384,
               "y": 272.44446
             },
             "width": 9.44,
@@ -1960,7 +1960,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 205.29068,
+          "x": 209.34384,
           "y": 272.44446
         },
         "width": 9.440002,
@@ -1982,7 +1982,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 190.93867,
+            "x": 194.99184,
             "y": 276.44446
           },
           "glyph": {
@@ -1993,7 +1993,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 190.93867,
+              "x": 194.99184,
               "y": 262.46045
             },
             "width": 13.152,
@@ -2003,7 +2003,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 190.93867,
+          "x": 194.99184,
           "y": 262.46045
         },
         "width": 13.151993,
@@ -2024,7 +2024,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 240.34988,
+            "x": 231.41307,
             "y": 284.44446
           },
           "glyph": {
@@ -2035,7 +2035,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 240.34988,
+              "x": 231.41307,
               "y": 280.44446
             },
             "width": 9.44,
@@ -2045,7 +2045,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 240.34988,
+          "x": 231.41307,
           "y": 280.44446
         },
         "width": 9.440002,
@@ -2067,17 +2067,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 254.30475,
+            "x": 252.0192,
             "y": 260.44446
           },
           "end": {
-            "x": 254.30475,
+            "x": 252.0192,
             "y": 292.44446
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 253.66475,
+              "x": 251.3792,
               "y": 259.80444
             },
             "width": 1.2799988,
@@ -2087,7 +2087,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 253.66475,
+          "x": 251.3792,
           "y": 259.80444
         },
         "width": 1.2799988,
@@ -2102,70 +2102,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 266.94476,
-            "y": 284.44446
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 266.94476,
-              "y": 273.53247
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 274.94476,
-            "y": 272.44446
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 274.94476,
-              "y": 261.53247
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 282.94476,
-            "y": 288.44446
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 282.94476,
-              "y": 277.53247
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 290.94476,
+            "x": 264.65918,
             "y": 276.44446
           },
           "glyph": {
@@ -2176,7 +2113,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 290.94476,
+              "x": 264.65918,
               "y": 265.53247
             },
             "width": 5.376,
@@ -2186,7 +2123,133 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 302.94476,
+            "x": 272.65918,
+            "y": 264.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 272.65918,
+              "y": 253.53246
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 280.65918,
+            "y": 280.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 280.65918,
+              "y": 269.53247
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 288.65918,
+            "y": 268.44446
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 288.65918,
+              "y": 257.53247
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 300.65918,
+            "y": 260.44446
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 300.65918,
+              "y": 249.24446
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 308.65918,
+            "y": 272.44446
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 308.65918,
+              "y": 261.24445
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 316.65918,
+            "y": 256.44446
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 316.65918,
+              "y": 245.24446
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 324.65918,
             "y": 268.44446
           },
           "glyph": {
@@ -2197,7 +2260,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 302.94476,
+              "x": 324.65918,
               "y": 257.24445
             },
             "width": 7.968,
@@ -2207,7 +2270,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 310.94476,
+            "x": 332.65918,
             "y": 280.44446
           },
           "glyph": {
@@ -2218,71 +2281,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 310.94476,
+              "x": 332.65918,
               "y": 269.24445
-            },
-            "width": 7.968,
-            "height": 22.335999
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 318.94476,
-            "y": 264.44446
-          },
-          "glyph": {
-            "name": "accidentalSharp",
-            "codepoint": "",
-            "description": "Sharp"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 318.94476,
-              "y": 253.24446
-            },
-            "width": 7.968,
-            "height": 22.335999
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 326.94476,
-            "y": 276.44446
-          },
-          "glyph": {
-            "name": "accidentalSharp",
-            "codepoint": "",
-            "description": "Sharp"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 326.94476,
-              "y": 265.24445
-            },
-            "width": 7.968,
-            "height": 22.335999
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 334.94476,
-            "y": 288.44446
-          },
-          "glyph": {
-            "name": "accidentalSharp",
-            "codepoint": "",
-            "description": "Sharp"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 334.94476,
-              "y": 277.24445
             },
             "width": 7.968,
             "height": 22.335999
@@ -2291,8 +2291,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 266.94476,
-          "y": 253.24446
+          "x": 264.65918,
+          "y": 245.24446
         },
         "width": 75.96799,
         "height": 46.335983
@@ -2305,7 +2305,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 350.26215,
+            "x": 348.5547,
             "y": 276.44446
           },
           "glyph": {
@@ -2316,7 +2316,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 350.26215,
+              "x": 348.5547,
               "y": 272.44446
             },
             "width": 9.44,
@@ -2326,7 +2326,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 350.26215,
+          "x": 348.5547,
           "y": 272.44446
         },
         "width": 9.440002,
@@ -2348,7 +2348,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 370.9694,
+            "x": 370.62393,
             "y": 272.44446
           },
           "glyph": {
@@ -2359,7 +2359,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 370.9694,
+              "x": 370.62393,
               "y": 268.44446
             },
             "width": 9.44,
@@ -2369,7 +2369,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 370.9694,
+          "x": 370.62393,
           "y": 268.44446
         },
         "width": 9.440002,
@@ -2391,7 +2391,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 391.6766,
+            "x": 392.69318,
             "y": 268.44446
           },
           "glyph": {
@@ -2402,7 +2402,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 391.6766,
+              "x": 392.69318,
               "y": 264.44446
             },
             "width": 9.44,
@@ -2412,7 +2412,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 391.6766,
+          "x": 392.69318,
           "y": 264.44446
         },
         "width": 9.440002,
@@ -2434,7 +2434,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 412.38385,
+            "x": 414.7624,
             "y": 264.44446
           },
           "glyph": {
@@ -2445,7 +2445,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 412.38385,
+              "x": 414.7624,
               "y": 260.44446
             },
             "width": 9.44,
@@ -2455,7 +2455,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 412.38385,
+          "x": 414.7624,
           "y": 260.44446
         },
         "width": 9.440002,
@@ -2477,17 +2477,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 432.12567,
+            "x": 436.01324,
             "y": 260.44446
           },
           "end": {
-            "x": 432.12567,
+            "x": 436.01324,
             "y": 292.44446
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 431.48566,
+              "x": 435.37323,
               "y": 259.80444
             },
             "width": 1.2800293,
@@ -2497,7 +2497,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 431.48566,
+          "x": 435.37323,
           "y": 259.80444
         },
         "width": 1.2800293,
@@ -2512,7 +2512,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 449.78467,
+            "x": 455.10626,
             "y": 288.44446
           },
           "glyph": {
@@ -2523,7 +2523,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 449.78467,
+              "x": 455.10626,
               "y": 284.44446
             },
             "width": 9.44,
@@ -2533,7 +2533,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 449.78467,
+          "x": 455.10626,
           "y": 284.44446
         },
         "width": 9.440002,
@@ -2555,7 +2555,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 443.20868,
+            "x": 448.53027,
             "y": 288.44446
           },
           "glyph": {
@@ -2566,7 +2566,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 443.20868,
+              "x": 448.53027,
               "y": 277.53247
             },
             "width": 5.376,
@@ -2576,7 +2576,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 443.20868,
+          "x": 448.53027,
           "y": 277.53247
         },
         "width": 5.376007,
@@ -2597,7 +2597,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 477.0679,
+            "x": 477.1755,
             "y": 280.44446
           },
           "glyph": {
@@ -2608,7 +2608,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 477.0679,
+              "x": 477.1755,
               "y": 276.44446
             },
             "width": 9.44,
@@ -2618,7 +2618,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 477.0679,
+          "x": 477.1755,
           "y": 276.44446
         },
         "width": 9.440002,
@@ -2640,7 +2640,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 497.43073,
+            "x": 499.54642,
             "y": 272.44446
           },
           "glyph": {
@@ -2651,7 +2651,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 497.43073,
+              "x": 499.54642,
               "y": 268.44446
             },
             "width": 9.44,
@@ -2661,7 +2661,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 497.43073,
+          "x": 499.54642,
           "y": 268.44446
         },
         "width": 9.440002,
@@ -2683,7 +2683,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 488.32672,
+            "x": 490.4424,
             "y": 272.44446
           },
           "glyph": {
@@ -2694,7 +2694,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 488.32672,
+              "x": 490.4424,
               "y": 268.38046
             },
             "width": 7.904,
@@ -2704,7 +2704,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 488.32672,
+          "x": 490.4424,
           "y": 268.38046
         },
         "width": 7.9039917,
@@ -2725,7 +2725,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 527.24194,
+            "x": 521.61566,
             "y": 284.44446
           },
           "glyph": {
@@ -2736,7 +2736,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 527.24194,
+              "x": 521.61566,
               "y": 280.44446
             },
             "width": 9.44,
@@ -2746,7 +2746,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 527.24194,
+          "x": 521.61566,
           "y": 280.44446
         },
         "width": 9.440002,
@@ -2769,7 +2769,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 554.99023,
-            "y": 268.44446
+            "y": 260.44446
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -2780,7 +2780,7 @@
           "bounds": {
             "origin": {
               "x": 554.99023,
-              "y": 257.53247
+              "y": 249.53246
             },
             "width": 5.376,
             "height": 21.632
@@ -2790,7 +2790,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 562.99023,
-            "y": 280.44446
+            "y": 272.44446
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -2801,7 +2801,7 @@
           "bounds": {
             "origin": {
               "x": 562.99023,
-              "y": 269.53247
+              "y": 261.53247
             },
             "width": 5.376,
             "height": 21.632
@@ -2811,7 +2811,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 570.99023,
-            "y": 264.44446
+            "y": 256.44446
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -2822,7 +2822,7 @@
           "bounds": {
             "origin": {
               "x": 570.99023,
-              "y": 253.53246
+              "y": 245.53246
             },
             "width": 5.376,
             "height": 21.632
@@ -2832,7 +2832,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 578.99023,
-            "y": 276.44446
+            "y": 268.44446
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -2843,7 +2843,7 @@
           "bounds": {
             "origin": {
               "x": 578.99023,
-              "y": 265.53247
+              "y": 257.53247
             },
             "width": 5.376,
             "height": 21.632
@@ -2853,7 +2853,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 586.99023,
-            "y": 288.44446
+            "y": 280.44446
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -2864,7 +2864,7 @@
           "bounds": {
             "origin": {
               "x": 586.99023,
-              "y": 277.53247
+              "y": 269.53247
             },
             "width": 5.376,
             "height": 21.632
@@ -2874,7 +2874,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 598.99023,
-            "y": 284.44446
+            "y": 276.44446
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -2885,7 +2885,7 @@
           "bounds": {
             "origin": {
               "x": 598.99023,
-              "y": 270.39645
+              "y": 262.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -2895,7 +2895,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 606.99023,
-            "y": 272.44446
+            "y": 264.44446
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -2906,7 +2906,7 @@
           "bounds": {
             "origin": {
               "x": 606.99023,
-              "y": 258.39645
+              "y": 250.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -2916,7 +2916,7 @@
       "hitBox": {
         "origin": {
           "x": 554.99023,
-          "y": 253.53246
+          "y": 245.53246
         },
         "width": 59.231995,
         "height": 45.632004
@@ -2972,7 +2972,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 158.82838,
+            "x": 159.9316,
             "y": 560.8889
           },
           "glyph": {
@@ -2983,7 +2983,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 158.82838,
+              "x": 159.9316,
               "y": 556.8889
             },
             "width": 9.44,
@@ -2993,7 +2993,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 158.82838,
+          "x": 159.9316,
           "y": 556.8889
         },
         "width": 9.440002,
@@ -3015,7 +3015,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 188.31277,
+            "x": 190.5192,
             "y": 556.8889
           },
           "glyph": {
@@ -3026,7 +3026,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 188.31277,
+              "x": 190.5192,
               "y": 552.8889
             },
             "width": 9.44,
@@ -3036,7 +3036,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 188.31277,
+          "x": 190.5192,
           "y": 552.8889
         },
         "width": 9.440002,
@@ -3058,7 +3058,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 217.79718,
+            "x": 221.1068,
             "y": 552.8889
           },
           "glyph": {
@@ -3069,7 +3069,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 217.79718,
+              "x": 221.1068,
               "y": 548.8889
             },
             "width": 9.44,
@@ -3079,7 +3079,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 217.79718,
+          "x": 221.1068,
           "y": 548.8889
         },
         "width": 9.440002,
@@ -3101,17 +3101,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 247.26338,
+            "x": 251.79524,
             "y": 548.8889
           },
           "end": {
-            "x": 247.26338,
+            "x": 251.79524,
             "y": 580.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 246.62338,
+              "x": 251.15524,
               "y": 548.2489
             },
             "width": 1.2799988,
@@ -3121,7 +3121,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 246.62338,
+          "x": 251.15524,
           "y": 548.2489
         },
         "width": 1.2799988,
@@ -3136,7 +3136,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 273.8385,
+            "x": 277.02274,
             "y": 564.8889
           },
           "glyph": {
@@ -3147,7 +3147,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 273.8385,
+              "x": 277.02274,
               "y": 560.8889
             },
             "width": 9.44,
@@ -3157,7 +3157,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 273.8385,
+          "x": 277.02274,
           "y": 560.8889
         },
         "width": 9.440002,
@@ -3179,7 +3179,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 267.2625,
+            "x": 270.44675,
             "y": 564.8889
           },
           "glyph": {
@@ -3190,7 +3190,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 267.2625,
+              "x": 270.44675,
               "y": 553.9769
             },
             "width": 5.376,
@@ -3200,7 +3200,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 267.2625,
+          "x": 270.44675,
           "y": 553.9769
         },
         "width": 5.376007,
@@ -3221,7 +3221,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 309.8989,
+            "x": 307.61035,
             "y": 552.8889
           },
           "glyph": {
@@ -3232,7 +3232,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 309.8989,
+              "x": 307.61035,
               "y": 548.8889
             },
             "width": 9.44,
@@ -3242,7 +3242,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 309.8989,
+          "x": 307.61035,
           "y": 548.8889
         },
         "width": 9.440002,
@@ -3264,7 +3264,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 341.5254,
+            "x": 338.19794,
             "y": 552.8889
           },
           "glyph": {
@@ -3275,7 +3275,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 341.5254,
+              "x": 338.19794,
               "y": 548.8889
             },
             "width": 9.44,
@@ -3285,7 +3285,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 341.5254,
+          "x": 338.19794,
           "y": 548.8889
         },
         "width": 9.440002,
@@ -3307,7 +3307,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 334.9494,
+            "x": 331.62195,
             "y": 552.8889
           },
           "glyph": {
@@ -3318,7 +3318,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 334.9494,
+              "x": 331.62195,
               "y": 541.9769
             },
             "width": 5.376,
@@ -3328,7 +3328,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 334.9494,
+          "x": 331.62195,
           "y": 541.9769
         },
         "width": 5.376007,
@@ -3349,7 +3349,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 377.58582,
+            "x": 368.78552,
             "y": 548.8889
           },
           "glyph": {
@@ -3360,7 +3360,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 377.58582,
+              "x": 368.78552,
               "y": 544.8889
             },
             "width": 9.44,
@@ -3370,7 +3370,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 377.58582,
+          "x": 368.78552,
           "y": 544.8889
         },
         "width": 9.440002,
@@ -3392,17 +3392,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 423.97995,
+            "x": 418.9798,
             "y": 548.8889
           },
           "end": {
-            "x": 423.97995,
+            "x": 418.9798,
             "y": 580.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 423.33994,
+              "x": 418.33978,
               "y": 548.2489
             },
             "width": 1.2800293,
@@ -3412,7 +3412,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 423.33994,
+          "x": 418.33978,
           "y": 548.2489
         },
         "width": 1.2800293,
@@ -3427,8 +3427,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 436.61993,
-            "y": 572.8889
+            "x": 431.6198,
+            "y": 564.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -3438,8 +3438,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 436.61993,
-              "y": 561.9769
+              "x": 431.6198,
+              "y": 553.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -3448,73 +3448,31 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 444.61993,
-            "y": 560.8889
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 444.61993,
-              "y": 549.9769
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 456.61993,
-            "y": 556.8889
-          },
-          "glyph": {
-            "name": "accidentalSharp",
-            "codepoint": "",
-            "description": "Sharp"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 456.61993,
-              "y": 545.6889
-            },
-            "width": 7.968,
-            "height": 22.335999
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 464.61993,
-            "y": 568.8889
-          },
-          "glyph": {
-            "name": "accidentalSharp",
-            "codepoint": "",
-            "description": "Sharp"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 464.61993,
-              "y": 557.6889
-            },
-            "width": 7.968,
-            "height": 22.335999
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 472.61993,
+            "x": 439.6198,
             "y": 552.8889
           },
           "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 439.6198,
+              "y": 541.9769
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 451.6198,
+            "y": 548.8889
+          },
+          "glyph": {
             "name": "accidentalSharp",
             "codepoint": "",
             "description": "Sharp"
@@ -3522,8 +3480,50 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 472.61993,
-              "y": 541.6889
+              "x": 451.6198,
+              "y": 537.6889
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 459.6198,
+            "y": 560.8889
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 459.6198,
+              "y": 549.6889
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 467.6198,
+            "y": 544.8889
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 467.6198,
+              "y": 533.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -3532,8 +3532,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 436.61993,
-          "y": 541.6889
+          "x": 431.6198,
+          "y": 533.6889
         },
         "width": 43.967987,
         "height": 41.920044
@@ -3546,7 +3546,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 491.66284,
+            "x": 487.13095,
             "y": 568.8889
           },
           "glyph": {
@@ -3557,7 +3557,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 491.66284,
+              "x": 487.13095,
               "y": 564.8889
             },
             "width": 9.44,
@@ -3567,7 +3567,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 491.66284,
+          "x": 487.13095,
           "y": 564.8889
         },
         "width": 9.440002,
@@ -3589,7 +3589,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 521.1473,
+            "x": 517.71857,
             "y": 564.8889
           },
           "glyph": {
@@ -3600,7 +3600,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 521.1473,
+              "x": 517.71857,
               "y": 560.8889
             },
             "width": 9.44,
@@ -3610,7 +3610,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 521.1473,
+          "x": 517.71857,
           "y": 560.8889
         },
         "width": 9.440002,
@@ -3632,7 +3632,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 550.63165,
+            "x": 548.30615,
             "y": 560.8889
           },
           "glyph": {
@@ -3643,7 +3643,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 550.63165,
+              "x": 548.30615,
               "y": 556.8889
             },
             "width": 9.44,
@@ -3653,7 +3653,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 550.63165,
+          "x": 548.30615,
           "y": 556.8889
         },
         "width": 9.440002,
@@ -3675,7 +3675,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 580.116,
+            "x": 578.89374,
             "y": 556.8889
           },
           "glyph": {
@@ -3686,7 +3686,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 580.116,
+              "x": 578.89374,
               "y": 552.8889
             },
             "width": 9.44,
@@ -3696,7 +3696,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 580.116,
+          "x": 578.89374,
           "y": 552.8889
         },
         "width": 9.440002,
@@ -3718,7 +3718,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 138.07999,
+            "x": 147.18399,
             "y": 688.8889
           },
           "glyph": {
@@ -3729,7 +3729,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 138.07999,
+              "x": 147.18399,
               "y": 684.8889
             },
             "width": 9.44,
@@ -3739,7 +3739,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 138.07999,
+          "x": 147.18399,
           "y": 684.8889
         },
         "width": 9.440002,
@@ -3761,7 +3761,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 128.97598,
+            "x": 138.07999,
             "y": 688.8889
           },
           "glyph": {
@@ -3772,7 +3772,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 128.97598,
+              "x": 138.07999,
               "y": 684.8249
             },
             "width": 7.904,
@@ -3782,7 +3782,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 128.97598,
+          "x": 138.07999,
           "y": 684.8249
         },
         "width": 7.904007,
@@ -3803,7 +3803,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 171.63914,
+            "x": 170.19325,
             "y": 692.8889
           },
           "glyph": {
@@ -3814,7 +3814,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 171.63914,
+              "x": 170.19325,
               "y": 688.8889
             },
             "width": 9.44,
@@ -3824,7 +3824,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 171.63914,
+          "x": 170.19325,
           "y": 688.8889
         },
         "width": 9.440002,
@@ -3846,7 +3846,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 196.74936,
+            "x": 193.20251,
             "y": 676.8889
           },
           "glyph": {
@@ -3857,7 +3857,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 196.74936,
+              "x": 193.20251,
               "y": 672.8889
             },
             "width": 9.44,
@@ -3867,7 +3867,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 196.74936,
+          "x": 193.20251,
           "y": 672.8889
         },
         "width": 9.440002,
@@ -3889,7 +3889,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 190.17336,
+            "x": 186.62651,
             "y": 676.8889
           },
           "glyph": {
@@ -3900,7 +3900,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 190.17336,
+              "x": 186.62651,
               "y": 665.9769
             },
             "width": 5.376,
@@ -3910,7 +3910,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 190.17336,
+          "x": 186.62651,
           "y": 665.9769
         },
         "width": 5.376007,
@@ -3931,7 +3931,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 227.78052,
+            "x": 216.21178,
             "y": 668.8889
           },
           "glyph": {
@@ -3942,7 +3942,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 227.78052,
+              "x": 216.21178,
               "y": 664.8889
             },
             "width": 9.44,
@@ -3952,7 +3952,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 227.78052,
+          "x": 216.21178,
           "y": 664.8889
         },
         "width": 9.440002,
@@ -3974,30 +3974,30 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 257.57434,
+            "x": 240.5528,
             "y": 664.8889
           },
           "end": {
-            "x": 257.57434,
+            "x": 240.5528,
             "y": 696.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 256.93433,
+              "x": 239.9128,
               "y": 664.2489
             },
-            "width": 1.2800293,
+            "width": 1.2799988,
             "height": 33.28003
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 256.93433,
+          "x": 239.9128,
           "y": 664.2489
         },
-        "width": 1.2800293,
+        "width": 1.2799988,
         "height": 33.28003
       },
       "measureNumber": 10
@@ -4009,8 +4009,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 270.21436,
-            "y": 672.8889
+            "x": 253.19281,
+            "y": 664.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -4020,8 +4020,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 270.21436,
-              "y": 661.9769
+              "x": 253.19281,
+              "y": 653.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -4030,92 +4030,50 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 278.21436,
-            "y": 684.8889
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 278.21436,
-              "y": 673.9769
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 286.21436,
-            "y": 668.8889
-          },
-          "glyph": {
-            "name": "accidentalNatural",
-            "codepoint": "",
-            "description": "Natural"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 286.21436,
-              "y": 657.9769
-            },
-            "width": 5.376,
-            "height": 21.632
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 298.21436,
-            "y": 688.8889
-          },
-          "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 298.21436,
-              "y": 674.84094
-            },
-            "width": 7.232,
-            "height": 19.648
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 306.21436,
+            "x": 261.1928,
             "y": 676.8889
           },
           "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
           },
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 306.21436,
-              "y": 662.84094
+              "x": 261.1928,
+              "y": 665.9769
             },
-            "width": 7.232,
-            "height": 19.648
+            "width": 5.376,
+            "height": 21.632
           }
         },
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 314.21436,
-            "y": 692.8889
+            "x": 269.1928,
+            "y": 660.8889
+          },
+          "glyph": {
+            "name": "accidentalNatural",
+            "codepoint": "",
+            "description": "Natural"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 269.1928,
+              "y": 649.9769
+            },
+            "width": 5.376,
+            "height": 21.632
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 281.1928,
+            "y": 680.8889
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -4125,8 +4083,50 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 314.21436,
-              "y": 678.84094
+              "x": 281.1928,
+              "y": 666.84094
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 289.1928,
+            "y": 668.8889
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 289.1928,
+              "y": 654.84094
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 297.1928,
+            "y": 684.8889
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 297.1928,
+              "y": 670.84094
             },
             "width": 7.232,
             "height": 19.648
@@ -4135,8 +4135,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 270.21436,
-          "y": 657.9769
+          "x": 253.19281,
+          "y": 649.9769
         },
         "width": 51.231995,
         "height": 40.512024
@@ -4149,7 +4149,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 330.38654,
+            "x": 312.75128,
             "y": 696.8889
           },
           "glyph": {
@@ -4160,7 +4160,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 330.38654,
+              "x": 312.75128,
               "y": 692.8889
             },
             "width": 9.44,
@@ -4170,7 +4170,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 330.38654,
+          "x": 312.75128,
           "y": 692.8889
         },
         "width": 9.440002,
@@ -4192,7 +4192,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 354.8417,
+            "x": 335.76053,
             "y": 692.8889
           },
           "glyph": {
@@ -4203,7 +4203,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 354.8417,
+              "x": 335.76053,
               "y": 688.8889
             },
             "width": 9.44,
@@ -4213,7 +4213,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 354.8417,
+          "x": 335.76053,
           "y": 688.8889
         },
         "width": 9.440002,
@@ -4235,7 +4235,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 379.29688,
+            "x": 358.7698,
             "y": 688.8889
           },
           "glyph": {
@@ -4246,7 +4246,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 379.29688,
+              "x": 358.7698,
               "y": 684.8889
             },
             "width": 9.44,
@@ -4256,7 +4256,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 379.29688,
+          "x": 358.7698,
           "y": 684.8889
         },
         "width": 9.440002,
@@ -4278,7 +4278,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 403.752,
+            "x": 381.77905,
             "y": 684.8889
           },
           "glyph": {
@@ -4289,7 +4289,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 403.752,
+              "x": 381.77905,
               "y": 680.8889
             },
             "width": 9.44,
@@ -4299,7 +4299,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 403.752,
+          "x": 381.77905,
           "y": 680.8889
         },
         "width": 9.440002,
@@ -4321,17 +4321,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 427.64624,
+            "x": 404.07135,
             "y": 664.8889
           },
           "end": {
-            "x": 427.64624,
+            "x": 404.07135,
             "y": 696.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 427.00623,
+              "x": 403.43134,
               "y": 664.2489
             },
             "width": 1.2800293,
@@ -4341,7 +4341,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 427.00623,
+          "x": 403.43134,
           "y": 664.2489
         },
         "width": 1.2800293,
@@ -4356,7 +4356,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 458.4376,
+            "x": 431.8863,
             "y": 680.8889
           },
           "glyph": {
@@ -4367,7 +4367,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 458.4376,
+              "x": 431.8863,
               "y": 676.8889
             },
             "width": 9.44,
@@ -4377,7 +4377,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 458.4376,
+          "x": 431.8863,
           "y": 676.8889
         },
         "width": 9.440002,
@@ -4399,7 +4399,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 444.0856,
+            "x": 417.5343,
             "y": 680.8889
           },
           "glyph": {
@@ -4410,7 +4410,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 444.0856,
+              "x": 417.5343,
               "y": 666.9049
             },
             "width": 13.152,
@@ -4420,7 +4420,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 444.0856,
+          "x": 417.5343,
           "y": 666.9049
         },
         "width": 13.152008,
@@ -4441,7 +4441,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 497.24472,
+            "x": 454.89557,
             "y": 676.8889
           },
           "glyph": {
@@ -4452,7 +4452,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 497.24472,
+              "x": 454.89557,
               "y": 672.8889
             },
             "width": 9.44,
@@ -4462,7 +4462,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 497.24472,
+          "x": 454.89557,
           "y": 672.8889
         },
         "width": 9.440002,
@@ -4484,7 +4484,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 522.3549,
+            "x": 477.90482,
             "y": 684.8889
           },
           "glyph": {
@@ -4495,7 +4495,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 522.3549,
+              "x": 477.90482,
               "y": 680.8889
             },
             "width": 9.44,
@@ -4505,7 +4505,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 522.3549,
+          "x": 477.90482,
           "y": 680.8889
         },
         "width": 9.440002,
@@ -4527,7 +4527,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 515.77893,
+            "x": 471.32883,
             "y": 684.8889
           },
           "glyph": {
@@ -4538,7 +4538,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 515.77893,
+              "x": 471.32883,
               "y": 673.9769
             },
             "width": 5.376,
@@ -4548,10 +4548,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 515.77893,
+          "x": 471.32883,
           "y": 673.9769
         },
-        "width": 5.3759766,
+        "width": 5.376007,
         "height": 21.632019
       },
       "eventId": "ve-047",
@@ -4569,7 +4569,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 553.3861,
+            "x": 500.91406,
             "y": 700.8889
           },
           "glyph": {
@@ -4580,7 +4580,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 553.3861,
+              "x": 500.91406,
               "y": 696.8889
             },
             "width": 9.44,
@@ -4590,7 +4590,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 553.3861,
+          "x": 500.91406,
           "y": 696.8889
         },
         "width": 9.440002,
@@ -4607,13 +4607,48 @@
     },
     {
       "id": "elem_84",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 524.2225,
+            "y": 664.8889
+          },
+          "end": {
+            "x": 524.2225,
+            "y": 696.8889
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 523.58246,
+              "y": 664.2489
+            },
+            "width": 1.2800293,
+            "height": 33.28003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 523.58246,
+          "y": 664.2489
+        },
+        "width": 1.2800293,
+        "height": 33.28003
+      },
+      "measureNumber": 12
+    },
+    {
+      "id": "elem_85",
       "type": "KEY_SIGNATURE",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 592.84625,
-            "y": 688.8889
+            "x": 536.8625,
+            "y": 680.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -4623,8 +4658,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 592.84625,
-              "y": 677.9769
+              "x": 536.8625,
+              "y": 669.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -4633,8 +4668,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 600.84625,
-            "y": 676.8889
+            "x": 544.8625,
+            "y": 668.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -4644,8 +4679,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 600.84625,
-              "y": 665.9769
+              "x": 544.8625,
+              "y": 657.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -4654,8 +4689,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 608.84625,
-            "y": 692.8889
+            "x": 552.8625,
+            "y": 684.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -4665,8 +4700,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 608.84625,
-              "y": 681.9769
+              "x": 552.8625,
+              "y": 673.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -4675,22 +4710,22 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 592.84625,
-          "y": 665.9769
+          "x": 536.8625,
+          "y": 657.9769
         },
         "width": 21.375977,
         "height": 37.63202
       }
     },
     {
-      "id": "elem_85",
+      "id": "elem_86",
       "type": "NOTEHEAD",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 106.112,
-            "y": 808.8889
+            "x": 566.70557,
+            "y": 704.8889
           },
           "glyph": {
             "name": "noteheadWhole",
@@ -4700,8 +4735,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 106.112,
-              "y": 804.8889
+              "x": 566.70557,
+              "y": 700.8889
             },
             "width": 13.504,
             "height": 8.0
@@ -4710,10 +4745,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 106.112,
-          "y": 804.8889
+          "x": 566.70557,
+          "y": 700.8889
         },
-        "width": 13.503998,
+        "width": 13.504028,
         "height": 8.0
       },
       "eventId": "ve-049",
@@ -4726,36 +4761,36 @@
       }
     },
     {
-      "id": "elem_86",
+      "id": "elem_87",
       "type": "LEDGER_LINE",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 102.912,
-            "y": 808.8889
+            "x": 563.50555,
+            "y": 704.8889
           },
           "end": {
-            "x": 122.816,
-            "y": 808.8889
+            "x": 583.40955,
+            "y": 704.8889
           },
           "thickness": 1.04,
           "bounds": {
             "origin": {
-              "x": 102.392006,
-              "y": 808.3689
+              "x": 562.98553,
+              "y": 704.3689
             },
-            "width": 20.943993,
+            "width": 20.94403,
             "height": 1.0400391
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 102.392006,
-          "y": 808.3689
+          "x": 562.98553,
+          "y": 704.3689
         },
-        "width": 20.943993,
+        "width": 20.94403,
         "height": 1.0400391
       },
       "eventId": "ve-049",
@@ -4764,49 +4799,14 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_87",
-      "type": "BARLINE",
-      "commands": [
-        {
-          "type": "com.mecon.renderer.render.DrawLine",
-          "start": {
-            "x": 137.30319,
-            "y": 768.8889
-          },
-          "end": {
-            "x": 137.30319,
-            "y": 800.8889
-          },
-          "thickness": 1.28,
-          "bounds": {
-            "origin": {
-              "x": 136.6632,
-              "y": 768.2489
-            },
-            "width": 1.2799988,
-            "height": 33.28003
-          }
-        }
-      ],
-      "hitBox": {
-        "origin": {
-          "x": 136.6632,
-          "y": 768.2489
-        },
-        "width": 1.2799988,
-        "height": 33.28003
-      },
-      "measureNumber": 13
-    },
-    {
       "id": "elem_88",
       "type": "KEY_SIGNATURE",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 149.94319,
-            "y": 776.8889
+            "x": 606.2542,
+            "y": 664.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -4816,8 +4816,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 149.94319,
-              "y": 765.6889
+              "x": 606.2542,
+              "y": 653.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -4826,10 +4826,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 149.94319,
-          "y": 765.6889
+          "x": 606.2542,
+          "y": 653.6889
         },
-        "width": 7.9680023,
+        "width": 7.9680176,
         "height": 22.335999
       }
     },
@@ -4840,7 +4840,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 167.80247,
+            "x": 122.08,
             "y": 792.8889
           },
           "glyph": {
@@ -4851,7 +4851,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 167.80247,
+              "x": 122.08,
               "y": 788.8889
             },
             "width": 13.504,
@@ -4861,7 +4861,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 167.80247,
+          "x": 122.08,
           "y": 788.8889
         },
         "width": 13.503998,
@@ -4883,17 +4883,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 200.11407,
+            "x": 152.72069,
             "y": 768.8889
           },
           "end": {
-            "x": 200.11407,
+            "x": 152.72069,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 199.47408,
+              "x": 152.08069,
               "y": 768.2489
             },
             "width": 1.2799988,
@@ -4903,7 +4903,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 199.47408,
+          "x": 152.08069,
           "y": 768.2489
         },
         "width": 1.2799988,
@@ -4918,8 +4918,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 212.75407,
-            "y": 776.8889
+            "x": 165.36069,
+            "y": 768.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -4929,8 +4929,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 212.75407,
-              "y": 765.6889
+              "x": 165.36069,
+              "y": 757.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -4939,8 +4939,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 220.75407,
-            "y": 788.8889
+            "x": 173.36069,
+            "y": 780.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -4950,8 +4950,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 220.75407,
-              "y": 777.6889
+              "x": 173.36069,
+              "y": 769.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -4960,8 +4960,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 212.75407,
-          "y": 765.6889
+          "x": 165.36069,
+          "y": 757.6889
         },
         "width": 15.968002,
         "height": 34.336
@@ -4974,7 +4974,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 238.61322,
+            "x": 190.75577,
             "y": 804.8889
           },
           "glyph": {
@@ -4985,7 +4985,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 238.61322,
+              "x": 190.75577,
               "y": 800.8889
             },
             "width": 13.504,
@@ -4995,7 +4995,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 238.61322,
+          "x": 190.75577,
           "y": 800.8889
         },
         "width": 13.503998,
@@ -5017,30 +5017,30 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 272.04507,
+            "x": 222.24185,
             "y": 768.8889
           },
           "end": {
-            "x": 272.04507,
+            "x": 222.24185,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 271.40506,
+              "x": 221.60185,
               "y": 768.2489
             },
-            "width": 1.2800293,
+            "width": 1.2799988,
             "height": 33.28003
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 271.40506,
+          "x": 221.60185,
           "y": 768.2489
         },
-        "width": 1.2800293,
+        "width": 1.2799988,
         "height": 33.28003
       },
       "measureNumber": 15
@@ -5052,8 +5052,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 284.68506,
-            "y": 776.8889
+            "x": 234.88185,
+            "y": 768.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5063,8 +5063,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 284.68506,
-              "y": 765.6889
+              "x": 234.88185,
+              "y": 757.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5073,8 +5073,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 292.68506,
-            "y": 788.8889
+            "x": 242.88185,
+            "y": 780.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5084,8 +5084,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 292.68506,
-              "y": 777.6889
+              "x": 242.88185,
+              "y": 769.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5094,8 +5094,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 300.68506,
-            "y": 772.8889
+            "x": 250.88185,
+            "y": 764.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5105,8 +5105,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 300.68506,
-              "y": 761.6889
+              "x": 250.88185,
+              "y": 753.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5115,10 +5115,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 284.68506,
-          "y": 761.6889
+          "x": 234.88185,
+          "y": 753.6889
         },
-        "width": 23.967987,
+        "width": 23.968002,
         "height": 38.336
       }
     },
@@ -5129,7 +5129,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 318.54422,
+            "x": 268.27695,
             "y": 788.8889
           },
           "glyph": {
@@ -5140,7 +5140,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 318.54422,
+              "x": 268.27695,
               "y": 784.8889
             },
             "width": 13.504,
@@ -5150,7 +5150,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 318.54422,
+          "x": 268.27695,
           "y": 784.8889
         },
         "width": 13.503998,
@@ -5172,17 +5172,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 347.4989,
+            "x": 296.38477,
             "y": 768.8889
           },
           "end": {
-            "x": 347.4989,
+            "x": 296.38477,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 346.8589,
+              "x": 295.74475,
               "y": 768.2489
             },
             "width": 1.2800293,
@@ -5192,7 +5192,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 346.8589,
+          "x": 295.74475,
           "y": 768.2489
         },
         "width": 1.2800293,
@@ -5207,7 +5207,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 362.0301,
+            "x": 310.45184,
             "y": 780.8889
           },
           "glyph": {
@@ -5218,7 +5218,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 362.0301,
+              "x": 310.45184,
               "y": 776.8889
             },
             "width": 13.504,
@@ -5228,7 +5228,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 362.0301,
+          "x": 310.45184,
           "y": 776.8889
         },
         "width": 13.503998,
@@ -5250,17 +5250,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 396.02216,
+            "x": 342.3605,
             "y": 768.8889
           },
           "end": {
-            "x": 396.02216,
+            "x": 342.3605,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 395.38214,
+              "x": 341.7205,
               "y": 768.2489
             },
             "width": 1.2800293,
@@ -5270,7 +5270,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 395.38214,
+          "x": 341.7205,
           "y": 768.2489
         },
         "width": 1.2800293,
@@ -5285,8 +5285,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 408.66217,
-            "y": 772.8889
+            "x": 355.0005,
+            "y": 764.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -5296,8 +5296,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 408.66217,
-              "y": 761.9769
+              "x": 355.0005,
+              "y": 753.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -5306,8 +5306,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 420.66217,
-            "y": 776.8889
+            "x": 367.0005,
+            "y": 768.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5317,8 +5317,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 420.66217,
-              "y": 765.6889
+              "x": 367.0005,
+              "y": 757.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5327,8 +5327,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 428.66217,
-            "y": 788.8889
+            "x": 375.0005,
+            "y": 780.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5338,8 +5338,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 428.66217,
-              "y": 777.6889
+              "x": 375.0005,
+              "y": 769.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5348,8 +5348,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 408.66217,
-          "y": 761.9769
+          "x": 355.0005,
+          "y": 753.9769
         },
         "width": 27.967987,
         "height": 38.047974
@@ -5362,7 +5362,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 446.5213,
+            "x": 392.39542,
             "y": 804.8889
           },
           "glyph": {
@@ -5373,7 +5373,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 446.5213,
+              "x": 392.39542,
               "y": 800.8889
             },
             "width": 13.504,
@@ -5383,7 +5383,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 446.5213,
+          "x": 392.39542,
           "y": 800.8889
         },
         "width": 13.503998,
@@ -5405,17 +5405,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 479.39297,
+            "x": 423.4587,
             "y": 768.8889
           },
           "end": {
-            "x": 479.39297,
+            "x": 423.4587,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 478.75296,
+              "x": 422.8187,
               "y": 768.2489
             },
             "width": 1.2800293,
@@ -5425,7 +5425,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 478.75296,
+          "x": 422.8187,
           "y": 768.2489
         },
         "width": 1.2800293,
@@ -5440,8 +5440,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 492.03296,
-            "y": 788.8889
+            "x": 436.0987,
+            "y": 780.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -5451,8 +5451,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 492.03296,
-              "y": 777.9769
+              "x": 436.0987,
+              "y": 769.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -5461,8 +5461,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 504.03296,
-            "y": 776.8889
+            "x": 448.0987,
+            "y": 768.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -5472,8 +5472,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 504.03296,
-              "y": 765.6889
+              "x": 448.0987,
+              "y": 757.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -5482,10 +5482,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 492.03296,
-          "y": 765.6889
+          "x": 436.0987,
+          "y": 757.6889
         },
-        "width": 19.968018,
+        "width": 19.967987,
         "height": 33.920044
       }
     },
@@ -5496,7 +5496,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 521.8921,
+            "x": 465.49362,
             "y": 792.8889
           },
           "glyph": {
@@ -5507,7 +5507,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 521.8921,
+              "x": 465.49362,
               "y": 788.8889
             },
             "width": 13.504,
@@ -5517,10 +5517,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 521.8921,
+          "x": 465.49362,
           "y": 788.8889
         },
-        "width": 13.504028,
+        "width": 13.503998,
         "height": 8.0
       },
       "eventId": "ve-055",
@@ -5539,17 +5539,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 552.72034,
+            "x": 495.01514,
             "y": 768.8889
           },
           "end": {
-            "x": 552.72034,
+            "x": 495.01514,
             "y": 800.8889
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 552.0803,
+              "x": 494.37512,
               "y": 768.2489
             },
             "width": 1.2800293,
@@ -5559,7 +5559,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 552.0803,
+          "x": 494.37512,
           "y": 768.2489
         },
         "width": 1.2800293,
@@ -5574,8 +5574,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 565.36035,
-            "y": 776.8889
+            "x": 507.65512,
+            "y": 768.8889
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -5585,8 +5585,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 565.36035,
-              "y": 765.9769
+              "x": 507.65512,
+              "y": 757.9769
             },
             "width": 5.376,
             "height": 21.632
@@ -5595,10 +5595,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 565.36035,
-          "y": 765.9769
+          "x": 507.65512,
+          "y": 757.9769
         },
-        "width": 5.3759766,
+        "width": 5.376007,
         "height": 21.632019
       }
     },
@@ -5609,7 +5609,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 580.62744,
+            "x": 522.458,
             "y": 780.8889
           },
           "glyph": {
@@ -5620,7 +5620,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 580.62744,
+              "x": 522.458,
               "y": 776.8889
             },
             "width": 13.504,
@@ -5630,7 +5630,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 580.62744,
+          "x": 522.458,
           "y": 776.8889
         },
         "width": 13.504028,
@@ -5647,13 +5647,48 @@
     },
     {
       "id": "elem_107",
+      "type": "BARLINE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawLine",
+          "start": {
+            "x": 550.56573,
+            "y": 768.8889
+          },
+          "end": {
+            "x": 550.56573,
+            "y": 800.8889
+          },
+          "thickness": 1.28,
+          "bounds": {
+            "origin": {
+              "x": 549.9257,
+              "y": 768.2489
+            },
+            "width": 1.2800293,
+            "height": 33.28003
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 549.9257,
+          "y": 768.2489
+        },
+        "width": 1.2800293,
+        "height": 33.28003
+      },
+      "measureNumber": 20
+    },
+    {
+      "id": "elem_108",
       "type": "NOTEHEAD",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 106.11197,
-            "y": 1069.3334
+            "x": 564.6327,
+            "y": 808.8889
           },
           "glyph": {
             "name": "noteheadWhole",
@@ -5663,8 +5698,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 106.11197,
-              "y": 1065.3334
+              "x": 564.6327,
+              "y": 804.8889
             },
             "width": 13.504,
             "height": 8.0
@@ -5673,10 +5708,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 106.11197,
-          "y": 1065.3334
+          "x": 564.6327,
+          "y": 804.8889
         },
-        "width": 13.503998,
+        "width": 13.504028,
         "height": 8.0
       },
       "eventId": "ve-057",
@@ -5689,36 +5724,36 @@
       }
     },
     {
-      "id": "elem_108",
+      "id": "elem_109",
       "type": "LEDGER_LINE",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 102.91197,
-            "y": 1069.3334
+            "x": 561.4327,
+            "y": 808.8889
           },
           "end": {
-            "x": 122.81597,
-            "y": 1069.3334
+            "x": 581.3367,
+            "y": 808.8889
           },
           "thickness": 1.04,
           "bounds": {
             "origin": {
-              "x": 102.391975,
-              "y": 1068.8134
+              "x": 560.91266,
+              "y": 808.3689
             },
-            "width": 20.943993,
+            "width": 20.94403,
             "height": 1.0400391
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 102.391975,
-          "y": 1068.8134
+          "x": 560.91266,
+          "y": 808.3689
         },
-        "width": 20.943993,
+        "width": 20.94403,
         "height": 1.0400391
       },
       "eventId": "ve-057",
@@ -5727,49 +5762,14 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_109",
-      "type": "BARLINE",
-      "commands": [
-        {
-          "type": "com.mecon.renderer.render.DrawLine",
-          "start": {
-            "x": 131.61603,
-            "y": 1029.3334
-          },
-          "end": {
-            "x": 131.61603,
-            "y": 1061.3334
-          },
-          "thickness": 1.28,
-          "bounds": {
-            "origin": {
-              "x": 130.97603,
-              "y": 1028.6934
-            },
-            "width": 1.2799988,
-            "height": 33.28003
-          }
-        }
-      ],
-      "hitBox": {
-        "origin": {
-          "x": 130.97603,
-          "y": 1028.6934
-        },
-        "width": 1.2799988,
-        "height": 33.28003
-      },
-      "measureNumber": 21
-    },
-    {
       "id": "elem_110",
       "type": "KEY_SIGNATURE",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 144.25604,
-            "y": 1053.3334
+            "x": 606.99023,
+            "y": 784.8889
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -5779,8 +5779,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 144.25604,
-              "y": 1039.2854
+              "x": 606.99023,
+              "y": 770.84094
             },
             "width": 7.232,
             "height": 19.648
@@ -5789,11 +5789,11 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 144.25604,
-          "y": 1039.2854
+          "x": 606.99023,
+          "y": 770.84094
         },
         "width": 7.2319946,
-        "height": 19.64795
+        "height": 19.64801
       }
     },
     {
@@ -5803,7 +5803,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 159.48795,
+            "x": 121.3439,
             "y": 1057.3334
           },
           "glyph": {
@@ -5814,7 +5814,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 159.48795,
+              "x": 121.3439,
               "y": 1053.3334
             },
             "width": 13.504,
@@ -5824,7 +5824,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 159.48795,
+          "x": 121.3439,
           "y": 1053.3334
         },
         "width": 13.503998,
@@ -5846,17 +5846,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 184.992,
+            "x": 146.84796,
             "y": 1029.3334
           },
           "end": {
-            "x": 184.992,
+            "x": 146.84796,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 184.352,
+              "x": 146.20796,
               "y": 1028.6934
             },
             "width": 1.2799988,
@@ -5866,7 +5866,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 184.352,
+          "x": 146.20796,
           "y": 1028.6934
         },
         "width": 1.2799988,
@@ -5881,8 +5881,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 197.63202,
-            "y": 1053.3334
+            "x": 159.48798,
+            "y": 1045.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -5892,8 +5892,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 197.63202,
-              "y": 1039.2854
+              "x": 159.48798,
+              "y": 1031.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -5902,8 +5902,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 205.63202,
-            "y": 1041.3334
+            "x": 167.48798,
+            "y": 1033.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -5913,8 +5913,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 205.63202,
-              "y": 1027.2854
+              "x": 167.48798,
+              "y": 1019.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -5923,8 +5923,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 197.63202,
-          "y": 1027.2854
+          "x": 159.48798,
+          "y": 1019.2854
         },
         "width": 15.231995,
         "height": 31.64795
@@ -5937,7 +5937,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 220.86392,
+            "x": 182.71988,
             "y": 1045.3334
           },
           "glyph": {
@@ -5948,7 +5948,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 220.86392,
+              "x": 182.71988,
               "y": 1041.3334
             },
             "width": 13.504,
@@ -5958,7 +5958,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 220.86392,
+          "x": 182.71988,
           "y": 1041.3334
         },
         "width": 13.503998,
@@ -5980,17 +5980,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 246.36798,
+            "x": 208.22394,
             "y": 1029.3334
           },
           "end": {
-            "x": 246.36798,
+            "x": 208.22394,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 245.72798,
+              "x": 207.58394,
               "y": 1028.6934
             },
             "width": 1.2799988,
@@ -6000,7 +6000,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 245.72798,
+          "x": 207.58394,
           "y": 1028.6934
         },
         "width": 1.2799988,
@@ -6015,8 +6015,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 259.008,
-            "y": 1053.3334
+            "x": 220.86395,
+            "y": 1045.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6026,8 +6026,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 259.008,
-              "y": 1039.2854
+              "x": 220.86395,
+              "y": 1031.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6036,8 +6036,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 267.008,
-            "y": 1041.3334
+            "x": 228.86395,
+            "y": 1033.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6047,8 +6047,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 267.008,
-              "y": 1027.2854
+              "x": 228.86395,
+              "y": 1019.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6057,8 +6057,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 275.008,
-            "y": 1057.3334
+            "x": 236.86395,
+            "y": 1049.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6068,8 +6068,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 275.008,
-              "y": 1043.2854
+              "x": 236.86395,
+              "y": 1035.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6078,8 +6078,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 259.008,
-          "y": 1027.2854
+          "x": 220.86395,
+          "y": 1019.2854
         },
         "width": 23.231995,
         "height": 35.64795
@@ -6092,7 +6092,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 290.2399,
+            "x": 252.09586,
             "y": 1061.3334
           },
           "glyph": {
@@ -6103,7 +6103,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 290.2399,
+              "x": 252.09586,
               "y": 1057.3334
             },
             "width": 13.504,
@@ -6113,7 +6113,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 290.2399,
+          "x": 252.09586,
           "y": 1057.3334
         },
         "width": 13.503998,
@@ -6135,17 +6135,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 315.74377,
+            "x": 277.59973,
             "y": 1029.3334
           },
           "end": {
-            "x": 315.74377,
+            "x": 277.59973,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 315.10376,
+              "x": 276.95972,
               "y": 1028.6934
             },
             "width": 1.2800293,
@@ -6155,7 +6155,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 315.10376,
+          "x": 276.95972,
           "y": 1028.6934
         },
         "width": 1.2800293,
@@ -6170,7 +6170,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 328.3837,
+            "x": 290.23965,
             "y": 1049.3334
           },
           "glyph": {
@@ -6181,7 +6181,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 328.3837,
+              "x": 290.23965,
               "y": 1045.3334
             },
             "width": 13.504,
@@ -6191,7 +6191,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 328.3837,
+          "x": 290.23965,
           "y": 1045.3334
         },
         "width": 13.503998,
@@ -6213,17 +6213,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 353.88776,
+            "x": 315.7437,
             "y": 1029.3334
           },
           "end": {
-            "x": 353.88776,
+            "x": 315.7437,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 353.24774,
+              "x": 315.1037,
               "y": 1028.6934
             },
             "width": 1.2800293,
@@ -6233,7 +6233,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 353.24774,
+          "x": 315.1037,
           "y": 1028.6934
         },
         "width": 1.2800293,
@@ -6248,8 +6248,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 366.52777,
-            "y": 1057.3334
+            "x": 328.38373,
+            "y": 1049.3334
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -6259,8 +6259,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 366.52777,
-              "y": 1046.4214
+              "x": 328.38373,
+              "y": 1038.4214
             },
             "width": 5.376,
             "height": 21.632
@@ -6269,8 +6269,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 378.52777,
-            "y": 1053.3334
+            "x": 340.38373,
+            "y": 1045.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6280,8 +6280,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 378.52777,
-              "y": 1039.2854
+              "x": 340.38373,
+              "y": 1031.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6290,8 +6290,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 386.52777,
-            "y": 1041.3334
+            "x": 348.38373,
+            "y": 1033.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6301,8 +6301,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 386.52777,
-              "y": 1027.2854
+              "x": 348.38373,
+              "y": 1019.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6311,8 +6311,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 366.52777,
-          "y": 1027.2854
+          "x": 328.38373,
+          "y": 1019.2854
         },
         "width": 27.231995,
         "height": 40.767944
@@ -6325,7 +6325,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 401.75967,
+            "x": 363.61563,
             "y": 1045.3334
           },
           "glyph": {
@@ -6336,7 +6336,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 401.75967,
+              "x": 363.61563,
               "y": 1041.3334
             },
             "width": 13.504,
@@ -6346,7 +6346,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 401.75967,
+          "x": 363.61563,
           "y": 1041.3334
         },
         "width": 13.503998,
@@ -6368,17 +6368,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 427.26373,
+            "x": 389.1197,
             "y": 1029.3334
           },
           "end": {
-            "x": 427.26373,
+            "x": 389.1197,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 426.62372,
+              "x": 388.47968,
               "y": 1028.6934
             },
             "width": 1.2800293,
@@ -6388,7 +6388,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 426.62372,
+          "x": 388.47968,
           "y": 1028.6934
         },
         "width": 1.2800293,
@@ -6403,8 +6403,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 439.90375,
-            "y": 1041.3334
+            "x": 401.7597,
+            "y": 1033.3334
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -6414,8 +6414,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 439.90375,
-              "y": 1030.4214
+              "x": 401.7597,
+              "y": 1022.4214
             },
             "width": 5.376,
             "height": 21.632
@@ -6424,8 +6424,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 451.90375,
-            "y": 1053.3334
+            "x": 413.7597,
+            "y": 1045.3334
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -6435,8 +6435,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 451.90375,
-              "y": 1039.2854
+              "x": 413.7597,
+              "y": 1031.2854
             },
             "width": 7.232,
             "height": 19.648
@@ -6445,8 +6445,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 439.90375,
-          "y": 1030.4214
+          "x": 401.7597,
+          "y": 1022.4214
         },
         "width": 19.231995,
         "height": 28.511963
@@ -6459,7 +6459,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 467.13565,
+            "x": 428.9916,
             "y": 1057.3334
           },
           "glyph": {
@@ -6470,7 +6470,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 467.13565,
+              "x": 428.9916,
               "y": 1053.3334
             },
             "width": 13.504,
@@ -6480,7 +6480,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 467.13565,
+          "x": 428.9916,
           "y": 1053.3334
         },
         "width": 13.503998,
@@ -6502,17 +6502,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 492.63977,
+            "x": 454.49573,
             "y": 1029.3334
           },
           "end": {
-            "x": 492.63977,
+            "x": 454.49573,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 491.99976,
+              "x": 453.8557,
               "y": 1028.6934
             },
             "width": 1.2800293,
@@ -6522,7 +6522,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 491.99976,
+          "x": 453.8557,
           "y": 1028.6934
         },
         "width": 1.2800293,
@@ -6537,8 +6537,8 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 505.27975,
-            "y": 1053.3334
+            "x": 467.1357,
+            "y": 1045.3334
           },
           "glyph": {
             "name": "accidentalNatural",
@@ -6548,8 +6548,8 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 505.27975,
-              "y": 1042.4214
+              "x": 467.1357,
+              "y": 1034.4214
             },
             "width": 5.376,
             "height": 21.632
@@ -6558,8 +6558,8 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 505.27975,
-          "y": 1042.4214
+          "x": 467.1357,
+          "y": 1034.4214
         },
         "width": 5.376007,
         "height": 21.631958
@@ -6572,7 +6572,7 @@
         {
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
-            "x": 518.65564,
+            "x": 480.51163,
             "y": 1041.3334
           },
           "glyph": {
@@ -6583,7 +6583,7 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 518.65564,
+              "x": 480.51163,
               "y": 1037.3334
             },
             "width": 13.504,
@@ -6593,10 +6593,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 518.65564,
+          "x": 480.51163,
           "y": 1037.3334
         },
-        "width": 13.504028,
+        "width": 13.503998,
         "height": 8.0
       },
       "eventId": "ve-064",
@@ -6615,17 +6615,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 544.1597,
+            "x": 506.01572,
             "y": 1029.3334
           },
           "end": {
-            "x": 544.1597,
+            "x": 506.01572,
             "y": 1061.3334
           },
           "thickness": 1.28,
           "bounds": {
             "origin": {
-              "x": 543.5197,
+              "x": 505.3757,
               "y": 1028.6934
             },
             "width": 1.2800293,
@@ -6635,17 +6635,17 @@
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 549.99976,
+            "x": 511.8557,
             "y": 1029.3334
           },
           "end": {
-            "x": 549.99976,
+            "x": 511.8557,
             "y": 1061.3334
           },
           "thickness": 4.0,
           "bounds": {
             "origin": {
-              "x": 547.99976,
+              "x": 509.8557,
               "y": 1027.3334
             },
             "width": 4.0,
@@ -6655,10 +6655,10 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 543.5197,
+          "x": 505.3757,
           "y": 1027.3334
         },
-        "width": 8.4800415,
+        "width": 8.480011,
         "height": 36.0
       },
       "measureNumber": 28
@@ -6811,69 +6811,6 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 106.112,
-            "y": 284.44446
-          },
-          "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 106.112,
-              "y": 270.39645
-            },
-            "width": 7.232,
-            "height": 19.648
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 114.112,
-            "y": 272.44446
-          },
-          "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 114.112,
-              "y": 258.39645
-            },
-            "width": 7.232,
-            "height": 19.648
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 122.112,
-            "y": 288.44446
-          },
-          "glyph": {
-            "name": "accidentalFlat",
-            "codepoint": "",
-            "description": "Flat"
-          },
-          "fontSize": 32.0,
-          "bounds": {
-            "origin": {
-              "x": 122.112,
-              "y": 274.39645
-            },
-            "width": 7.232,
-            "height": 19.648
-          }
-        },
-        {
-          "type": "com.mecon.renderer.render.DrawGlyph",
-          "position": {
-            "x": 130.112,
             "y": 276.44446
           },
           "glyph": {
@@ -6884,8 +6821,71 @@
           "fontSize": 32.0,
           "bounds": {
             "origin": {
-              "x": 130.112,
+              "x": 106.112,
               "y": 262.39645
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 114.112,
+            "y": 264.44446
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 114.112,
+              "y": 250.39645
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 122.112,
+            "y": 280.44446
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 122.112,
+              "y": 266.39645
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        },
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 130.112,
+            "y": 268.44446
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 130.112,
+              "y": 254.39645
             },
             "width": 7.232,
             "height": 19.648
@@ -6895,7 +6895,7 @@
       "hitBox": {
         "origin": {
           "x": 106.112,
-          "y": 258.39645
+          "y": 250.39645
         },
         "width": 31.231995,
         "height": 35.64801
@@ -7014,7 +7014,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 106.112,
-            "y": 572.8889
+            "y": 564.8889
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -7025,7 +7025,7 @@
           "bounds": {
             "origin": {
               "x": 106.112,
-              "y": 558.84094
+              "y": 550.84094
             },
             "width": 7.232,
             "height": 19.648
@@ -7035,7 +7035,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 114.112,
-            "y": 560.8889
+            "y": 552.8889
           },
           "glyph": {
             "name": "accidentalFlat",
@@ -7046,7 +7046,7 @@
           "bounds": {
             "origin": {
               "x": 114.112,
-              "y": 546.84094
+              "y": 538.84094
             },
             "width": 7.232,
             "height": 19.648
@@ -7056,7 +7056,7 @@
       "hitBox": {
         "origin": {
           "x": 106.112,
-          "y": 546.84094
+          "y": 538.84094
         },
         "width": 15.232002,
         "height": 31.64801
@@ -7130,7 +7130,7 @@
         "width": 1.2800293,
         "height": 33.28003
       },
-      "measureNumber": 12
+      "measureNumber": 13
     },
     {
       "id": "elem_141",
@@ -7175,7 +7175,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 106.112,
-            "y": 672.8889
+            "y": 664.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -7186,7 +7186,7 @@
           "bounds": {
             "origin": {
               "x": 106.112,
-              "y": 661.6889
+              "y": 653.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -7196,7 +7196,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 114.112,
-            "y": 684.8889
+            "y": 676.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -7207,7 +7207,7 @@
           "bounds": {
             "origin": {
               "x": 114.112,
-              "y": 673.6889
+              "y": 665.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -7217,7 +7217,7 @@
           "type": "com.mecon.renderer.render.DrawGlyph",
           "position": {
             "x": 122.112,
-            "y": 668.8889
+            "y": 660.8889
           },
           "glyph": {
             "name": "accidentalSharp",
@@ -7228,7 +7228,7 @@
           "bounds": {
             "origin": {
               "x": 122.112,
-              "y": 657.6889
+              "y": 649.6889
             },
             "width": 7.968,
             "height": 22.335999
@@ -7238,7 +7238,7 @@
       "hitBox": {
         "origin": {
           "x": 106.112,
-          "y": 657.6889
+          "y": 649.6889
         },
         "width": 23.968002,
         "height": 38.336
@@ -7277,7 +7277,7 @@
         "width": 1.2799988,
         "height": 33.28003
       },
-      "measureNumber": 12
+      "measureNumber": 13
     },
     {
       "id": "elem_144",
@@ -7312,7 +7312,7 @@
         "width": 1.2800293,
         "height": 33.28003
       },
-      "measureNumber": 20
+      "measureNumber": 21
     },
     {
       "id": "elem_145",
@@ -7351,6 +7351,41 @@
     },
     {
       "id": "elem_146",
+      "type": "KEY_SIGNATURE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 106.112,
+            "y": 768.8889
+          },
+          "glyph": {
+            "name": "accidentalSharp",
+            "codepoint": "",
+            "description": "Sharp"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 106.112,
+              "y": 757.6889
+            },
+            "width": 7.968,
+            "height": 22.335999
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 106.112,
+          "y": 757.6889
+        },
+        "width": 7.9680023,
+        "height": 22.335999
+      }
+    },
+    {
+      "id": "elem_147",
       "type": "BARLINE",
       "commands": [
         {
@@ -7382,10 +7417,10 @@
         "width": 1.2799988,
         "height": 33.28003
       },
-      "measureNumber": 20
+      "measureNumber": 21
     },
     {
-      "id": "elem_147",
+      "id": "elem_148",
       "type": "CLEF",
       "commands": [
         {
@@ -7420,23 +7455,58 @@
       }
     },
     {
-      "id": "elem_148",
+      "id": "elem_149",
+      "type": "KEY_SIGNATURE",
+      "commands": [
+        {
+          "type": "com.mecon.renderer.render.DrawGlyph",
+          "position": {
+            "x": 106.112,
+            "y": 1045.3334
+          },
+          "glyph": {
+            "name": "accidentalFlat",
+            "codepoint": "",
+            "description": "Flat"
+          },
+          "fontSize": 32.0,
+          "bounds": {
+            "origin": {
+              "x": 106.112,
+              "y": 1031.2854
+            },
+            "width": 7.232,
+            "height": 19.648
+          }
+        }
+      ],
+      "hitBox": {
+        "origin": {
+          "x": 106.112,
+          "y": 1031.2854
+        },
+        "width": 7.2320023,
+        "height": 19.64795
+      }
+    },
+    {
+      "id": "elem_150",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 182.55022,
+            "x": 182.97797,
             "y": 148.44446
           },
           "end": {
-            "x": 182.55022,
+            "x": 182.97797,
             "y": 176.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 182.07022,
+              "x": 182.49797,
               "y": 147.96446
             },
             "width": 0.95999146,
@@ -7446,7 +7516,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 182.07022,
+          "x": 182.49797,
           "y": 147.96446
         },
         "width": 0.95999146,
@@ -7458,23 +7528,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_149",
+      "id": "elem_151",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 207.40576,
+            "x": 208.84126,
             "y": 144.44446
           },
           "end": {
-            "x": 207.40576,
+            "x": 208.84126,
             "y": 172.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 206.92577,
+              "x": 208.36127,
               "y": 143.96446
             },
             "width": 0.95999146,
@@ -7484,7 +7554,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 206.92577,
+          "x": 208.36127,
           "y": 143.96446
         },
         "width": 0.95999146,
@@ -7496,23 +7566,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_150",
+      "id": "elem_152",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 232.2613,
+            "x": 234.70456,
             "y": 140.44446
           },
           "end": {
-            "x": 232.2613,
+            "x": 234.70456,
             "y": 168.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 231.78131,
+              "x": 234.22456,
               "y": 139.96446
             },
             "width": 0.95999146,
@@ -7522,7 +7592,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 231.78131,
+          "x": 234.22456,
           "y": 139.96446
         },
         "width": 0.95999146,
@@ -7534,23 +7604,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_151",
+      "id": "elem_153",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 257.11685,
+            "x": 260.56784,
             "y": 136.44446
           },
           "end": {
-            "x": 257.11685,
+            "x": 260.56784,
             "y": 164.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 256.63684,
+              "x": 260.08783,
               "y": 135.96446
             },
             "width": 0.960022,
@@ -7560,7 +7630,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 256.63684,
+          "x": 260.08783,
           "y": 135.96446
         },
         "width": 0.960022,
@@ -7572,23 +7642,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_152",
+      "id": "elem_154",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 306.4502,
+            "x": 310.78732,
             "y": 144.44446
           },
           "end": {
-            "x": 306.4502,
+            "x": 310.78732,
             "y": 172.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 305.97018,
+              "x": 310.3073,
               "y": 143.96446
             },
             "width": 0.960022,
@@ -7598,7 +7668,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 305.97018,
+          "x": 310.3073,
           "y": 143.96446
         },
         "width": 0.960022,
@@ -7610,23 +7680,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_153",
+      "id": "elem_155",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 340.40973,
+            "x": 336.6506,
             "y": 140.44446
           },
           "end": {
-            "x": 340.40973,
+            "x": 336.6506,
             "y": 168.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 339.92972,
+              "x": 336.1706,
               "y": 139.96446
             },
             "width": 0.960022,
@@ -7636,7 +7706,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 339.92972,
+          "x": 336.1706,
           "y": 139.96446
         },
         "width": 0.960022,
@@ -7648,23 +7718,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_154",
+      "id": "elem_156",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 365.26526,
+            "x": 362.5139,
             "y": 152.44446
           },
           "end": {
-            "x": 365.26526,
+            "x": 362.5139,
             "y": 180.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 364.78525,
+              "x": 362.03387,
               "y": 151.96446
             },
             "width": 0.960022,
@@ -7674,7 +7744,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 364.78525,
+          "x": 362.03387,
           "y": 151.96446
         },
         "width": 0.960022,
@@ -7686,23 +7756,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_155",
+      "id": "elem_157",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 390.89413,
+            "x": 388.37717,
             "y": 156.44446
           },
           "end": {
-            "x": 390.89413,
+            "x": 388.37717,
             "y": 184.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 390.41412,
+              "x": 387.89716,
               "y": 155.96446
             },
             "width": 0.960022,
@@ -7712,7 +7782,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 390.41412,
+          "x": 387.89716,
           "y": 155.96446
         },
         "width": 0.960022,
@@ -7724,23 +7794,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_156",
+      "id": "elem_158",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 519.6378,
+            "x": 515.49805,
             "y": 136.44446
           },
           "end": {
-            "x": 519.6378,
+            "x": 515.49805,
             "y": 164.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 519.15784,
+              "x": 515.01807,
               "y": 135.96446
             },
             "width": 0.95996094,
@@ -7750,7 +7820,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 519.15784,
+          "x": 515.01807,
           "y": 135.96446
         },
         "width": 0.95996094,
@@ -7762,23 +7832,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_157",
+      "id": "elem_159",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 544.4934,
+            "x": 541.3613,
             "y": 132.44446
           },
           "end": {
-            "x": 544.4934,
+            "x": 541.3613,
             "y": 160.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 544.0134,
+              "x": 540.88135,
               "y": 131.96446
             },
             "width": 0.95996094,
@@ -7788,7 +7858,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 544.0134,
+          "x": 540.88135,
           "y": 131.96446
         },
         "width": 0.95996094,
@@ -7800,23 +7870,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_158",
+      "id": "elem_160",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 560.86884,
+            "x": 558.7446,
             "y": 156.44446
           },
           "end": {
-            "x": 560.86884,
+            "x": 558.7446,
             "y": 184.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 560.38885,
+              "x": 558.26465,
               "y": 155.96446
             },
             "width": 0.95996094,
@@ -7826,7 +7896,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 560.38885,
+          "x": 558.26465,
           "y": 155.96446
         },
         "width": 0.95996094,
@@ -7838,23 +7908,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_159",
+      "id": "elem_161",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 585.7244,
+            "x": 584.60785,
             "y": 152.44446
           },
           "end": {
-            "x": 585.7244,
+            "x": 584.60785,
             "y": 180.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 585.24445,
+              "x": 584.12787,
               "y": 151.96446
             },
             "width": 0.95996094,
@@ -7864,7 +7934,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 585.24445,
+          "x": 584.12787,
           "y": 151.96446
         },
         "width": 0.95996094,
@@ -7876,23 +7946,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_160",
+      "id": "elem_162",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 154.304,
+            "x": 168.65599,
             "y": 264.44446
           },
           "end": {
-            "x": 154.304,
+            "x": 168.65599,
             "y": 292.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 153.824,
+              "x": 168.176,
               "y": 263.96445
             },
             "width": 0.95999146,
@@ -7902,7 +7972,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 153.824,
+          "x": 168.176,
           "y": 263.96445
         },
         "width": 0.95999146,
@@ -7914,23 +7984,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_161",
+      "id": "elem_163",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 189.36322,
+            "x": 190.72523,
             "y": 260.44446
           },
           "end": {
-            "x": 189.36322,
+            "x": 190.72523,
             "y": 288.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 188.88322,
+              "x": 190.24524,
               "y": 259.96445
             },
             "width": 0.95999146,
@@ -7940,7 +8010,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 188.88322,
+          "x": 190.24524,
           "y": 259.96445
         },
         "width": 0.95999146,
@@ -7952,23 +8022,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_162",
+      "id": "elem_164",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 214.25069,
+            "x": 218.30385,
             "y": 248.44446
           },
           "end": {
-            "x": 214.25069,
+            "x": 218.30385,
             "y": 276.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 213.77069,
+              "x": 217.82385,
               "y": 247.96446
             },
             "width": 0.95999146,
@@ -7978,7 +8048,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 213.77069,
+          "x": 217.82385,
           "y": 247.96446
         },
         "width": 0.95999146,
@@ -7990,23 +8060,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_163",
+      "id": "elem_165",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 249.30989,
+            "x": 240.37308,
             "y": 256.44446
           },
           "end": {
-            "x": 249.30989,
+            "x": 240.37308,
             "y": 284.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 248.8299,
+              "x": 239.89308,
               "y": 255.96446
             },
             "width": 0.95999146,
@@ -8016,7 +8086,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 248.8299,
+          "x": 239.89308,
           "y": 255.96446
         },
         "width": 0.95999146,
@@ -8028,23 +8098,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_164",
+      "id": "elem_166",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 359.22214,
+            "x": 357.51468,
             "y": 248.44446
           },
           "end": {
-            "x": 359.22214,
+            "x": 357.51468,
             "y": 276.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 358.74213,
+              "x": 357.03467,
               "y": 247.96446
             },
             "width": 0.960022,
@@ -8054,7 +8124,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 358.74213,
+          "x": 357.03467,
           "y": 247.96446
         },
         "width": 0.960022,
@@ -8066,23 +8136,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_165",
+      "id": "elem_167",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 371.4494,
+            "x": 371.10394,
             "y": 272.44446
           },
           "end": {
-            "x": 371.4494,
+            "x": 371.10394,
             "y": 300.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 370.9694,
+              "x": 370.62393,
               "y": 271.96445
             },
             "width": 0.960022,
@@ -8092,7 +8162,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 370.9694,
+          "x": 370.62393,
           "y": 271.96445
         },
         "width": 0.960022,
@@ -8104,23 +8174,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_166",
+      "id": "elem_168",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 392.15662,
+            "x": 393.1732,
             "y": 268.44446
           },
           "end": {
-            "x": 392.15662,
+            "x": 393.1732,
             "y": 296.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 391.6766,
+              "x": 392.69318,
               "y": 267.96445
             },
             "width": 0.960022,
@@ -8130,7 +8200,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 391.6766,
+          "x": 392.69318,
           "y": 267.96445
         },
         "width": 0.960022,
@@ -8142,23 +8212,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_167",
+      "id": "elem_169",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 412.86386,
+            "x": 415.2424,
             "y": 264.44446
           },
           "end": {
-            "x": 412.86386,
+            "x": 415.2424,
             "y": 292.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 412.38385,
+              "x": 414.7624,
               "y": 263.96445
             },
             "width": 0.960022,
@@ -8168,7 +8238,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 412.38385,
+          "x": 414.7624,
           "y": 263.96445
         },
         "width": 0.960022,
@@ -8180,23 +8250,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_168",
+      "id": "elem_170",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 458.74466,
+            "x": 464.06625,
             "y": 260.44446
           },
           "end": {
-            "x": 458.74466,
+            "x": 464.06625,
             "y": 288.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 458.26465,
+              "x": 463.58624,
               "y": 259.96445
             },
             "width": 0.960022,
@@ -8206,7 +8276,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 458.26465,
+          "x": 463.58624,
           "y": 259.96445
         },
         "width": 0.960022,
@@ -8218,23 +8288,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_169",
+      "id": "elem_171",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 486.0279,
+            "x": 486.1355,
             "y": 252.44446
           },
           "end": {
-            "x": 486.0279,
+            "x": 486.1355,
             "y": 280.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 485.54788,
+              "x": 485.6555,
               "y": 251.96446
             },
             "width": 0.960022,
@@ -8244,7 +8314,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 485.54788,
+          "x": 485.6555,
           "y": 251.96446
         },
         "width": 0.960022,
@@ -8256,23 +8326,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_170",
+      "id": "elem_172",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 497.91074,
+            "x": 500.02643,
             "y": 272.44446
           },
           "end": {
-            "x": 497.91074,
+            "x": 500.02643,
             "y": 300.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 497.43073,
+              "x": 499.54642,
               "y": 271.96445
             },
             "width": 0.960022,
@@ -8282,7 +8352,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 497.43073,
+          "x": 499.54642,
           "y": 271.96445
         },
         "width": 0.960022,
@@ -8294,23 +8364,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_171",
+      "id": "elem_173",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 536.20197,
+            "x": 530.5757,
             "y": 256.44446
           },
           "end": {
-            "x": 536.20197,
+            "x": 530.5757,
             "y": 284.44446
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 535.722,
+              "x": 530.0957,
               "y": 255.96446
             },
             "width": 0.95996094,
@@ -8320,7 +8390,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 535.722,
+          "x": 530.0957,
           "y": 255.96446
         },
         "width": 0.95996094,
@@ -8332,7 +8402,7 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_172",
+      "id": "elem_174",
       "type": "STEM",
       "commands": [
         {
@@ -8370,23 +8440,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_173",
+      "id": "elem_175",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 159.30838,
+            "x": 160.41159,
             "y": 560.8889
           },
           "end": {
-            "x": 159.30838,
+            "x": 160.41159,
             "y": 588.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 158.82838,
+              "x": 159.9316,
               "y": 560.40894
             },
             "width": 0.95999146,
@@ -8396,7 +8466,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 158.82838,
+          "x": 159.9316,
           "y": 560.40894
         },
         "width": 0.95999146,
@@ -8408,23 +8478,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_174",
+      "id": "elem_176",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 188.79277,
+            "x": 190.99919,
             "y": 556.8889
           },
           "end": {
-            "x": 188.79277,
+            "x": 190.99919,
             "y": 584.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 188.31277,
+              "x": 190.5192,
               "y": 556.40894
             },
             "width": 0.95999146,
@@ -8434,7 +8504,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 188.31277,
+          "x": 190.5192,
           "y": 556.40894
         },
         "width": 0.95999146,
@@ -8446,23 +8516,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_175",
+      "id": "elem_177",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 218.27718,
+            "x": 221.58679,
             "y": 552.8889
           },
           "end": {
-            "x": 218.27718,
+            "x": 221.58679,
             "y": 580.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 217.79718,
+              "x": 221.1068,
               "y": 552.40894
             },
             "width": 0.95999146,
@@ -8472,7 +8542,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 217.79718,
+          "x": 221.1068,
           "y": 552.40894
         },
         "width": 0.95999146,
@@ -8484,23 +8554,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_176",
+      "id": "elem_178",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 282.7985,
+            "x": 285.98273,
             "y": 536.8889
           },
           "end": {
-            "x": 282.7985,
+            "x": 285.98273,
             "y": 564.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 282.31848,
+              "x": 285.50272,
               "y": 536.40894
             },
             "width": 0.960022,
@@ -8510,7 +8580,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 282.31848,
+          "x": 285.50272,
           "y": 536.40894
         },
         "width": 0.960022,
@@ -8522,23 +8592,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_177",
+      "id": "elem_179",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 310.3789,
+            "x": 308.09036,
             "y": 552.8889
           },
           "end": {
-            "x": 310.3789,
+            "x": 308.09036,
             "y": 580.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 309.8989,
+              "x": 307.61035,
               "y": 552.40894
             },
             "width": 0.960022,
@@ -8548,7 +8618,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 309.8989,
+          "x": 307.61035,
           "y": 552.40894
         },
         "width": 0.960022,
@@ -8560,23 +8630,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_178",
+      "id": "elem_180",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 342.0054,
+            "x": 338.67795,
             "y": 552.8889
           },
           "end": {
-            "x": 342.0054,
+            "x": 338.67795,
             "y": 580.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 341.5254,
+              "x": 338.19794,
               "y": 552.40894
             },
             "width": 0.960022,
@@ -8586,7 +8656,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 341.5254,
+          "x": 338.19794,
           "y": 552.40894
         },
         "width": 0.960022,
@@ -8598,23 +8668,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_179",
+      "id": "elem_181",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 378.06583,
+            "x": 369.26553,
             "y": 548.8889
           },
           "end": {
-            "x": 378.06583,
+            "x": 369.26553,
             "y": 576.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 377.58582,
+              "x": 368.78552,
               "y": 548.40894
             },
             "width": 0.960022,
@@ -8624,7 +8694,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 377.58582,
+          "x": 368.78552,
           "y": 548.40894
         },
         "width": 0.960022,
@@ -8636,23 +8706,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_180",
+      "id": "elem_182",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 500.62283,
+            "x": 496.09094,
             "y": 540.8889
           },
           "end": {
-            "x": 500.62283,
+            "x": 496.09094,
             "y": 568.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 500.14282,
+              "x": 495.61093,
               "y": 540.40894
             },
             "width": 0.960022,
@@ -8662,7 +8732,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 500.14282,
+          "x": 495.61093,
           "y": 540.40894
         },
         "width": 0.960022,
@@ -8674,23 +8744,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_181",
+      "id": "elem_183",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 530.1073,
+            "x": 526.6786,
             "y": 536.8889
           },
           "end": {
-            "x": 530.1073,
+            "x": 526.6786,
             "y": 564.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 529.6273,
+              "x": 526.1986,
               "y": 536.40894
             },
             "width": 0.95996094,
@@ -8700,7 +8770,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 529.6273,
+          "x": 526.1986,
           "y": 536.40894
         },
         "width": 0.95996094,
@@ -8712,23 +8782,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_182",
+      "id": "elem_184",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 551.11163,
+            "x": 548.78613,
             "y": 560.8889
           },
           "end": {
-            "x": 551.11163,
+            "x": 548.78613,
             "y": 588.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 550.63165,
+              "x": 548.30615,
               "y": 560.40894
             },
             "width": 0.95996094,
@@ -8738,7 +8808,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 550.63165,
+          "x": 548.30615,
           "y": 560.40894
         },
         "width": 0.95996094,
@@ -8750,23 +8820,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_183",
+      "id": "elem_185",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 580.596,
+            "x": 579.3737,
             "y": 556.8889
           },
           "end": {
-            "x": 580.596,
+            "x": 579.3737,
             "y": 584.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 580.116,
+              "x": 578.89374,
               "y": 556.40894
             },
             "width": 0.95996094,
@@ -8776,7 +8846,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 580.116,
+          "x": 578.89374,
           "y": 556.40894
         },
         "width": 0.95996094,
@@ -8788,23 +8858,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_184",
+      "id": "elem_186",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 147.04,
+            "x": 156.144,
             "y": 660.8889
           },
           "end": {
-            "x": 147.04,
+            "x": 156.144,
             "y": 688.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 146.56,
+              "x": 155.664,
               "y": 660.40894
             },
             "width": 0.95999146,
@@ -8814,7 +8884,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 146.56,
+          "x": 155.664,
           "y": 660.40894
         },
         "width": 0.95999146,
@@ -8826,23 +8896,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_185",
+      "id": "elem_187",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 180.59915,
+            "x": 179.15326,
             "y": 664.8889
           },
           "end": {
-            "x": 180.59915,
+            "x": 179.15326,
             "y": 692.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 180.11916,
+              "x": 178.67326,
               "y": 664.40894
             },
             "width": 0.95999146,
@@ -8852,7 +8922,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 180.11916,
+          "x": 178.67326,
           "y": 664.40894
         },
         "width": 0.95999146,
@@ -8864,23 +8934,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_186",
+      "id": "elem_188",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 197.22935,
+            "x": 193.68251,
             "y": 676.8889
           },
           "end": {
-            "x": 197.22935,
+            "x": 193.68251,
             "y": 704.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 196.74936,
+              "x": 193.20251,
               "y": 676.40894
             },
             "width": 0.95999146,
@@ -8890,7 +8960,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 196.74936,
+          "x": 193.20251,
           "y": 676.40894
         },
         "width": 0.95999146,
@@ -8902,23 +8972,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_187",
+      "id": "elem_189",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 228.26051,
+            "x": 216.69177,
             "y": 668.8889
           },
           "end": {
-            "x": 228.26051,
+            "x": 216.69177,
             "y": 696.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 227.78052,
+              "x": 216.21178,
               "y": 668.40894
             },
             "width": 0.95999146,
@@ -8928,7 +8998,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 227.78052,
+          "x": 216.21178,
           "y": 668.40894
         },
         "width": 0.95999146,
@@ -8940,23 +9010,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_188",
+      "id": "elem_190",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 339.34653,
+            "x": 321.71127,
             "y": 668.8889
           },
           "end": {
-            "x": 339.34653,
+            "x": 321.71127,
             "y": 696.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 338.86652,
+              "x": 321.23126,
               "y": 668.40894
             },
             "width": 0.960022,
@@ -8966,7 +9036,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 338.86652,
+          "x": 321.23126,
           "y": 668.40894
         },
         "width": 0.960022,
@@ -8978,23 +9048,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_189",
+      "id": "elem_191",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 363.8017,
+            "x": 344.72052,
             "y": 664.8889
           },
           "end": {
-            "x": 363.8017,
+            "x": 344.72052,
             "y": 692.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 363.3217,
+              "x": 344.2405,
               "y": 664.40894
             },
             "width": 0.960022,
@@ -9004,7 +9074,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 363.3217,
+          "x": 344.2405,
           "y": 664.40894
         },
         "width": 0.960022,
@@ -9016,23 +9086,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_190",
+      "id": "elem_192",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 388.25687,
+            "x": 367.7298,
             "y": 660.8889
           },
           "end": {
-            "x": 388.25687,
+            "x": 367.7298,
             "y": 688.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 387.77686,
+              "x": 367.2498,
               "y": 660.40894
             },
             "width": 0.960022,
@@ -9042,7 +9112,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 387.77686,
+          "x": 367.2498,
           "y": 660.40894
         },
         "width": 0.960022,
@@ -9054,23 +9124,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_191",
+      "id": "elem_193",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 412.712,
+            "x": 390.73904,
             "y": 656.8889
           },
           "end": {
-            "x": 412.712,
+            "x": 390.73904,
             "y": 684.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 412.232,
+              "x": 390.25903,
               "y": 656.40894
             },
             "width": 0.960022,
@@ -9080,7 +9150,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 412.232,
+          "x": 390.25903,
           "y": 656.40894
         },
         "width": 0.960022,
@@ -9092,23 +9162,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_192",
+      "id": "elem_194",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 467.39758,
+            "x": 440.84628,
             "y": 652.8889
           },
           "end": {
-            "x": 467.39758,
+            "x": 440.84628,
             "y": 680.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 466.91757,
+              "x": 440.36627,
               "y": 652.40894
             },
             "width": 0.960022,
@@ -9118,7 +9188,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 466.91757,
+          "x": 440.36627,
           "y": 652.40894
         },
         "width": 0.960022,
@@ -9130,23 +9200,23 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_193",
+      "id": "elem_195",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 497.72473,
+            "x": 455.37558,
             "y": 676.8889
           },
           "end": {
-            "x": 497.72473,
+            "x": 455.37558,
             "y": 704.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 497.24472,
+              "x": 454.89557,
               "y": 676.40894
             },
             "width": 0.960022,
@@ -9156,7 +9226,7 @@
       ],
       "hitBox": {
         "origin": {
-          "x": 497.24472,
+          "x": 454.89557,
           "y": 676.40894
         },
         "width": 0.960022,
@@ -9168,36 +9238,36 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_194",
+      "id": "elem_196",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 531.31494,
+            "x": 486.8648,
             "y": 656.8889
           },
           "end": {
-            "x": 531.31494,
+            "x": 486.8648,
             "y": 684.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 530.83496,
+              "x": 486.3848,
               "y": 656.40894
             },
-            "width": 0.95996094,
+            "width": 0.960022,
             "height": 28.95996
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 530.83496,
+          "x": 486.3848,
           "y": 656.40894
         },
-        "width": 0.95996094,
+        "width": 0.960022,
         "height": 28.95996
       },
       "eventId": "ve-047",
@@ -9206,36 +9276,36 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_195",
+      "id": "elem_197",
       "type": "STEM",
       "commands": [
         {
           "type": "com.mecon.renderer.render.DrawLine",
           "start": {
-            "x": 562.3461,
+            "x": 509.87405,
             "y": 672.8889
           },
           "end": {
-            "x": 562.3461,
+            "x": 509.87405,
             "y": 700.8889
           },
           "thickness": 0.96,
           "bounds": {
             "origin": {
-              "x": 561.86615,
+              "x": 509.39404,
               "y": 672.40894
             },
-            "width": 0.95996094,
+            "width": 0.960022,
             "height": 28.95996
           }
         }
       ],
       "hitBox": {
         "origin": {
-          "x": 561.86615,
+          "x": 509.39404,
           "y": 672.40894
         },
-        "width": 0.95996094,
+        "width": 0.960022,
         "height": 28.95996
       },
       "eventId": "ve-048",
@@ -9244,7 +9314,7 @@
       "staffIndex": 0
     },
     {
-      "id": "elem_196",
+      "id": "elem_198",
       "type": "TEXT_ANNOTATION",
       "commands": [
         {
@@ -9278,7 +9348,7 @@
       }
     },
     {
-      "id": "elem_197",
+      "id": "elem_199",
       "type": "TEXT_ANNOTATION",
       "commands": [
         {
@@ -9312,7 +9382,7 @@
       }
     },
     {
-      "id": "elem_198",
+      "id": "elem_200",
       "type": "TEXT_ANNOTATION",
       "commands": [
         {

@@ -2741,6 +2741,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-m1-g2"
       }
     },
@@ -2818,6 +2820,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-m2-1"
       }
     },
@@ -2895,6 +2899,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-m3-1"
       }
     },
@@ -2972,6 +2978,8 @@
       "staffIndex": 0,
       "metadata": {
         "sourcePitchIndex": "1",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4",
         "targetEventId": "ve-m3-1"
       }
     },
@@ -3051,7 +3059,9 @@
         "slurId": "slur:ve-m4-g1->ve-m4-1:0",
         "startEventId": "ve-m4-g1",
         "endEventId": "ve-m4-1",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     },
     {
@@ -3130,7 +3140,9 @@
         "slurId": "slur:ve-m5-g1->ve-m5-4:0",
         "startEventId": "ve-m5-g1",
         "endEventId": "ve-m5-4",
-        "nestingLevel": "0"
+        "nestingLevel": "0",
+        "hitShape": "filledPath",
+        "hitTolerancePx": "2.4"
       }
     }
   ],

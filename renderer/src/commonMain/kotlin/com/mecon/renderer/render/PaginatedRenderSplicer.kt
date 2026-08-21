@@ -888,7 +888,8 @@ internal fun RichElement.isPaginatedSpliceSafe(): Boolean {
             type == RenderElementType.TEXT_ANNOTATION || type == RenderElementType.EDITOR_MARKER ||
             type == RenderElementType.MEASURE
     } else {
-        isPaginatedSpliceableType(type) && hit.customIntersect == null
+        // RelativeHitShape has an explicit translation contract and follows reused system runs.
+        isPaginatedSpliceableType(type)
     }
 }
 
