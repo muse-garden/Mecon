@@ -50,6 +50,7 @@ import com.mecon.api.storage.NoteRef
 import com.mecon.renderer.interaction.*
 import com.mecon.api.interaction.*
 import com.mecon.desktop.ui.components.*
+import com.mecon.desktop.ui.dialogs.DocumentSafetyDialogs
 import com.mecon.desktop.input.handleEditingShortcut
 import com.mecon.desktop.input.NoteInputController
 import com.mecon.desktop.input.NoteInputState
@@ -102,6 +103,15 @@ fun App() {
     val midiInput = remember { JvmMidiInputService(coroutineScope) }
     val fileController = remember {
         ScoreFileController(coroutineScope, ScoreFileService.instance, session, playback)
+    }
+
+    LaunchedEffect(fileController) { fileController.start() }
+    DisposableEffect(fileController) {
+        DesktopApplicationLifecycle.install(
+            close = fileController::requestExit,
+            recover = fileController::emergencyAutosaveBlocking,
+        )
+        onDispose { DesktopApplicationLifecycle.clear() }
     }
 
     val playbackState by playback.playbackState.collectAsState()
@@ -168,6 +178,7 @@ fun App() {
                 freePracticeFile = file
                 freePracticeOpenGeneration += 1
                 activeMenuTab = explorationMenuTab
+                fileController.markFreePracticeOpened(opened)
             } else {
                 latestFreePracticeSnapshot = null
                 freePracticeFile = null
@@ -186,6 +197,14 @@ fun App() {
             latestFreePracticeSnapshot = document.activeFreePracticeSnapshot()
                 ?: latestFreePracticeSnapshot
             freePracticeFile = file
+        }
+        fileController.onRecoveredFreePractice = { document, file ->
+            val recovered = document.activeFreePracticeSnapshot()
+            latestFreePracticeSnapshot = recovered
+            freePracticeFile = file
+            freePracticeOpenGeneration += 1
+            freePracticeModeActive = recovered != null
+            activeMenuTab = if (recovered != null) explorationMenuTab else fileMenuTab
         }
     }
     var scoreViewMode by remember { mutableStateOf(ScoreViewMode.EDIT) }
@@ -614,7 +633,7 @@ fun App() {
         } else {
             when (KeybindingStore.actionFor(event)) {
                 ShortcutAction.NEW_SCORE -> {
-                    dialogState.showNewScore = true
+                    fileController.requestNewScore { dialogState.showNewScore = true }
                     true
                 }
                 ShortcutAction.OPEN_SCORE -> {
@@ -693,7 +712,7 @@ fun App() {
                     } else if (event.type != KeyEventType.KeyDown) {
                         false
                     } else if (KeybindingStore.actionFor(event) == ShortcutAction.NEW_SCORE) {
-                        dialogState.showNewScore = true
+                        fileController.requestNewScore { dialogState.showNewScore = true }
                         true
                     } else if (KeybindingStore.actionFor(event) == ShortcutAction.OPEN_SCORE) {
                         fileController.openFile()
@@ -798,7 +817,7 @@ fun App() {
                         pasteSelection = pasteSelection,
                     ),
                     document = DocumentToolbarActions(
-                        newScore = { dialogState.showNewScore = true },
+                        newScore = { fileController.requestNewScore { dialogState.showNewScore = true } },
                         openAudioSettings = { dialogState.showAudioSettings = true },
                         openScoreMetadata = { dialogState.showScoreMetadata = true },
                         openPageSettings = { dialogState.showPageSettings = true },
@@ -923,7 +942,10 @@ fun App() {
                     onEditableScoreHostChange = { explorationScoreHost = it },
                     initialFreePractice = latestFreePracticeSnapshot,
                     freePracticeOpenGeneration = freePracticeOpenGeneration,
-                    onFreePracticeSnapshotChange = { latestFreePracticeSnapshot = it },
+                    onFreePracticeSnapshotChange = {
+                        latestFreePracticeSnapshot = it
+                        fileController.noteFreePracticeChanged(it)
+                    },
                     onFreePracticeModeChange = { freePracticeModeActive = it },
                     onExplorationToolbarControllerChange = { explorationToolbarController = it },
                     onFreePracticeToolbarControllerChange = { freePracticeToolbarController = it },
@@ -1113,6 +1135,7 @@ fun App() {
         },
         onApplyOrchestration = session::configureOrchestration,
     )
+    DocumentSafetyDialogs(fileController)
 
     } // CompositionLocalProvider
 }

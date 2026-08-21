@@ -140,16 +140,27 @@ Renderer 结果和分页 Picture 缓存保持不变。强制分行 / 分页记�
 
 ## 6. 文件操作
 
-> `service/ScoreFileService.kt`
+> `service/{ScoreFileController,ScoreFileService,AutosaveRepository}.kt`
 
 ```kotlin
 suspend fun loadAuto(file: File): Result<StorageScore>
 suspend fun saveAuto(score: StorageScore, file: File): Result<Unit>
 ```
 
-按扩展名自动分派：`.mecon/.yaml` → YAML，`.xml/.musicxml` → `MusicXmlConverter`。
+按扩展名自动分派：`.mecon` → 容器，`.yaml/.yml` → 原生文本，`.xml/.musicxml` →
+`MusicXmlConverter`。新建、打开与窗口关闭统一经过未保存修改确认；保存成功点以当前 Runtime
+历史帧 identity 标记，撤销回该帧会重新变为“已保存”。文件路径只在写盘成功后更新。
 
-对话框：`ui/dialogs/` 下封装 `JFileChooser`（原生文件选择器）。
+桌面每 2 分钟检查一次当前文档；只有用户操作产生了新 dirty 帧才静默写自动保存。恢复负载是省略
+冻结几何的合法 `.mecon`（启动恢复时重新渲染），旁边的 `.autosave` 元数据记录保存时间、显示文件名、
+原路径与最近一次手动保存文件的 SHA-256。负载与元数据均以同目录临时文件 + 原子替换提交。手动保存、
+明确放弃并成功切换文档、正常退出会删除当前会话的自动保存；异常退出和未捕获错误则保留，并在错误
+处理器中再尝试一次最后机会快照。启动发现残留项时提示进入恢复中心：左侧按时间列出文件名/路径，
+右侧经 `SimpleScoreView` 预览；恢复前若原文件 hash 已变化则提示版本分叉，删除必须二次确认。恢复只
+替换编辑器内容并保持 dirty，不会在用户再次手动保存前直接覆盖原文件。
+
+对话框：`ui/dialogs/` 下封装 `JFileChooser`（原生文件选择器）；设置 → 文件安全可调整后续自动保存
+目录并重新打开恢复中心。自由练习仍保存完整共享会话快照与 module payload，不另设桌面业务格式。
 
 打开或新建文档后，主乐谱区显示“正在载入乐谱并准备交互”遮罩。该状态从文件解析开始，覆盖
 Runtime/Computed 构建、完整 RenderResult 发布以及 Canvas 的首轮 Picture 缓存录制；分页乐谱会在遮罩期间

@@ -5,6 +5,7 @@ import com.mecon.desktop.uikit.theme.ThemeMode
 import com.mecon.desktop.input.NoteInputEntryMode
 import com.mecon.input.ComputerNoteKey
 import com.mecon.input.InputPitchMode
+import java.io.File
 import java.util.prefs.Preferences
 
 /**
@@ -50,6 +51,16 @@ object AppSettings {
     var themeMode: ThemeMode
         get() = ThemeMode.fromCode(prefs.get("themeMode", ThemeMode.DARK.code))
         set(value) { prefs.put("themeMode", value.code) }
+
+    // ─── File safety ────────────────────────────────────────────────────────
+
+    /** Directory containing recoverable autosave payloads and their small metadata sidecars. */
+    var autosaveDirectory: File
+        get() = prefs.get("files.autosaveDirectory", "")
+            .takeIf(String::isNotBlank)
+            ?.let(::File)
+            ?: File(System.getProperty("user.home"), ".mecon/autosave")
+        set(value) { prefs.put("files.autosaveDirectory", value.absoluteFile.normalize().path) }
 
     // ─── Note input ──────────────────────────────────────────────────────────
 

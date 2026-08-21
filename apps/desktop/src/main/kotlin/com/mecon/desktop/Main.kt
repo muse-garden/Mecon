@@ -12,6 +12,13 @@ import com.mecon.desktop.input.GlobalShortcutDispatcher
 import com.mecon.desktop.uikit.components.MeconTextInputFocus
 
 fun main() {
+    val previousUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+        runCatching { DesktopApplicationLifecycle.attemptEmergencyRecovery() }
+            .onFailure(Throwable::printStackTrace)
+        if (previousUncaughtHandler != null) previousUncaughtHandler.uncaughtException(thread, error)
+        else error.printStackTrace()
+    }
     // Opt-in perf tracing of the edit → compute → render pipeline. Off by default; enable with
     // -Dmecon.perf=true or MECON_PERF=1. Logs to stdout, tagged [perf][...] (see PerfLog).
     com.mecon.renderer.debug.PerfLog.enabled =
@@ -23,7 +30,7 @@ fun main() {
     bootstrapPlugins()
     application {
         Window(
-            onCloseRequest = ::exitApplication,
+            onCloseRequest = { DesktopApplicationLifecycle.requestClose(::exitApplication) },
             title = "Mecon - Music Analysis",
             state = rememberWindowState(width = 1400.dp, height = 900.dp),
             onPreviewKeyEvent = { event ->

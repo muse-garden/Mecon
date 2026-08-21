@@ -8,7 +8,6 @@ import com.mecon.api.state.RenderHint
 import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.edit.ExpressionEditEngine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Commit an expression edit and resolve its requested selection in the new frame. */
@@ -18,7 +17,7 @@ internal fun ScoreSession.commitExpressionEdit(
 ) {
     val mgr = manager ?: return
     val previousComputed = mgr.currentState.computedScore
-    scope.launch {
+    launchRecovering {
         val computed = withContext(Dispatchers.Default) { computeScore(result.score) }
         mgr.commitNewState(
             result.score,

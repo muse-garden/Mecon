@@ -1,13 +1,14 @@
 # 设置对话框与快捷键
 
-集中说明应用的「设置」对话框（界面缩放 / 语言 / 键盘快捷键）、快捷键架构，以及**如何为一个功能定义可重绑定的快捷键**。本地存储约定见末尾。
+集中说明应用的「设置」对话框（界面缩放 / 语言 / 文件安全 / 键盘快捷键）、快捷键架构，以及**如何为一个功能定义可重绑定的快捷键**。本地存储约定见末尾。
 
 ## 入口与构成
 
-工具栏右上「设置」齿轮（`Toolbar.kt` 的 `SettingsButton`）打开 `apps/desktop/.../ui/dialogs/SettingsDialog.kt`。`App` 持有 `showSettingsDialog` 与当前 `language` 状态，并把 `uiScale` 一并传入。对话框两个 Tab：
+工具栏右上「设置」齿轮（`Toolbar.kt` 的 `SettingsButton`）打开 `apps/desktop/.../ui/dialogs/SettingsDialog.kt`。`App` 持有 `showSettingsDialog` 与当前 `language` 状态，并把 `uiScale` 一并传入。对话框三个 Tab：
 
 - **常规**：界面缩放步进（`AppSettings.uiScale`，A−/A+ 走 `stepDown`/`stepUp`）+ 语言选择（`Language.entries`）。原工具栏上的独立缩放/语言控件已移除并入此处。
 - **快捷键**：按 `ShortcutCategory` 分组列出全部 `ShortcutAction`，每行显示当前键位 chip +「更改」+ 单项重置图标；顶部「全部恢复默认」。
+- **文件安全**：显示并选择 `AppSettings.autosaveDirectory`，以及打开自动保存恢复中心；目录只影响后续自动保存，切换前会清理当前正常会话的临时副本。
 
 语言改动经 `App` 的 `onLanguageChange`：写 `AppSettings.language` → `I18nRegistry.setLanguage` → 更新本地 `language` 状态 → `refreshKey++` 强制整树重组（对话框因读 `language` 也会重组，i18n 文案即时刷新）。
 
@@ -87,6 +88,7 @@
 | 键位绑定 | `com/mecon/desktop/keybindings`，键 = `ShortcutAction.name`，值 = `KeyStroke.serialize()` 或 `"none"` | `KeybindingStore` | 单例 `init` 逐项读取 |
 | 界面语言 | `com/mecon/desktop`，键 `language` = `Language.code` | `AppSettings.language` | `Main.kt` 启动时 `I18nRegistry.setLanguage(AppSettings.language)` |
 | 界面缩放 | `com/mecon/desktop`，键 `uiScale` | `AppSettings.uiScale` | `App` 初始读 `AppSettings.uiScale` |
+| 自动保存目录 | `com/mecon/desktop`，键 `files.autosaveDirectory` | `AppSettings.autosaveDirectory` | 默认 `~/.mecon/autosave`；`AutosaveRepository` 每次操作读取当前值 |
 | 音色库 | `com/mecon/desktop/soundfonts`，键 `available` / `loaded` / `default`（换行分隔的绝对路径） | `JvmSoundFontManager.persistCatalogue()` | 构造时 `restoreCatalogue()` 重建目录；`initialize(synth)` 把上次已加载的 `.sf2` 重新载入合成器 |
 
 > 音色库此前**完全无持久化**（全在内存 StateFlow，重启即丢）；现已补上路径 / 加载状态 / 默认音色的持久化与启动重载。详见 [audio/README.md](../audio/README.md)。

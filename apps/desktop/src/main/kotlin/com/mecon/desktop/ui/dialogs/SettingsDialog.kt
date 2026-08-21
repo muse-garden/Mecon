@@ -39,6 +39,8 @@ import com.mecon.desktop.uikit.i18n.Language
 import com.mecon.desktop.uikit.i18n.i18n
 import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.desktop.uikit.theme.ThemeMode
+import java.io.File
+import javax.swing.JFileChooser
 
 // Getters, not cached vals — MeconColors roles are reactive `mutableStateOf`s that change
 // when the user switches skin; a plain `val` would freeze at class-init time and never update.
@@ -62,6 +64,9 @@ fun SettingsDialog(
     onLanguageChange: (Language) -> Unit,
     currentThemeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    autosaveDirectory: File,
+    onAutosaveDirectoryChange: (File) -> Unit,
+    onOpenRecoveryCenter: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -106,6 +111,11 @@ fun SettingsDialog(
                         onClick = { selectedTab = 1 },
                         text = { Text(i18n("dialog.settings.tab.shortcuts")) },
                     )
+                    Tab(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        text = { Text(i18n("dialog.settings.tab.files")) },
+                    )
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -121,6 +131,11 @@ fun SettingsDialog(
                             onThemeModeChange = onThemeModeChange,
                         )
                         1 -> ShortcutsTab()
+                        2 -> FileSafetyTab(
+                            autosaveDirectory = autosaveDirectory,
+                            onAutosaveDirectoryChange = onAutosaveDirectoryChange,
+                            onOpenRecoveryCenter = onOpenRecoveryCenter,
+                        )
                     }
                 }
 
@@ -143,6 +158,53 @@ fun SettingsDialog(
             }
         }
     }
+}
+
+@Composable
+private fun FileSafetyTab(
+    autosaveDirectory: File,
+    onAutosaveDirectoryChange: (File) -> Unit,
+    onOpenRecoveryCenter: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionLabel(i18n("dialog.settings.autosaveDirectory"))
+        Text(
+            i18n("dialog.settings.autosaveDescription"),
+            color = Muted,
+            fontSize = 12.sp,
+        )
+        Surface(color = FieldBg, shape = RoundedCornerShape(8.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    autosaveDirectory.absolutePath,
+                    color = MeconColors.TextPrimary,
+                    fontSize = 12.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                OutlinedButton(onClick = {
+                    chooseAutosaveDirectory(autosaveDirectory)?.let(onAutosaveDirectoryChange)
+                }) {
+                    Text(i18n("dialog.settings.chooseDirectory"))
+                }
+            }
+        }
+        OutlinedButton(onClick = onOpenRecoveryCenter) {
+            Text(i18n("dialog.settings.manageRecovery"))
+        }
+    }
+}
+
+private fun chooseAutosaveDirectory(initial: File): File? {
+    val chooser = JFileChooser(initial.takeIf(File::isDirectory)).apply {
+        dialogTitle = "Mecon autosave directory"
+        fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+        isAcceptAllFileFilterUsed = false
+    }
+    return if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
 
 @Composable

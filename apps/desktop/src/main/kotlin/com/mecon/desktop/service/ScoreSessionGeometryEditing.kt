@@ -7,13 +7,12 @@ import com.mecon.api.storage.BeamGeometry
 import com.mecon.api.storage.ScoreGeometry
 import com.mecon.core.engine.computeScore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Replace the entire runtime document and recompute it off the UI thread. */
 fun ScoreSession.applyRuntimeEdit(newRuntime: RuntimeScore) {
     val mgr = manager ?: return
-    scope.launch {
+    launchRecovering {
         val computed = withContext(Dispatchers.Default) { computeScore(newRuntime) }
         mgr.commitNewState(newRuntime, computed)
     }
@@ -31,7 +30,7 @@ fun ScoreSession.applyBeamGeometry(groupId: String, geometry: BeamGeometry) {
         ?.value
         ?.map { it.measurePosition.measure }
         .orEmpty()
-    scope.launch {
+    launchRecovering {
         val computed = withContext(Dispatchers.Default) { computeScore(updated) }
         val hint = if (measures.isEmpty()) null else RenderHint(
             previousComputed,

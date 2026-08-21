@@ -52,7 +52,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.toPersistentMap
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -87,6 +86,10 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         internal set
     var currentFileName by mutableStateOf("Untitled.mecon")
         internal set
+    /** Whether the current history frame differs from the last successful manual save/load. */
+    var isModified by mutableStateOf(false)
+        internal set
+    internal var savedRuntimeScore: RuntimeScore? = null
     override var documentVersion by mutableStateOf(0L)
         internal set
     var analysisMessage by mutableStateOf<String?>(null)
@@ -174,7 +177,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         intent: (expectedRevision: Long) -> ScoreEditIntent,
         onResult: (ScoreEditDispatchResult) -> Unit = {},
     ) {
-        scope.launch {
+        launchRecovering {
             noteInputMutex.withLock {
                 val shared = sharedEditingSession ?: return@withLock
                 val result = withContext(Dispatchers.Default) {
@@ -476,7 +479,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
     ) {
         val mgr = manager ?: return
         val previousComputed = mgr.currentState.computedScore
-        scope.launch {
+        launchRecovering {
             val computed = withContext(Dispatchers.Default) { computeScore(result.score) }
             mgr.commitNewState(
                 result.score,
@@ -526,7 +529,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         val hint = slurMeasureRange(previousComputed, slurId)?.let {
             RenderHint(previousComputed, ComputeChangeSet.forRange(it))
         }
-        scope.launch {
+        launchRecovering {
             // Geometry edits do not change musical semantics. Reuse the current computed graph and
             // replace only its runtime reference; never traverse/recompute the score for a curve drag.
             mgr.commitNewState(updated, computed, hint)
@@ -567,7 +570,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         val hint = tieMeasureRange(previousComputed, sourceEventId, sourcePitchIndex)?.let {
             RenderHint(previousComputed, ComputeChangeSet.forRange(it))
         }
-        scope.launch {
+        launchRecovering {
             mgr.commitNewState(updated, computed, hint)
             onAfter()
         }
@@ -601,7 +604,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         val hint = tieMeasureRange(
             previousComputed, sourceEventId, geometry.sourcePitchIndex,
         )?.let { RenderHint(previousComputed, ComputeChangeSet.forRange(it)) }
-        scope.launch {
+        launchRecovering {
             mgr.commitNewState(updated, computed, hint)
         }
     }
@@ -626,7 +629,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         val hint = slurMeasureRange(previousComputed, slurId)?.let {
             RenderHint(previousComputed, ComputeChangeSet.forRange(it))
         }
-        scope.launch {
+        launchRecovering {
             mgr.commitNewState(updated, computed, hint)
         }
     }
@@ -674,7 +677,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         if (structuralEditInFlight) return
         val previousComputed = mgr.currentState.computedScore
         structuralEditInFlight = true
-        scope.launch {
+        launchRecovering {
             var committed = false
             try {
                 val computed = withContext(Dispatchers.Default) { computeScore(newRuntime) }
@@ -790,7 +793,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         insertion: NoteEditEngine.ChordInsertion,
         onInserted: (com.mecon.api.interaction.EventSection, RuntimeScore) -> Unit = { _, _ -> },
     ) {
-        scope.launch {
+        launchRecovering {
             noteInputMutex.withLock {
                 val mgr = manager ?: return@withLock
                 val current = state ?: return@withLock
@@ -820,7 +823,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         insertion: NoteEditEngine.CaptureInsertion,
         onCommitted: (RuntimeScore) -> Unit = {},
     ) {
-        scope.launch {
+        launchRecovering {
             noteInputMutex.withLock {
                 val mgr = manager ?: return@withLock
                 val current = state ?: return@withLock
@@ -893,7 +896,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
             NoteEditEngine.PasteOutcome.NoOp -> return
         }
 
-        scope.launch {
+        launchRecovering {
             if (result.intervals.size == 1) {
                 val incremental = withContext(Dispatchers.Default) {
                     computeScoreIncremental(previousComputed, result.score, result.intervals.single())
@@ -945,7 +948,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         if (expressionResult != null) score = expressionResult.score
         if (score === current.runtimeScore) return
         val finalScore = score
-        scope.launch {
+        launchRecovering {
             val computed = withContext(Dispatchers.Default) { computeScore(finalScore) }
             mgr.commitNewState(finalScore, computed)
             onAfter(buildSet {
@@ -1426,7 +1429,7 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
     ) {
         val mgr = manager ?: return
         val finalRt = outcome.score
-        scope.launch {
+        launchRecovering {
             if (outcome.intervals.size == 1) {
                 val incremental = withContext(Dispatchers.Default) {
                     computeScoreIncremental(previousComputed, finalRt, outcome.intervals.single())

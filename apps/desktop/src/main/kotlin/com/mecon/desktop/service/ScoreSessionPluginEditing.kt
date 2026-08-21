@@ -14,7 +14,6 @@ import com.mecon.api.storage.events.StoragePluginIntervalEvent
 import com.mecon.core.engine.computeScore
 import com.mecon.core.engine.computeScoreIncremental
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 fun ScoreSession.addPluginEvent(trackType: String, event: StoragePluginEvent) {
@@ -140,7 +139,7 @@ private fun ScoreSession.applyPluginEdit(newRuntime: RuntimeScore, vararg ranges
     val range = ranges.minOfOrNull(IntRange::first)?.let { lo ->
         lo..ranges.maxOf(IntRange::last)
     }
-    scope.launch {
+    launchRecovering {
         val computed = withContext(Dispatchers.Default) { computeScore(newRuntime) }
         val hint = if (previousComputed != null && range != null)
             RenderHint(previousComputed, ComputeChangeSet.forRange(range)) else null

@@ -6,7 +6,6 @@ import com.mecon.api.storage.StorageScore
 import com.mecon.core.analysis.ReductionSyncEngine
 import com.mecon.core.engine.computeScore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Commit an analysis/orchestration mutation through the document undo stack. */
@@ -16,7 +15,7 @@ fun ScoreSession.applyStorageEdit(update: (StorageScore) -> StorageScore) {
     val previousStorage = current.toStorage()
     val updatedStorage = ReductionSyncEngine.synchronize(previousStorage, update(previousStorage))
     if (updatedStorage == previousStorage) return
-    scope.launch {
+    launchRecovering {
         val updatedRuntime = withContext(Dispatchers.Default) {
             RuntimeScore.fromStorage(updatedStorage)
         }

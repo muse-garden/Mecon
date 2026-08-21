@@ -67,6 +67,7 @@ internal fun ApplicationDialogs(
     themeMode = themeMode,
     audioEngine = audioEngine,
     session = session,
+    fileController = fileController,
     actions = AppDialogActions(
         changeUiScale = onUiScaleChanged,
         changeLanguage = onLanguageChanged,
@@ -102,6 +103,7 @@ internal fun AppDialogs(
     themeMode: ThemeMode,
     audioEngine: JvmAudioEngine,
     session: ScoreSession,
+    fileController: ScoreFileController,
     actions: AppDialogActions,
 ) {
     if (state.showSettings) {
@@ -112,6 +114,12 @@ internal fun AppDialogs(
             onLanguageChange = actions.changeLanguage,
             currentThemeMode = themeMode,
             onThemeModeChange = actions.changeThemeMode,
+            autosaveDirectory = fileController.autosaveDirectory,
+            onAutosaveDirectoryChange = fileController::changeAutosaveDirectory,
+            onOpenRecoveryCenter = {
+                state.showSettings = false
+                fileController.openRecoveryCenter()
+            },
             onDismiss = { state.showSettings = false },
         )
     }

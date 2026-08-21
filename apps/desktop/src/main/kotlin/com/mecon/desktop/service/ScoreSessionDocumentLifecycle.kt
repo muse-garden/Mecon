@@ -8,9 +8,30 @@ import com.mecon.api.runtime.toStorage
 import com.mecon.core.analysis.ReductionSyncEngine
 import com.mecon.features.scoreediting.ScoreEditingSession
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+
+/**
+ * Editing failures are atomic because commits happen only after compute succeeds. Surface the error
+ * while retaining the preceding state instead of letting an uncaught coroutine failure tear down the
+ * desktop scope. Cancellation remains cooperative and is never presented as an editing failure.
+ */
+internal fun ScoreSession.launchRecovering(
+    operation: String = "编辑",
+    block: suspend () -> Unit,
+): Job = scope.launch {
+    try {
+        block()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (error: Throwable) {
+        analysisMessage = "${operation}失败，已保留最近一次完整乐谱状态：${error.message ?: error::class.simpleName}"
+        error.printStackTrace()
+    }
+}
 
 suspend fun ScoreSession.replaceDocument(storage: StorageScore, file: File?, fileName: String) {
     val (runtime, computed) = withContext(Dispatchers.Default) {
@@ -20,13 +41,31 @@ suspend fun ScoreSession.replaceDocument(storage: StorageScore, file: File?, fil
     installManager(ScoreStateManager(runtime, computed))
     currentFile = file
     currentFileName = fileName
+    markCurrentStateSaved()
     documentVersion += 1
 }
 
-/** Record the location a save landed in (no document reload). */
-fun ScoreSession.markSavedAs(file: File, fileName: String) {
+/** Record a successful manual save without reloading the document. */
+fun ScoreSession.markCurrentStateSaved(file: File? = currentFile, fileName: String = currentFileName) {
+    markRuntimeStateSaved(state?.runtimeScore, file, fileName)
+}
+
+/** Mark the exact immutable frame that was serialized, even if editing continued during I/O. */
+fun ScoreSession.markRuntimeStateSaved(
+    runtime: RuntimeScore?,
+    file: File? = currentFile,
+    fileName: String = currentFileName,
+) {
     currentFile = file
     currentFileName = fileName
+    savedRuntimeScore = runtime
+    isModified = state?.runtimeScore !== runtime
+}
+
+/** A recovered autosave is intentionally dirty until the user explicitly saves it. */
+fun ScoreSession.markRecoveredAsModified() {
+    savedRuntimeScore = null
+    isModified = state != null
 }
 
 private fun ScoreSession.installManager(mgr: ScoreStateManager) {
@@ -46,7 +85,12 @@ private fun ScoreSession.installManager(mgr: ScoreStateManager) {
     manager = mgr
     sharedEditingSession = ScoreEditingSession.open(mgr)
     state = mgr.currentState
-    collectJob = scope.launch { mgr.currentStateFlow.collect { state = it } }
+    collectJob = scope.launch {
+        mgr.currentStateFlow.collect {
+            state = it
+            isModified = it.runtimeScore !== savedRuntimeScore
+        }
+    }
 }
 
 // --- Edits --------------------------------------------------------------
