@@ -11,6 +11,7 @@ import com.mecon.api.primitive.TimeCode
 import com.mecon.api.render.RenderColor
 import com.mecon.api.plugin.NoteSelectionLabel
 import com.mecon.api.runtime.RuntimeScore
+import com.mecon.desktop.ui.views.drag.*
 import com.mecon.audio.engine.PlaybackState
 import com.mecon.renderer.geometry.AbsoluteRect
 import com.mecon.renderer.interaction.StyleSnapshot

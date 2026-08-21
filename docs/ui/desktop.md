@@ -236,8 +236,20 @@ NewScoreDialog.kt 使用接近全屏的四栏布局：原有的类别→预制�
   拖拽动作按选择、音符移动、表情移动和结构移动分组。Canvas 请求契约位于
   `RenderedScoreCanvasContract.kt`，绘制实现不再同时声明宿主契约。
 - Canvas 绘制、统一拖拽、点击选择和插入工具手势分别位于
-  `RenderedScoreCanvasDraw.kt`、`RenderedScoreDragGestures.kt`、
-  `RenderedScoreSelectionGestures.kt`、`RenderedScoreInsertionGestures.kt`；拖拽几何/命中测试
-  与分页坐标支持位于 `RenderedScoreDragSupport.kt` / `RenderedScoreViewSupport.kt`。
+  `RenderedScoreCanvasDraw.kt`、`views/drag/`（见下条）、
+  `RenderedScoreSelectionGestures.kt`、`RenderedScoreInsertionGestures.kt`。命中优先级位于
+  `ScoreSectionPriority.kt`，像素→`TrackId`/`TimeCode`/锚点解析位于 `ScoreAnchorResolution.kt`
+  （P/S 放置与 H 手柄共用），分页坐标支持位于 `RenderedScoreViewSupport.kt`。
+- **拖拽按[交互家族](score-interaction-taxonomy.md)分文件**：`views/drag/ScoreDragGestures.kt`
+  只做仲裁——解析一次命中（`ScoreDragPick`）、选出认领该手势的 handler、转发 move/release/cancel；
+  每种行为各占一个文件：`ViewportPanDrag`（视口，非编辑）、`MarqueeSelectDrag`（N）、
+  `NoteHandleDrag`（H，移调/移休止）、`BeamHandleDrag`、`AttachmentHandleDrag`、`CurveHandleDrag`、
+  `VoltaHandleDrag`、`NavigationHandleDrag`（均为 H）、`AnnotationRangeDrag`（分析域区间）。
+  新增拖拽行为应新增一个 handler 文件并在仲裁链中排序，不要回到单个巨型 `onDragStart`。
+  handler 只写 transient 预览状态，抬起时最多派发一次编辑（一个历史项）。
+- 拖拽的两条配套通道也在同一包：`ScoreDragOverlayDraw.kt` 画所有进行中拖拽的 Canvas 覆盖层
+  （编辑器 chrome，不产生 `RenderElement`，因此不影响排版边界/分页/命中索引）；
+  `ScoreDragCommitHold.kt` 统一"抬起 → 提交帧上屏"的交接：按 identity 比较 `commitBaseline`，
+  在完整新帧显示前保留预览并阻断交互，并带超时兜底。各拖拽类型不再各写一遍这套 effect。
 - 探索输入页的不可变 state/actions 契约位于 `ExplorationEditorContract.kt`，具体编辑器只消费
   对应领域契约，避免视图实现同时承担跨模式状态定义。

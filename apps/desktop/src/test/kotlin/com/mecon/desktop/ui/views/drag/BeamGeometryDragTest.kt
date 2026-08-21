@@ -1,4 +1,6 @@
-package com.mecon.desktop.ui.views
+package com.mecon.desktop.ui.views.drag
+
+import com.mecon.desktop.ui.views.*
 
 import com.mecon.api.storage.BeamGeometry
 import com.mecon.api.storage.CrossStaffBeamBase

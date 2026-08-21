@@ -41,6 +41,7 @@ import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeCode
 import com.mecon.api.storage.BeamGeometry
 import com.mecon.api.storage.tracks.Clef
+import com.mecon.desktop.ui.views.drag.*
 import com.mecon.desktop.ui.components.EditTool
 import com.mecon.desktop.uikit.i18n.i18n
 import com.mecon.audio.converter.ScoreToMidiConverter
@@ -420,38 +421,19 @@ fun RenderedScoreView(
     val currentOnMoveNavigationMark by rememberUpdatedState(onMoveNavigationMark)
     val currentOnStaffSelector by rememberUpdatedState(staffSelectors.onSelect)
 
+    // The preview is held until the committed re-render lands, so the score never flashes the
+    // pre-drag notation; see [rememberScoreDragCommitHold] for the full hand-off contract.
+    val commitHold = rememberScoreDragCommitHold(dragPreviews, renderResult)
+    val committedFrameDisplayed = commitHold.transpose.committedFrameDisplayed
+    val beamCommittedFrameDisplayed = commitHold.beam.committedFrameDisplayed
+    val attachmentCommittedFrameDisplayed = commitHold.attachment.committedFrameDisplayed
+    val navigationCommittedFrameDisplayed = commitHold.navigation.committedFrameDisplayed
+    val curveCommittedFrameDisplayed = commitHold.curve.committedFrameDisplayed
+    val commitInteractionBlocked = commitHold.interactionBlocked
     // The drag's hide override is transient view state, not an engine-global style track. Merge it
     // into the snapshot consumed by this Canvas only. That lets a committed frame remove both the hide
     // and its preview in one recomposition, instead of waiting for StyleOverrideManager.snapshotFlow
     // to round-trip and forcing an extra notes-Picture recording.
-    // As soon as the replacement RenderResult is the displayed frame, stop applying the old-frame
-    // hide/preview during drawing itself. The cleanup effect runs after composition; deriving this
-    // here prevents one intermediate draw of the new page with the hide followed by a second notes-
-    // layer recording when transposeDrag is cleared.
-    val committedFrameDisplayed = transposeDrag?.let { drag ->
-        drag.committing && renderResult !== drag.commitBaseline
-    } == true
-    val beamCommittedFrameDisplayed = beamDrag?.let { drag ->
-        drag.committing && renderResult !== drag.commitBaseline
-    } == true
-    val attachmentCommittedFrameDisplayed = attachmentDrag?.let { drag ->
-        drag.committing && renderResult !== drag.commitBaseline
-    } == true
-    val navigationCommittedFrameDisplayed = navigationDrag?.let { drag ->
-        drag.committing && renderResult !== drag.commitBaseline
-    } == true
-    val curveCommittedFrameDisplayed = curveDrag?.let { drag ->
-        drag.committing && renderResult !== drag.commitBaseline
-    } == true
-    // The cleanup effect runs after the committed frame has already been composed/drawn. Do not keep
-    // the pointer-consuming overlay alive for that bookkeeping tail: unlock on the first composition
-    // that owns the replacement RenderResult, matching the visual settlement point.
-    val commitInteractionBlocked =
-        (transposeDrag?.committing == true && !committedFrameDisplayed) ||
-            (beamDrag?.committing == true && !beamCommittedFrameDisplayed) ||
-            (attachmentDrag?.committing == true && !attachmentCommittedFrameDisplayed) ||
-            (navigationDrag?.committing == true && !navigationCommittedFrameDisplayed) ||
-            (curveDrag?.committing == true && !curveCommittedFrameDisplayed)
     val movedEventIds = transposeDrag
         ?.takeIf { it.preview != null && !committedFrameDisplayed }
         ?.previewTargets?.keys.orEmpty()
@@ -524,69 +506,6 @@ fun RenderedScoreView(
         }
     }
 
-    // After releasing a transpose, hold the preview until the committed re-render lands so the score
-    // never flashes the pre-drag notes (produceState keeps the stale RenderResult on screen while the
-    // commit recomputes off-thread). While holding, interaction is blocked (overlay below) and — if the
-    // re-render is slow — a "score updating" label appears.
-    //
-    // The preview and its Canvas-local hide override are driven by the same transposeDrag state. Once
-    // the committed result lands, clearing that state reveals the committed note and removes the preview
-    // atomically in the next recomposition; no asynchronous style-snapshot reveal phase is needed.
-    val committing = transposeDrag?.committing == true
-    // React directly to publication of a replacement frame. The previous polling loop could remain
-    // suspended behind frame drawing even after renderResult had changed, inflating the apparent wait.
-    LaunchedEffect(committing, renderResultIdentityKey) {
-        val drag = transposeDrag ?: return@LaunchedEffect
-        if (!drag.committing || renderResult === drag.commitBaseline) return@LaunchedEffect
-        com.mecon.renderer.debug.PerfLog.log("transpose.handoff") {
-            "renderWait=${(System.nanoTime() - drag.commitStartedAtNanos) / 1_000_000}ms " +
-                "revealWait=0ms"
-        }
-        transposeDrag = null
-    }
-    // Independent safety net for a failed/no-op commit. Normally cancelled as soon as the effect above
-    // clears transposeDrag and [committing] becomes false.
-    LaunchedEffect(committing) {
-        if (!committing) return@LaunchedEffect
-        kotlinx.coroutines.delay(COMMIT_HOLD_TIMEOUT_MS)
-        transposeDrag = null
-    }
-    LaunchedEffect(beamCommittedFrameDisplayed) {
-        if (beamCommittedFrameDisplayed) beamDrag = null
-    }
-    val beamCommitting = beamDrag?.committing == true
-    LaunchedEffect(beamCommitting) {
-        if (!beamCommitting) return@LaunchedEffect
-        kotlinx.coroutines.delay(COMMIT_HOLD_TIMEOUT_MS)
-        beamDrag = null
-    }
-    LaunchedEffect(attachmentCommittedFrameDisplayed) {
-        if (attachmentCommittedFrameDisplayed) attachmentDrag = null
-    }
-    val attachmentCommitting = attachmentDrag?.committing == true
-    LaunchedEffect(attachmentCommitting) {
-        if (!attachmentCommitting) return@LaunchedEffect
-        kotlinx.coroutines.delay(COMMIT_HOLD_TIMEOUT_MS)
-        attachmentDrag = null
-    }
-    LaunchedEffect(navigationCommittedFrameDisplayed) {
-        if (navigationCommittedFrameDisplayed) navigationDrag = null
-    }
-    val navigationCommitting = navigationDrag?.committing == true
-    LaunchedEffect(navigationCommitting) {
-        if (!navigationCommitting) return@LaunchedEffect
-        kotlinx.coroutines.delay(COMMIT_HOLD_TIMEOUT_MS)
-        navigationDrag = null
-    }
-    LaunchedEffect(curveCommittedFrameDisplayed) {
-        if (curveCommittedFrameDisplayed) curveDrag = null
-    }
-    val curveCommitting = curveDrag?.committing == true
-    LaunchedEffect(curveCommitting) {
-        if (!curveCommitting) return@LaunchedEffect
-        kotlinx.coroutines.delay(COMMIT_HOLD_TIMEOUT_MS)
-        curveDrag = null
-    }
     compositionCheckpoint("selection+commit")
 
     // Build the O(N) playback-position mapping only while a playhead can actually be shown/followed.

@@ -1,4 +1,6 @@
-package com.mecon.desktop.ui.views
+package com.mecon.desktop.ui.views.drag
+
+import com.mecon.desktop.ui.views.*
 
 import com.mecon.api.render.RenderColor
 import com.mecon.renderer.geometry.AbsolutePoint

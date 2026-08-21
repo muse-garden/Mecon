@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import com.mecon.desktop.ui.views.drag.*
 import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature

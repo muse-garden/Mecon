@@ -1,4 +1,6 @@
-package com.mecon.desktop.ui.views
+package com.mecon.desktop.ui.views.drag
+
+import com.mecon.desktop.ui.views.*
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
