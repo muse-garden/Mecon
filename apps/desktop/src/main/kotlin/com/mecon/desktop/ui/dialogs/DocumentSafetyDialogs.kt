@@ -1,6 +1,7 @@
 package com.mecon.desktop.ui.dialogs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,7 +31,6 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -48,19 +48,38 @@ fun DocumentSafetyDialogs(fileController: ScoreFileController) {
     if (fileController.showUnsavedChangesPrompt) {
         AlertDialog(
             onDismissRequest = fileController::cancelPendingDocumentAction,
-            title = { Text(i18n("dialog.unsaved.title")) },
-            text = { Text(i18n("dialog.unsaved.message")) },
+            containerColor = MeconColors.DialogBackground,
+            titleContentColor = MeconColors.TextPrimary,
+            textContentColor = MeconColors.TextSecondary,
+            title = { Text(i18n("dialog.unsaved.title"), color = MeconColors.TextPrimary) },
+            text = { Text(i18n("dialog.unsaved.message"), color = MeconColors.TextSecondary) },
             confirmButton = {
-                Button(onClick = fileController::saveAndContinue) {
+                Button(
+                    onClick = fileController::saveAndContinue,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MeconColors.Primary,
+                        contentColor = MeconColors.White,
+                    ),
+                ) {
                     Text(i18n("dialog.unsaved.save"))
                 }
             },
             dismissButton = {
                 Row {
-                    TextButton(onClick = fileController::discardAndContinue) {
+                    Button(
+                        onClick = fileController::discardAndContinue,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MeconColors.Danger,
+                            contentColor = MeconColors.White,
+                        ),
+                    ) {
                         Text(i18n("dialog.unsaved.discard"))
                     }
-                    TextButton(onClick = fileController::cancelPendingDocumentAction) {
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = fileController::cancelPendingDocumentAction,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MeconColors.TextSecondary),
+                    ) {
                         Text(i18n("dialog.unsaved.cancel"))
                     }
                 }
@@ -71,15 +90,27 @@ fun DocumentSafetyDialogs(fileController: ScoreFileController) {
     if (fileController.showRecoveryStartupPrompt) {
         AlertDialog(
             onDismissRequest = { fileController.showRecoveryStartupPrompt = false },
-            title = { Text(i18n("dialog.recovery.availableTitle")) },
-            text = { Text(i18n("dialog.recovery.availableMessage")) },
+            containerColor = MeconColors.DialogBackground,
+            titleContentColor = MeconColors.TextPrimary,
+            textContentColor = MeconColors.TextSecondary,
+            title = { Text(i18n("dialog.recovery.availableTitle"), color = MeconColors.TextPrimary) },
+            text = { Text(i18n("dialog.recovery.availableMessage"), color = MeconColors.TextSecondary) },
             confirmButton = {
-                Button(onClick = fileController::openRecoveryCenter) {
+                Button(
+                    onClick = fileController::openRecoveryCenter,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MeconColors.Primary,
+                        contentColor = MeconColors.White,
+                    ),
+                ) {
                     Text(i18n("dialog.recovery.view"))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { fileController.showRecoveryStartupPrompt = false }) {
+                TextButton(
+                    onClick = { fileController.showRecoveryStartupPrompt = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MeconColors.TextSecondary),
+                ) {
                     Text(i18n("dialog.recovery.later"))
                 }
             },
@@ -91,16 +122,30 @@ fun DocumentSafetyDialogs(fileController: ScoreFileController) {
     fileController.pendingRecoveryDelete?.let { entry ->
         AlertDialog(
             onDismissRequest = { fileController.pendingRecoveryDelete = null },
-            title = { Text(i18n("dialog.recovery.deleteTitle")) },
-            text = { Text(i18n("dialog.recovery.deleteMessage").replace("{name}", entry.fileName)) },
+            containerColor = MeconColors.DialogBackground,
+            titleContentColor = MeconColors.TextPrimary,
+            textContentColor = MeconColors.TextSecondary,
+            title = { Text(i18n("dialog.recovery.deleteTitle"), color = MeconColors.TextPrimary) },
+            text = {
+                Text(
+                    i18n("dialog.recovery.deleteMessage").replace("{name}", entry.fileName),
+                    color = MeconColors.TextSecondary,
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = fileController::confirmDeleteRecovery,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB71C1C)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MeconColors.Danger,
+                        contentColor = MeconColors.White,
+                    ),
                 ) { Text(i18n("dialog.recovery.delete")) }
             },
             dismissButton = {
-                TextButton(onClick = { fileController.pendingRecoveryDelete = null }) {
+                TextButton(
+                    onClick = { fileController.pendingRecoveryDelete = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MeconColors.TextSecondary),
+                ) {
                     Text(i18n("dialog.unsaved.cancel"))
                 }
             },
@@ -110,15 +155,32 @@ fun DocumentSafetyDialogs(fileController: ScoreFileController) {
     fileController.pendingDivergedRecovery?.let { entry ->
         AlertDialog(
             onDismissRequest = { fileController.pendingDivergedRecovery = null },
-            title = { Text(i18n("dialog.recovery.divergedTitle")) },
-            text = { Text(i18n("dialog.recovery.divergedMessage").replace("{name}", entry.fileName)) },
+            containerColor = MeconColors.DialogBackground,
+            titleContentColor = MeconColors.TextPrimary,
+            textContentColor = MeconColors.TextSecondary,
+            title = { Text(i18n("dialog.recovery.divergedTitle"), color = MeconColors.TextPrimary) },
+            text = {
+                Text(
+                    i18n("dialog.recovery.divergedMessage").replace("{name}", entry.fileName),
+                    color = MeconColors.TextSecondary,
+                )
+            },
             confirmButton = {
-                Button(onClick = fileController::confirmDivergedRecovery) {
+                Button(
+                    onClick = fileController::confirmDivergedRecovery,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MeconColors.Primary,
+                        contentColor = MeconColors.White,
+                    ),
+                ) {
                     Text(i18n("dialog.recovery.restoreAnyway"))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { fileController.pendingDivergedRecovery = null }) {
+                TextButton(
+                    onClick = { fileController.pendingDivergedRecovery = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MeconColors.TextSecondary),
+                ) {
                     Text(i18n("dialog.unsaved.cancel"))
                 }
             },
@@ -132,7 +194,9 @@ private fun RecoveryCenterDialog(controller: ScoreFileController) {
         Surface(
             modifier = Modifier.width(920.dp).height(620.dp),
             shape = RoundedCornerShape(12.dp),
-            color = MeconColors.Surface,
+            color = MeconColors.DialogBackground,
+            contentColor = MeconColors.TextPrimary,
+            border = BorderStroke(1.dp, MeconColors.Border),
             tonalElevation = 8.dp,
         ) {
             Column(Modifier.padding(20.dp)) {
@@ -141,13 +205,20 @@ private fun RecoveryCenterDialog(controller: ScoreFileController) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(i18n("dialog.recovery.title"), style = MaterialTheme.typography.headlineSmall)
-                    TextButton(onClick = { controller.showRecoveryCenter = false }) {
+                    Text(
+                        i18n("dialog.recovery.title"),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MeconColors.TextPrimary,
+                    )
+                    TextButton(
+                        onClick = { controller.showRecoveryCenter = false },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MeconColors.TextSecondary),
+                    ) {
                         Text(i18n("dialog.settings.close"))
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                HorizontalDivider()
+                HorizontalDivider(color = MeconColors.Border)
                 Row(Modifier.fillMaxSize()) {
                     LazyColumn(
                         modifier = Modifier.width(300.dp).fillMaxHeight().padding(top = 12.dp),
@@ -164,12 +235,18 @@ private fun RecoveryCenterDialog(controller: ScoreFileController) {
                             )
                         }
                     }
-                    VerticalDivider(Modifier.fillMaxHeight().width(1.dp))
+                    VerticalDivider(
+                        modifier = Modifier.fillMaxHeight().width(1.dp),
+                        color = MeconColors.Border,
+                    )
                     Box(Modifier.weight(1f).fillMaxHeight().padding(start = 20.dp, top = 12.dp)) {
                         val preview = controller.recoveryPreview
                         when {
                             controller.recoveryPreviewLoading ->
-                                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                                CircularProgressIndicator(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    color = MeconColors.Primary,
+                                )
                             preview == null -> Text(
                                 i18n("dialog.recovery.selectHint"),
                                 color = MeconColors.TextSecondary,
@@ -193,11 +270,21 @@ private fun RecoveryCenterDialog(controller: ScoreFileController) {
                                     Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End,
                                 ) {
-                                    OutlinedButton(onClick = { controller.requestDeleteRecovery(preview.entry) }) {
+                                    OutlinedButton(
+                                        onClick = { controller.requestDeleteRecovery(preview.entry) },
+                                        border = BorderStroke(1.dp, MeconColors.Danger),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MeconColors.Danger),
+                                    ) {
                                         Text(i18n("dialog.recovery.delete"))
                                     }
                                     Spacer(Modifier.width(8.dp))
-                                    Button(onClick = { controller.requestRestoreRecovery(preview.entry) }) {
+                                    Button(
+                                        onClick = { controller.requestRestoreRecovery(preview.entry) },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MeconColors.Primary,
+                                            contentColor = MeconColors.White,
+                                        ),
+                                    ) {
                                         Text(i18n("dialog.recovery.restore"))
                                     }
                                 }

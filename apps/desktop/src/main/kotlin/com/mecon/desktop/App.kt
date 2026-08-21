@@ -79,6 +79,7 @@ import kotlinx.coroutines.launch
 import com.mecon.desktop.uikit.theme.MeconColors
 import com.mecon.desktop.uikit.theme.MeconDimensions
 import com.mecon.desktop.uikit.theme.ThemeMode
+import com.mecon.desktop.uikit.theme.MeconDialogTheme
 import com.mecon.desktop.uikit.components.MeconTextInputFocus
 import com.mecon.desktop.ui.exploration.ExplorationView
 import com.mecon.desktop.ui.exploration.FreePracticeToolbarController
@@ -1104,38 +1105,40 @@ fun App() {
         }
     }
 
-    ApplicationDialogs(
-        state = dialogState,
-        uiScale = uiScale,
-        language = language,
-        themeMode = themeMode,
-        audioEngine = audioEngine,
-        session = session,
-        fileController = fileController,
-        onUiScaleChanged = { AppSettings.uiScale = it; uiScale = it },
-        onLanguageChanged = { selected ->
-            AppSettings.language = selected
-            I18nRegistry.setLanguage(selected)
-            language = selected
-            refreshKey++
-        },
-        onThemeModeChanged = { selected ->
-            AppSettings.themeMode = selected
-            MeconColors.setTheme(selected)
-            themeMode = selected
-        },
-        deleteMeasures = ::deleteMeasures,
-        onCreateReduction = { title, clefs ->
-            session.applyStorageEdit { storage ->
-                if (storage.reductions.isNotEmpty()) return@applyStorageEdit storage
-                val reduction = ReductionEngine.createFixed(storage, title, clefs)
-                storage.copy(reductions = listOf(reduction))
-            }
-            isSplitView = true
-        },
-        onApplyOrchestration = session::configureOrchestration,
-    )
-    DocumentSafetyDialogs(fileController)
+    MeconDialogTheme {
+        ApplicationDialogs(
+            state = dialogState,
+            uiScale = uiScale,
+            language = language,
+            themeMode = themeMode,
+            audioEngine = audioEngine,
+            session = session,
+            fileController = fileController,
+            onUiScaleChanged = { AppSettings.uiScale = it; uiScale = it },
+            onLanguageChanged = { selected ->
+                AppSettings.language = selected
+                I18nRegistry.setLanguage(selected)
+                language = selected
+                refreshKey++
+            },
+            onThemeModeChanged = { selected ->
+                AppSettings.themeMode = selected
+                MeconColors.setTheme(selected)
+                themeMode = selected
+            },
+            deleteMeasures = ::deleteMeasures,
+            onCreateReduction = { title, clefs ->
+                session.applyStorageEdit { storage ->
+                    if (storage.reductions.isNotEmpty()) return@applyStorageEdit storage
+                    val reduction = ReductionEngine.createFixed(storage, title, clefs)
+                    storage.copy(reductions = listOf(reduction))
+                }
+                isSplitView = true
+            },
+            onApplyOrchestration = session::configureOrchestration,
+        )
+        DocumentSafetyDialogs(fileController)
+    }
 
     } // CompositionLocalProvider
 }

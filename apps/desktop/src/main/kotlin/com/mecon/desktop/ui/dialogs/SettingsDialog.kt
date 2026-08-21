@@ -1,6 +1,7 @@
 package com.mecon.desktop.ui.dialogs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -187,12 +188,19 @@ private fun FileSafetyTab(
                 Spacer(Modifier.width(8.dp))
                 OutlinedButton(onClick = {
                     chooseAutosaveDirectory(autosaveDirectory)?.let(onAutosaveDirectoryChange)
-                }) {
+                },
+                    border = BorderStroke(1.dp, MeconColors.BorderLight),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MeconColors.IconDefault),
+                ) {
                     Text(i18n("dialog.settings.chooseDirectory"))
                 }
             }
         }
-        OutlinedButton(onClick = onOpenRecoveryCenter) {
+        OutlinedButton(
+            onClick = onOpenRecoveryCenter,
+            border = BorderStroke(1.dp, MeconColors.Primary),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MeconColors.PrimaryLight),
+        ) {
             Text(i18n("dialog.settings.manageRecovery"))
         }
     }
