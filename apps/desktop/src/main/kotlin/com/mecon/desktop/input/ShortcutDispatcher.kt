@@ -98,6 +98,8 @@ private fun ShortcutAction.apply(
         ShortcutAction.VOICE_4 -> pickVoice(4, noteTool, editor, editing)
         ShortcutAction.UNDO -> session.undo()
         ShortcutAction.REDO -> session.redo()
+        // The owning RenderedScoreView intercepts viewport navigation through its controller.
+        ShortcutAction.SCORE_SYSTEM_UP, ShortcutAction.SCORE_SYSTEM_DOWN -> {}
         // Selection clipboard actions need composition-owned selection state; App intercepts them
         // before reaching here, so there is nothing to do at this layer.
         ShortcutAction.CUT -> {}

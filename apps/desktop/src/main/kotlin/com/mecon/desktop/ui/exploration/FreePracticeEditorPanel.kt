@@ -667,7 +667,7 @@ internal fun PracticeEditorPanel(
                                             )
                                         }
                                     },
-                                    onInsertNote = { raw ->
+                                    onInsertNote = { raw, onCommitted ->
                                         val onInputTransition = noteTool.prepareInsertionCommit()
                                         host.applyPracticeNoteEdit(
                                             raw,
@@ -675,6 +675,7 @@ internal fun PracticeEditorPanel(
                                             onInputTransition = onInputTransition,
                                             onInserted = { inserted, _ ->
                                                 selection = setOf(inserted)
+                                                onCommitted(inserted)
                                             },
                                             onRejected = { rejection ->
                                                 actions.reportError(rejection.message)

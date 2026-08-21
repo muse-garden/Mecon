@@ -18,6 +18,7 @@ import com.mecon.desktop.ui.components.NoteToolState
 import com.mecon.desktop.ui.components.NoteEntryKind
 import com.mecon.desktop.ui.components.PauseMarkKind
 import com.mecon.api.primitive.EventId
+import com.mecon.api.interaction.EventSection
 import com.mecon.features.scoreediting.ScoreInteractionCatalog
 import com.mecon.features.scoreediting.ScoreTargetingKind
 import com.mecon.api.storage.events.OrnamentAnchor
@@ -48,10 +49,13 @@ internal data class InsertionGestureEnvironment(
     val offset: () -> Offset,
     val scale: () -> Float,
     val density: Float,
+    val panEnabled: Boolean,
+    val updateOffset: (Offset) -> Unit,
+    val updateFollowPlayback: (Boolean) -> Unit,
 )
 
 internal data class InsertionGestureActions(
-    val insertNote: (NoteEditEngine.Insertion) -> Unit,
+    val insertNote: (NoteEditEngine.Insertion, (EventSection) -> Unit) -> Unit,
     val insertClef: (ClefEditEngine.Target) -> Unit,
     val insertTimeSignature: (Int) -> Unit,
     val insertKeySignature: (TimeCode) -> Unit,
@@ -73,6 +77,7 @@ internal data class InsertionGesturePreviews(
     val keySignature: (GhostKeySignature?) -> Unit,
     val pointSymbol: (GhostPointSymbol?) -> Unit,
     val expressionSpan: (GhostExpressionSpan?) -> Unit,
+    val noteCommitted: (PendingNoteViewportAlignment) -> Unit,
 )
 
 internal data class InsertionGestureRequest(
@@ -102,6 +107,8 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
     val clefActive = tool?.tool == EditTool.CLEF
     val timeActive = tool?.tool == EditTool.TIME
     val keyActive = tool?.tool == EditTool.KEY
+    val insertionActive = barlineActive || repeatStructureActive || noteActive || dynamicActive ||
+        pauseActive || tempoActive || expressionSpanActive || clefActive || timeActive || keyActive
 
     fun absolutePoint(raw: Offset): AbsolutePoint? {
         val offset = environment.offset()
@@ -116,6 +123,51 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
     }
 
     return this
+        .pointerInput(
+            environment.resultIdentityKey,
+            insertionActive,
+            environment.paginated,
+            environment.panEnabled,
+        ) {
+            if (!insertionActive || !environment.panEnabled) return@pointerInput
+            val result = environment.result ?: return@pointerInput
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                val canPan = canStartInsertionPan(
+                    raw = down.position,
+                    offset = environment.offset(),
+                    scale = environment.scale(),
+                    density = environment.density,
+                    paginated = environment.paginated,
+                    pages = environment.pages,
+                    pageSlots = environment.pageSlots,
+                    systems = displayedScoreSystems(
+                        result,
+                        environment.paginated,
+                        environment.pages,
+                        environment.pageSlots,
+                    ),
+                )
+                var previous = down.position
+                var panning = false
+                while (true) {
+                    val event = awaitPointerEvent()
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    if (!change.pressed) break
+                    val delta = change.position - previous
+                    previous = change.position
+                    if (!canPan || delta == Offset.Zero) continue
+                    if (!panning) {
+                        panning = true
+                        environment.updateFollowPlayback(false)
+                        previews.note(null)
+                    }
+                    environment.updateOffset(environment.offset() + delta)
+                    change.consume()
+                }
+                if (panning) environment.updateFollowPlayback(true)
+            }
+        }
         .pointerInput(
             environment.resultIdentityKey,
             barlineActive,
@@ -182,6 +234,14 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
                         PointerEventType.Move, PointerEventType.Enter -> previews.note(target)
                         PointerEventType.Exit -> previews.note(null)
                         PointerEventType.Press -> if (target != null) {
+                            val insertionCursorRaw = change.position
+                            val originalSystemFirstMeasure = result
+                                .insertionPositionAt(target.onset)
+                                ?.systemIndex
+                                ?.let(result.spatialIndex::getSystem)
+                                ?.measureNumbers
+                                ?.firstOrNull()
+                                ?: target.onset.measure
                             actions.insertNote(
                                 NoteEditEngine.Insertion(
                                     voiceTrackId = target.voiceTrackId,
@@ -203,8 +263,17 @@ internal fun Modifier.scoreInsertionGestures(request: InsertionGestureRequest): 
                                         )
                                     } else null,
                                     smallNoteAppendStartEventId = target.smallNoteAppendStartEventId,
+                                ),
+                            ) { insertedSection ->
+                                previews.noteCommitted(
+                                    PendingNoteViewportAlignment(
+                                        insertedSection = insertedSection,
+                                        cursorRaw = insertionCursorRaw,
+                                        originalSystemFirstMeasure = originalSystemFirstMeasure,
+                                        originalResultIdentityKey = environment.resultIdentityKey,
+                                    ),
                                 )
-                            )
+                            }
                             change.consume()
                         }
 

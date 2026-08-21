@@ -12,6 +12,7 @@ enum class ShortcutCategory(val labelKey: String) {
     ACCIDENTAL("dialog.settings.category.accidental"),
     VOICE("dialog.settings.category.voice"),
     HISTORY("dialog.settings.category.history"),
+    NAVIGATION("dialog.settings.category.navigation"),
     EDIT("dialog.settings.category.edit"),
 }
 
@@ -69,6 +70,9 @@ enum class ShortcutAction(
 
     UNDO(ShortcutCategory.HISTORY, "shortcut.undo", KeyStroke.of(Key.Z, ctrl = true)),
     REDO(ShortcutCategory.HISTORY, "shortcut.redo", KeyStroke.of(Key.Y, ctrl = true)),
+
+    SCORE_SYSTEM_UP(ShortcutCategory.NAVIGATION, "shortcut.scoreSystemUp", KeyStroke.of(Key.PageUp)),
+    SCORE_SYSTEM_DOWN(ShortcutCategory.NAVIGATION, "shortcut.scoreSystemDown", KeyStroke.of(Key.PageDown)),
 
     CUT(ShortcutCategory.EDIT, "shortcut.cut", KeyStroke.of(Key.X, ctrl = true)),
     COPY(ShortcutCategory.EDIT, "shortcut.copy", KeyStroke.of(Key.C, ctrl = true)),

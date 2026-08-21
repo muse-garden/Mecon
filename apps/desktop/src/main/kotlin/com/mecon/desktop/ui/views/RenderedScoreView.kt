@@ -168,6 +168,76 @@ fun RenderedScoreView(
     val insertionPreviews = remember { RenderedScoreInsertionPreviewState() }
     insertionPreviews.clearGhostsForInactiveTools(activeTool)
 
+    val latestSystemNavigator by rememberUpdatedState<(Int) -> Boolean> { delta ->
+        val result = frame.result ?: return@rememberUpdatedState false
+        val next = viewportOffsetAfterSystemMove(
+            systems = displayedScoreSystems(result, frame.paginated, frame.pages, frame.pageSlots),
+            currentOffset = viewport.offset.value,
+            scale = viewport.scale.value,
+            density = screenDensity,
+            viewportSize = viewport.viewportSize.value,
+            delta = delta,
+        ) ?: return@rememberUpdatedState false
+        viewport.offset.value = next
+        true
+    }
+    val viewportNavigator = remember(display.viewportController) {
+        { delta: Int -> latestSystemNavigator(delta) }
+    }
+    DisposableEffect(display.viewportController, viewportNavigator) {
+        display.viewportController?.attach(viewportNavigator)
+        onDispose { display.viewportController?.detach(viewportNavigator) }
+    }
+
+    val pendingNoteAlignment = insertionPreviews.pendingNoteAlignment.value
+    // Resolve synchronously in the composition-apply side effect. A LaunchedEffect lets the newly
+    // engraved frame draw once at the old offset and then draws it again after correction, which is
+    // especially visible when the first note expands an empty measure. SideEffect updates the layer's
+    // live viewport state before that frame is drawn, so render publication + compensation is one step.
+    SideEffect {
+        val pending = pendingNoteAlignment ?: return@SideEffect
+        if (frame.identityKey == pending.originalResultIdentityKey) return@SideEffect
+        val result = frame.result ?: return@SideEffect
+        val (anchor, systemIndex) = insertedSectionDesignAnchor(
+            result = result,
+            section = pending.insertedSection,
+            cursorRaw = pending.cursorRaw,
+            currentOffset = viewport.offset.value,
+            scale = viewport.scale.value,
+            density = screenDensity,
+            paginated = frame.paginated,
+            pages = frame.pages,
+            pageSlots = frame.pageSlots,
+        ) ?: return@SideEffect
+        val systems = displayedScoreSystems(result, frame.paginated, frame.pages, frame.pageSlots)
+        val system = systems.firstOrNull { it.systemIndex == systemIndex } ?: return@SideEffect
+        viewport.offset.value = if (system.firstMeasure != pending.originalSystemFirstMeasure) {
+            revealSystemStartOffset(
+                system = system,
+                currentOffset = viewport.offset.value,
+                scale = viewport.scale.value,
+                density = screenDensity,
+                viewportSize = viewport.viewportSize.value,
+            )
+        } else {
+            softAlignDesignPointToCursorOffset(
+                designPoint = anchor,
+                cursorRaw = pending.cursorRaw,
+                currentOffset = viewport.offset.value,
+                scale = viewport.scale.value,
+                density = screenDensity,
+            )
+        }
+        insertionPreviews.pendingNoteAlignment.value = null
+    }
+    LaunchedEffect(pendingNoteAlignment) {
+        val pending = pendingNoteAlignment ?: return@LaunchedEffect
+        kotlinx.coroutines.delay(NOTE_ALIGNMENT_TIMEOUT_MS)
+        if (insertionPreviews.pendingNoteAlignment.value === pending) {
+            insertionPreviews.pendingNoteAlignment.value = null
+        }
+    }
+
     LaunchedEffect(source.documentVersion) {
         dragPreviews.transpose.value = null
         viewport.scale.value = 1f
@@ -176,6 +246,7 @@ fun RenderedScoreView(
         viewport.ctrlHeld.value = false
         viewport.marqueeRect.value = null
         insertionPreviews.clearGhostsForInactiveTools(activeTool = null)
+        insertionPreviews.pendingNoteAlignment.value = null
     }
     perf.checkpoint("interaction+page")
 
@@ -406,6 +477,7 @@ private val EXPRESSION_SPAN_TOOLS = setOf(
     EditTool.HAIRPIN,
     EditTool.OCTAVE,
     EditTool.TEMPO_SPAN,
+    EditTool.ORNAMENT_SPAN,
 )
 
 /**
@@ -426,6 +498,8 @@ private val INSERTION_TOOLS = EXPRESSION_SPAN_TOOLS + setOf(
     EditTool.BARLINE,
     EditTool.REPEAT_STRUCTURE,
 )
+
+private const val NOTE_ALIGNMENT_TIMEOUT_MS = 10_000L
 
 /**
  * Opt-in composition timing probe: reports each phase that took long enough to matter.

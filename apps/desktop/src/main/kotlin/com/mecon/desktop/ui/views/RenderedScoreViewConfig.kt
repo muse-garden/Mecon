@@ -126,11 +126,13 @@ data class RenderedScoreDisplayConfig(
      * because their requested time segments already provide the editable width.
      */
     val padEmptyMeasures: Boolean = true,
+    /** Optional desktop bridge for rebindable one-system viewport navigation shortcuts. */
+    val viewportController: RenderedScoreViewportController? = null,
 )
 
 data class RenderedScoreNotationInsertion(
     val noteTool: NoteToolState? = null,
-    val onInsertNote: (NoteEditEngine.Insertion) -> Unit = {},
+    val onInsertNote: (NoteEditEngine.Insertion, (EventSection) -> Unit) -> Unit = { _, _ -> },
     val onAuditionNote: (ComputedVoiceEvent, Set<Int>?, Set<Int>?, Int) -> Unit = { _, _, _, _ -> },
     val onInsertClef: (ClefEditEngine.Target) -> Unit = {},
     val onInsertTimeSignature: (Int) -> Unit = {},

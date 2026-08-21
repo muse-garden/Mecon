@@ -88,6 +88,8 @@ detectTapGestures { offset →
 
 分页模式播放时，`RenderedScoreView` 通过 `globalToDesign` 把播放线的顶部和底部映射到 UI 页面网格，再分别检查 X 与 Y 是否仍在视口内。播放线及其当前谱表行仍可见时保持用户视口；X 越界时把播放线放到视口约三分之一处，Y 越界时把当前谱表行垂直居中。两个轴独立判断，因此放大页面后会随播放线继续横向跟随，换行或换页时也会定位到实际播放行。播放位置索引在后台批量换算 tick，播放线按音符位置逐步前进。Renderer 仍只输出 page-local 页面与坐标，不负责屏幕视口。播放中拖动画布仅在手势期间暂停跟随，松开或取消后先保持当前位置，待播放线再次越界才重新对齐。
 
+插入笔激活时，谱表行左右两侧以及分页纸张外的空隙仍可拖动画布；页面内部且不在谱表行侧边的空白继续归插入工具。音符提交成功后，桌面端等待包含新事件的完整 `RenderResult`，通过 `SectionIndex` 定位新音符，并在新帧首次绘制前合并视口补偿，避免空小节从重排位置到补偿位置连续跳两次；普通插入采用横向 14px、纵向 24px 的死区，超过死区也只修正超出部分，不再像素级吸附音符右侧中央。若该小节因本次排版进入了另一系统，则只最小平移到新系统行首可见。该策略只改变桌面 viewport，不进入共享 intent/session。`PageUp` / `PageDown` 默认把相邻系统移到当前系统的屏幕锚点，分页时可跨页；二者作为 `ShortcutAction` 出现在设置的“乐谱导航”分组，可重新绑定。
+
 谱号 / 调号 / 拍号输入走独立的乐谱元素调板：`LeftToolbar.kt` 展示谱号、调号、拍号三段；调号选择复用 `KeySignaturePicker.kt`，新建乐谱对话框与左侧调板共用同一套预览按钮，按钮自动换行并按 `C`、升号从少到多、降号从少到多排列完整大调调号。`RenderedScoreView.kt` 分别调 `RenderEngine.computeClefGhost()`、`computeKeySignatureGhost()`、`computeTimeSignatureGhost()` 显示竖线+元素 ghost，并提交到 `ScoreSession.applyClefEdit()`、`applyKeySignatureEdit()`、`applyTimeSignatureEdit()`。第 1 小节拍首的谱号笔由共享 core 规范化为初始谱号状态，不写入冗余 `clefChanges`；后续变谱号进入 `StaffPitchContext.Timeline`，音符 pointer 先确定 onset，再按该时刻的中央 C 位置反推音高，并在未显式选择临时记号时采用调号默认音。单选 `ClefSection` / `KeySignatureSection` / `TimeSignatureSection` 时调板按钮高亮，点击其他值会原位修改；未选中时点击调板进入对应笔，在乐谱小节上点击写入/替换该小节起的元素。所有插入笔仍以根 `NoteToolState.tool` 全局互斥，但具体默认值由 `toolstate/` 下的 note、notation、expression、structure 四个子状态分别持有；按钮高亮只反映当前激活工具（保存的默认值不单独常亮）。点选择 / 框选工具或按 Esc 会取消当前插入笔但保留下次使用的默认值。以后新增乐谱元素工具必须加入对应功能子状态，不得继续向根状态堆放无关字段。若选到分页/分行的行首重述谱号或调号，则编辑写入本行起始小节的变更，不回溯修改前一个真实事件或乐谱初始状态。行首重述谱号与调号虽显示当前有效状态，但 hit element 注册为本行起点的独立 `ClefSection` / `KeySignatureSection`，保证每行可单独选中、高亮不联动。
 
 需要把编辑控件放在谱面上方的工作台复用 `HorizontalScoreEditor`。它与 `LeftToolbar`
@@ -257,7 +259,8 @@ NewScoreDialog.kt 使用接近全屏的四栏布局：原有的类别→预制�
   绘制实现不再同时声明宿主契约。
 - 画布上共有四层指针 modifier，由外到内固定顺序：`scoreAmbientGestures`（缩放、修饰键、谱表
   选择器、右键菜单）、`scoreDragGestures`、`scoreSelectionGestures`、`scoreInsertionGestures`。
-  插入工具激活时中间两层整体让位，判据集中在 `INSERTION_TOOLS`。
+  插入工具激活时中间两层整体让位，判据集中在 `INSERTION_TOOLS`；插入状态下的空隙平移由最内层
+  先判定页面/系统边界后处理，不能重新开放通用 drag 仲裁而与笔的提交竞争。
 - Canvas 绘制、统一拖拽、点击选择和插入工具手势分别位于
   `RenderedScoreCanvasDraw.kt`、`views/drag/`（见下条）、
   `RenderedScoreSelectionGestures.kt`、`RenderedScoreInsertionGestures.kt`。命中优先级位于

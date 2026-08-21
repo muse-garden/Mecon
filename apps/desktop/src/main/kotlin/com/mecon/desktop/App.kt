@@ -627,6 +627,9 @@ fun App() {
 
     // Keyboard shortcut focus
     val rootFocusRequester = remember { FocusRequester() }
+    val mainScoreViewportController = remember {
+        com.mecon.desktop.ui.views.RenderedScoreViewportController()
+    }
     LaunchedEffect(Unit) { rootFocusRequester.requestFocus() }
     val currentGlobalShortcutHandler = rememberUpdatedState<(KeyEvent) -> Boolean> { event ->
         if (MeconTextInputFocus.hasFocus || event.type != KeyEventType.KeyDown) {
@@ -653,6 +656,8 @@ fun App() {
                     host.redo()
                     true
                 } ?: false
+                ShortcutAction.SCORE_SYSTEM_UP -> mainScoreViewportController.moveBySystem(-1)
+                ShortcutAction.SCORE_SYSTEM_DOWN -> mainScoreViewportController.moveBySystem(1)
                 ShortcutAction.COPY -> eventSelection.isNotEmpty().also { if (it) copySelection() }
                 ShortcutAction.CUT -> eventSelection.isNotEmpty().also { if (it) cutSelection() }
                 ShortcutAction.PASTE -> eventSelection.isNotEmpty().also { if (it) pasteSelection() }
@@ -725,6 +730,10 @@ fun App() {
                         activeHistoryHost?.let { it.undo(); true } ?: false
                     } else if (KeybindingStore.actionFor(event) == ShortcutAction.REDO) {
                         activeHistoryHost?.let { it.redo(); true } ?: false
+                    } else if (KeybindingStore.actionFor(event) == ShortcutAction.SCORE_SYSTEM_UP) {
+                        mainScoreViewportController.moveBySystem(-1)
+                    } else if (KeybindingStore.actionFor(event) == ShortcutAction.SCORE_SYSTEM_DOWN) {
+                        mainScoreViewportController.moveBySystem(1)
                     } else if (KeybindingStore.actionFor(event) == ShortcutAction.NOTE_INPUT) {
                         session.runtimeScore?.let { runtime ->
                             noteTool.cancelInsertionTool()
@@ -1001,6 +1010,7 @@ fun App() {
                             pluginRenderNonce = pluginRenderNonce,
                             selectionOverlayNonce = pluginSelectionOverlayNonce,
                             scoreViewMode = scoreViewMode,
+                            viewportController = mainScoreViewportController,
                         ),
                         scoreState = AppMainScoreState(
                             geometry = { latestRenderedGeometry },

@@ -179,6 +179,9 @@ internal fun insertionGestureRequest(
         offset = { viewport.offset.value },
         scale = { viewport.scale.value },
         density = density,
+        panEnabled = config.display.panEnabled,
+        updateOffset = { viewport.offset.value = it },
+        updateFollowPlayback = { viewport.followPlayback.value = it },
     ),
     tool = config.edit.notation.noteTool,
     actions = InsertionGestureActions(
@@ -203,6 +206,11 @@ internal fun insertionGestureRequest(
         keySignature = { previews.keySignature.value = it },
         pointSymbol = { previews.pointSymbol.value = it },
         expressionSpan = { previews.expressionSpan.value = it },
+        noteCommitted = {
+            if (config.display.panEnabled && config.display.externalHorizontalOffsetPx == null) {
+                previews.pendingNoteAlignment.value = it
+            }
+        },
     ),
 )
 

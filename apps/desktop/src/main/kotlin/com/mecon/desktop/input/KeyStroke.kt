@@ -95,6 +95,7 @@ private val KEY_LABELS: Map<Long, String> = buildMap {
     put(Key.Spacebar.keyCode, "Space"); put(Key.Enter.keyCode, "Enter")
     put(Key.Tab.keyCode, "Tab"); put(Key.Backspace.keyCode, "Backspace")
     put(Key.Delete.keyCode, "Delete"); put(Key.Escape.keyCode, "Esc")
+    put(Key.PageUp.keyCode, "PageUp"); put(Key.PageDown.keyCode, "PageDown")
     put(Key.DirectionUp.keyCode, "↑"); put(Key.DirectionDown.keyCode, "↓")
     put(Key.DirectionLeft.keyCode, "←"); put(Key.DirectionRight.keyCode, "→")
 }

@@ -1,9 +1,11 @@
 package com.mecon.desktop.ui.views
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import com.mecon.api.interaction.EventSection
 import com.mecon.renderer.render.edit.GhostClef
 import com.mecon.renderer.render.edit.GhostExpressionSpan
 import com.mecon.renderer.render.edit.GhostKeySignature
@@ -30,4 +32,15 @@ internal class RenderedScoreInsertionPreviewState {
     val keySignature = mutableStateOf<GhostKeySignature?>(null)
     val pointSymbol = mutableStateOf<GhostPointSymbol?>(null)
     val expressionSpan = mutableStateOf<GhostExpressionSpan?>(null)
+    val pendingNoteAlignment = mutableStateOf<PendingNoteViewportAlignment?>(
+        null,
+        referentialEqualityPolicy(),
+    )
 }
+
+internal class PendingNoteViewportAlignment(
+    val insertedSection: EventSection,
+    val cursorRaw: Offset,
+    val originalSystemFirstMeasure: Int,
+    val originalResultIdentityKey: Long,
+)

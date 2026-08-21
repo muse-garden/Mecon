@@ -42,6 +42,7 @@ import com.mecon.desktop.ui.views.RenderedScoreStaffSelectorConfig
 import com.mecon.desktop.ui.views.RenderedScoreStructuralMoveActions
 import com.mecon.desktop.ui.views.RenderedScoreView
 import com.mecon.desktop.ui.views.RenderedScoreViewConfig
+import com.mecon.desktop.ui.views.RenderedScoreViewportController
 import com.mecon.desktop.ui.views.noteMovementActions
 import com.mecon.renderer.interaction.*
 import com.mecon.plugins.chord.StorageTonalRegionEvent
@@ -67,6 +68,7 @@ internal data class AppMainScoreUi(
     val pluginRenderNonce: Int,
     val selectionOverlayNonce: Int,
     val scoreViewMode: ScoreViewMode,
+    val viewportController: RenderedScoreViewportController,
 )
 
 internal data class AppMainScoreState(
@@ -201,6 +203,7 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
                 playbackState = playbackState,
                 arrangement = session.pageArrangement,
                 showEditorMarkers = scoreViewMode == ScoreViewMode.EDIT,
+                viewportController = request.ui.viewportController,
             ),
             edit = RenderedScoreEditConfig(
                 notation = RenderedScoreNotationInsertion(
@@ -214,12 +217,13 @@ internal fun AppMainScoreView(request: AppMainScoreRequest) {
                 stepDelta,
             )
         },
-        onInsertNote = { insertion ->
+        onInsertNote = { insertion, onCommitted ->
             val onInputTransition = noteTool.prepareInsertionCommit()
             session.applyNoteEdit(insertion, onInputTransition) { inserted, committedScore ->
                 eventSelection = setOf(inserted)
                 selectedAnnotationEventId = null
                 auditionSingleEditedEvent(setOf(inserted), committedScore)
+                onCommitted(inserted)
             }
         },
         onInsertClef = { target ->

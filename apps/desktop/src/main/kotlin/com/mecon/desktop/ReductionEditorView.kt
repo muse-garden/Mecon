@@ -392,9 +392,10 @@ private fun ReductionNotationScore(
                     onAuditionNote = { event, pitchIndices, transposedPitchIndices, stepDelta ->
                         playback.audition(runtime, event, pitchIndices, transposedPitchIndices, stepDelta)
                     },
-                    onInsertNote = { insertion ->
+                    onInsertNote = { insertion, onCommitted ->
                         session.applyReductionNoteEdit(reductionId, insertion) { inserted, committed ->
                             onSelectionChange(setOf(inserted))
+                            onCommitted(inserted)
                             val insertedEvent = (inserted as? VoiceEventSection)?.event
                             if (insertedEvent != null) {
                                 playback.auditionPiano(committed, insertedEvent)
