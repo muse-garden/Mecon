@@ -19,7 +19,8 @@ Storage/Runtime/Computed 层决定，Renderer 只消费已有的 `ComputedStaffA
 - fermata 和 breath 的存储锚点均为记号后方 TimeCode。选中音符或直接点击符头添加 fermata
   时使用该音符结束时间；fermata 一次写入 global track 并作用到全部声部。
 - breath 的自动 X 位置取前一音与后续音时间列的中点；跨系统时放在新系统后续音之前，不覆盖符头。
-- breath 的点选、虚线指引和拖动统一使用边界候选：实际小节线或相邻音符列中点，而不是符头位置。
+- breath 的点选、虚线指引和拖动统一使用 `InsertionBoundaryResolver` 的边界候选：实际小节线或相邻
+  音符列中点，而不是符头位置；谱号输入复用同一候选本体。
   单声部、单谱表与全谱 breath 均可拖动并重新吸附；全谱 breath 改变时间时联动所有谱表。
 - 点力度：选择音符后按 `(staff, TimeCode)` 去重批量添加；无选区时点击按钮进入点选模式。
 - 区间记号：选择音符后按谱表分别取最左、最右 onset；无选区时拖动画出区间。

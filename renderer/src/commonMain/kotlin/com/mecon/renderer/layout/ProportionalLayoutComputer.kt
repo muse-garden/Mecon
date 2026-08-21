@@ -641,7 +641,7 @@ class ProportionalLayoutComputer(
 
     private fun spacingAfterPriority(priority: Int): StaffSpace = when (priority) {
         LayoutElement.PRIORITY_BARLINE -> config.spaceAfterBarline
-        LayoutElement.PRIORITY_CLEF -> config.spaceAfterClef
+        LayoutElement.PRIORITY_CLEF_CHANGE, LayoutElement.PRIORITY_CLEF -> config.spaceAfterClef
         LayoutElement.PRIORITY_KEY_SIGNATURE -> config.spaceAfterKeySignature
         LayoutElement.PRIORITY_TIME_SIGNATURE -> config.spaceAfterTimeSignature
         else -> StaffSpace.ZERO

@@ -1,5 +1,6 @@
 package com.mecon.renderer.render
 
+import com.mecon.api.interaction.BarlineSection
 import com.mecon.api.primitive.TimeCode
 import com.mecon.renderer.elements.NoteElement
 import com.mecon.renderer.geometry.AbsoluteRect
@@ -12,6 +13,9 @@ import com.mecon.renderer.layout.SlurLayout
 import com.mecon.renderer.layout.TieLayout
 import com.mecon.renderer.layout.UnifiedLayoutResult
 import com.mecon.renderer.render.spatial.ScoreSpatialAdapter
+import com.mecon.renderer.render.edit.InsertionBoundary
+import com.mecon.renderer.render.edit.InsertionBoundaryKind
+import com.mecon.renderer.render.edit.buildInsertionBoundaries
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentMap
@@ -364,6 +368,7 @@ internal class RenderResultAssembler(
                 topY = band?.first ?: fullTopY,
                 bottomY = band?.second ?: fullBottomY,
                 leftX = leftAbsX,
+                systemIndex = slot.systemIndex,
             )
         }
         val immutableNoteheadRights = noteheadRightPositions.mapValues { (_, byStaffVoice) ->
@@ -407,6 +412,11 @@ internal class RenderResultAssembler(
         val _tMeasureBounds = kotlin.time.TimeSource.Monotonic.markNow()
         val measureBounds = computeRenderedMeasureBounds(layoutResult)
         val measureEntryXs = computeMeasureEntryXs(layoutResult, measureBounds)
+        val insertionBoundariesBySystem = computeInsertionBoundaryIndex(
+            elements,
+            sectionIndex,
+            timeCodePositions,
+        )
         com.mecon.renderer.debug.PerfLog.log("render.stage") {
             "assemble.measureBounds=${_tMeasureBounds.elapsedNow().inWholeMilliseconds}ms measures=${measureBounds.size}"
         }
@@ -420,6 +430,7 @@ internal class RenderResultAssembler(
             sectionIndex = sectionIndex,
             elementIndex = elementIndex,
             timeCodePositions = timeCodePositions,
+            insertionBoundariesBySystem = insertionBoundariesBySystem,
             measureEntryXs = measureEntryXs,
             noteheadRightPositions = noteheadRightPositions,
             sharedNoteheadRightPositionsByVoice = sharedNoteheadRightPositionsByVoice,
@@ -440,6 +451,39 @@ internal class RenderResultAssembler(
             "assemble.buildResult=${_tBuildResult.elapsedNow().inWholeMilliseconds}ms elements=${elements.size}"
         }
         return result
+    }
+
+    private fun computeInsertionBoundaryIndex(
+        elements: List<RenderElement>,
+        sectionIndex: SectionIndex,
+        positions: Map<TimeCode, TimeCodePosition>,
+    ): Map<Int, List<InsertionBoundary>> {
+        val barlinesBySystem = elements.asSequence()
+            .filter { it.type == RenderElementType.BARLINE }
+            .mapNotNull { element ->
+                val systemIndex = element.systemIndex ?: return@mapNotNull null
+                sectionIndex.sectionsFor(element.id)
+                    .filterIsInstance<BarlineSection>()
+                    .firstOrNull()
+                    ?.let { section ->
+                        systemIndex to InsertionBoundary(
+                            time = section.barline.time,
+                            absoluteX = element.center.x.value,
+                            kind = InsertionBoundaryKind.BARLINE,
+                        )
+                    }
+            }
+            .groupBy({ it.first }, { it.second })
+        val positionsBySystem = positions.values
+            .mapNotNull { position -> position.systemIndex?.let { it to position } }
+            .groupBy({ it.first }, { it.second })
+        val systems = (barlinesBySystem.keys + positionsBySystem.keys).sorted()
+        return systems.associateWith { systemIndex ->
+            buildInsertionBoundaries(
+                positionsBySystem[systemIndex].orEmpty(),
+                barlinesBySystem[systemIndex].orEmpty(),
+            )
+        }
     }
 
     /**

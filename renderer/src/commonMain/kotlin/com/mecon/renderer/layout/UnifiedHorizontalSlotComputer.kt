@@ -26,7 +26,8 @@ internal class UnifiedHorizontalSlotComputer(
     private val annotationLabelGap = StaffSpace(0.5f)
     /**
      * Assign each event's negative relativeX within a single time slot (all [slotEvents] share a time).
-     * Events are sorted by priority (Barline → Clef → Key Signature → Time Signature → Notes) and each
+     * Events are sorted by priority (mid-score Clef → Barline → header Clef → Key Signature →
+     * Time Signature → Notes) and each
      * priority group placed sequentially. relativeX values are **negative** — the offset from the slot's
      * right edge (slot.x) to the element's left edge — so slot.x is the rightmost position at that time.
      *
@@ -131,7 +132,7 @@ internal class UnifiedHorizontalSlotComputer(
      */
     private fun getSpacingAfterPriority(priority: Int): StaffSpace = when (priority) {
         LayoutElement.PRIORITY_BARLINE -> config.spaceAfterBarline
-        LayoutElement.PRIORITY_CLEF -> config.spaceAfterClef
+        LayoutElement.PRIORITY_CLEF_CHANGE, LayoutElement.PRIORITY_CLEF -> config.spaceAfterClef
         LayoutElement.PRIORITY_KEY_SIGNATURE -> config.spaceAfterKeySignature
         LayoutElement.PRIORITY_TIME_SIGNATURE -> config.spaceAfterTimeSignature
         else -> StaffSpace.ZERO

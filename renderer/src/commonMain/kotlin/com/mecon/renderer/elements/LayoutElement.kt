@@ -48,7 +48,8 @@ sealed interface LayoutElement {
     companion object {
         // Priority constants for X ordering within a time slot
         // Lower number = further left in the layout
-        // Order: Barline → Clef → Key Signature → Time Signature → Notes
+        // Mid-score clef changes precede a coincident barline; initial/system-header clefs follow it.
+        const val PRIORITY_CLEF_CHANGE = -10
         const val PRIORITY_BARLINE = 0
         const val PRIORITY_CLEF = 10
         const val PRIORITY_KEY_SIGNATURE = 20

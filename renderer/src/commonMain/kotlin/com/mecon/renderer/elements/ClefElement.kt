@@ -39,7 +39,8 @@ data class ClefElement(
     /** X offset from time slot X position */
     override val relativeX: StaffSpace = StaffSpace.ZERO
 ) : LayoutElement, RenderableElement {
-    override val priority: Int = LayoutElement.PRIORITY_CLEF
+    override val priority: Int
+        get() = if (isInitial) LayoutElement.PRIORITY_CLEF else LayoutElement.PRIORITY_CLEF_CHANGE
     override val minimumWidth: StaffSpace
         get() = geometryList.computeUnscaledMinimumWidth()
             ?: if (isInitial) RenderConstants.INITIAL_CLEF_WIDTH else RenderConstants.CLEF_CHANGE_WIDTH

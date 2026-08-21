@@ -51,5 +51,7 @@ class ClefElementTest {
 
         assertEquals(RenderConstants.INITIAL_CLEF_WIDTH, initial.minimumWidth)
         assertEquals(RenderConstants.CLEF_CHANGE_WIDTH, change.minimumWidth)
+        assertEquals(LayoutElement.PRIORITY_CLEF, initial.priority)
+        assertEquals(LayoutElement.PRIORITY_CLEF_CHANGE, change.priority)
     }
 }

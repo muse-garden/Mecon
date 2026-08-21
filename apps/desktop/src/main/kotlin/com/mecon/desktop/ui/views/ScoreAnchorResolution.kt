@@ -1,6 +1,5 @@
 package com.mecon.desktop.ui.views
 
-import com.mecon.api.interaction.BarlineSection
 import com.mecon.api.interaction.VoiceNoteSection
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.TimeCode
@@ -14,6 +13,8 @@ import com.mecon.renderer.geometry.StaffSpace
 import com.mecon.renderer.render.RenderElementType
 import com.mecon.renderer.render.RenderResult
 import com.mecon.renderer.render.TimeCodePosition
+import com.mecon.renderer.render.edit.insertionBoundaries
+import com.mecon.renderer.render.edit.nearestInsertionBoundary
 
 /**
  * Pointer pixels → semantic anchors (`TrackId` + `TimeCode` + rendered anchor points).
@@ -82,50 +83,11 @@ private fun TimeCodePosition.isOnSystem(
     return relativeY >= system.topY && relativeY <= system.bottomY
 }
 
-private data class BreathBoundaryCandidate(
-    val time: TimeCode,
-    val absoluteX: Float,
-)
-
-/**
- * Breath marks live on boundaries, not note columns. Candidates are exact
- * barlines plus the visual midpoint between adjacent note slots.
- */
-private fun breathBoundaryCandidates(
-    result: RenderResult,
-    systemIndex: Int?,
-): List<BreathBoundaryCandidate> {
-    val positions = result.timeCodePositions.values
-        .filter { it.isOnSystem(result, systemIndex) }
-        .sortedBy { it.x }
-    val midpoints = positions.zipWithNext { left, right ->
-        BreathBoundaryCandidate(
-            time = right.timeCode,
-            absoluteX = (left.x + right.x) / 2f,
-        )
-    }
-    val barlines = result.elements.asSequence()
-        .filter { it.type == RenderElementType.BARLINE }
-        .filter { systemIndex == null || it.systemIndex == systemIndex }
-        .flatMap { element ->
-            result.sectionIndex.sectionsFor(element.id).asSequence()
-                .filterIsInstance<BarlineSection>()
-                .map { section ->
-                    BreathBoundaryCandidate(section.barline.time, element.center.x.value)
-                }
-        }
-        .distinctBy { it.time to it.absoluteX }
-        .toList()
-    return (midpoints + barlines).distinctBy { it.time to it.absoluteX }
-}
-
 internal fun resolveBreathBoundaryTime(
     result: RenderResult,
     absoluteX: Float,
     systemIndex: Int?,
-): TimeCode? = breathBoundaryCandidates(result, systemIndex)
-    .minByOrNull { kotlin.math.abs(it.absoluteX - absoluteX) }
-    ?.time
+): TimeCode? = result.nearestInsertionBoundary(absoluteX, systemIndex)?.time
 
 internal fun breathBoundaryAnchor(
     result: RenderResult,
@@ -134,7 +96,7 @@ internal fun breathBoundaryAnchor(
     systemIndex: Int?,
     symbol: AbsolutePoint,
 ): AbsolutePoint? {
-    val candidate = breathBoundaryCandidates(result, systemIndex)
+    val candidate = result.insertionBoundaries(systemIndex)
         .filter { it.time == time }
         .minByOrNull { kotlin.math.abs(it.absoluteX - symbol.x.value) }
         ?: return null

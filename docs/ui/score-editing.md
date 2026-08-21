@@ -69,7 +69,11 @@
 
 ### 谱号笔虚影 `RenderEngine.computeClefGhost` → `GhostClefComputer`
 
-`EditTool.CLEF` 激活时同样逐帧计算虚影：一枚谱号字形 + 一根竖线标示插入生效位置。竖线落在**插入 onset 右侧相邻音符的左缘**——即该时槽的最左元素边（`TimeCodePosition.leftX`）。落在小节开头（downbeat）时，最左元素是本小节的起始小节线（它位于更靠前的独立时槽），故 `leftX` 会把该小节线一并纳入，竖线与小节线重合；小节中间则贴住音符组左缘。`leftX` 由 `RenderResultAssembler.computeTimeCodePositions` 单趟计算：按时间序（系统内即 X 升序）累积「上一个音符槽之后到当前音符槽之间」所有槽的最左边，遇音符槽结算、跨系统重置。
+`EditTool.CLEF` 激活时逐帧计算一枚谱号字形和一根插入竖线。谱号与 breath 共用
+`InsertionBoundaryResolver`：候选仅为当前系统内的**相邻音符列中点**和**精确小节线**；中点映射到
+右侧音符的 onset，不再混入整拍网格或吸附到符头本身。点中小节线时竖线与小节线重合；中途谱号的
+字形画在边界左侧。提交后 `ClefElement` 也把非初始谱号排在同 onset 小节线左侧；谱首初始谱号和
+系统行首重述仍保持 `小节线 → 谱号` 的行首顺序。
 
 ### 框选与多选
 
@@ -333,7 +337,7 @@ ghost 会根据吸附后的 onset 自动判断是否位于 `smallNotes` 区域�
 | 快捷键 / 设置 | `input/{KeyStroke,ShortcutAction,KeybindingStore,ShortcutDispatcher}.kt`、`ui/dialogs/SettingsDialog.kt`、`AppSettings.kt` |
 | 画布交互 / 虚影绘制 | `ui/views/RenderedScoreView.kt`、`ComposeScoreRenderer.renderCommandsTinted` |
 | 虚影计算 | `renderer/.../render/edit/GhostNoteComputer.kt`、`RenderEngine.computeGhost`、`HierarchicalSpatialIndex.staffAt` |
-| 谱号笔虚影 / 插入竖线定位 | `renderer/.../render/edit/GhostClefComputer.kt`、`RenderEngine.computeClefGhost`、`TimeCodePosition.leftX`（`RenderResultAssembler.computeTimeCodePositions`） |
+| 谱号笔虚影 / 插入竖线定位 | `renderer/.../render/edit/GhostClefComputer.kt`、`InsertionBoundaryResolver.kt`、`RenderEngine.computeClefGhost` |
 | 拖动平移预览 / 隐藏原音 | `renderer/.../render/edit/TransposePreviewComputer.kt`（两层着色）、`RenderEngine.computeTransposePreview`、`StyleOverride.hidden` / `StyleSnapshot.isHidden`、`ComposeScoreRenderer.renderElement` |
 | 拖动移动休止符 | `renderer/.../render/edit/RestMovePreviewComputer.kt`、`RenderEngine.computeRestMovePreview`、`RestLayout.defaultRestStaffPosition`、`RenderedScoreView`（`DragMode.REST_MOVE` / `buildRestMoveInfo`） |
 | 平移音高拼写 / MIDI 夹取 | `api/.../primitive/DiatonicTranspose.kt`（`spell` / `clampDelta`，引擎与预览共用） |

@@ -77,6 +77,32 @@
 7. **确定性替代**：每个 drag 必须有 nudge 或属性表单；每个 hover 路径必须有 tap/键盘/辅助技术路径。
 8. **候选不猜测**：命中接近时显示候选 callout/sheet；用户确认后才进入共享控制器。
 
+### 3.1 吸附拓扑与坐标自由度是两条独立轴
+
+交互家族只描述一次操作的生命周期，不能替代吸附规则。元素还应分别回答“语义锚点吸附到哪里”和
+“相对锚点允许调整哪些坐标”。例如 breath 的语义时间吸附到音间边界，但字形仍可相对该锚点调整
+X/Y；这不等于没有吸附。
+
+当前实现审计如下：
+
+| 语义吸附拓扑 | 代表元素 | 当前共享程度 |
+|---|---|---|
+| 小节线 / measure boundary | 调号、拍号、小节线、重复、房子、导航、换行 | 领域目标统一为 boundary/measure；像素候选仍分散在签名 ghost、barline hit、volta/navigation handler |
+| 音符 / 事件时间列 | 音符与休止输入、fermata、力度、速度、普通装饰音、区间附件端点 | 都提交 event ID 或 `TimeCode`；`GhostNoteComputer`、`resolveExpressionTime` 与直接 hit 仍是不同 resolver |
+| 两音符之间或小节线 | 谱号、breath | 已统一为 renderer 的 `InsertionBoundaryResolver`：相邻音符列中点 + 精确小节线 |
+| 不重选语义锚点 | tie/slur 曲率、beam、演奏法几何 | 固定原事件/端点，只编辑派生几何参数 |
+
+| 坐标自由度 | 代表元素 | 持久化方式 |
+|---|---|---|
+| X/Y 固定，由排版决定 | 谱号、调号、拍号、小节线、房子端点 | 只存语义时间/边界，不存自由像素坐标 |
+| X 固定，Y 可调 | 音符/休止纵向移动、beam、tie/slur 曲率、导航记号 | 固定 onset/端点 X；存谱位、beam Y、曲率或局部 `dy` |
+| X/Y 均可相对锚点调整 | 力度、breath、hairpin、8va、速度、装饰音附件；演奏法几何数据 | 仍保留稳定 event/`TimeCode` 锚点，另存 staff-space `dx/dy`；安全带或端点顺序可继续约束自由度 |
+
+因此结论是：**提交身份与交互生命周期已经统一，吸附算法只部分统一，坐标自由度尚未进入
+`ScoreInteractionSpec` 的声明式契约。** 新功能不得再新增私有“最近 X”算法；应先复用现有 boundary、
+event-slot 或 notehead resolver。后续若把这两条轴加入 descriptor，必须同时覆盖 Desktop/Web/Mobile
+候选适配与共享测试，不能只给枚举命名。
+
 统一生命周期：
 
 ```text

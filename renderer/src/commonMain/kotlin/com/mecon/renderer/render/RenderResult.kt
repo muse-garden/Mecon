@@ -16,6 +16,7 @@ import com.mecon.renderer.layout.ResolvedTimeAxis
 import com.mecon.renderer.render.spatial.HierarchicalSpatialIndex
 import com.mecon.renderer.render.spatial.ScoreHittableElement
 import com.mecon.renderer.render.spatial.StaffHit
+import com.mecon.renderer.render.edit.InsertionBoundary
 
 /**
  * Result of rendering a score section.
@@ -39,6 +40,8 @@ data class RenderResult(
     internal val elementIndex: Map<RenderElementId, RenderElement> = emptyMap(),
     /** Map of TimeCode to absolute positions for rendering playhead */
     val timeCodePositions: Map<TimeCode, TimeCodePosition> = emptyMap(),
+    /** Per-system point-placement boundaries, assembled off the UI thread with the render frame. */
+    val insertionBoundariesBySystem: Map<Int, List<InsertionBoundary>> = emptyMap(),
     /**
      * First writable X inside each rendered measure, after its opening barline/header cluster.
      * Empty measures have no note-bearing [timeCodePositions] entry, so entry UIs must use this
@@ -238,6 +241,7 @@ data class RenderResult(
             topY = transformerSnapshot.toAbsolute(RelativePoint(StaffSpace.ZERO, StaffSpace(top))).y.value,
             bottomY = transformerSnapshot.toAbsolute(RelativePoint(StaffSpace.ZERO, StaffSpace(bottom))).y.value,
             leftX = x,
+            systemIndex = measure.systemIndex,
         )
     }
 
@@ -358,6 +362,7 @@ data class RenderResult(
                 RelativePoint(StaffSpace.ZERO, StaffSpace(bottom)),
             ).y.value,
             leftX = absoluteX,
+            systemIndex = hit.systemIndex,
         )
     }
 
@@ -455,4 +460,6 @@ data class TimeCodePosition(
      * it. See [com.mecon.renderer.render.edit.GhostClefComputer].
      */
     val leftX: Float = x,
+    /** Owning rendered system, when produced by a complete render frame. */
+    val systemIndex: Int? = null,
 )
