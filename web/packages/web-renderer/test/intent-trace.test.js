@@ -23,7 +23,7 @@ function createIdNormalizer() {
     if (Array.isArray(value)) return value.map(normalize);
     if (value && typeof value === "object") {
       const result = {};
-      for (const key of Object.keys(value).sort()) result[key] = normalize(value[key]);
+      for (const key of Object.keys(value).sort()) result[byActual.get(key) ?? key] = normalize(value[key]);
       return result;
     }
     if (typeof value === "string" && GENERATED_ID.test(value)) {

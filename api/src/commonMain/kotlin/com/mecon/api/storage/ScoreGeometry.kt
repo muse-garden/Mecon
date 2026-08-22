@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.serialization.Serializable
 
 /**
- * Persisted render-geometry overlay for slurs, articulation marks and staff
+ * Persisted render-geometry overlay for slurs, tuplets, articulation marks and staff
  * attachments (dynamics / hairpins / 8va·8vb brackets).
  *
  * When present, an entry is the **source of truth** for that symbol's geometry:
@@ -40,10 +40,12 @@ data class ScoreGeometry(
     val attachments: Map<EventId, AttachmentGeometry> = emptyMap(),
     /** Beam geometry keyed by the stable computed beam-group id. */
     val beams: Map<String, BeamGeometry> = emptyMap(),
+    /** Tuplet placement keyed by the stable id of the span's first voice event. */
+    val tuplets: Map<EventId, TupletGeometry> = emptyMap(),
 ) {
     val isEmpty: Boolean
         get() = articulations.isEmpty() && ties.isEmpty() && slurs.isEmpty() &&
-            attachments.isEmpty() && beams.isEmpty()
+            attachments.isEmpty() && beams.isEmpty() && tuplets.isEmpty()
 
     /**
      * Drop the named entries, returning the overlay the renderer should consume
@@ -98,6 +100,7 @@ data class ScoreGeometry(
             attachments = if (staleAttachments.isEmpty()) attachments
             else attachments.filterKeys { it !in staleAttachments },
             beams = if (staleBeams.isEmpty()) beams else beams.filterKeys { it !in staleBeams },
+            tuplets = tuplets,
         )
     }
 
@@ -105,6 +108,18 @@ data class ScoreGeometry(
         val EMPTY = ScoreGeometry()
     }
 }
+
+/**
+ * Persisted side of a tuplet bracket / slur / number.
+ *
+ * Auto-captured geometry remains unlocked so changes to the group's stems can choose a new side.
+ * An inspector edit locks the side and turns it into an explicit engraving directive.
+ */
+@Serializable
+data class TupletGeometry(
+    val above: Boolean,
+    val directionLocked: Boolean = false,
+)
 
 /**
  * Persisted geometry for one tie from a specific pitch of a voice event.

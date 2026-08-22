@@ -20,6 +20,7 @@ import com.mecon.api.storage.ArticulationGeometry
 import com.mecon.api.storage.MarkOffset
 import com.mecon.api.storage.SlurGeometry
 import com.mecon.api.storage.TieGeometry
+import com.mecon.api.storage.TupletGeometry
 import com.mecon.api.storage.events.DynamicLevel
 import com.mecon.api.storage.events.HairpinType
 import com.mecon.api.storage.events.HairpinStyle
@@ -139,6 +140,39 @@ class ScoreEditingSessionTest {
 
         val undone = session.dispatch(ScoreEditIntent.Undo(4))
         assertTrue(undone.toWireUpdate().score.geometry?.ties?.get(firstId).isNullOrEmpty())
+    }
+
+    @Test
+    fun tupletSideGeometryIsSharedSerializableAndUndoable() {
+        val score = StorageScore.create(StorageScore.CreationOptions(measureCount = 1))
+        val voiceId = score.voiceTracks.keys.single()
+        val session = ScoreEditingSession.open(score)
+        val created = session.dispatch(ScoreEditIntent.CreateTupletRegion(
+            expectedRevision = 0,
+            voiceTrackId = voiceId,
+            start = TimeCode.of(1, Fraction.ZERO),
+            totalDuration = Duration.QUARTER,
+            count = 3,
+        ))
+        val startId = created.toWireUpdate().score.voiceTracks.getValue(voiceId).events
+            .single { it.tupletSpan != null }.id
+        val intent = ScoreEditIntent.SetTupletGeometry(
+            expectedRevision = 1,
+            startEventId = startId,
+            geometry = TupletGeometry(above = false),
+        )
+        assertEquals(intent, ScoreEditCodec.decodeIntent(ScoreEditCodec.encodeIntent(intent)))
+
+        val placed = session.dispatch(intent)
+        assertEquals(2, placed.frame.revision)
+        assertEquals(
+            TupletGeometry(above = false, directionLocked = true),
+            placed.toWireUpdate().score.geometry?.tuplets?.get(startId),
+        )
+        assertFalse(placed.frame.renderHint?.changeSet?.structureReflow == true)
+
+        val undone = session.dispatch(ScoreEditIntent.Undo(2))
+        assertTrue(undone.toWireUpdate().score.geometry?.tuplets?.get(startId) == null)
     }
 
     @Test

@@ -537,6 +537,24 @@ class ScoreSession(internal val scope: CoroutineScope) : EditableNoteHost {
         }
     }
 
+    /** Lock a selected tuplet to one side while retaining automatic endpoint placement. */
+    fun applyTupletDirection(startEventId: EventId, above: Boolean) {
+        val authoritative = runtimeScore?.geometry?.tuplets?.get(startEventId)
+        val captured = lastRenderedGeometry?.tuplets?.get(startEventId)
+        val current = authoritative ?: captured
+        if (current?.above == above && current.directionLocked) return
+        dispatchSharedEdit({ revision ->
+            ScoreEditIntent.SetTupletGeometry(
+                expectedRevision = revision,
+                startEventId = startEventId,
+                geometry = (current ?: com.mecon.api.storage.TupletGeometry(above)).copy(
+                    above = above,
+                    directionLocked = true,
+                ),
+            )
+        })
+    }
+
     /** Change one tie's bow side while retaining automatic anchors and collision avoidance. */
     fun applyTieDirection(
         sourceEventId: EventId,

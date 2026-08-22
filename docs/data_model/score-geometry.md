@@ -21,6 +21,13 @@
 同一系统内自动排版的曲线会被捕获为稳定几何。跨系统曲线由各系统 stub 自动排版，不保存
 一组易受换行影响的绝对端点。
 
+## Tuplet
+
+- `tuplets: Map<EventId, TupletGeometry>`：键为携带 `TupletSpan` 的首事件 id。
+- `above` 保存当前符号侧别；`directionLocked=false` 是自动捕获缓存，renderer 仍按组内第一个
+  实际符杆重新判定，`directionLocked=true` 才是用户在属性面板设置的持久排版指令。
+- Tuplet 端点继续由成员符杆/休止符范围自动求解，不保存易受音符间距变化影响的绝对坐标。
+
 ## 增量约束
 
 Tie 源由 `ComputedEventStore.tieSourceEventIds` 持久索引；局部失效通过小节 B+ tree

@@ -16,6 +16,7 @@ import com.mecon.desktop.ui.components.inspector.note.SelectionSummaryContributo
 import com.mecon.desktop.ui.components.inspector.ornament.OrnamentPropertiesContributor
 import com.mecon.desktop.ui.components.inspector.performance.PerformanceMarkPropertiesContributor
 import com.mecon.desktop.ui.components.inspector.tempo.TempoPropertiesContributor
+import com.mecon.desktop.ui.components.inspector.tuplet.TupletPropertiesContributor
 import com.mecon.desktop.ui.components.inspector.visibility.HiddenStaffPropertiesContributor
 import com.mecon.desktop.ui.components.inspector.visibility.HiddenStaffRegionPropertiesContributor
 import com.mecon.desktop.uikit.i18n.i18n
@@ -36,6 +37,7 @@ internal fun SelectionInspector(
         BarlinePropertiesContributor(actions.barline),
         HiddenStaffRegionPropertiesContributor(actions.staffVisibility),
         CurvePropertiesContributor(actions.curves),
+        TupletPropertiesContributor(actions.tuplets),
     )
     val applicable = contributors.filter { it.isApplicable(context) }
     val visible = applicable.firstOrNull { it.exclusive }?.let(::listOf) ?: applicable

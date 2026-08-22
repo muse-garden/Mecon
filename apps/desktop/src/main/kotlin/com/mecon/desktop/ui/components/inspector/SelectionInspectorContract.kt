@@ -60,6 +60,10 @@ internal data class CurvePropertiesActions(
     val changeTieDirection: (Boolean) -> Unit = {},
 )
 
+internal data class TupletPropertiesActions(
+    val changeDirection: (Boolean) -> Unit = {},
+)
+
 internal data class SelectionInspectorActions(
     val delete: () -> Unit = {},
     val tempo: TempoPropertiesActions = TempoPropertiesActions(),
@@ -68,6 +72,7 @@ internal data class SelectionInspectorActions(
     val barline: BarlinePropertiesActions = BarlinePropertiesActions(),
     val staffVisibility: StaffVisibilityPropertiesActions = StaffVisibilityPropertiesActions(),
     val curves: CurvePropertiesActions = CurvePropertiesActions(),
+    val tuplets: TupletPropertiesActions = TupletPropertiesActions(),
     val ornaments: OrnamentPropertiesActions = OrnamentPropertiesActions(),
 )
 

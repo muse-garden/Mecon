@@ -98,6 +98,7 @@ internal object BuiltinStrings {
         "inspector.barline.navigation" to "导航记号",
         "inspector.barline.repeatCount" to "反复次数",
         "inspector.curve.slurPosition" to "圆滑线位置",
+        "inspector.tuplet.position" to "连音组符号位置",
         "inspector.curve.tiePosition" to "延音线位置",
         "inspector.curve.above" to "上方",
         "inspector.curve.below" to "下方",

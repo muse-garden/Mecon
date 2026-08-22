@@ -189,6 +189,7 @@ internal class FullScoreRenderer(
             computedScore, layoutQuery,
             stemAdjustments = beamProcessingResult.stemAdjustments,
             measureFilter = effectiveMeasureFilter,
+            geometry = geometry,
         )
         for (tupletLayout in tupletLayouts) {
             val tupletElement = TupletElement(tupletLayout, config)

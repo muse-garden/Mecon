@@ -5,6 +5,7 @@ import com.mecon.api.interaction.BarlineVisualPlacement
 import com.mecon.api.interaction.EventSection
 import com.mecon.api.interaction.VoiceSlurSection
 import com.mecon.api.interaction.VoiceTieSection
+import com.mecon.api.interaction.VoiceTupletSection
 import com.mecon.api.storage.tracks.MeasureRange
 import com.mecon.core.engine.edit.ExpressionEditEngine
 import com.mecon.core.engine.edit.NoteEditEngine
@@ -18,6 +19,7 @@ import com.mecon.desktop.ui.components.inspector.SelectionInspectorActions
 import com.mecon.desktop.ui.components.inspector.SelectionInspectorContext
 import com.mecon.desktop.ui.components.inspector.StaffVisibilityPropertiesActions
 import com.mecon.desktop.ui.components.inspector.TempoPropertiesActions
+import com.mecon.desktop.ui.components.inspector.TupletPropertiesActions
 import com.mecon.desktop.ui.components.inspector.OrnamentPropertiesActions
 
 internal fun selectionInspectorContext(
@@ -59,6 +61,13 @@ internal fun selectionInspectorActions(
                 section.sourcePitchIndex,
                 above,
             )
+        },
+    ),
+    tuplets = TupletPropertiesActions(
+        changeDirection = changeTupletDirection@{ above ->
+            val section = selection.singleOrNull() as? VoiceTupletSection
+                ?: return@changeTupletDirection
+            session.applyTupletDirection(section.startEvent.id, above)
         },
     ),
     tempo = TempoPropertiesActions(

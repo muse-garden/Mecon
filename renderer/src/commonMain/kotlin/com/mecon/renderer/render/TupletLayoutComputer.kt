@@ -2,6 +2,7 @@ package com.mecon.renderer.render
 
 import com.mecon.api.computed.ComputedScore
 import com.mecon.api.primitive.EventId
+import com.mecon.api.storage.ScoreGeometry
 import com.mecon.api.storage.events.TupletDisplayStyle
 import com.mecon.renderer.enums.StemDirection
 import com.mecon.renderer.geometry.RelativePoint
@@ -18,8 +19,9 @@ import com.mecon.renderer.layout.VoiceEventLayout
  * by locating each tuplet's member notes in the post-layout score and choosing a
  * tilted bracket/slur baseline that hugs the notes.
  *
- * Side selection mirrors stem direction sampled from the first event: Stems UP →
- * bracket goes ABOVE; Stems DOWN → BELOW; rest-only groups default to ABOVE.
+ * Side selection mirrors the first stem found in the group: Stems UP → bracket
+ * goes ABOVE; Stems DOWN → BELOW; rest-only groups default to ABOVE. A locked
+ * [ScoreGeometry.tuplets] entry overrides that automatic choice.
  *
  * Vertical placement is per-event rather than per-staff: for each group member the
  * computer takes the "outer" extent (stem tip if it points away from the staff,
@@ -40,6 +42,7 @@ internal class TupletLayoutComputer(
         query: LayoutQuery,
         stemAdjustments: Map<EventId, StaffSpace> = emptyMap(),
         measureFilter: IntRange? = null,
+        geometry: ScoreGeometry? = computedScore.runtime.geometry,
     ): List<TupletLayout> {
         val result = mutableListOf<TupletLayout>()
 
@@ -64,7 +67,10 @@ internal class TupletLayoutComputer(
                 endTime = endLayout.time,
             )
 
-            val direction = chooseDirection(startLayout.stem?.direction)
+            val lockedDirection = geometry?.tuplets?.get(tupletInfo.startEventId)
+                ?.takeIf { it.directionLocked }
+                ?.let { if (it.above) SlurDirection.ABOVE else SlurDirection.BELOW }
+            val direction = lockedDirection ?: chooseDirection(members)
             val padding = when (tupletInfo.displayStyle) {
                 TupletDisplayStyle.NUMBER_ONLY -> NUMBER_ONLY_PADDING
                 else -> BRACKET_PADDING
@@ -93,7 +99,9 @@ internal class TupletLayoutComputer(
         return result
     }
 
-    private fun chooseDirection(stem: StemDirection?): SlurDirection = when (stem) {
+    private fun chooseDirection(members: List<VoiceEventLayout>): SlurDirection = when (
+        members.firstNotNullOfOrNull { it.stem?.direction }
+    ) {
         StemDirection.UP -> SlurDirection.ABOVE
         StemDirection.DOWN -> SlurDirection.BELOW
         null -> SlurDirection.ABOVE

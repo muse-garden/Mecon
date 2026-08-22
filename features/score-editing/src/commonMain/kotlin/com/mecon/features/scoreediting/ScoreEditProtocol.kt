@@ -22,6 +22,7 @@ import com.mecon.api.storage.NavigationMark
 import com.mecon.api.storage.NavigationMarkOffset
 import com.mecon.api.storage.SlurGeometry
 import com.mecon.api.storage.TieGeometry
+import com.mecon.api.storage.TupletGeometry
 import com.mecon.api.storage.AttachmentGeometry
 import com.mecon.api.storage.events.DynamicLevel
 import com.mecon.api.storage.events.HairpinStyle
@@ -336,6 +337,14 @@ sealed interface ScoreEditIntent {
         override val expectedRevision: Long,
         val sourceEventId: EventId,
         val geometry: TieGeometry,
+    ) : ScoreEditIntent
+
+    @Serializable
+    @SerialName("setTupletGeometry")
+    data class SetTupletGeometry(
+        override val expectedRevision: Long,
+        val startEventId: EventId,
+        val geometry: TupletGeometry,
     ) : ScoreEditIntent
 
     @Serializable

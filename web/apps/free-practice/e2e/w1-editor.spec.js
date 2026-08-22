@@ -680,6 +680,12 @@ test("W1 grace, tuplets, small notes, ornaments, marquee and note/rest drags are
   await act(page, () => clickElement(page, "NOTEHEAD", 2, ["Shift"]));
   await page.getByLabel("连音组").selectOption("3");
   await act(page, () => page.getByRole("button", { name: "所选设为连音组" }).click());
+  await act(page, () => clickElement(page, "TUPLET_BRACKET"));
+  const tupletStartId = await page.evaluate(() => window.__MECON_E2E__.snapshot().update.selection[0].eventId);
+  await act(page, () => page.getByRole("button", { name: "下方", exact: true }).click());
+  await expect.poll(() => page.evaluate((eventId) =>
+    window.__MECON_E2E__.snapshot().update.score.geometry?.tuplets?.[eventId], tupletStartId,
+  )).toEqual({ above: false, directionLocked: true });
   await act(page, () => page.getByRole("button", { name: "添加到所选音符" }).click());
   await act(page, () => clickElement(page, "ORNAMENT"));
   await page.getByLabel("装饰振荡次数").fill("6");

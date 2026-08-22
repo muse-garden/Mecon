@@ -18,11 +18,15 @@
 
 ## 2. 朝向选择
 
-`TupletLayoutComputer` 取连音组**起始事件**的 `StemDirection`：
+`TupletLayoutComputer` 取连音组内**第一个实际存在的符杆**的 `StemDirection`：
 
 - `UP` → bracket / slur 在五线谱**上**方（`SlurDirection.ABOVE`）
 - `DOWN` → 在**下**方
-- 起始为休止符时默认 `ABOVE`
+- 组首为休止符时继续查看后续成员；全组均无符杆时才默认 `ABOVE`
+
+`ScoreGeometry.tuplets[startEventId]` 保存当前侧别。自动捕获条目的
+`directionLocked=false`，音高、声部或符杆变化后仍重新自动判定；用户在属性面板选择上方/下方后写入
+`directionLocked=true`，该侧别成为排版输入并随乐谱保存。
 
 水平方向 X 取成员事件的符干 / 符头锚点；垂直方向按每个成员的外侧范围（符干端、符头边缘，休止符用自身中心附近）斜放 baseline，并向外平移直到中间成员不穿线。成员查询必须按真正的 `voiceTrackId` 隔离声部，不能用 `VoiceEventLayout.trackId`（该字段是谱表轨 ID），否则同谱表的其他声部会错误参与端点和避让计算。分页 / 分行模式下，同一 `staffIndex` 会在多个 system 中复用，连音成员的 `StaffLayoutInfo` 必须通过 `LayoutQuery.staffLayoutFor(event)` 按事件所在 `systemIndex` 解析，不能直接用扁平 `staffLayoutByIndex`，否则后续系统的连音会拿错 Y 基线。
 

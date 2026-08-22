@@ -126,6 +126,11 @@ export function ScoreEditorSlurInspector(props: {
   commands: import("./index.js").ScoreEditorCommandController;
 }): ReactNode;
 
+export function ScoreEditorTupletInspector(props: {
+  frame: any;
+  dispatch: (intent: any) => any;
+}): ReactNode;
+
 export function createScoreEditorToolbarControls(options: {
   frame: any;
   input: ScoreEditorInputState;

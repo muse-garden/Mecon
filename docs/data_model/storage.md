@@ -587,11 +587,17 @@ data class TupletSpan(
 )
 ```
 
+Tuplet 的自动排版结果与用户侧别覆盖保存在 `StorageScore.geometry.tuplets`，以连音组首事件
+`EventId` 为稳定键。`TupletGeometry(above, directionLocked)` 中，自动捕获的条目
+`directionLocked=false`，后续仍会跟随组内符杆方向重新排版；属性面板显式选择“上方/下方”后写入
+`directionLocked=true`，跨保存、撤销/重做和重新排版保持该侧别。
+
 语义：
 - `endTimeCode` **不含**该 TimeCode 自身（半开区间）。例：4/4 拍第 1 拍的三连音，`endTimeCode = "0:1/4"`（即第 2 拍开始）。
 - `count > 1` 由构造器约束。
 - `beatUnit` 是编辑提示：表示连音拍面向用户显示的基础时值，渲染层只消费 `ComputedTupletInfo`。
 - 显示样式由 `displayStyle` 直接决定，渲染层不做自动降级；是否在 beam 上方再画 bracket 由作者按谱例自行选择。
+- 默认侧别取连音组内第一个实际存在的符杆（符杆向上 → 上方，符杆向下 → 下方），因此组首为休止符时不会误回退到符头侧；全休止符组才回退到上方。
 - 渲染层不会因连音跨越小节线做特殊处理；编辑器新建与粘贴连音时则拒绝跨小节线，以维持当前交互模型的单小节连音约束。
 - `smallNotes=true` 表示占拍的小音符输入区域：仍占用 `[start,endTimeCode)`，但隐藏括号/数字，
   成员由 `RenderingProps.scale` 缩小；未输入部分保留为 `RenderingProps.hidden=true` 的休止

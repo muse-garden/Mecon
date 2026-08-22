@@ -16,6 +16,7 @@ import com.mecon.api.storage.MarkOffset
 import com.mecon.api.storage.ScoreGeometry
 import com.mecon.api.storage.SlurGeometry
 import com.mecon.api.storage.TieGeometry
+import com.mecon.api.storage.TupletGeometry
 import com.mecon.renderer.geometry.HairpinGeometry
 import com.mecon.renderer.geometry.IntervalAttachmentGeometry
 import com.mecon.renderer.geometry.RelativePoint
@@ -27,6 +28,7 @@ import com.mecon.renderer.layout.PlacedArticulation
 import com.mecon.renderer.layout.PlacedStaffAttachment
 import com.mecon.renderer.layout.SlurLayout
 import com.mecon.renderer.layout.TieLayout
+import com.mecon.renderer.layout.TupletLayout
 import com.mecon.renderer.smufl.BravuraFont
 import kotlinx.collections.immutable.toPersistentMap
 
@@ -56,6 +58,7 @@ internal object GeometryProjector {
         articulationLayouts: Map<EventId, ArticulationLayout>,
         tieLayouts: List<TieLayout>,
         slurLayouts: List<SlurLayout>,
+        tupletLayouts: List<TupletLayout>,
         placedAttachments: List<PlacedStaffAttachment>,
         query: LayoutQuery,
         attachmentFilter: ((EventId) -> Boolean)? = null,
@@ -77,6 +80,11 @@ internal object GeometryProjector {
         for ((slurId, layouts) in slurLayouts.groupBy { it.slurId }) {
             if (layouts.size != 1) continue
             toStored(layouts.single(), query)?.let { slurMap[slurId] = it }
+        }
+        val tupletMap = tupletLayouts.associateTo(LinkedHashMap()) { layout ->
+            layout.startEventId to TupletGeometry(
+                above = layout.direction == SlurDirection.ABOVE,
+            )
         }
         val attachmentSegments = LinkedHashMap<EventId, MutableList<PlacedStaffAttachment>>()
         for (placed in placedAttachments) {
@@ -103,6 +111,7 @@ internal object GeometryProjector {
             slurs = slurMap.toPersistentMap(),
             attachments = attMap,
             beams = beamMap,
+            tuplets = tupletMap,
         )
     }
 

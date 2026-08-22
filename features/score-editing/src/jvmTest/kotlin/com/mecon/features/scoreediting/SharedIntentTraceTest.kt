@@ -125,7 +125,11 @@ object SharedIntentTrace {
 
         fun normalize(element: JsonElement): JsonElement = when (element) {
             is JsonObject -> buildJsonObject {
-                element.keys.sorted().forEach { key -> put(key, normalize(element.getValue(key))) }
+                element.keys.sorted().forEach { key ->
+                    // Stable ids can also be JSON object keys (ScoreGeometry maps). Reuse an
+                    // already-seen ordinal without changing the value-driven id assignment order.
+                    put(byActual[key] ?: key, normalize(element.getValue(key)))
+                }
             }
             is JsonArray -> buildJsonArray { element.forEach { add(normalize(it)) } }
             is JsonPrimitive -> {

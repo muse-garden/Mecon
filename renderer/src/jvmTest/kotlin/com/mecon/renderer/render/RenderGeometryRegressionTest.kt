@@ -14,6 +14,8 @@ import com.mecon.api.runtime.events.RuntimeVoiceEvent
 import com.mecon.api.runtime.orderedStaffs
 import com.mecon.api.storage.StaffLayoutPreset
 import com.mecon.api.storage.StorageScore
+import com.mecon.api.storage.ScoreGeometry
+import com.mecon.api.storage.TupletGeometry
 import com.mecon.api.storage.tracks.StoragePitchTrack
 import com.mecon.core.engine.edit.NoteEditEngine
 import com.mecon.api.storage.tracks.StorageSystemBreak
@@ -21,6 +23,7 @@ import com.mecon.api.storage.tracks.StorageVoiceTrack
 import com.mecon.core.engine.computeScore
 import com.mecon.renderer.geometry.AbsolutePathSegment
 import com.mecon.renderer.geometry.StaffSpace
+import com.mecon.renderer.geometry.SlurDirection
 import com.mecon.renderer.layout.PageGeometry
 import com.mecon.renderer.layout.RenderLayoutConfig
 import com.mecon.renderer.layout.UnifiedLayoutComputer
@@ -95,6 +98,74 @@ class RenderGeometryRegressionTest {
         assertTrue(
             tuplet.hitBox.height.value < 40f,
             "tuplet bracket should remain compact when later members are rests: ${tuplet.hitBox}"
+        )
+    }
+
+    @Test
+    fun tupletStartingWithRestUsesFirstMemberStemAndHonoursLockedSide() {
+        val font = loadFont() ?: return
+        val base = RuntimeScore.fromStorage(StorageScore.create(
+            StorageScore.CreationOptions("T", TimeSignature.COMMON, KeySignature.C_MAJOR)
+        ))
+        val voiceId = base.voiceTracks.keys.first()
+        var runtime = NoteEditEngine.insert(
+            base,
+            NoteEditEngine.Insertion(
+                voiceTrackId = voiceId,
+                start = TimeCode.of(1, Fraction.ZERO),
+                duration = Duration.QUARTER,
+                pitch = null,
+                isRest = true,
+                tupletCount = 3,
+            ),
+        )!!.score
+        runtime = NoteEditEngine.insert(
+            runtime,
+            NoteEditEngine.Insertion(
+                voiceTrackId = voiceId,
+                start = TimeCode.of(1, Fraction(1, 12)),
+                duration = Duration.EIGHTH,
+                pitch = Pitch(14, 0),
+            ),
+        )!!.score
+        runtime = NoteEditEngine.insert(
+            runtime,
+            NoteEditEngine.Insertion(
+                voiceTrackId = voiceId,
+                start = TimeCode.of(1, Fraction(1, 6)),
+                duration = Duration.EIGHTH,
+                pitch = Pitch(16, 0),
+            ),
+        )!!.score
+
+        fun layout(score: RuntimeScore) = computeScore(score).let { computed ->
+            val result = with(font) {
+                UnifiedLayoutComputer(RenderLayoutConfig.DEFAULT).computeLayout(computed, score)
+            }
+            TupletLayoutComputer(RenderLayoutConfig.DEFAULT).computeTupletLayouts(
+                computed,
+                LayoutQuery(result, result.staffLayouts.associateBy { it.staffIndex }, computed),
+            ).single()
+        }
+
+        val automatic = layout(runtime)
+        assertEquals(SlurDirection.BELOW, automatic.direction)
+        val automaticEngine = with(font) { RenderEngine(RenderLayoutConfig.DEFAULT) }
+        with(font) { automaticEngine.render(runtime) }
+        assertEquals(
+            TupletGeometry(above = false, directionLocked = false),
+            automaticEngine.captureGeometry()?.tuplets?.get(automatic.startEventId),
+        )
+
+        val locked = runtime.copy(geometry = ScoreGeometry(tuplets = mapOf(
+            automatic.startEventId to TupletGeometry(above = true, directionLocked = true),
+        )))
+        assertEquals(SlurDirection.ABOVE, layout(locked).direction)
+        val lockedEngine = with(font) { RenderEngine(RenderLayoutConfig.DEFAULT) }
+        with(font) { lockedEngine.render(locked) }
+        assertEquals(
+            TupletGeometry(above = true, directionLocked = true),
+            lockedEngine.captureGeometry()?.tuplets?.get(automatic.startEventId),
         )
     }
 

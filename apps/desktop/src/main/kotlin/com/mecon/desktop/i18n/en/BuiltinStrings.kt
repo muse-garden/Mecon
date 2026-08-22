@@ -98,6 +98,7 @@ internal object BuiltinStrings {
         "inspector.barline.navigation" to "Navigation marks",
         "inspector.barline.repeatCount" to "Repeat count",
         "inspector.curve.slurPosition" to "Slur position",
+        "inspector.tuplet.position" to "Tuplet position",
         "inspector.curve.tiePosition" to "Tie position",
         "inspector.curve.above" to "Above",
         "inspector.curve.below" to "Below",

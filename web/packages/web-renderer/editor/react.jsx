@@ -28,6 +28,7 @@ const SELECTABLE_ELEMENT_TYPES = [
   "FERMATA", "HAIRPIN", "OCTAVE_SHIFT", "TEMPO_MARKING", "TEXT_ANNOTATION",
   "REHEARSAL_MARK", "PEDAL", "SLUR", "BARLINE", "VOLTA_ENDING", "NAVIGATION_MARK",
   "TIE", "BEAM",
+  "TUPLET_BRACKET",
 ];
 
 const VISUALLY_HIDDEN_STYLE = {
@@ -865,6 +866,31 @@ export function ScoreEditorSlurInspector({ frame, structure, commands }) {
   </fieldset>;
 }
 
+/** Tuplet side control. The browser only emits a stable-id shared-session intent. */
+export function ScoreEditorTupletInspector({ frame, dispatch }) {
+  const selected = frame?.update?.selection?.length === 1 ? frame.update.selection[0] : null;
+  const startEventId = selected?.type === "event" ? selected.eventId : null;
+  const isTupletStart = Boolean(startEventId && Object.values(frame?.update?.score?.voiceTracks ?? {})
+    .some((voice) => (voice.events ?? []).some((event) =>
+      event.id === startEventId && event.tupletSpan != null)));
+  if (!isTupletStart) return null;
+  const geometry = frame?.update?.score?.geometry?.tuplets?.[startEventId]
+    ?? frame?.geometry?.tuplets?.[startEventId];
+  if (!geometry) return null;
+  const setAbove = (above) => dispatch({
+    type: "setTupletGeometry",
+    startEventId,
+    geometry: { ...geometry, above, directionLocked: true },
+  });
+  return <fieldset className="insert-panel">
+    <legend>连音组</legend>
+    <div className="insert-actions">
+      <button aria-pressed={geometry.above === true} onClick={() => setAbove(true)}>上方</button>
+      <button aria-pressed={geometry.above === false} onClick={() => setAbove(false)}>下方</button>
+    </div>
+  </fieldset>;
+}
+
 /** Builds the complete stable-id toolbar registry for a score-editor host. */
 export function createScoreEditorToolbarControls({
   frame, input, commands, destinations = [], dispatch, onEnableMidi, onExport,
@@ -1580,6 +1606,7 @@ export function ScoreEditor({
         commands={controller.commands} dispatch={controller.dispatch} />
       <ScoreEditorSlurInspector frame={controller.frame} structure={controller.structure}
         commands={controller.commands} />
+      <ScoreEditorTupletInspector frame={controller.frame} dispatch={controller.dispatch} />
     </>,
   };
   return typeof children === "function"

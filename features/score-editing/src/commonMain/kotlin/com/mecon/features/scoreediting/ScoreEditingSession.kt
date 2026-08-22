@@ -283,6 +283,7 @@ class ScoreEditingSession private constructor(
             is ScoreEditIntent.DeleteSlurs -> deleteSlurs(intent, baseRevision)
             is ScoreEditIntent.SetSlurGeometry -> setSlurGeometry(intent, baseRevision)
             is ScoreEditIntent.SetTieGeometry -> setTieGeometry(intent, baseRevision)
+            is ScoreEditIntent.SetTupletGeometry -> setTupletGeometry(intent, baseRevision)
             is ScoreEditIntent.SetBeamGeometry -> setBeamGeometry(intent, baseRevision)
             is ScoreEditIntent.SetArticulationGeometry -> setArticulationGeometry(intent, baseRevision)
             is ScoreEditIntent.AddDynamic -> expression(
@@ -931,6 +932,34 @@ class ScoreEditingSession private constructor(
                 voiceTrackId = voiceTrackIdOf(intent.sourceEventId),
             ),
         )
+        return applied(baseRevision)
+    }
+
+    private fun setTupletGeometry(
+        intent: ScoreEditIntent.SetTupletGeometry,
+        baseRevision: Long,
+    ): ScoreEditDispatchResult {
+        val current = manager.currentState
+        val start = current.computedScore.getComputedEvent(intent.startEventId)
+            ?.takeIf { it.tupletInfo != null }
+            ?: return noOp(baseRevision)
+        val info = start.tupletInfo ?: return noOp(baseRevision)
+        val replacement = intent.geometry.copy(directionLocked = true)
+        val base = current.runtimeScore.geometry ?: ScoreGeometry()
+        if (base.tuplets[intent.startEventId] == replacement) return noOp(baseRevision)
+        val score = current.runtimeScore.copy(
+            geometry = base.copy(tuplets = base.tuplets + (intent.startEventId to replacement)),
+        )
+        val endMeasure = current.computedScore.getComputedEvent(info.endEventId)?.onset?.measure
+            ?: start.onset.measure
+        val affected = minOf(start.onset.measure, endMeasure)..maxOf(start.onset.measure, endMeasure)
+        commitNewState(
+            score,
+            current.computedScore.copy(runtime = score),
+            RenderHint(current.computedScore, ComputeChangeSet.forRange(affected)),
+        )
+        observedState = manager.currentState
+        revision++
         return applied(baseRevision)
     }
 

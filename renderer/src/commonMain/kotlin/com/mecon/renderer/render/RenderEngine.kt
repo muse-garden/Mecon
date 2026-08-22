@@ -515,7 +515,10 @@ class RenderEngine(
         geometryInvalidation = invalidation
         val renderGeometry = when {
             baseGeometry == null -> computed.runtime.geometry
-            invalidation!!.full -> com.mecon.api.storage.ScoreGeometry.EMPTY
+            invalidation!!.full -> com.mecon.api.storage.ScoreGeometry(
+                // Tuplet side overrides are engraving directives, not stale coordinates.
+                tuplets = baseGeometry.tuplets.filterValues { it.directionLocked },
+            )
             else -> baseGeometry.without(
                 invalidation.staleArticulations, invalidation.staleSlurs, invalidation.staleAttachments,
                 invalidation.staleBeams,
@@ -679,12 +682,19 @@ class RenderEngine(
         captured?.beams?.forEach { (id, geometry) ->
             if (id !in invalidation.reusableBeams) beams[id] = geometry
         }
+        val tuplets = LinkedHashMap<com.mecon.api.primitive.EventId, com.mecon.api.storage.TupletGeometry>()
+        for ((id, geometry) in base.tuplets) {
+            val event = lastComputedScore?.getComputedEvent(id)
+            if (event?.tupletInfo != null && event.onset.measure !in window) tuplets[id] = geometry
+        }
+        captured?.tuplets?.forEach { (id, geometry) -> tuplets[id] = geometry }
         val result = com.mecon.api.storage.ScoreGeometry(
             articulations = articulations,
             ties = ties,
             slurs = slurs,
             attachments = attachments,
             beams = beams,
+            tuplets = tuplets,
         )
         return if (result.isEmpty) null else result
     }
@@ -786,6 +796,13 @@ class RenderEngine(
                 measureFilter = measureFilter,
             )
         }
+        val tupletLayouts = tupletLayoutComputer.computeTupletLayouts(
+            computed,
+            query,
+            stemAdjustments = beamProc.stemAdjustments,
+            measureFilter = measureFilter,
+            geometry = overlay,
+        )
         com.mecon.renderer.debug.PerfLog.log("render.stage") {
             "geometry.slur=${slurStart.elapsedNow().inWholeMilliseconds}ms layouts=${slurLayouts.size}"
         }
@@ -797,6 +814,7 @@ class RenderEngine(
             articulationLayouts,
             tieLayouts,
             slurLayouts,
+            tupletLayouts,
             layout.placedAttachments,
             query,
             attachmentFilter,
@@ -829,6 +847,11 @@ class RenderEngine(
                 if (overlay?.attachments?.get(id)?.manuallyAdjustedY == true) {
                     geometry.copy(manuallyAdjustedY = true)
                 } else geometry
+            },
+            tuplets = captured.tuplets.mapValues { (id, geometry) ->
+                overlay?.tuplets?.get(id)?.let { old ->
+                    geometry.copy(directionLocked = old.directionLocked)
+                } ?: geometry
             },
         )
         // Cross-system curves are split into multiple stubs and intentionally absent from a single

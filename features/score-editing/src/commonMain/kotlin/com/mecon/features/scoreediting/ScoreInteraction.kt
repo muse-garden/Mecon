@@ -526,6 +526,7 @@ object ScoreInteractionCatalog {
         is ScoreEditIntent.SetStaffVisibility -> ScoreTargetingKind.STRUCTURE
         is ScoreEditIntent.SetSlurGeometry,
         is ScoreEditIntent.SetTieGeometry,
+        is ScoreEditIntent.SetTupletGeometry,
         is ScoreEditIntent.SetBeamGeometry -> ScoreTargetingKind.VERTICAL_HANDLE
         is ScoreEditIntent.SetArticulationGeometry -> ScoreTargetingKind.FREE_HANDLE
         is ScoreEditIntent.MoveAttachment -> ScoreTargetingKind.ATTACHMENT_HANDLE
@@ -582,6 +583,7 @@ object ScoreInteractionCatalog {
         is ScoreEditIntent.SetStaffVisibility -> STRUCTURE
         is ScoreEditIntent.SetSlurGeometry,
         is ScoreEditIntent.SetTieGeometry,
+        is ScoreEditIntent.SetTupletGeometry,
         is ScoreEditIntent.SetBeamGeometry,
         is ScoreEditIntent.SetArticulationGeometry,
         is ScoreEditIntent.MoveAttachment,
