@@ -203,9 +203,10 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         )
 
         val commands = mutableListOf<RenderCommand>()
-        // Anchor used for the geometry origin (and to locate the owning page). The rest sits with
-        // its left edge on the onset; the note is shifted left so the notehead's RIGHT edge lands on
-        // the onset X (the snap target), which the user reads as "the note ending at this beat".
+        // Anchor used for the geometry origin (and to locate the owning page). Ordinary score
+        // snapping resolves the rendered notehead's RIGHT edge, so both notes and rests must move
+        // left by the reference notehead extent to occupy the same notation column. Without that
+        // shared shift, a rest starts exactly where the notehead ends and appears beside the note.
         // A new/append grace note belongs before its principal onset, so preview it to the left.
         // An onset that already has a grace component is an existing grace event: keep the exact X
         // there so clicking another pitch previews and commits a chord at that same grace onset.
@@ -225,8 +226,22 @@ class GhostNoteComputer(private val config: RenderLayoutConfig = RenderLayoutCon
         var drawOffset = RelativePoint(alignedContentX ?: gracePreviewX, centerY)
 
         if (restMode) {
-            // Rest preview: just the rest glyph, dropped on the staff centre.
+            // Rest preview: just the rest glyph, dropped on the staff centre. In ordinary score
+            // layout, preserve the same column origin as the equivalent note preview.
             val body = NoteBodyElementBuilder(config, scale = previewScale).buildRestElement(displayDuration)
+            if (alignedContentX == null) {
+                val referenceNoteheadBounds = NoteBodyElementBuilder(config, scale = previewScale)
+                    .buildNoteGeometry(listOf(pitchData), displayDuration)
+                    .noteheads
+                    .single()
+                    .geometry
+                    .bounds
+                val restLeft = body.noteheads.single().geometry.bounds.left
+                drawOffset = RelativePoint(
+                    gracePreviewX - referenceNoteheadBounds.right + referenceNoteheadBounds.left - restLeft,
+                    centerY,
+                )
+            }
             for (g in body.geometryList) commands += g.draw(drawOffset, transformer)
         } else {
             // Note preview: build the real note body + stem/flag via the engraving builders so the

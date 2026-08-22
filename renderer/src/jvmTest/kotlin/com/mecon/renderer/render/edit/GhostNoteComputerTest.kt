@@ -44,6 +44,50 @@ class GhostNoteComputerTest {
         .first { it.glyph.name.startsWith("notehead") }
         .bounds.bottomRight.x.value
 
+    private fun ghostGlyphLeft(ghost: GhostNote): Float = ghost.commands
+        .filterIsInstance<DrawGlyph>()
+        .single()
+        .bounds.origin.x.value
+
+    @Test
+    fun restGhostSharesTheNoteGhostColumnInsteadOfStartingAtItsRightEdge() {
+        val font = loadFont() ?: return
+        val runtime = emptyScore()
+
+        with(font) {
+            val engine = RenderEngine(RenderLayoutConfig.DEFAULT.copy(padEmptyMeasures = true))
+            val result = engine.render(runtime)
+            val onset = com.mecon.api.primitive.TimeCode.of(
+                1,
+                com.mecon.api.primitive.Fraction.ZERO,
+            )
+            val snapX = assertNotNull(result.timeCodePositions[onset]?.x)
+            val staff = result.elements.first { it.type == RenderElementType.STAFF }
+            val point = com.mecon.renderer.geometry.AbsolutePoint(
+                com.mecon.renderer.geometry.Pixels(snapX),
+                staff.hitBox.center.y,
+            )
+
+            val noteGhost = assertNotNull(
+                engine.computeGhost(
+                    result, runtime, point, Duration.QUARTER, null, restMode = false,
+                ),
+            )
+            val restGhost = assertNotNull(
+                engine.computeGhost(
+                    result, runtime, point, Duration.QUARTER, null, restMode = true,
+                ),
+            )
+
+            assertEquals(
+                ghostGlyphLeft(noteGhost),
+                ghostGlyphLeft(restGhost),
+                absoluteTolerance = 0.01f,
+                message = "rest and note ghosts must start in the same notation column",
+            )
+        }
+    }
+
     @Test
     fun ghostAlignsToRenderedNoteheadWithAccidentalDotAndArticulation() {
         val font = loadFont() ?: return
