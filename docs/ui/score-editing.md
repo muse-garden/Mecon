@@ -147,7 +147,7 @@
 
 选中项详情显示在**右侧面板「选中项属性」**（`RightPanel.kt`，原乐谱左下角的浮层已移除）：单选时列出类型（音符 / 和弦 / 休止符）、位置、时值、音高；多选时显示「已选 N 项」。有选择时面板底部出现**删除按钮**。
 
-删除入口有二，都走 `App.deleteSelection`：删除按钮，或 `Delete` 键（可在设置里重绑定，见 [settings.md](settings.md)，`ShortcutAction.DELETE`）。窗口预览键盘分发器在子控件获得焦点时仍会把 Delete / Copy / Cut / Paste 路由到当前乐谱选区，内容区 `onKeyEvent` 保留为后备。`buildDeletions(selection, runtime)` 把 `Set<EventSection>` 按所属事件分组（`VoiceNoteSection` → 删和弦音；`VoiceEventSection`（含休止符）→ 整体删；同一事件的整体删优先于按音删）映射为 `Deletion` 列表，删除后选区指向产生的休止符。
+通用内容删除入口有二，都走 `App.deleteSelection`：右侧删除按钮，或 `Delete` 键（可在设置里重绑定，见 [settings.md](settings.md)，`ShortcutAction.DELETE`）。窗口预览键盘分发器在子控件获得焦点时仍会把 Delete / Copy / Cut / Paste 路由到当前乐谱选区，内容区 `onKeyEvent` 保留为后备。`buildDeletions(selection, runtime)` 把 `Set<EventSection>` 按所属事件分组（`VoiceNoteSection` → 删和弦音；`VoiceEventSection`（含休止符）→ 整体删；`MeasureStaffSection` → 展开并清空该谱表的所选小节；同一事件的整体删优先于按音删）映射为 `Deletion` 列表，删除后选区指向产生的休止符。结构性的“删除小节”不绑定快捷键，只由工具栏入口触发。
 
 复制 / 剪切 / 粘贴入口有二：顶栏编辑按钮组，或 `Ctrl+C` / `Ctrl+X` / `Ctrl+V`（可重绑定）。`App.buildCopyTargets` 从选区生成 `CopyTarget`，并把 Computed 层的源符杠结果冻结成 `RenderingProps.beaming`，所以自动符杠复制后也保持源位置的分组；音高对象原样进入剪贴板，粘到不同谱号 / 调号位置也不重拼写。若某条圆滑线的首尾音符都在复制目标中，`NoteClipboard.slurs` 会记录其声部偏移与端点源 ID，粘贴在新音符生成后以新 ID 重建该 slur；只复制单个端点时不携带。粘贴目标取当前选区最近一个音符 / 休止符 onset；空小节上的隐式整小节休止符用 `originVoiceTrackId` 定位目标声部。剪切只删除成功写入音符剪贴板的音符 / 休止内容；即使选区是整小节，也不会复用“删除小节”按钮的结构删除语义。
 

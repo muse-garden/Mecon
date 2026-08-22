@@ -24,8 +24,6 @@ internal fun deleteScoreSelection(
     onSelectionChange: (Set<EventSection>) -> Unit,
     onAnnotationSelectionChange: (EventId?) -> Unit,
     onApplyExpressionResult: (ExpressionEditEngine.Result?) -> Unit,
-    onDeleteMeasures: (Set<Int>) -> Unit,
-    onConfirmMeasureDeletion: (Set<Int>) -> Unit,
 ) {
     val runtime = session.runtimeScore ?: return
     if (selection.isEmpty()) return
@@ -146,16 +144,6 @@ internal fun deleteScoreSelection(
     val navigation = selection.singleOrNull() as? NavigationMarkSection
     if (navigation != null) {
         session.deleteNavigationMark(navigation) { clearSelection() }
-        return
-    }
-    val measures = selection.filterIsInstance<MeasureStaffSection>()
-        .mapTo(LinkedHashSet()) { it.measureNumber }
-    if (measures.isNotEmpty()) {
-        if (runtime.hasPitchedEventsIn(measures)) {
-            onConfirmMeasureDeletion(measures)
-        } else {
-            onDeleteMeasures(measures)
-        }
         return
     }
     val deletions = buildDeletions(selection, runtime, session.computedScore)

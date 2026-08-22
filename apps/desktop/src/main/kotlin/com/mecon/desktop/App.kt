@@ -262,13 +262,23 @@ fun App() {
         if (editMessage != null) { kotlinx.coroutines.delay(2500); editMessage = null }
     }
 
-    // Delete the current section selection (notes / rests). Shared by the Delete key and the
-    // right-panel button; resolves sections → deletions against the live runtime, then re-points
-    // the selection at the resulting rests.
+    // Structural measure deletion is deliberately toolbar-only. The generic Delete command clears
+    // note/rest content from a selected measure cell instead of removing the measure from the score.
     fun deleteMeasures(measures: Set<Int>) {
         session.deleteMeasures(measures) {
             eventSelection = emptySet()
             selectedAnnotationEventId = null
+        }
+    }
+    fun requestDeleteSelectedMeasures() {
+        val runtime = session.runtimeScore ?: return
+        val measures = eventSelection.filterIsInstance<MeasureStaffSection>()
+            .mapTo(LinkedHashSet()) { it.measureNumber }
+        if (measures.isEmpty()) return
+        if (runtime.hasPitchedEventsIn(measures)) {
+            dialogState.pendingMeasureDeletion = measures
+        } else {
+            deleteMeasures(measures)
         }
     }
     fun applyExpressionResult(
@@ -289,8 +299,6 @@ fun App() {
             onSelectionChange = { eventSelection = it },
             onAnnotationSelectionChange = { selectedAnnotationEventId = it },
             onApplyExpressionResult = ::applyExpressionResult,
-            onDeleteMeasures = ::deleteMeasures,
-            onConfirmMeasureDeletion = { dialogState.pendingMeasureDeletion = it },
         )
     }
     fun copySelectionToClipboard(): Boolean {
@@ -850,7 +858,7 @@ fun App() {
                                 eventSelection = emptySet()
                             }
                         },
-                        deleteMeasures = deleteSelection,
+                        deleteMeasures = ::requestDeleteSelectedMeasures,
                     ),
                     staffVisibility = StaffVisibilityToolbarActions(
                         hideMeasures = { hideStaffCells(hideCellsSelection) },
