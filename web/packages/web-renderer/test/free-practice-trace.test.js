@@ -15,6 +15,21 @@ const parseFraction = (value) => {
   return { numerator: Number(numerator), denominator: Number(denominator) };
 };
 
+/**
+ * Mirrors FreePracticeTraceTest.pathwayByNodeChain: a pathway is addressed by its sonority chain
+ * so the trace does not pin the internal step-identity format.
+ */
+function pathwayByNodeChain(plan, step) {
+  const chain = step.pathwayNodePitchClasses.map((entry) => entry.join(","));
+  return plan.voiceLeading.pathways.groups
+    .flatMap((group) => group.pathways)
+    .find((pathway) => {
+      const nodes = pathway.nodes.map((node) =>
+        node.tones.map((tone) => tone.pitchClass).sort((a, b) => a - b).join(","));
+      return nodes.length === chain.length && nodes.every((value, index) => value === chain[index]);
+    });
+}
+
 /** Mirrors FreePracticeTraceTest.timelineEdit: slots and layouts are addressed by index. */
 function timelineEdit(step, update) {
   const slot = (key = "slotIndex") => update.timeline.slots[step[key]].id;
@@ -466,6 +481,24 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
         targetPitchClasses: candidate.choice.pitchClasses,
         pathIndex: candidate.primaryPathIndex,
       });
+    } else if (step.kind === "inspectVoiceLeadingPathways") {
+      const before = session.initialUpdate();
+      update = session.dispatch({
+        type: "selectSlot",
+        expectedRevision: step.expectedRevision,
+        slotId: before.selection.slotId,
+      });
+    } else if (step.kind === "insertVoiceLeadingPathway") {
+      const before = session.initialUpdate();
+      const pathway = pathwayByNodeChain(before.plan, step);
+      assert.ok(pathway, "voice-leading trace pathway");
+      update = session.dispatch({
+        type: "insertVoiceLeadingPathway",
+        expectedRevision: step.expectedRevision,
+        sourceSlotId: before.selection.slotId,
+        pathwayId: pathway.id,
+        placement: step.placement,
+      });
     } else if (step.kind === "setStaffLock") {
       const before = session.initialUpdate();
       const voiceId = before.document.noteConstraints.lockedVoiceTrackIds[0];
@@ -587,6 +620,37 @@ test("generated Kotlin/JS free-practice session replays the JVM golden trace", {
       if (step.voiceLeadingParallelFifth !== undefined) {
         assert.equal(candidate.paths.some((path) => path.parallelRisks.includes("PARALLEL_FIFTH")),
           step.voiceLeadingParallelFifth, step.kind);
+      }
+    }
+    if (step.pathwayGroupIds !== undefined) {
+      assert.deepEqual(update.plan.voiceLeading.pathways.groups.map((group) => group.id),
+        step.pathwayGroupIds, step.kind);
+    }
+    if (step.pathwayFocusedTarget !== undefined) {
+      const targets = update.plan.voiceLeading.pathways.groups
+        .flatMap((group) => group.pathways.map((pathway) => pathway.choice.pitchClasses.join(",")));
+      assert.deepEqual([...new Set(targets)], [step.pathwayFocusedTarget.join(",")], step.kind);
+    }
+    // Only inspection steps re-read the pathway; after an insertion the selection has moved on
+    // and the same chain is no longer on offer.
+    if (step.pathwayNodeStabilities !== undefined || step.pathwayInsertedPitchClasses !== undefined ||
+      step.pathwayFigurationCount !== undefined || step.pathwayArcPositive !== undefined) {
+      const pathway = pathwayByNodeChain(update.plan, step);
+      assert.ok(pathway, `${step.kind} pathway chain`);
+      if (step.pathwayNodeStabilities !== undefined) {
+        assert.deepEqual(pathway.nodes.map((node) => node.stability),
+          step.pathwayNodeStabilities, step.kind);
+      }
+      if (step.pathwayInsertedPitchClasses !== undefined) {
+        assert.deepEqual(pathway.insertedChoices.map((choice) => choice.pitchClasses),
+          step.pathwayInsertedPitchClasses, step.kind);
+      }
+      if (step.pathwayFigurationCount !== undefined) {
+        assert.equal(pathway.nodes.filter((node) => node.figurationLabel).length,
+          step.pathwayFigurationCount, step.kind);
+      }
+      if (step.pathwayArcPositive !== undefined) {
+        assert.equal(pathway.arc > 0, step.pathwayArcPositive, step.kind);
       }
     }
     if (step.selectedPitchClasses !== undefined) {

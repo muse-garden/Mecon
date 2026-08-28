@@ -109,6 +109,80 @@ test("voice-leading tab inserts an independent chord and highlights both changed
   })).toEqual({ slotCount: before.slotCount + 1, idiomCount: before.idiomCount, source: before.source });
 });
 
+test("voice-leading pathway writes a suspension and its resolution as one history item", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/");
+  await openPracticeFixture(page, fixture, "free-practice-f1");
+  const initialRevision = await page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision);
+  const autoWriting = page.getByRole("button", { name: "自动写作", exact: true });
+  let expectedRevision = initialRevision;
+  if (await autoWriting.getAttribute("aria-pressed") === "true") {
+    await autoWriting.click();
+    expectedRevision += 1;
+    await expect.poll(() => page.evaluate(() =>
+      window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(expectedRevision);
+  }
+
+  const before = await page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot().practiceUpdate;
+    return { slotCount: snapshot.timeline.slots.length, source: snapshot.timeline.slots[0].pitchClasses };
+  });
+  const idiomPanel = page.locator(".idiom-panel");
+  await idiomPanel.getByRole("tab", { name: "Voice leading" }).click();
+
+  // The projection, not the DOM, decides which chain is the cadential suspension.
+  const projected = await page.evaluate(() => {
+    const section = window.__MECON_E2E__.snapshot().practiceUpdate.plan.voiceLeading.pathways;
+    const group = section.groups.find((item) => item.id === "suspension");
+    const pathway = group.pathways.find((item) =>
+      item.nodes.length === 3 && item.nodes[1].stability === "TRANSITIONAL");
+    return {
+      id: pathway.id,
+      target: pathway.choice.pitchClasses,
+      inserted: pathway.insertedChoices.map((choice) => choice.pitchClasses),
+      metrics: pathway.metricsLabel,
+      placements: section.placementOptions.map((option) => [option.label, option.enabled]),
+    };
+  });
+  expect(projected.placements).toEqual([["作为经过和弦", true], ["作为和弦外音", false]]);
+  // The figuration placement is projected as disabled and must not be clickable yet.
+  await expect(page.locator('.voice-leading-placement button:has-text("作为和弦外音")')).toBeDisabled();
+
+  const card = page.locator(`.voice-leading-pathway[data-pathway-id="${projected.id}"]`);
+  await expect(card.locator('mark[data-stability="TRANSITIONAL"]')).toHaveCount(1);
+  await expect(card.getByText(projected.metrics, { exact: true })).toBeVisible();
+  await expect(card.locator(".voice-leading-figuration")).toContainText("延留音");
+  await card.getByRole("button").click();
+  expectedRevision += 1;
+  await expect.poll(() => page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(expectedRevision);
+
+  await expect.poll(() => page.evaluate(() => {
+    const snapshot = window.__MECON_E2E__.snapshot().practiceUpdate;
+    return {
+      slotCount: snapshot.timeline.slots.length,
+      source: snapshot.timeline.slots[0].pitchClasses,
+      written: snapshot.timeline.slots.slice(1).map((slot) => slot.pitchClasses),
+      selected: snapshot.plan.selectedSlot.pitchClasses,
+    };
+  })).toEqual({
+    slotCount: before.slotCount + 2,
+    source: before.source,
+    written: projected.inserted,
+    selected: projected.target,
+  });
+
+  // One gesture, one history item: a single undo removes both written chords.
+  await expect(page.getByRole("button", { name: "撤销" })).toBeEnabled();
+  await page.getByRole("button", { name: "撤销" }).click();
+  expectedRevision += 1;
+  await expect.poll(() => page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.revision)).toBe(expectedRevision);
+  await expect.poll(() => page.evaluate(() =>
+    window.__MECON_E2E__.snapshot().practiceUpdate.timeline.slots.length)).toBe(before.slotCount);
+});
+
 test("2/4 practice shows a passive empty beat and a separate add button", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");

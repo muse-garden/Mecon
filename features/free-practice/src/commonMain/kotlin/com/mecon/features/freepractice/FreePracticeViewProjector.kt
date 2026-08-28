@@ -25,7 +25,12 @@ import com.mecon.theory.ModulationPitchLabels
 import com.mecon.theory.voiceleading.SchoenbergChromaticRootMotion
 import com.mecon.theory.voiceleading.StandardVoiceLeadingChordFamilies
 import com.mecon.theory.voiceleading.VoiceLeadingParallelRisk
+import com.mecon.theory.voiceleading.VoiceLeadingFigurationPlacement
+import com.mecon.theory.voiceleading.VoiceLeadingFigurationProjector
+import com.mecon.theory.voiceleading.VoiceLeadingPathNode
+import com.mecon.theory.voiceleading.VoiceLeadingStability
 import com.mecon.theory.voiceleading.VoiceLeadingTransformations
+import com.mecon.theory.NonChordToneType
 import kotlin.math.round
 
 /** UI-neutral read models shared by Compose and React workbench adapters. */
@@ -415,6 +420,11 @@ object FreePracticeViewProjector {
             key = effectiveKey,
             sourceRootPitchClass = slot?.chordChoice?.preferredRootPitchClass
                 ?: detailChoice?.rootPitchClass,
+            // When the following slot already holds a chord, pathways are the "fill the gap
+            // between these two chords" question rather than open-ended discovery.
+            followingChoice = if (slotIndex >= 0) {
+                workspace.slots.getOrNull(slotIndex + 1)?.chordChoice
+            } else null,
         )
         val chordDetail = if (effectiveKey != null && detailChoice != null) {
             chordDetail(
@@ -826,14 +836,15 @@ object FreePracticeViewProjector {
         choice: WorkspaceChordChoice,
         key: com.mecon.theory.ModulationKey,
     ): NonFunctionalTimelineChord {
-        val family = StandardVoiceLeadingChordFamilies.matching(choice.pitchClasses)
-        val readings = family?.let { VoiceLeadingTransformations.recognize(choice.pitchClasses, it) }.orEmpty()
+        // The pathway universe, not the base families: a suspended sonority written by a pathway
+        // insertion still has to show its own symbol instead of falling back to bare pitch names.
+        val universe = PracticeVoiceLeadingPathwayCatalog.universe
+        val readings = universe.recognize(choice.pitchClasses)
         val reading = choice.preferredRootPitchClass?.let { preferred ->
             readings.firstOrNull { it.rootPitchClass == preferred }
         } ?: readings.firstOrNull()
-        val orderedPitchClasses = if (reading != null && family != null) {
-            val definition = family.definitions.first { it.id == reading.definitionId }
-            definition.members.map { member ->
+        val orderedPitchClasses = if (reading != null) {
+            universe.definitionOf(reading.definitionId).members.map { member ->
                 (reading.rootPitchClass + member.semitones).mod(12)
             }.distinct()
         } else {
@@ -857,10 +868,19 @@ object FreePracticeViewProjector {
         source: WorkspaceChordChoice?,
         key: com.mecon.theory.ModulationKey?,
         sourceRootPitchClass: Int?,
+        followingChoice: WorkspaceChordChoice? = null,
     ): PracticeVoiceLeadingView {
         if (source == null || key == null) return PracticeVoiceLeadingView()
+        // Pathways stand on their own vocabulary: a suspended sonority inserted by a previous
+        // pathway is not part of any base family, but must still offer its own continuations.
+        val pathwaySection = projectVoiceLeadingPathways(
+            source,
+            key,
+            sourceRootPitchClass,
+            followingChoice,
+        )
         val family = StandardVoiceLeadingChordFamilies.matching(source.pitchClasses)
-            ?: return PracticeVoiceLeadingView()
+            ?: return PracticeVoiceLeadingView(pathways = pathwaySection)
         val candidates = VoiceLeadingTransformations.enumerate(source.pitchClasses, family)
         val views = candidates.map { candidate ->
             val targetReading = candidate.readings.firstOrNull {
@@ -997,8 +1017,189 @@ object FreePracticeViewProjector {
                     candidates = items,
                 )
             },
+            pathways = pathwaySection,
         )
     }
+
+    /**
+     * Suspension and passing-chord candidates: the same move multiset in a different order.
+     *
+     * Ordering is what distinguishes them, so the projection presents the whole ordered node chain
+     * plus its tension profile rather than only the destination chord.
+     */
+    private fun projectVoiceLeadingPathways(
+        source: WorkspaceChordChoice,
+        key: com.mecon.theory.ModulationKey,
+        sourceRootPitchClass: Int?,
+        followingChoice: WorkspaceChordChoice?,
+    ): PracticeVoiceLeadingPathwaySectionView {
+        val all = PracticeVoiceLeadingPathwayCatalog.entries(source.pitchClasses)
+        // Filtering to a known destination is presentation only; the session still validates every
+        // pathway against the full catalog.
+        val target = followingChoice?.pitchClasses?.sorted()
+        val focused = target?.let { wanted ->
+            all.filter { it.pathway.targetPitchClasses == wanted }
+        }.orEmpty()
+        val entries = if (focused.isNotEmpty()) focused else all
+        val destinationLabel = if (focused.isNotEmpty() && followingChoice != null) {
+            "填充到下一个和弦 " + nonFunctionalTimelineChord(followingChoice, key)
+                .let { it.absoluteSymbol ?: it.absoluteTones.joinToString("-") }
+        } else ""
+        val grouped = entries.groupBy { it.groupId }
+        val placementOptions = listOf(
+            PracticeVoiceLeadingPlacementOptionView(
+                placement = PracticeVoiceLeadingPlacement.PASSING_CHORD,
+                label = "作为经过和弦",
+                enabled = true,
+                hintLabel = "中间和弦各占一个和弦槽，可以单独改和弦与时值。",
+            ),
+            PracticeVoiceLeadingPlacementOptionView(
+                placement = PracticeVoiceLeadingPlacement.NON_CHORD_TONE,
+                label = "作为和弦外音",
+                enabled = false,
+                hintLabel = "把中间和弦压进声部里的延留 / 先现时值，待装饰层接入后启用。",
+            ),
+        )
+        if (grouped.isEmpty()) {
+            return PracticeVoiceLeadingPathwaySectionView(placementOptions = placementOptions)
+        }
+        val groups = listOf(
+            PracticeVoiceLeadingPathwayCatalog.SUSPENSION_GROUP_ID to
+                ("挂留" to "中间和弦没有稳定名称，听感上是强位不协和再解决。"),
+            PracticeVoiceLeadingPathwayCatalog.PASSING_GROUP_ID to
+                ("经过" to "中间和弦本身成立，可以作为独立的经过和弦听。"),
+        ).mapNotNull { (groupId, labels) ->
+            val groupEntries = grouped[groupId].orEmpty()
+            if (groupEntries.isEmpty()) return@mapNotNull null
+            val shown = groupEntries.take(PracticeVoiceLeadingPathwayCatalog.MAX_PER_GROUP)
+            PracticeVoiceLeadingPathwayGroupView(
+                id = groupId,
+                titleLabel = "${labels.first} · ${shown.size}/${groupEntries.size}",
+                descriptionLabel = labels.second,
+                pathways = shown.map { entry ->
+                    pathwayView(entry, key, sourceRootPitchClass)
+                },
+            )
+        }
+        return PracticeVoiceLeadingPathwaySectionView(
+            available = groups.isNotEmpty(),
+            descriptionLabel = listOfNotNull(
+                PracticeVoiceLeadingPathwaySectionView().descriptionLabel,
+                destinationLabel.takeIf { it.isNotEmpty() },
+            ).joinToString(" · "),
+            placementOptions = placementOptions,
+            groups = groups,
+        )
+    }
+
+    private fun pathwayView(
+        entry: PracticeVoiceLeadingPathwayCatalog.Entry,
+        key: com.mecon.theory.ModulationKey,
+        sourceRootPitchClass: Int?,
+    ): PracticeVoiceLeadingPathwayView {
+        val pathway = entry.pathway
+        val figuration = VoiceLeadingFigurationProjector.project(
+            pathway,
+            VoiceLeadingFigurationPlacement.SUSPENSION_BEFORE_TARGET,
+        )
+        val figurationByStep = figuration.nodes.associateBy { it.stepIndex }
+        val nodes = pathway.nodes.mapIndexed { index, node ->
+            val rootPitchClass = if (index == 0) {
+                sourceRootPitchClass ?: entry.nodeRootPitchClasses[index]
+            } else entry.nodeRootPitchClasses[index]
+            val metrics = entry.profile.nodes[index]
+            val changed = pathway.steps.getOrNull(index - 1)?.let { setOf(it.toPitchClass) }.orEmpty()
+            PracticeVoiceLeadingPathwayNodeView(
+                stepIndex = node.stepIndex,
+                stability = when (node.stability) {
+                    VoiceLeadingStability.STABLE -> PracticeVoiceLeadingNodeStability.STABLE
+                    VoiceLeadingStability.TRANSITIONAL -> PracticeVoiceLeadingNodeStability.TRANSITIONAL
+                },
+                absoluteLabel = nodeSymbol(node, rootPitchClass, key, absolute = true),
+                relativeLabel = nodeSymbol(node, rootPitchClass, key, absolute = false),
+                tones = orderedNodeTones(node, rootPitchClass).map { pitchClass ->
+                    PracticeVoiceLeadingToneView(
+                        pitchClass = pitchClass,
+                        absoluteLabel = pitchLabel(pitchClass, key, absolute = true),
+                        relativeLabel = pitchLabel(pitchClass, key, absolute = false),
+                        changed = pitchClass in changed,
+                    )
+                },
+                tension = round2(metrics.tension),
+                ambiguity = round2(metrics.ambiguity),
+                figurationLabel = figurationByStep[node.stepIndex]?.nonChordTones.orEmpty()
+                    .joinToString("、") { role ->
+                        "${pitchLabel(role.pitchClass, key, absolute = true)} " +
+                            nonChordToneLabel(role.nonChordTone)
+                    },
+            )
+        }
+        val profile = entry.profile
+        return PracticeVoiceLeadingPathwayView(
+            id = entry.id,
+            choice = WorkspaceChordChoice.of(
+                pathway.targetPitchClasses,
+                preferredRootPitchClass = entry.nodeRootPitchClasses.last(),
+            ),
+            insertedChoices = pathway.nodes.drop(1).mapIndexed { index, node ->
+                WorkspaceChordChoice.of(
+                    node.pitchClasses,
+                    preferredRootPitchClass = entry.nodeRootPitchClasses[index + 1],
+                )
+            },
+            stepCount = pathway.stepCount,
+            absoluteLabel = nodes.joinToString(" → ") { it.absoluteLabel },
+            relativeLabel = nodes.joinToString(" → ") { it.relativeLabel },
+            nodes = nodes,
+            peakTension = round2(profile.peakTension),
+            arc = round2(profile.arc),
+            centroid = round2(profile.centroid),
+            resolutionDrop = round2(profile.resolutionDrop),
+            drive = round2(entry.drive),
+            metricsLabel = "推动力 ${round2(entry.drive)} · 张力峰 ${round2(profile.peakTension)} · " +
+                "拱形 ${round2(profile.arc)} · 解决落差 ${round2(profile.resolutionDrop)}",
+            figurationTypeLabels = figuration.types.map(::nonChordToneLabel),
+        )
+    }
+
+    /** Root, third, fifth (and seventh) order of the chosen reading; falls back to sorted tones. */
+    private fun orderedNodeTones(node: VoiceLeadingPathNode, rootPitchClass: Int): List<Int> {
+        val reading = node.readings.firstOrNull { it.rootPitchClass == rootPitchClass }
+            ?: return node.pitchClasses
+        return PracticeVoiceLeadingPathwayCatalog.universe.definitionOf(reading.definitionId)
+            .members.map { (reading.rootPitchClass + it.semitones).mod(12) }.distinct()
+    }
+
+    private fun nodeSymbol(
+        node: VoiceLeadingPathNode,
+        rootPitchClass: Int,
+        key: com.mecon.theory.ModulationKey,
+        absolute: Boolean,
+    ): String {
+        val reading = node.readings.firstOrNull { it.rootPitchClass == rootPitchClass }
+            ?: node.readings.first()
+        return ChordSymbolFormatter.format(
+            Chord(PitchClass(reading.rootPitchClass), reading.quality),
+            if (absolute) ChordSymbolDisplayStyle.LETTER else ChordSymbolDisplayStyle.SCALE_DEGREE,
+            key.keySignature,
+        )
+    }
+
+    private fun nonChordToneLabel(type: NonChordToneType?): String = when (type) {
+        NonChordToneType.SUSPENSION -> "延留音"
+        NonChordToneType.RETARDATION -> "上行延留音"
+        NonChordToneType.ANTICIPATION -> "先现音"
+        NonChordToneType.PASSING -> "经过音"
+        NonChordToneType.NEIGHBOR -> "邻音"
+        NonChordToneType.APPOGGIATURA -> "倚音"
+        NonChordToneType.ESCAPE -> "规避音"
+        NonChordToneType.NEIGHBOR_GROUP -> "邻音组"
+        NonChordToneType.SUSTAINED -> "保持音"
+        NonChordToneType.PEDAL -> "持续音"
+        null -> "和弦音"
+    }
+
+    private fun round2(value: Double): Double = round(value * 100) / 100
 
     private fun pitchLabel(
         pitchClass: Int,

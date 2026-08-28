@@ -438,6 +438,27 @@ class FreePracticeTraceTest {
                         ),
                     )
                 }
+                "inspectVoiceLeadingPathways" -> session.dispatch(
+                    FreePracticeIntent.SelectSlot(
+                        expectedRevision!!.toLong(),
+                        requireNotNull(session.frame().selection.slotId),
+                    ),
+                )
+                "insertVoiceLeadingPathway" -> {
+                    val pathway = requireNotNull(
+                        pathwayByNodeChain(session.frame().plan, step)
+                    ) { "trace pathway not offered" }
+                    session.dispatch(
+                        FreePracticeIntent.InsertVoiceLeadingPathway(
+                            expectedRevision!!.toLong(),
+                            requireNotNull(session.frame().selection.slotId),
+                            pathway.id,
+                            PracticeVoiceLeadingPlacement.valueOf(
+                                step.getValue("placement").jsonPrimitive.content,
+                            ),
+                        ),
+                    )
+                }
                 "setStaffLock" -> session.frame().let { before ->
                     val voiceId = before.document.noteConstraints.lockedVoiceTrackIds.single()
                     val staffId = before.score.runtimeScore.staffTracks.entries
@@ -587,6 +608,49 @@ class FreePracticeTraceTest {
                     )
                 }
             }
+            step["pathwayGroupIds"]?.jsonArray?.let { expected ->
+                assertEquals(
+                    expected.map { it.jsonPrimitive.content },
+                    update.plan.voiceLeading.pathways.groups.map { it.id },
+                )
+            }
+            step["pathwayFocusedTarget"]?.jsonArray?.let { expected ->
+                val target = expected.map { it.jsonPrimitive.int }
+                assertEquals(
+                    listOf(target),
+                    update.plan.voiceLeading.pathways.groups
+                        .flatMap { group -> group.pathways.map { it.choice.pitchClasses } }
+                        .distinct(),
+                )
+            }
+            // Only inspection steps re-read the pathway; after an insertion the selection has
+            // moved on and the same chain is no longer on offer.
+            if (
+                step["pathwayNodeStabilities"] != null ||
+                step["pathwayInsertedPitchClasses"] != null ||
+                step["pathwayFigurationCount"] != null ||
+                step["pathwayArcPositive"] != null
+            ) {
+                val pathway = requireNotNull(pathwayByNodeChain(update.plan, step))
+                step["pathwayNodeStabilities"]?.jsonArray?.let { expected ->
+                    assertEquals(
+                        expected.map { it.jsonPrimitive.content },
+                        pathway.nodes.map { it.stability.name },
+                    )
+                }
+                step["pathwayInsertedPitchClasses"]?.jsonArray?.let { expected ->
+                    assertEquals(
+                        expected.map { entry -> entry.jsonArray.map { it.jsonPrimitive.int } },
+                        pathway.insertedChoices.map { it.pitchClasses },
+                    )
+                }
+                step["pathwayFigurationCount"]?.jsonPrimitive?.int?.let { expected ->
+                    assertEquals(expected, pathway.nodes.count { it.figurationLabel.isNotBlank() })
+                }
+                step["pathwayArcPositive"]?.jsonPrimitive?.boolean?.let { expected ->
+                    assertEquals(expected, pathway.arc > 0.0)
+                }
+            }
             step["selectedPitchClasses"]?.jsonArray?.let { expected ->
                 assertEquals(
                     expected.map { it.jsonPrimitive.int },
@@ -695,6 +759,21 @@ class FreePracticeTraceTest {
                     update.document.settings.staffVoices.lowerVoiceCount,
                 )
             }
+        }
+    }
+
+    /**
+     * Looks a pathway up by its sonority chain rather than its identity string, so the trace stays
+     * readable and does not pin the internal step-identity format.
+     */
+    private fun pathwayByNodeChain(
+        plan: PracticePlanView,
+        step: kotlinx.serialization.json.JsonObject,
+    ): PracticeVoiceLeadingPathwayView? {
+        val chain = step.getValue("pathwayNodePitchClasses").jsonArray
+            .map { entry -> entry.jsonArray.map { it.jsonPrimitive.int } }
+        return plan.voiceLeading.pathways.groups.flatMap { it.pathways }.firstOrNull { pathway ->
+            pathway.nodes.map { node -> node.tones.map { it.pitchClass }.sorted() } == chain
         }
     }
 

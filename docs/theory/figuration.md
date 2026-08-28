@@ -2,6 +2,13 @@
 
 > 状态：**F1 分析路径已实现；延留音的 Stage 1 反向投影与探索谱例已落地；通用 F2–F4 生成路径仍为 🚧**。对应教材"和弦外音"章（textbook.md：经过音 p / 邻音 n / 延留音 s·r /
 > 倚音 app / 规避音 e / 邻音组 n.gr / 先现音 ant / 持续音 ped）。
+> 相关：[chorale-harmonization.md](chorale-harmonization.md) 是本文两阶段设计的第一个完整落地
+> （四部圣咏织体）：Stage 2 用「逐格填充 + `NonChordToneClassifier` 校验」一条规则涌现出 §5 的整组
+> 装饰操作，不为每类外音写生成器；§7.1 的延留反向投影与 §8 的表面级平行复查也在那里首次实现。
+> 通用 `FigurationCandidateSpace` / `WritingTaskPlan` staged solve（F2/F3）仍未接。
+> 相关：[voice-leading-pathways.md](voice-leading-pathways.md) 从 pitch-class 变换路径侧给出
+> 挂留 / 先现 / 经过的**骨架级**判定与张力度量，是 §7.1 反向投影的一个天然生成器；本文继续
+> 拥有外音类型定义、表面分类与装饰层的时值实现。
 > 前置：[writing-engine.md](writing-engine.md)（`WritingTaskPlan` 多阶段任务）·
 > [rule-scenes.md](rule-scenes.md)（`NonChordTone` / `MetricPosition` facet 占位）·
 > [constraint-program.md](constraint-program.md)（`FigurationAt` / `PedalAt` / `HarmonicRhythm` spec）。

@@ -1837,6 +1837,120 @@ class FreePracticeSessionTest {
         assertEquals(next, undone.frame.document.workspace.slots.last())
     }
 
+    @Test
+    fun voiceLeadingPathwayInsertionWritesEveryNodeAsOneHistoryItem() {
+        val preset = FreePracticePreset.document()
+        val session = session(
+            preset.copy(settings = preset.settings.copy(
+                writing = preset.settings.writing.copy(autoWritingEnabled = false),
+            )),
+        )
+        val before = session.frame()
+        val source = before.document.workspace.slots.single()
+        val cadential = before.plan.voiceLeading.pathways.groups
+            .single { it.id == "suspension" }
+            .pathways.single { it.id == "s1:4>2|s0:0>11" }
+
+        val unknown = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingPathway(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                pathwayId = "s0:0>1",
+                placement = PracticeVoiceLeadingPlacement.PASSING_CHORD,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.INVALID, unknown.effect.kind)
+
+        // The figuration placement has no realization yet and must be refused rather than
+        // silently writing the passing-chord form.
+        val notImplemented = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingPathway(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                pathwayId = cadential.id,
+                placement = PracticeVoiceLeadingPlacement.NON_CHORD_TONE,
+            ),
+        )
+        assertEquals(FreePracticeEffectKind.INVALID, notImplemented.effect.kind)
+        assertEquals(before.revision, notImplemented.frame.revision)
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingPathway(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                pathwayId = cadential.id,
+                placement = PracticeVoiceLeadingPlacement.PASSING_CHORD,
+            ),
+        )
+
+        assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+        val slots = inserted.frame.document.workspace.slots
+        assertEquals(3, slots.size)
+        assertEquals(source.chordChoice, slots.first().chordChoice)
+        assertEquals(
+            listOf(listOf(0, 2, 7), listOf(2, 7, 11)),
+            slots.drop(1).map { it.chordChoice?.pitchClasses },
+        )
+        assertEquals(listOf(7, 7), slots.drop(1).map { it.chordChoice?.preferredRootPitchClass })
+        assertEquals(slots.last().id, inserted.frame.selection.slotId)
+        assertTrue(inserted.frame.document.workspace.idiomInstances.isEmpty())
+        // The suspension keeps its own symbol on the timeline instead of reading as an empty slot.
+        assertEquals(
+            "Gsus4",
+            inserted.frame.timeline.slots.first { it.id == slots[1].id }.absoluteSymbol,
+        )
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(inserted.frame.revision))
+        assertEquals(1, undone.frame.document.workspace.slots.size)
+        assertEquals(source.chordChoice, undone.frame.document.workspace.slots.single().chordChoice)
+    }
+
+    @Test
+    fun voiceLeadingPathwayInsertionReplacesFollowingSlotsBeforeAppending() {
+        val preset = FreePracticePreset.document()
+        val source = preset.workspace.slots.single()
+        // A follower that already holds the destination is the "insert a suspension before this
+        // chord" case: the panel narrows to it and the first node replaces it in place.
+        val next = source.copy(
+            id = WorkspaceSlotId("pathway-next"),
+            onset = source.onset + source.duration,
+            duration = Fraction.HALF,
+            chordChoice = WorkspaceChordChoice.of(listOf(2, 7, 11), preferredRootPitchClass = 7),
+        )
+        val session = session(preset.copy(
+            settings = preset.settings.copy(
+                writing = preset.settings.writing.copy(autoWritingEnabled = false),
+            ),
+            workspace = preset.workspace.copy(slots = listOf(source, next)),
+        ))
+        val before = session.frame()
+        val cadential = before.plan.voiceLeading.pathways.groups
+            .single { it.id == "suspension" }
+            .pathways.single { it.id == "s1:4>2|s0:0>11" }
+
+        val inserted = session.dispatch(
+            FreePracticeIntent.InsertVoiceLeadingPathway(
+                expectedRevision = before.revision,
+                sourceSlotId = source.id,
+                pathwayId = cadential.id,
+                placement = PracticeVoiceLeadingPlacement.PASSING_CHORD,
+            ),
+        )
+
+        assertEquals(FreePracticeEffectKind.APPLIED, inserted.effect.kind)
+        val slots = inserted.frame.document.workspace.slots
+        assertEquals(3, slots.size)
+        // The existing follower keeps its identity and range; only the third node is appended.
+        assertEquals(next.id, slots[1].id)
+        assertEquals(next.duration, slots[1].duration)
+        assertEquals(listOf(0, 2, 7), slots[1].chordChoice?.pitchClasses)
+        assertEquals(listOf(2, 7, 11), slots[2].chordChoice?.pitchClasses)
+        assertEquals(slots[2].id, inserted.frame.selection.slotId)
+
+        val undone = session.dispatch(FreePracticeIntent.Undo(inserted.frame.revision))
+        assertEquals(listOf(source, next), undone.frame.document.workspace.slots)
+    }
+
     private fun threeSlotSession(): FreePracticeSession {
         val preset = FreePracticePreset.document()
         val template = preset.workspace.slots.single()

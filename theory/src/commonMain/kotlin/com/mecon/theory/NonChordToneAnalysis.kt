@@ -35,9 +35,11 @@ data class NonChordToneContext(
     val previousPitch: Pitch?,
     val pitch: Pitch,
     val nextPitch: Pitch?,
-    val previousChord: Chord?,
-    val chord: Chord,
-    val nextChord: Chord?,
+    // Sonority, not Chord: solver targets carry their own spelled sonority, and re-deriving a
+    // Chord from root + quality could disagree with it about which tones are chord tones.
+    val previousChord: Sonority?,
+    val chord: Sonority,
+    val nextChord: Sonority?,
     val beatWeight: BeatWeight,
     /** Lowest outer sustained tones are pedal tones; other voices use the generic sustained label. */
     val voiceBoundary: VoiceBoundary? = null,

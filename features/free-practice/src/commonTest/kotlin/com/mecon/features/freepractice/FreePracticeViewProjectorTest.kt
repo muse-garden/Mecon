@@ -471,4 +471,102 @@ class FreePracticeViewProjectorTest {
         assertEquals(listOf("5", "7", "2"), bassChoices.map { it.relativeLabel })
         assertEquals(listOf("G", "B", "D"), bassChoices.map { it.absoluteLabel })
     }
+
+    private fun planForTonicWithFollower(
+        follower: WorkspaceChordChoice? = null,
+    ): PracticePlanView {
+        val key = ModulationKey(0, KeySignatureMode.MAJOR)
+        val initial = FreePracticePreset.workspace(voiceCount = 4, initialKey = key)
+        val tonic = initial.slots.single().copy(
+            chordChoice = WorkspaceChordChoice.of(listOf(0, 4, 7), preferredRootPitchClass = 0),
+        )
+        val slots = listOfNotNull(
+            tonic,
+            follower?.let {
+                tonic.copy(
+                    id = WorkspaceSlotId("follower"),
+                    onset = tonic.onset + tonic.duration,
+                    chordChoice = it,
+                )
+            },
+        )
+        return FreePracticeViewProjector.plan(
+            workspace = initial.copy(slots = slots),
+            selectedSlotId = tonic.id,
+            catalog = PracticeCatalogView(requestKey = "test", chordChoices = emptyList()),
+        )
+    }
+
+    @Test
+    fun pathwaysOfferTheSuspendedOrderingOfTheTonicToDominantConnection() {
+        val section = planForTonicWithFollower().voiceLeading.pathways
+
+        assertTrue(section.available)
+        assertEquals(
+            listOf(PracticeVoiceLeadingPlacement.PASSING_CHORD, PracticeVoiceLeadingPlacement.NON_CHORD_TONE),
+            section.placementOptions.map { it.placement },
+        )
+        assertEquals(listOf(true, false), section.placementOptions.map { it.enabled })
+
+        val suspensions = section.groups.single { it.id == "suspension" }
+        val cadential = suspensions.pathways.single { it.id == "s1:4>2|s0:0>11" }
+        assertEquals(listOf("1", "5sus4", "5"), cadential.nodes.map { it.relativeLabel })
+        assertEquals(listOf("C", "Gsus4", "G"), cadential.nodes.map { it.absoluteLabel })
+        assertEquals(
+            listOf(
+                PracticeVoiceLeadingNodeStability.STABLE,
+                PracticeVoiceLeadingNodeStability.TRANSITIONAL,
+                PracticeVoiceLeadingNodeStability.STABLE,
+            ),
+            cadential.nodes.map { it.stability },
+        )
+        // The suspended fourth is the held tonic; it resolves down onto the leading tone.
+        assertEquals("C 延留音", cadential.nodes[1].figurationLabel)
+        assertTrue(cadential.arc > 0.0)
+        assertTrue(cadential.resolutionDrop > 0.0)
+        assertEquals(listOf(listOf(0, 2, 7), listOf(2, 7, 11)), cadential.insertedChoices.map { it.pitchClasses })
+        assertEquals(listOf(7, 7), cadential.insertedChoices.map { it.preferredRootPitchClass })
+    }
+
+    @Test
+    fun aStablePassingChordCarriesNoNonChordToneLabels() {
+        val section = planForTonicWithFollower().voiceLeading.pathways
+        val passing = section.groups.single { it.id == "passing" }
+        assertTrue(passing.pathways.isNotEmpty())
+        passing.pathways.forEach { pathway ->
+            assertTrue(
+                pathway.nodes.none {
+                    it.stability == PracticeVoiceLeadingNodeStability.TRANSITIONAL
+                },
+                "${pathway.id} is not a purely stable pathway",
+            )
+        }
+        val viaMediant = passing.pathways.singleOrNull { it.id == "s0:0>11|s1:4>2" }
+        if (viaMediant != null) {
+            assertEquals(listOf("1", "3m", "5"), viaMediant.nodes.map { it.relativeLabel })
+            assertTrue(viaMediant.nodes.all { it.figurationLabel.isEmpty() })
+            assertTrue(viaMediant.arc <= 0.0)
+        }
+    }
+
+    @Test
+    fun anExistingFollowingChordNarrowsPathwaysToThatDestination() {
+        val focused = planForTonicWithFollower(
+            WorkspaceChordChoice.of(listOf(2, 7, 11), preferredRootPitchClass = 7),
+        ).voiceLeading.pathways
+
+        assertTrue(focused.available)
+        assertTrue(focused.descriptionLabel.contains("G"))
+        assertTrue(focused.groups.isNotEmpty())
+        focused.groups.flatMap { it.pathways }.forEach { pathway ->
+            assertEquals(listOf(2, 7, 11), pathway.choice.pitchClasses, "${pathway.id} left the target")
+        }
+        // Unfocused projection still offers other destinations, so this really is a filter.
+        assertTrue(
+            planForTonicWithFollower().groups().any { it.choice.pitchClasses != listOf(2, 7, 11) },
+        )
+    }
+
+    private fun PracticePlanView.groups(): List<PracticeVoiceLeadingPathwayView> =
+        voiceLeading.pathways.groups.flatMap { it.pathways }
 }

@@ -428,6 +428,9 @@ class FreePracticeSession private constructor(
             is FreePracticeIntent.InsertIdiom -> insertIdiom(intent, baseRevision)
             is FreePracticeIntent.InsertVoiceLeadingChord ->
                 insertVoiceLeadingChord(intent, baseRevision)
+
+            is FreePracticeIntent.InsertVoiceLeadingPathway ->
+                insertVoiceLeadingPathway(intent, baseRevision)
             is FreePracticeIntent.ReplaceIdiom -> replaceIdiom(intent, baseRevision)
             is FreePracticeIntent.SetIdiomChordToneCount -> setIdiomChordToneCount(intent, baseRevision)
             is FreePracticeIntent.InsertChordRange -> applyWorkspaceCommand(
@@ -1760,6 +1763,76 @@ class FreePracticeSession private constructor(
             )
         } else {
             commitPreparedWorkspace(baseRevision, edit.state)
+        }
+    }
+
+    /**
+     * Writes every node of a voice-leading pathway after its source, as one history item.
+     *
+     * The pathway is re-enumerated from the stored source chord and matched by its deterministic
+     * identity, so the intent never carries a frame-local index and a stale panel cannot write a
+     * connection the current chord does not have.
+     */
+    private fun insertVoiceLeadingPathway(
+        intent: FreePracticeIntent.InsertVoiceLeadingPathway,
+        baseRevision: Long,
+    ): FreePracticeDispatchResult {
+        if (activeRequest != null) return invalidScope(baseRevision)
+        // The figuration placement needs the decoration layer; refuse it rather than silently
+        // writing the passing-chord form under a different label.
+        if (intent.placement != PracticeVoiceLeadingPlacement.PASSING_CHORD) {
+            return invalidScope(baseRevision)
+        }
+        val sourceIndex = workspace.slots.indexOfFirst { it.id == intent.sourceSlotId }
+        if (sourceIndex < 0) return staleTarget(baseRevision, intent.sourceSlotId)
+        val source = workspace.slots[sourceIndex]
+        val sourceChoice = source.chordChoice ?: return invalidScope(baseRevision)
+        if (workspace.idiomInstances.any { source.id in it.slotIds }) return invalidScope(baseRevision)
+        val entry = PracticeVoiceLeadingPathwayCatalog.find(sourceChoice.pitchClasses, intent.pathwayId)
+            ?: return invalidScope(baseRevision)
+
+        val written = entry.pathway.nodes.drop(1).mapIndexed { index, node ->
+            WorkspaceChordChoice.of(
+                node.pitchClasses,
+                preferredRootPitchClass = entry.nodeRootPitchClasses[index + 1],
+            )
+        }
+        val replacedSlotIds = written.indices.mapNotNull { offset ->
+            workspace.slots.getOrNull(sourceIndex + 1 + offset)?.id
+        }
+        var next = workspace
+        written.forEachIndexed { offset, choice ->
+            val index = sourceIndex + 1 + offset
+            val command = if (index < next.slots.size) {
+                HarmonyWorkspaceCommand.ReplaceChord(index = index, chordChoice = choice)
+            } else {
+                HarmonyWorkspaceCommand.InsertChord(
+                    index = index,
+                    mode = InsertChordMode.RIPPLE,
+                    duration = source.duration,
+                    chordChoice = choice,
+                )
+            }
+            val edit = HarmonyWorkspaceEditor.applyResult(next, command)
+            if (!edit.succeeded) return invalidScope(baseRevision)
+            next = edit.state
+        }
+        if (next == workspace) return invalidScope(baseRevision)
+
+        val existingIds = workspace.slots.mapTo(hashSetOf()) { it.id }
+        val touchedIds = replacedSlotIds + next.slots.filterNot { it.id in existingIds }.map { it.id }
+        val target = touchedIds.lastOrNull()?.let { id -> next.slots.firstOrNull { it.id == id } }
+            ?: return invalidScope(baseRevision)
+        selectedSlotId = target.id
+        selectedIdiomInstanceId = null
+        return if (settings.writing.autoWritingEnabled) {
+            requestWritingForWorkspace(
+                nextWorkspace = next,
+                triggerSlotId = target.id,
+                configuredBacktrack = settings.writing.backtrackChordCount,
+            )
+        } else {
+            commitPreparedWorkspace(baseRevision, next)
         }
     }
 

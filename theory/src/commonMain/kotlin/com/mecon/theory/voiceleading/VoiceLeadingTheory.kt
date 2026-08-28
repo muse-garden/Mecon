@@ -263,7 +263,8 @@ object VoiceLeadingTransformations {
         return VoiceLeadingRootConnection(sourceRootPitchClass, targetRootPitchClass, delta, motion)
     }
 
-    private fun mostStableRootConnection(
+    /** Picks the single most stable source/target root reading pair; also used by pathway drive. */
+    fun mostStableRootConnection(
         sourceReadings: List<VoiceLeadingChordReading>,
         targetReadings: List<VoiceLeadingChordReading>,
     ): VoiceLeadingRootConnection = sourceReadings.flatMap { source ->
@@ -346,4 +347,5 @@ object VoiceLeadingTransformations {
     )
 }
 
-private val ALLOWED_SEMITONE_MOVES = listOf(-2, -1, 1, 2)
+/** Parsimonious motion: one tone, one or two semitones. Shared with the pathway layer. */
+internal val ALLOWED_SEMITONE_MOVES = listOf(-2, -1, 1, 2)

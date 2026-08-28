@@ -87,6 +87,15 @@ test("right panel replays the shared plan projection without duplicating top-too
     "voice-leading choices must dispatch the shared candidate and ordered path selection");
   assert.match(plan, /candidate\.availableWhenThreeToneSameDirectionFiltered/,
     "the seventh filter must consume the shared path classification");
+  assert.match(plan, /plan\.voiceLeading\?\.pathways/);
+  assert.match(plan, /onChoose\(pathway, placement\)/,
+    "pathway insertion must dispatch the shared pathway id and the chosen placement");
+  assert.match(plan, /view\.placementOptions/,
+    "the placement toggle must come from the shared projection, not a local list");
+  assert.match(plan, /pathway\.metricsLabel/,
+    "tension metrics must be rendered from the shared label, not recomputed in React");
+  assert.equal(plan.includes("node.tension >") || plan.includes("resolutionDrop >"), false,
+    "React must not re-derive tension thresholds from the raw metrics");
   assert.equal(plan.includes("pitchClasses.map"), false,
     "the right panel must not reconstruct voice-leading candidates from pitch classes");
   assert.match(plan, /const strings = plan\?\.strings/);

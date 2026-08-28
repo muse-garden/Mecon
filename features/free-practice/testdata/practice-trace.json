@@ -78,6 +78,12 @@
     { "kind": "selectScoreNote", "expectedRevision": 68, "revision": 69, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 1, "selectionSlotFilled": false, "scoreChanged": false },
     { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 69, "revision": 70, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
     { "kind": "inspectVoiceLeading", "expectedRevision": 70, "revision": 70, "effect": "NO_OP", "voiceLeadingFamily": "tertian.triad", "voiceLeadingSteps": [1, 2], "targetPitchClasses": [1, 4, 8], "voiceLeadingTargetSteps": 2, "voiceLeadingParallelFifth": true },
-    { "kind": "insertVoiceLeadingCandidate", "expectedRevision": 70, "revision": 71, "effect": "APPLIED", "targetPitchClasses": [1, 4, 8], "selectedPitchClasses": [1, 4, 8], "firstSlotPitchClasses": [0, 4, 7], "selectedFallbackSymbols": true, "selectionSlotIndex": 1, "slotCount": 2, "idiomCount": 0 }
+    { "kind": "insertVoiceLeadingCandidate", "expectedRevision": 70, "revision": 71, "effect": "APPLIED", "targetPitchClasses": [1, 4, 8], "selectedPitchClasses": [1, 4, 8], "firstSlotPitchClasses": [0, 4, 7], "selectedFallbackSymbols": true, "selectionSlotIndex": 1, "slotCount": 2, "idiomCount": 0 },
+    { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 71, "revision": 72, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
+    { "kind": "insertVoiceLeadingCandidate", "expectedRevision": 72, "revision": 73, "effect": "APPLIED", "targetPitchClasses": [2, 7, 11], "selectedPitchClasses": [2, 7, 11], "firstSlotPitchClasses": [0, 4, 7], "slotCount": 2, "selectionSlotIndex": 1 },
+    { "kind": "selectSlot", "slotIndex": 0, "expectedRevision": 73, "revision": 74, "effect": "SELECTION_CHANGED", "selectionSlotIndex": 0 },
+    { "kind": "inspectVoiceLeadingPathways", "expectedRevision": 74, "revision": 74, "effect": "NO_OP", "pathwayGroupIds": ["suspension", "passing"], "pathwayFocusedTarget": [2, 7, 11], "pathwayNodePitchClasses": [[0, 4, 7], [0, 2, 7], [2, 7, 11]], "pathwayNodeStabilities": ["STABLE", "TRANSITIONAL", "STABLE"], "pathwayInsertedPitchClasses": [[0, 2, 7], [2, 7, 11]], "pathwayFigurationCount": 1, "pathwayArcPositive": true },
+    { "kind": "insertVoiceLeadingPathway", "expectedRevision": 74, "revision": 75, "effect": "APPLIED", "placement": "PASSING_CHORD", "pathwayNodePitchClasses": [[0, 4, 7], [0, 2, 7], [2, 7, 11]], "firstSlotPitchClasses": [0, 4, 7], "selectedPitchClasses": [2, 7, 11], "selectionSlotIndex": 2, "slotCount": 3, "idiomCount": 0 },
+    { "kind": "undo", "expectedRevision": 75, "revision": 76, "effect": "UNDONE", "slotCount": 2, "selectionSlotIndex": 0, "selectedPitchClasses": [0, 4, 7], "firstSlotPitchClasses": [0, 4, 7] }
   ]
 }

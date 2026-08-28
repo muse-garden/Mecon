@@ -68,9 +68,15 @@ ConstraintProgram 的后续搜索契约见 [diverse-search.md](diverse-search.md
 
 第一批实现顺序：
 
-1. `FixedVoiceWritingCandidateSpace`：固定声部写作通用候选空间。
+1. `FixedVoiceWritingCandidateSpace`：固定声部写作通用候选空间。✅
 2. `MelodyHarmonizationCandidateSpace`：固定旋律，枚举和声、低音与内声部。
 3. `CounterpointCandidateSpace`：固定 cantus firmus，按音程关系枚举对位声部。
+
+`ChoraleRealizationSpace`（[chorale-harmonization.md](chorale-harmonization.md)）是第一个**装饰阶段**
+候选空间：状态按和声跨度推进，一步同时决定全部声部在该跨度内的节奏与填充。它验证了本节的两条
+设计——阶段间以 fixedMaterial 衔接（骨架来自 `ConstraintProgramSolver`），以及跨织体关注点以规则
+身份进入任意空间（voice-leading 张力度量在这里对表面评分）。3 号的「各声部 frontier 独立推进」是
+它放开「全声部同跨度」约束后的形态。
 
 候选约束必须可解释。若某条规则在生成阶段缩小枚举范围，例如 V-I 中导音必须上行解决，它也必须在检查阶段返回对应 `RuleFinding`，以便用户写作检查和搜索解释一致。
 

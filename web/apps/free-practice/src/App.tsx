@@ -804,6 +804,12 @@ export function App() {
       targetPitchClasses: candidate.choice.pitchClasses,
       pathIndex: candidate.primaryPathIndex,
     })}
+    onInsertVoiceLeadingPathway={(pathway, placement) => selectedPracticeSlotId && dispatchPractice({
+      type: "insertVoiceLeadingPathway",
+      sourceSlotId: selectedPracticeSlotId,
+      pathwayId: pathway.id,
+      placement,
+    })}
     onReplaceIdiom={(idiomInstanceId, definitionId, variantId) => dispatchPractice({
       type: "replaceIdiom", idiomInstanceId, definitionId, variantId,
     })}

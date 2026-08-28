@@ -616,6 +616,24 @@ button:disabled { cursor: default; opacity: .45; }
 .voice-leading-candidate summary { cursor: pointer; }
 .voice-leading-path { display: grid; gap: 3px; padding: 6px 2px 0; }
 .voice-leading-warning { color: #e6ad62; line-height: 1.4; }
+.voice-leading-pathways { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid #2d3d55; }
+.voice-leading-pathways > header { display: grid; gap: 6px; }
+.voice-leading-pathways > header > div:first-child { display: grid; gap: 3px; }
+.voice-leading-pathways > header strong { color: #d9e1ee; }
+.voice-leading-pathways > header small { color: #8493a9; line-height: 1.4; }
+.voice-leading-placement button[aria-pressed="true"] { color: #f1c27d; border-color: #b97831; background: #46341f; }
+.voice-leading-placement button:disabled { color: #66738a; cursor: not-allowed; }
+.voice-leading-pathway-group { display: grid; gap: 6px; }
+.voice-leading-pathway-group h4 { margin: 0; color: #aeb9ca; font-size: 13px; }
+.voice-leading-pathway-group > small { color: #8493a9; line-height: 1.4; }
+.voice-leading-pathway-list { display: grid; gap: 7px; }
+.voice-leading-pathway { display: grid; gap: 4px; padding: 8px; border: 1px solid #33445d; border-radius: 8px; background: #202d40; }
+.voice-leading-pathway > button { display: grid; gap: 4px; text-align: left; }
+.voice-leading-pathway > button > small { color: #8593a7; }
+.voice-leading-pathway-chain { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.voice-leading-pathway-chain mark { padding: 1px 3px; color: #d9e1ee; background: transparent; border-radius: 3px; }
+.voice-leading-pathway-chain mark[data-stability="TRANSITIONAL"] { color: #ffd09a; background: rgb(230 173 98 / 22%); font-weight: 700; }
+.voice-leading-figuration { color: #9eabc0; line-height: 1.4; }
 .practice-writing-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .practice-writing-settings .check-row { grid-column: 1 / -1; }
 .practice-writing-settings input[type="number"] { width: 100%; padding: 6px; color: inherit; background: #252a34; border: 1px solid #414858; border-radius: 4px; }

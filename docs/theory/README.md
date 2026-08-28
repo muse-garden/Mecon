@@ -19,7 +19,12 @@
 章节向通用和弦目录贡献新和弦类别的协议见
 [chord-catalog-contributions.md](chord-catalog-contributions.md)。
 无功能 pitch-class 集合上的新里曼 / voice-leading 邻接、路径身份、平行完全音程风险及自由练习接入见
-[neo-riemannian-voice-leading.md](neo-riemannian-voice-leading.md)。
+[neo-riemannian-voice-leading.md](neo-riemannian-voice-leading.md)；在其之上把挂留和弦、经过和弦与
+和弦外音统一为**有序变换路径**（稳定 / 过渡节点分层、分叉合并算子、张力量化、外音投影与复调接口）见
+[voice-leading-pathways.md](voice-leading-pathways.md)。
+把这套度量真正用起来的写作任务是圣咏配和声：完整指定和弦进行，部分指定节奏型、冲突 / 解决位与
+旋律方向，两阶段求解并按张力曲线排序多个候选，见
+[chorale-harmonization.md](chorale-harmonization.md)。
 
 ## 1. 已实现
 

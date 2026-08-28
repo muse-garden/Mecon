@@ -139,6 +139,51 @@ function VoiceLeadingCandidates({ view, disabled, onChoose }) {
   </section>;
 }
 
+// Suspension and passing-chord pathways. Rendered beside the one-step candidates because a
+// suspended sonority belongs to no base chord family yet still offers its own continuations.
+function VoiceLeadingPathways({ view, disabled, onChoose }) {
+  const defaultPlacement = view?.defaultPlacement ?? "PASSING_CHORD";
+  const [placement, setPlacement] = useState(defaultPlacement);
+  if (!view?.available) return null;
+  const activeOption = view.placementOptions.find((option) => option.placement === placement);
+  return <section className="voice-leading-pathways" aria-label={view.titleLabel}>
+    <header>
+      <div><strong>{view.titleLabel}</strong><small>{view.descriptionLabel}</small></div>
+      <div className="practice-choice-list voice-leading-placement" role="group"
+        aria-label={view.titleLabel}>
+        {view.placementOptions.map((option) => <button key={option.placement} type="button"
+          aria-pressed={option.placement === placement} disabled={!option.enabled}
+          title={option.hintLabel}
+          onClick={() => setPlacement(option.placement)}>{option.label}</button>)}
+      </div>
+      {activeOption?.hintLabel && <small>{activeOption.hintLabel}</small>}
+      <small>{view.sortHintLabel}</small>
+    </header>
+    {view.groups.map((group) => <section className="voice-leading-pathway-group" key={group.id}
+      data-group-id={group.id}>
+      <h4>{group.titleLabel}</h4>
+      <small>{group.descriptionLabel}</small>
+      <div className="voice-leading-pathway-list">{group.pathways.map((pathway) =>
+        <article className="voice-leading-pathway" key={pathway.id}
+          data-pathway-id={pathway.id}
+          data-target-pitch-classes={pathway.choice.pitchClasses.join("-")}>
+          <button type="button" disabled={disabled} onClick={() => onChoose(pathway, placement)}>
+            <span className="voice-leading-pathway-chain">{pathway.nodes.map((node, index) =>
+              <React.Fragment key={`${pathway.id}:${node.stepIndex}`}>
+                {index > 0 && <span aria-hidden="true">→</span>}
+                <mark data-stability={node.stability}>{node.relativeLabel}</mark>
+              </React.Fragment>)}</span>
+            <small>{pathway.metricsLabel}</small>
+          </button>
+          {pathway.nodes.filter((node) => node.figurationLabel).map((node) =>
+            <small className="voice-leading-figuration" key={`fig:${node.stepIndex}`}>
+              第 {node.stepIndex} 步：{node.figurationLabel}
+            </small>)}
+        </article>)}</div>
+    </section>)}
+  </section>;
+}
+
 export function PracticePlanPanel({
   update,
   catalogChoiceId,
@@ -157,6 +202,7 @@ export function PracticePlanPanel({
   onSelectIdiomTonalLayout,
   onInsertIdiom,
   onInsertVoiceLeadingChord,
+  onInsertVoiceLeadingPathway,
   onReplaceIdiom,
   onSetIdiomChordToneCount,
   onRemoveIdiom,
@@ -417,9 +463,13 @@ export function PracticePlanPanel({
         <button type="button" role="tab" aria-selected={progressionTheoryTab === "VOICE_LEADING"}
           onClick={() => setProgressionTheoryTab("VOICE_LEADING")}>{strings.voiceLeadingProgressionsTab}</button>
       </div>
-      {progressionTheoryTab === "VOICE_LEADING" ?
+      {progressionTheoryTab === "VOICE_LEADING" ? <>
         <VoiceLeadingCandidates view={plan.voiceLeading} disabled={plan.chordLocked || writingLocked}
-          onChoose={onInsertVoiceLeadingChord} /> : <>
+          onChoose={onInsertVoiceLeadingChord} />
+        <VoiceLeadingPathways view={plan.voiceLeading?.pathways}
+          disabled={plan.chordLocked || writingLocked}
+          onChoose={onInsertVoiceLeadingPathway} />
+      </> : <>
       {plan.selectedIdiomForm && <div className="idiom-form-controls">
         <strong>{strings.idiomChordForms}</strong>
         <small>{plan.selectedIdiomForm.title}</small>

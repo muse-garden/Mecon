@@ -4,6 +4,11 @@
 展示勋伯格目录与 voice-leading 候选，后者插入为独立 `WorkspaceChordChoice`，再由共享写作会话完成
 实际声部配置。
 
+> 本文只描述**基础邻接图**：一步一音、每音至多移动一次、只保留最短路径。放宽这三条限制以表达
+> 挂留和弦、经过和弦与和弦外音的**路径代数**（过渡态集合类、`Split`/`Fuse`、排列枚举与张力度量）
+> 见 [voice-leading-pathways.md](voice-leading-pathways.md)；那一层在本文之上扩展，不 fork 本文的
+> 变换枚举、平行风险与根音分类。
+
 ## 1. 变换定义
 
 核心实现位于 `theory/.../voiceleading/VoiceLeadingTheory.kt`。
@@ -77,6 +82,10 @@ UI 使用稳定 `colorToken` 区分上升、下降、超越及中性关系。
 路径。源和弦后已有和弦框时直接替换该框的和弦并保留其 ID、位置和时值；源和弦为末框时才追加一个
 同长度和弦框。一次动作只形成一个历史项，并与勋伯格目录共享 revision、自动写作与失败原子性。该动作
 不创建 `WorkspaceIdiomInstance`，所以时间轴没有惯用进行线。
+
+同一页签下方的挂留 / 经过和弦路径由
+[voice-leading-pathways.md](voice-leading-pathways.md) §9.1 定义，走独立的
+`FreePracticeIntent.InsertVoiceLeadingPathway`，与这里的单步插入互不影响。
 
 门禁：
 

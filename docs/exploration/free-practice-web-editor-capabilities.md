@@ -61,6 +61,7 @@ raw input 与 Kotlin/JS facade；浏览器动态导出的 `.mecon` 由桌面 `Me
 | document/workspace/revision 与稳定 slot id | `FreePracticeSession` | ✅ 当前子集 | ✅ 5 步 MVP trace |
 | 和弦目录、选和弦与固定低音 | `frame.catalog` + typed intent | ✅ | ✅ React 不维护和弦白名单 |
 | 新里曼 / voice-leading 惯用进行页签 | `theory.voiceleading` + `PracticePlanView.voiceLeading` + `InsertVoiceLeadingChord` | ✅ 三/七和弦、1–3 步、有序原音路径、平五/平八风险、勋伯格根音方向 | ✅ 与勋伯格惯用进行分 tab；候选按 `6m 1-3-5 → 1-3-6` 展示并高亮两侧变动音；插入为独立和弦，不创建惯用进行线；JVM/JS trace 和真实 Playwright 插入路径 |
+| 挂留 / 经过和弦路径 | `theory.voiceleading` 路径代数 + `PracticeVoiceLeadingPathwaySectionView` + `InsertVoiceLeadingPathway` | ✅ 稳定 / 过渡节点分层、张力剖面排序、外音标签、整条路径一次写入一个历史项；`NON_CHORD_TONE` 放置待装饰层，session 拒绝 | ✅ 与一步候选同页签；节点链高亮过渡态；置灰的“作为和弦外音”开关来自共享 `placementOptions`；JVM/JS trace 与真实 Playwright 插入 + 单次撤销 |
 | 自动配声、重写、取消与 typed outcome | background request/result | ✅ | ✅ 独立 search worker；真实 JS 求解测试 |
 | 候选优化与换结果 | serializable `PracticeVoicingCandidate` | ✅ | ✅ Playwright |
 | workspace + score 原子历史 | `HarmonyPracticeTransaction` + 显式 score-session 通知 | ✅ | ✅ trace 覆盖 undo/redo |

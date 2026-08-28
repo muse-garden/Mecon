@@ -168,6 +168,22 @@ sealed interface FreePracticeIntent {
         val pathIndex: Int,
     ) : FreePracticeIntent
 
+    /**
+     * Writes a whole voice-leading pathway: every node after the source becomes a chord slot,
+     * replacing following slots where they exist and appending past the end, as one history item.
+     */
+    @Serializable
+    @SerialName("insertVoiceLeadingPathway")
+    data class InsertVoiceLeadingPathway(
+        override val expectedRevision: Long,
+        val sourceSlotId: WorkspaceSlotId,
+        /** Deterministic pathway identity; the session re-enumerates and re-validates it. */
+        val pathwayId: String,
+        val placement: PracticeVoiceLeadingPlacement,
+    ) : FreePracticeIntent {
+        init { require(pathwayId.isNotBlank()) { "A pathway id must not be blank" } }
+    }
+
     @Serializable
     @SerialName("replaceIdiom")
     data class ReplaceIdiom(
@@ -600,6 +616,90 @@ data class PracticeVoiceLeadingStepGroupView(
     val candidates: List<PracticeVoiceLeadingCandidateView>,
 )
 
+/** How the intermediate sonorities of a pathway are realized in the workspace. */
+@Serializable
+enum class PracticeVoiceLeadingPlacement {
+    /** Every intermediate sonority takes a chord slot of its own. */
+    PASSING_CHORD,
+
+    /** Intermediates stay inside the voicing as non-chord tones; needs the figuration layer. */
+    NON_CHORD_TONE,
+}
+
+@Serializable
+enum class PracticeVoiceLeadingNodeStability {
+    STABLE,
+    TRANSITIONAL,
+}
+
+@Serializable
+data class PracticeVoiceLeadingPathwayNodeView(
+    /** 0 is the source chord; the last index is the destination. */
+    val stepIndex: Int,
+    val stability: PracticeVoiceLeadingNodeStability,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+    val tones: List<PracticeVoiceLeadingToneView>,
+    val tension: Double,
+    val ambiguity: Double,
+    /** Non-chord-tone reading of this node, empty for source, target and passing chords. */
+    val figurationLabel: String = "",
+)
+
+@Serializable
+data class PracticeVoiceLeadingPathwayView(
+    /** Deterministic identity of the ordered step sequence; the session re-derives it. */
+    val id: String,
+    /** The destination chord, i.e. the last node. */
+    val choice: WorkspaceChordChoice,
+    /** Every node after the source, in order — what `PASSING_CHORD` placement writes. */
+    val insertedChoices: List<WorkspaceChordChoice>,
+    val stepCount: Int,
+    val absoluteLabel: String,
+    val relativeLabel: String,
+    val nodes: List<PracticeVoiceLeadingPathwayNodeView>,
+    val peakTension: Double,
+    /** Above zero when the pathway rises above both of its endpoints. */
+    val arc: Double,
+    /** Below 0.5 = tension early (suspension), above = tension late (anticipation). */
+    val centroid: Double,
+    val resolutionDrop: Double,
+    val drive: Double,
+    val metricsLabel: String,
+    val figurationTypeLabels: List<String> = emptyList(),
+)
+
+@Serializable
+data class PracticeVoiceLeadingPathwayGroupView(
+    val id: String,
+    val titleLabel: String,
+    val descriptionLabel: String,
+    val pathways: List<PracticeVoiceLeadingPathwayView>,
+)
+
+@Serializable
+data class PracticeVoiceLeadingPlacementOptionView(
+    val placement: PracticeVoiceLeadingPlacement,
+    val label: String,
+    val enabled: Boolean,
+    val hintLabel: String = "",
+)
+
+@Serializable
+data class PracticeVoiceLeadingPathwaySectionView(
+    val available: Boolean = false,
+    val titleLabel: String = "挂留 / 经过和弦",
+    val descriptionLabel: String =
+        "同一组变换换个顺序就得到不同的中间和弦：稳定的读作经过和弦，不稳定的读作挂留。",
+    val emptyLabel: String = "当前和弦没有可用的两步路径。",
+    val defaultPlacement: PracticeVoiceLeadingPlacement = PracticeVoiceLeadingPlacement.PASSING_CHORD,
+    val placementOptions: List<PracticeVoiceLeadingPlacementOptionView> = emptyList(),
+    val sortHintLabel: String =
+        "按推动力排序：根音进行强度 + 解决落差。挂留装饰进行但不升级进行——" +
+            "同一挂留放在 IV/ii⁷ 之后远比放在 I 之后常用，这里只列简约变换可达的路径。",
+    val groups: List<PracticeVoiceLeadingPathwayGroupView> = emptyList(),
+)
+
 @Serializable
 data class PracticeVoiceLeadingView(
     val available: Boolean = false,
@@ -609,6 +709,7 @@ data class PracticeVoiceLeadingView(
     val filterThreeToneSameDirectionLabel: String = "过滤三音同向变换",
     val emptyLabel: String = "所选和弦不属于已注册的三和弦或七和弦类型。",
     val groups: List<PracticeVoiceLeadingStepGroupView> = emptyList(),
+    val pathways: PracticeVoiceLeadingPathwaySectionView = PracticeVoiceLeadingPathwaySectionView(),
 )
 
 @Serializable

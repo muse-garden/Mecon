@@ -101,6 +101,10 @@ internal data class PracticePlanActions(
     val insertVoiceLeadingChord: (
         com.mecon.features.freepractice.PracticeVoiceLeadingCandidateView,
     ) -> Unit,
+    val insertVoiceLeadingPathway: (
+        com.mecon.features.freepractice.PracticeVoiceLeadingPathwayView,
+        com.mecon.features.freepractice.PracticeVoiceLeadingPlacement,
+    ) -> Unit,
     val selectIdiom: (WorkspaceIdiomInstanceId) -> Unit,
     val replaceIdiom: (
         WorkspaceIdiomInstance,
@@ -426,6 +430,11 @@ internal fun PracticePlanPanel(
                     view = view.voiceLeading,
                     chordLocked = view.chordLocked,
                     onInsert = actions.insertVoiceLeadingChord,
+                )
+                VoiceLeadingPathways(
+                    view = view.voiceLeading.pathways,
+                    chordLocked = view.chordLocked,
+                    onInsert = actions.insertVoiceLeadingPathway,
                 )
             } else {
             val hasConfiguredChord = selectedSlot?.let { slot ->
@@ -834,6 +843,122 @@ private fun VoiceLeadingToneSequence(
                     fontSize = 10.sp,
                     fontWeight = if (tone.changed) FontWeight.Bold else FontWeight.Normal,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Suspension and passing-chord pathways.
+ *
+ * Rendered as a sibling of the one-step candidates rather than inside them: a suspended sonority
+ * has no base chord family, so it must still be able to offer its own continuations.
+ */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun VoiceLeadingPathways(
+    view: com.mecon.features.freepractice.PracticeVoiceLeadingPathwaySectionView,
+    chordLocked: Boolean,
+    onInsert: (
+        com.mecon.features.freepractice.PracticeVoiceLeadingPathwayView,
+        com.mecon.features.freepractice.PracticeVoiceLeadingPlacement,
+    ) -> Unit,
+) {
+    if (!view.available) return
+    var placement by remember(view.defaultPlacement) { mutableStateOf(view.defaultPlacement) }
+
+    Column(
+        modifier = Modifier.padding(top = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(view.titleLabel, color = MeconColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(view.descriptionLabel, color = MeconColors.TextDark, fontSize = 10.sp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            view.placementOptions.forEach { option ->
+                val selected = option.placement == placement
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(enabled = option.enabled) { placement = option.placement },
+                    color = if (selected) MeconColors.Orange.copy(alpha = 0.20f)
+                    else MeconColors.Surface.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        if (selected) MeconColors.Orange else MeconColors.Border,
+                    ),
+                ) {
+                    Text(
+                        option.label,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                        color = when {
+                            !option.enabled -> MeconColors.TextDark
+                            selected -> MeconColors.OrangeLight
+                            else -> MeconColors.TextMuted
+                        },
+                        fontSize = 10.sp,
+                    )
+                }
+            }
+        }
+        view.placementOptions.firstOrNull { it.placement == placement }?.hintLabel
+            ?.takeIf { it.isNotBlank() }
+            ?.let { Text(it, color = MeconColors.TextDark, fontSize = 9.sp) }
+        Text(view.sortHintLabel, color = MeconColors.TextDark, fontSize = 9.sp)
+        view.groups.forEach { group ->
+            Text(group.titleLabel, color = MeconColors.TextMuted, fontSize = 10.sp)
+            Text(group.descriptionLabel, color = MeconColors.TextDark, fontSize = 9.sp)
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                group.pathways.forEach { pathway ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !chordLocked) { onInsert(pathway, placement) },
+                        color = MeconColors.Surface.copy(alpha = 0.55f),
+                        shape = RoundedCornerShape(7.dp),
+                        border = BorderStroke(1.dp, MeconColors.Border),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp),
+                            ) {
+                                pathway.nodes.forEachIndexed { index, node ->
+                                    if (index > 0) {
+                                        Text("→", color = MeconColors.TextMuted, fontSize = 10.sp)
+                                    }
+                                    Text(
+                                        node.relativeLabel,
+                                        color = if (
+                                            node.stability ==
+                                            com.mecon.features.freepractice
+                                                .PracticeVoiceLeadingNodeStability.TRANSITIONAL
+                                        ) MeconColors.OrangeLight else MeconColors.TextPrimary,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (index == 0 || index == pathway.nodes.lastIndex) {
+                                            FontWeight.Normal
+                                        } else FontWeight.Bold,
+                                    )
+                                }
+                            }
+                            Text(pathway.metricsLabel, color = MeconColors.TextMuted, fontSize = 9.sp)
+                            pathway.nodes.filter { it.figurationLabel.isNotBlank() }.forEach { node ->
+                                Text(
+                                    "第 ${node.stepIndex} 步：${node.figurationLabel}",
+                                    color = MeconColors.TextDark,
+                                    fontSize = 9.sp,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -136,6 +136,18 @@ ready-to-dispatch payload、覆盖的惯用进行均由 `FreePracticeViewProject
 因此时间轴没有惯用进行线。完整语义见
 [新里曼 / Voice-leading 变换](../theory/neo-riemannian-voice-leading.md)。
 
+同一页签下的**挂留 / 经过和弦路径**遵守同一条边界，且多两条约束：
+
+- 候选、分组、排序、张力度量与外音标签全部来自 `PracticeVoiceLeadingPathwayCatalog` +
+  `FreePracticeViewProjector`；平台不得自行枚举路径、重排候选或按原始数值重算张力阈值。
+  下一框已有和弦时投影会收窄到该目标，这只是**展示过滤**，session 仍按完整目录校验。
+- `InsertVoiceLeadingPathway` 只携带共享目录给出的确定性 `pathwayId` 与 `placement`；session
+  从源和弦重新枚举并按 id 匹配，把路径上除源以外的每个节点写成一个和弦框（先替换后续已有框，
+  越过末框才追加），形成**单个历史项**。`placement = NON_CHORD_TONE` 目前一律被拒绝，
+  面板据共享 `placementOptions.enabled` 置灰，不得在平台侧改写为经过和弦形态。
+
+完整模型见 [Voice-leading 路径代数](../theory/voice-leading-pathways.md)。
+
 本地化只把 `messageKey + arguments` 映射为文案，不根据文案反推 effect 或业务状态。
 
 ## 5. 调整公共乐谱编辑器或工具栏
