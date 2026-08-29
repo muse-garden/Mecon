@@ -46,9 +46,20 @@ class TonalRegionInferenceTest {
         assertTrue(choices.any { it.key == cMajor && it.degreeLabels == listOf("5") })
         assertTrue(
             choices.any {
-                it.key == ModulationKey(-3, KeySignatureMode.MINOR) && it.degreeLabels == listOf("5")
+                it.key == ModulationKey(0, KeySignatureMode.MINOR) && it.degreeLabels == listOf("5")
             },
         )
+    }
+
+    @Test
+    fun minorCandidatesUseRelativeMajorDegreeNumbers() {
+        val aMinor = ModulationKey(0, KeySignatureMode.MINOR)
+        val candidate = TonalRegionKeyInference.candidates(
+            listOf(Pitch.C4, Pitch.E4, Pitch.A4),
+            aMinor,
+        ).first { it.key == aMinor }
+
+        assertEquals(listOf("1", "3", "6"), candidate.degreeLabels)
     }
 
     @Test
@@ -131,6 +142,19 @@ class TonalRegionInferenceTest {
                 start = quarter(1),
                 selectedEnd = quarter(2),
                 scoreEnd = quarter(8),
+            ),
+        )
+    }
+
+    @Test
+    fun newRegionStopsAtTheNextWrittenKeySignature() {
+        assertEquals(
+            quarter(4),
+            TonalRegionEditPolicy.defaultInsertionEnd(
+                start = quarter(1),
+                selectedEnd = quarter(2),
+                scoreEnd = quarter(8),
+                nextKeySignatureChange = quarter(4),
             ),
         )
     }

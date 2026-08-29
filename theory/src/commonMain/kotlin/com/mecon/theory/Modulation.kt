@@ -88,8 +88,9 @@ data class ModulationChordCandidate(
 /** Shared labels for displaying pitches and target-key tonics relative to a reference key. */
 object ModulationPitchLabels {
     fun relativePitchLabel(key: ModulationKey, pitchClass: PitchClass): String {
-        val intervals = key.key.mode.semitones()
-        val offset = key.key.root.intervalTo(pitchClass)
+        val displayKey = key.degreeDisplayKey()
+        val intervals = displayKey.key.mode.semitones()
+        val offset = displayKey.key.root.intervalTo(pitchClass)
         intervals.indexOf(offset).takeIf { it >= 0 }?.let { return (it + 1).toString() }
 
         val candidates = intervals.flatMapIndexed { index, semitones ->
@@ -104,9 +105,10 @@ object ModulationPitchLabels {
     }
 
     fun relativePitchLabel(key: ModulationKey, pitch: SpelledPitchClass): String {
-        val tonic = key.tonicSpelling()
+        val displayKey = key.degreeDisplayKey()
+        val tonic = displayKey.tonicSpelling()
         val degree = (pitch.noteName.ordinal - tonic.noteName.ordinal).mod(7) + 1
-        val expected = key.tonalContext("relative-label").spellDegree(degree)
+        val expected = displayKey.tonalContext("relative-label").spellDegree(degree)
         val alteration = centeredDelta(expected.pitchClass.value, pitch.pitchClass.value)
         val prefix = when {
             alteration > 0 -> "♯".repeat(alteration)
@@ -128,6 +130,10 @@ object ModulationPitchLabels {
         val delta = (target - natural).mod(12)
         return if (delta > 6) delta - 12 else delta
     }
+
+    /** Minor-key degree labels are written against the relative major (6, 7, 1, 2, 3, 4, 5). */
+    private fun ModulationKey.degreeDisplayKey(): ModulationKey =
+        if (mode == KeySignatureMode.MINOR) copy(mode = KeySignatureMode.MAJOR) else this
 
     private data class RelativeCandidate(
         val degree: Int,

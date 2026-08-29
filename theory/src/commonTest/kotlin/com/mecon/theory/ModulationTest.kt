@@ -101,6 +101,16 @@ class ModulationTest {
     }
 
     @Test
+    fun minorPitchLabelsUseTheRelativeMajorDegrees() {
+        val aMinor = ModulationKey(0, KeySignatureMode.MINOR)
+
+        assertEquals("6", ModulationPitchLabels.relativePitchLabel(aMinor, PitchClass(9)))
+        assertEquals("7", ModulationPitchLabels.relativePitchLabel(aMinor, PitchClass(11)))
+        assertEquals("1", ModulationPitchLabels.relativePitchLabel(aMinor, PitchClass(0)))
+        assertEquals("5", ModulationPitchLabels.relativePitchLabel(aMinor, PitchClass(7)))
+    }
+
+    @Test
     fun circleOfFifthsDistanceUsesTheShortestSignedPath() {
         val fMajor = ModulationKey(-1, KeySignatureMode.MAJOR)
         val cSharpMajor = ModulationKey(7, KeySignatureMode.MAJOR)

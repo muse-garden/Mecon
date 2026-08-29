@@ -95,8 +95,12 @@ object TonalRegionEditPolicy {
         start: com.mecon.api.primitive.TimeCode,
         selectedEnd: com.mecon.api.primitive.TimeCode,
         scoreEnd: com.mecon.api.primitive.TimeCode?,
+        nextKeySignatureChange: com.mecon.api.primitive.TimeCode? = null,
     ): com.mecon.api.primitive.TimeCode =
-        scoreEnd?.takeIf { it > start } ?: selectedEnd
+        listOfNotNull(
+            scoreEnd?.takeIf { it > start },
+            nextKeySignatureChange?.takeIf { it > start },
+        ).minOrNull() ?: selectedEnd
 
     /** Shared half-open interval validation for panel edits and score-line endpoint drags. */
     fun resize(

@@ -3,7 +3,6 @@ package com.mecon.plugins.chord.desktop
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +34,7 @@ import com.mecon.api.computed.ComputedVoiceEvent
 import com.mecon.api.interaction.EventSection
 import com.mecon.api.interaction.VoiceEventSection
 import com.mecon.api.interaction.VoiceNoteSection
+import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Fraction
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeCode
@@ -254,12 +255,36 @@ private fun selectedTimeRange(selection: Set<EventSection>): SelectedTimeRange? 
 
 @Composable
 internal fun TonalRegionEditor(ctx: PluginPanelContext) {
-    val editingRegion = remember(ctx.selectedAnnotationEventId, ctx.runtimeScore) {
-        val id = ctx.selectedAnnotationEventId ?: return@remember null
+    val existingRegions = remember(ctx.runtimeScore) {
         ctx.runtimeScore
             ?.pluginTrackOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
-            ?.findEventById(id)
-            ?.storageEvent
+            ?.events
+            ?.map { it.storageEvent }
+            .orEmpty()
+    }
+    val selectedRegion = remember(ctx.selectedAnnotationEventId, existingRegions) {
+        val id = ctx.selectedAnnotationEventId ?: return@remember null
+        existingRegions.firstOrNull { it.id == id }
+    }
+    val selectedPitches = remember(ctx.eventSelection) {
+        selectedScorePitches(ctx.eventSelection).map {
+            it.event.pitchData[it.pitchIndex].pitch
+        }
+    }
+    var retainedEditingRegionId by remember { mutableStateOf<EventId?>(null) }
+    val retainForNoteSelection =
+        ctx.selectedAnnotationEventId == null && selectedPitches.isNotEmpty()
+    val editingRegionId = selectedRegion?.id
+        ?: retainedEditingRegionId.takeIf { retainForNoteSelection }
+    val editingRegion = remember(editingRegionId, existingRegions) {
+        existingRegions.firstOrNull { it.id == editingRegionId }
+    }
+    SideEffect {
+        retainedEditingRegionId = when {
+            selectedRegion != null -> selectedRegion.id
+            retainForNoteSelection -> retainedEditingRegionId
+            else -> null
+        }
     }
     val selectionRange = remember(ctx.eventSelection, ctx.selectedAnnotationEventId, ctx.runtimeScore) {
         selectedTimeRange(ctx.eventSelection) ?: selectedChordTimeRange(ctx)
@@ -270,19 +295,7 @@ internal fun TonalRegionEditor(ctx: PluginPanelContext) {
     }
     val range = editingRegion?.let {
         SelectedTimeRange(it.onset, it.endOnset)
-    } ?: defaultTonalRegionRange(selectionRange, scoreEnd)
-    val selectedPitches = remember(ctx.eventSelection) {
-        selectedScorePitches(ctx.eventSelection).map {
-            it.event.pitchData[it.pitchIndex].pitch
-        }
-    }
-    val existingRegions = remember(ctx.runtimeScore) {
-        ctx.runtimeScore
-            ?.pluginTrackOf<StorageTonalRegionEvent>(StorageTonalRegionEvent.TRACK_TYPE)
-            ?.events
-            ?.map { it.storageEvent }
-            .orEmpty()
-    }
+    } ?: defaultTonalRegionRange(selectionRange, scoreEnd, ctx.runtimeScore)
     val referenceKey = remember(ctx.runtimeScore, range, existingRegions) {
         val score = ctx.runtimeScore
         val at = range?.start
@@ -320,7 +333,13 @@ internal fun TonalRegionEditor(ctx: PluginPanelContext) {
                 existingRegions = existingRegions,
             )
         } else {
-            ExistingTonalRegionEditor(ctx, editingRegion, range)
+            ExistingTonalRegionEditor(
+                ctx = ctx,
+                editingRegion = editingRegion,
+                range = range,
+                selectedPitches = selectedPitches,
+                referenceKey = referenceKey,
+            )
         }
     }
 }
@@ -342,9 +361,21 @@ private fun selectedChordTimeRange(ctx: PluginPanelContext): SelectedTimeRange? 
 private fun defaultTonalRegionRange(
     selected: SelectedTimeRange?,
     scoreEnd: TimeCode?,
+    score: RuntimeScore?,
 ): SelectedTimeRange? {
     selected ?: return null
-    val end = TonalRegionEditPolicy.defaultInsertionEnd(selected.start, selected.end, scoreEnd)
+    val nextKeySignatureChange = score?.globalTrack?.events
+        ?.asSequence()
+        ?.filterIsInstance<StorageKeySignatureChange>()
+        ?.map(StorageKeySignatureChange::onset)
+        ?.filter { it > selected.start }
+        ?.minOrNull()
+    val end = TonalRegionEditPolicy.defaultInsertionEnd(
+        start = selected.start,
+        selectedEnd = selected.end,
+        scoreEnd = scoreEnd,
+        nextKeySignatureChange = nextKeySignatureChange,
+    )
     return SelectedTimeRange(selected.start, end)
 }
 
@@ -430,86 +461,18 @@ private fun TonalRegionInsertControl(
                         onCheckedChange = { terminatePrevious = it },
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    ChoiceModeAction(
-                        label = i18n("plugin.chord.polyphony.chooseByCircle"),
-                        selected = mode == TonalRegionChoiceMode.CIRCLE,
-                    ) { mode = TonalRegionChoiceMode.CIRCLE }
-                    ChoiceModeAction(
-                        label = i18n("plugin.chord.polyphony.chooseByDegree"),
-                        selected = mode == TonalRegionChoiceMode.SINGLE_NOTE,
-                    ) { mode = TonalRegionChoiceMode.SINGLE_NOTE }
-                    ChoiceModeAction(
-                        label = i18n("plugin.chord.polyphony.chooseByCandidates"),
-                        selected = mode == TonalRegionChoiceMode.NOTE_CANDIDATES,
-                    ) { mode = TonalRegionChoiceMode.NOTE_CANDIDATES }
-                }
-
-                val toggleKey: (ModulationKey) -> Unit = { key ->
-                    val next = when {
-                        key in selectedKeys -> selectedKeys.filterNot { it == key }
-                        selectedKeys.size < MAX_TONAL_REGION_KEYS -> selectedKeys + key
-                        else -> selectedKeys
-                    }
-                    selectedKeys = next
-                    resolvedKey = when {
-                        resolvedKey in next -> resolvedKey
-                        else -> next.firstOrNull()
-                    }
-                }
-
-                when (mode) {
-                    TonalRegionChoiceMode.CIRCLE -> CircleOfFifthsPicker(
-                        currentKey = (resolvedKey ?: referenceKey).toUiKey(),
-                        selectedKeys = selectedKeys.mapTo(linkedSetOf(), ModulationKey::toUiKey),
-                        size = 340.dp,
-                        centerLabel = (resolvedKey ?: referenceKey).displayLabel(),
-                        label = FifthsKey::displayName,
-                        onKeyClick = { toggleKey(it.toModulationKey()) },
-                    )
-                    TonalRegionChoiceMode.SINGLE_NOTE -> if (selectedPitches.size == 1) {
-                        CandidateKeyList(
-                            candidates = TonalRegionKeyInference.singlePitchChoices(
-                                selectedPitches.single(),
-                                referenceKey,
-                            ),
-                            singlePitch = true,
-                            selectedKeys = selectedKeys.toSet(),
-                            onChoose = toggleKey,
-                        )
-                    } else SelectionAwaitingHint(
-                        i18n("plugin.chord.polyphony.selectSinglePitchHint")
-                    )
-                    TonalRegionChoiceMode.NOTE_CANDIDATES -> if (selectedPitches.size > 1) {
-                        CandidateKeyList(
-                            candidates = TonalRegionKeyInference.candidates(
-                                selectedPitches,
-                                referenceKey,
-                                limit = 12,
-                            ),
-                            singlePitch = false,
-                            selectedKeys = selectedKeys.toSet(),
-                            onChoose = toggleKey,
-                        )
-                    } else SelectionAwaitingHint(
-                        i18n("plugin.chord.polyphony.selectMultiplePitchesHint")
-                    )
-                }
-                if (selectedKeys.isNotEmpty()) {
-                    Text(
-                        i18n("plugin.chord.polyphony.chooseCenter"),
-                        color = MeconColors.TextMuted,
-                        fontSize = 9.sp,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        selectedKeys.forEach { key ->
-                            SmallAction(
-                                label = key.displayLabel(),
-                                tint = if (key == resolvedKey) MeconColors.Orange else MeconColors.Primary,
-                            ) { resolvedKey = key }
-                        }
-                    }
-                }
+                TonalRegionKeyChooser(
+                    mode = mode,
+                    onModeChange = { mode = it },
+                    selectedKeys = selectedKeys,
+                    resolvedKey = resolvedKey,
+                    onSelectionChange = { keys, center ->
+                        selectedKeys = keys
+                        resolvedKey = center
+                    },
+                    selectedPitches = selectedPitches,
+                    referenceKey = referenceKey,
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.End),
@@ -548,6 +511,95 @@ private fun TonalRegionInsertControl(
                         label = i18n("plugin.chord.polyphony.closeChooser"),
                     ) { expanded = false }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TonalRegionKeyChooser(
+    mode: TonalRegionChoiceMode,
+    onModeChange: (TonalRegionChoiceMode) -> Unit,
+    selectedKeys: List<ModulationKey>,
+    resolvedKey: ModulationKey?,
+    onSelectionChange: (List<ModulationKey>, ModulationKey?) -> Unit,
+    selectedPitches: List<Pitch>,
+    referenceKey: ModulationKey,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        ChoiceModeAction(
+            label = i18n("plugin.chord.polyphony.chooseByCircle"),
+            selected = mode == TonalRegionChoiceMode.CIRCLE,
+        ) { onModeChange(TonalRegionChoiceMode.CIRCLE) }
+        ChoiceModeAction(
+            label = i18n("plugin.chord.polyphony.chooseByDegree"),
+            selected = mode == TonalRegionChoiceMode.SINGLE_NOTE,
+        ) { onModeChange(TonalRegionChoiceMode.SINGLE_NOTE) }
+        ChoiceModeAction(
+            label = i18n("plugin.chord.polyphony.chooseByCandidates"),
+            selected = mode == TonalRegionChoiceMode.NOTE_CANDIDATES,
+        ) { onModeChange(TonalRegionChoiceMode.NOTE_CANDIDATES) }
+    }
+
+    val toggleKey: (ModulationKey) -> Unit = { key ->
+        val next = when {
+            key in selectedKeys -> selectedKeys.filterNot { it == key }
+            selectedKeys.size < MAX_TONAL_REGION_KEYS -> selectedKeys + key
+            else -> selectedKeys
+        }
+        val center = resolvedKey.takeIf { it in next } ?: next.firstOrNull()
+        onSelectionChange(next, center)
+    }
+
+    when (mode) {
+        TonalRegionChoiceMode.CIRCLE -> CircleOfFifthsPicker(
+            currentKey = (resolvedKey ?: referenceKey).toUiKey(),
+            selectedKeys = selectedKeys.mapTo(linkedSetOf(), ModulationKey::toUiKey),
+            size = 340.dp,
+            centerLabel = (resolvedKey ?: referenceKey).displayLabel(),
+            label = FifthsKey::displayName,
+            onKeyClick = { toggleKey(it.toModulationKey()) },
+        )
+        TonalRegionChoiceMode.SINGLE_NOTE -> if (selectedPitches.size == 1) {
+            CandidateKeyList(
+                candidates = TonalRegionKeyInference.singlePitchChoices(
+                    selectedPitches.single(),
+                    referenceKey,
+                ),
+                singlePitch = true,
+                selectedKeys = selectedKeys.toSet(),
+                onChoose = toggleKey,
+            )
+        } else SelectionAwaitingHint(
+            i18n("plugin.chord.polyphony.selectSinglePitchHint")
+        )
+        TonalRegionChoiceMode.NOTE_CANDIDATES -> if (selectedPitches.size > 1) {
+            CandidateKeyList(
+                candidates = TonalRegionKeyInference.candidates(
+                    selectedPitches,
+                    referenceKey,
+                    limit = 12,
+                ),
+                singlePitch = false,
+                selectedKeys = selectedKeys.toSet(),
+                onChoose = toggleKey,
+            )
+        } else SelectionAwaitingHint(
+            i18n("plugin.chord.polyphony.selectMultiplePitchesHint")
+        )
+    }
+    if (selectedKeys.isNotEmpty()) {
+        Text(
+            i18n("plugin.chord.polyphony.chooseCenter"),
+            color = MeconColors.TextMuted,
+            fontSize = 9.sp,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            selectedKeys.forEach { key ->
+                SmallAction(
+                    label = key.displayLabel(),
+                    tint = if (key == resolvedKey) MeconColors.Orange else MeconColors.Primary,
+                ) { onSelectionChange(selectedKeys, key) }
             }
         }
     }
@@ -644,6 +696,8 @@ private fun ExistingTonalRegionEditor(
     ctx: PluginPanelContext,
     editingRegion: StorageTonalRegionEvent,
     range: SelectedTimeRange?,
+    selectedPitches: List<Pitch>,
+    referenceKey: ModulationKey,
 ) {
     if (editingRegion.role == TonalRegionRole.SCORE_KEY_BASELINE) {
         Text(
@@ -653,84 +707,111 @@ private fun ExistingTonalRegionEditor(
         )
         return
     }
-    var selectedKeys by remember(editingRegion.id) {
-        mutableStateOf<Set<FifthsKey>>(
-            editingRegion.keys.mapTo(linkedSetOf()) { it.toUiKey() }
-        )
+    var expanded by remember(editingRegion.id) { mutableStateOf(false) }
+    var mode by remember(editingRegion.id) { mutableStateOf(TonalRegionChoiceMode.CIRCLE) }
+    var selectedKeys by remember(editingRegion) {
+        mutableStateOf(editingRegion.keys.map(PolyphonyTonalKey::toModulationKey))
     }
-    var resolvedKey by remember(editingRegion.id) {
-        mutableStateOf(editingRegion.resolvedKey?.toUiKey())
+    var resolvedKey by remember(editingRegion) {
+        mutableStateOf(editingRegion.resolvedKey?.toModulationKey())
     }
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-            CircleOfFifthsPicker(
-                selectedKeys = selectedKeys,
-                currentKey = resolvedKey,
-                size = 320.dp,
-                centerLabel = resolvedKey?.displayName(),
-                centerCaption = i18n("plugin.chord.polyphony.resolvedCenter"),
-                label = FifthsKey::displayName,
-                onKeyClick = { key ->
-                    selectedKeys = selectedKeys.toMutableSet().apply {
-                        if (key in this) {
-                            remove(key)
-                        } else if (size < MAX_TONAL_REGION_KEYS) {
-                            add(key)
-                        }
-                    }
-                    resolvedKey = when {
-                        key !in selectedKeys && resolvedKey == key -> selectedKeys.firstOrNull()
-                        resolvedKey == null -> selectedKeys.firstOrNull()
-                        else -> resolvedKey
-                    }
-                },
-            )
-        }
-        if (selectedKeys.isNotEmpty()) {
-            Text(
-                i18n("plugin.chord.polyphony.chooseCenter"),
-                color = MeconColors.TextMuted,
-                fontSize = 9.sp,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                selectedKeys.forEach { key ->
-                    SmallAction(
-                        label = key.displayName(),
-                        tint = if (key == resolvedKey) MeconColors.Orange else MeconColors.Primary,
-                    ) { resolvedKey = key }
-                }
-            }
-        }
+    Box {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            SmallAction(
-                label = i18n("plugin.chord.panel.update"),
-                enabled = range != null && selectedKeys.isNotEmpty() && resolvedKey in selectedKeys,
-                modifier = Modifier.weight(1f),
-            ) {
-                val selectedRange = range ?: return@SmallAction
-                val keys = selectedKeys.map(FifthsKey::toStorageKey)
-                val resolved = resolvedKey?.toStorageKey()
-                val event = editingRegion.copy(
-                    onset = selectedRange.start,
-                    endOnset = selectedRange.end,
-                    keys = keys,
-                    resolvedKey = resolved,
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    editingRegion.keys.joinToString(" / ") { it.toModulationKey().displayLabel() },
+                    color = MeconColors.TextPrimary,
+                    fontSize = 12.sp,
                 )
-                ctx.onUpdatePluginEvent?.invoke(
-                    StorageTonalRegionEvent.TRACK_TYPE,
-                    editingRegion.id,
-                    event,
-                )
+                editingRegion.resolvedKey?.let { center ->
+                    Text(
+                        "${i18n("plugin.chord.polyphony.resolvedCenter")}: ${center.toModulationKey().displayLabel()}",
+                        color = MeconColors.TextMuted,
+                        fontSize = 9.sp,
+                    )
+                }
             }
-            SmallAction(
-                label = i18n("plugin.chord.panel.delete"),
-                tint = MeconColors.Red,
-                modifier = Modifier.weight(1f),
+            SmallAction(label = i18n("plugin.chord.polyphony.editRegion")) {
+                expanded = true
+            }
+        }
+        MeconDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.width(390.dp),
+            containerColor = MeconColors.DialogBackground,
+            properties = PopupProperties(
+                focusable = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false,
+            ),
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ctx.onDeletePluginEvent?.invoke(StorageTonalRegionEvent.TRACK_TYPE, editingRegion.id)
+                Text(
+                    i18n("plugin.chord.polyphony.editRegionTitle"),
+                    color = MeconColors.TextPrimary,
+                    fontSize = 13.sp,
+                )
+                Text(
+                    i18n("plugin.chord.polyphony.insertRegionKeyHint"),
+                    color = MeconColors.TextMuted,
+                    fontSize = 9.sp,
+                )
+                TonalRegionKeyChooser(
+                    mode = mode,
+                    onModeChange = { mode = it },
+                    selectedKeys = selectedKeys,
+                    resolvedKey = resolvedKey,
+                    onSelectionChange = { keys, center ->
+                        selectedKeys = keys
+                        resolvedKey = center
+                    },
+                    selectedPitches = selectedPitches,
+                    referenceKey = referenceKey,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    SmallAction(
+                        label = i18n("plugin.chord.panel.update"),
+                        enabled = range != null && selectedKeys.isNotEmpty() && resolvedKey in selectedKeys,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        val selectedRange = range ?: return@SmallAction
+                        val event = editingRegion.copy(
+                            onset = selectedRange.start,
+                            endOnset = selectedRange.end,
+                            keys = selectedKeys.map(PolyphonyTonalKey::from),
+                            resolvedKey = resolvedKey?.let(PolyphonyTonalKey::from),
+                        )
+                        ctx.onUpdatePluginEvent?.invoke(
+                            StorageTonalRegionEvent.TRACK_TYPE,
+                            editingRegion.id,
+                            event,
+                        )
+                        expanded = false
+                    }
+                    SmallAction(
+                        label = i18n("plugin.chord.panel.delete"),
+                        tint = MeconColors.Red,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        ctx.onDeletePluginEvent?.invoke(StorageTonalRegionEvent.TRACK_TYPE, editingRegion.id)
+                        expanded = false
+                    }
+                    SmallAction(
+                        label = i18n("plugin.chord.polyphony.closeChooser"),
+                        modifier = Modifier.weight(1f),
+                    ) { expanded = false }
+                }
             }
         }
     }
@@ -795,11 +876,6 @@ private fun SmallAction(
     }
 }
 
-private fun PolyphonyTonalKey.toUiKey(): FifthsKey = FifthsKey(
-    fifths = fifths,
-    mode = if (mode == KeySignatureMode.MAJOR) FifthsKeyMode.MAJOR else FifthsKeyMode.MINOR,
-)
-
 private fun ModulationKey.toUiKey(): FifthsKey = FifthsKey(
     fifths = fifths,
     mode = if (mode == KeySignatureMode.MAJOR) FifthsKeyMode.MAJOR else FifthsKeyMode.MINOR,
@@ -807,11 +883,6 @@ private fun ModulationKey.toUiKey(): FifthsKey = FifthsKey(
 
 private fun ModulationKey.displayLabel(): String =
     displayName + if (mode == KeySignatureMode.MINOR) "m" else ""
-
-private fun FifthsKey.toStorageKey(): PolyphonyTonalKey = PolyphonyTonalKey(
-    fifths = fifths,
-    mode = if (mode == FifthsKeyMode.MAJOR) KeySignatureMode.MAJOR else KeySignatureMode.MINOR,
-)
 
 private fun FifthsKey.displayName(): String =
     toModulationKey().let { it.displayName + if (it.mode == KeySignatureMode.MINOR) "m" else "" }

@@ -27,6 +27,8 @@
   方向减弱，避免底部节点被压成水平排列；调性仍与对应外圈保持同一条由圆心出发的辐射方向。
 - `ModulationPitchLabels.relativeTonicLabel(referenceKey, targetKey)` 是调与调之间相对主音标签的
   公共入口；五度圈相对显示与自由练习调性线必须共用该方法，不在 UI 内重复推导音级。
+- `ModulationPitchLabels.relativePitchLabel` 的小调显示沿用同调号的关系大调编号；例如 a 小调的
+  七个自然音依次显示为 `6, 7, 1, 2, 3, 4, 5`，变化音也以该关系大调音级添加升降号。
 - `ModulationCircleOfFifths.signedDistance(referenceKey, targetKey)` 返回五度圈最短有向距离，
   顺时针为正、逆时针为负；六步等距时保留原始方向。`signedDistanceLabel` 负责为正数补 `+`。
 - `ModulationKey.circlePosition` / `isEnharmonicWith` 明确区分“12 个发声位置”和“15 种调号

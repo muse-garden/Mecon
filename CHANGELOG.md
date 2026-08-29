@@ -5,6 +5,12 @@ Semantic Versioning。未发布的用户可见变化先记录在 `Unreleased`，
 
 ## [Unreleased]
 
+### Added
+
+- 自由练习锁定音符与声部、为旋律配和弦。
+- 自由练习的 voice leading 进行。
+- 自由练习的调性线与和弦展示，搬运到主界面的分析功能。
+
 ### Changed
 
 - 动态规划求解器优化，实测性能已无问题，默认开启。
