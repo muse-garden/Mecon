@@ -9,6 +9,8 @@ import com.mecon.desktop.ui.views.globalToDesign
 import com.mecon.desktop.ui.views.resolveAnnotationBoundarySnap
 import com.mecon.renderer.geometry.AbsolutePoint
 import com.mecon.renderer.geometry.Pixels
+import com.mecon.renderer.geometry.RelativePoint
+import com.mecon.renderer.geometry.StaffSpace
 import com.mecon.renderer.render.RenderElementType
 import com.mecon.renderer.render.RenderResult
 
@@ -29,6 +31,7 @@ internal data class AnnotationRangeDragState(
     val originalPoint: AbsolutePoint,
     val currentPoint: AbsolutePoint,
     val sourceSystemIndex: Int,
+    val targetSystemIndex: Int = sourceSystemIndex,
     val candidateTime: TimeCode? = null,
 )
 
@@ -106,12 +109,55 @@ internal fun annotationDragTargetSystem(
     pointerRawY: Float,
     nearestSystemIndex: Int?,
     sourceRowLockPx: Float,
+    pointerOnSourcePage: Boolean = true,
 ): Int = if (
-    sourceRawY != null && kotlin.math.abs(pointerRawY - sourceRawY) <= sourceRowLockPx
+    pointerOnSourcePage && sourceRawY != null &&
+    kotlin.math.abs(pointerRawY - sourceRawY) <= sourceRowLockPx
 ) {
     sourceSystemIndex
 } else {
     nearestSystemIndex ?: sourceSystemIndex
+}
+
+/**
+ * Project one annotation lane from its source system onto [targetSystemIndex].
+ *
+ * The pointer chooses the row and X boundary, but the endpoint preview must stay on that row's
+ * annotation lane. Otherwise a pointer in the inter-system gap can show the blue handle on the
+ * previous row even though release commits a boundary from the target row.
+ */
+internal fun annotationDragTargetY(
+    result: RenderResult,
+    eventId: EventId,
+    sourceSystemIndex: Int,
+    targetSystemIndex: Int,
+    sourceY: Pixels,
+): Pixels {
+    fun staffAnchorY(systemIndex: Int): Float? {
+        val centerY = result.spatialIndex.allSystems()
+            .firstOrNull { it.systemIndex == systemIndex }
+            ?.staffRegions
+            ?.minOfOrNull { it.centerY }
+            ?: return null
+        return result.transformerSnapshot.toAbsolute(
+            RelativePoint(StaffSpace.ZERO, centerY)
+        ).y.value
+    }
+
+    val sourceAnchorY = staffAnchorY(sourceSystemIndex) ?: return sourceY
+    val targetAnchorY = staffAnchorY(targetSystemIndex) ?: return sourceY
+    val projectedY = sourceY.value + targetAnchorY - sourceAnchorY
+    val existingLaneY = result.elements.asSequence()
+        .filter { element ->
+            element.type == RenderElementType.TEXT_ANNOTATION &&
+                element.eventId == eventId &&
+                element.systemIndex == targetSystemIndex &&
+                element.hitBox.width.value > 0f && element.hitBox.height.value > 0f
+        }
+        .minByOrNull { element -> kotlin.math.abs(element.center.y.value - projectedY) }
+        ?.center
+        ?.y
+    return existingLaneY ?: Pixels(projectedY)
 }
 
 /**
@@ -155,18 +201,54 @@ internal class AnnotationRangeDragHandler : ScoreDragHandler {
                     sourceSystemIndex = it.sourceSystemIndex,
                     sourceRawY = sourceRawY(context, it.originalPoint),
                     pointerRawY = change.position.y,
-                    nearestSystemIndex = context.nearestSystem(change.position),
+                    nearestSystemIndex = context.nearestAnnotationSystem(
+                        change.position,
+                        it.targetSystemIndex,
+                    ),
                     sourceRowLockPx = ANNOTATION_SOURCE_ROW_LOCK_DP * context.density *
                         context.scale,
+                    pointerOnSourcePage = pointerOnSourcePage(
+                        context,
+                        it.originalPoint,
+                        point,
+                    ),
                 )
-            } ?: context.nearestSystem(change.position)
+            } ?: context.nearestAnnotationSystem(change.position)
             val snap = resolveAnnotationBoundarySnap(context.result, point.x.value, targetSystem)
             context.previews.annotationRange.value = drag?.copy(
-                currentPoint = AbsolutePoint(Pixels(snap?.absoluteX ?: point.x.value), point.y),
+                currentPoint = AbsolutePoint(
+                    Pixels(snap?.absoluteX ?: point.x.value),
+                    targetSystem?.let { systemIndex ->
+                        annotationDragTargetY(
+                            result = context.result,
+                            eventId = drag.eventId,
+                            sourceSystemIndex = drag.sourceSystemIndex,
+                            targetSystemIndex = systemIndex,
+                            sourceY = drag.originalPoint.y,
+                        )
+                    } ?: point.y,
+                ),
+                targetSystemIndex = targetSystem ?: drag.targetSystemIndex,
                 candidateTime = snap?.time,
             )
         }
         change.consume()
+    }
+
+    /** A horizontal page arrangement must not let the source-row lock reach into another page. */
+    private fun pointerOnSourcePage(
+        context: ScoreDragContext,
+        source: AbsolutePoint,
+        pointer: AbsolutePoint,
+    ): Boolean {
+        if (!context.frame.paginated) return true
+        fun pageIndex(point: AbsolutePoint): Int? = context.frame.pages.indices.firstOrNull { index ->
+            val page = context.frame.pages[index]
+            point.y.value in page.contentOffsetY.value..(
+                page.contentOffsetY.value + page.height.value
+            )
+        }
+        return pageIndex(source) == pageIndex(pointer)
     }
 
     /** The handle's own screen Y, so the row lock compares like with like. */

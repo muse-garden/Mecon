@@ -16,6 +16,9 @@ import com.mecon.renderer.render.RenderElementId
 import com.mecon.renderer.render.RenderElementType
 import com.mecon.renderer.render.RenderResult
 import com.mecon.renderer.render.RenderedMeasureBounds
+import com.mecon.renderer.render.spatial.HierarchicalSpatialIndex
+import com.mecon.renderer.render.spatial.StaffRegion
+import com.mecon.renderer.render.spatial.SystemNode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -43,6 +46,18 @@ class AnnotationRangeDragSupportTest {
                 nearestSystemIndex = 0,
                 sourceRowLockPx = 28f,
             ),
+        )
+        assertEquals(
+            4,
+            annotationDragTargetSystem(
+                sourceSystemIndex = 2,
+                sourceRawY = 240f,
+                pointerRawY = 240f,
+                nearestSystemIndex = 4,
+                sourceRowLockPx = 28f,
+                pointerOnSourcePage = false,
+            ),
+            "the row lock must not capture a same-height system on another page",
         )
     }
 
@@ -116,9 +131,79 @@ class AnnotationRangeDragSupportTest {
         assertEquals(200f, snap?.absoluteX)
     }
 
+    @Test
+    fun crossSystemPreviewProjectsEndpointOntoTargetAnnotationLane() {
+        val eventId = EventId("tonal-region")
+        val targetLane = RenderElement(
+            id = RenderElementId(1L),
+            type = RenderElementType.TEXT_ANNOTATION,
+            commands = emptyList(),
+            hitBox = rect(10f, 82f, 80f, 90f),
+            eventId = eventId,
+            systemIndex = 1,
+        )
+        val spatialIndex = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, staffCenterY = 10f))
+            addSystem(system(index = 1, staffCenterY = 100f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            elements = listOf(targetLane),
+            spatialIndex = spatialIndex,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+
+        val targetY = annotationDragTargetY(
+            result = result,
+            eventId = eventId,
+            sourceSystemIndex = 0,
+            targetSystemIndex = 1,
+            sourceY = Pixels(-4f),
+        )
+
+        assertEquals(86f, targetY.value)
+    }
+
+    @Test
+    fun crossSystemPreviewPreservesLaneOffsetWhenTargetHasNoRangeFragment() {
+        val spatialIndex = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, staffCenterY = 10f))
+            addSystem(system(index = 1, staffCenterY = 100f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            spatialIndex = spatialIndex,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+
+        val targetY = annotationDragTargetY(
+            result = result,
+            eventId = EventId("tonal-region"),
+            sourceSystemIndex = 0,
+            targetSystemIndex = 1,
+            sourceY = Pixels(-4f),
+        )
+
+        assertEquals(86f, targetY.value)
+    }
+
     private fun rect(x0: Float, y0: Float, x1: Float, y1: Float) = AbsoluteRect(
         origin = AbsolutePoint(Pixels(x0), Pixels(y0)),
         width = Pixels(x1 - x0),
         height = Pixels(y1 - y0),
+    )
+
+    private fun system(index: Int, staffCenterY: Float) = SystemNode(
+        systemIndex = index,
+        measureCount = 1,
+        staffRegions = listOf(
+            StaffRegion(
+                staffIndex = 0,
+                centerY = StaffSpace(staffCenterY),
+                topY = StaffSpace(staffCenterY - 4f),
+                bottomY = StaffSpace(staffCenterY + 4f),
+            )
+        ),
+        topY = StaffSpace(staffCenterY - 6f),
+        bottomY = StaffSpace(staffCenterY + 6f),
+        startX = StaffSpace.ZERO,
     )
 }

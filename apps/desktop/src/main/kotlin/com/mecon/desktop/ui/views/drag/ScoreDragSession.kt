@@ -9,6 +9,7 @@ import com.mecon.api.interaction.StaffAttachmentSection
 import com.mecon.api.interaction.VoiceBeamSection
 import com.mecon.api.interaction.VoltaEndingSection
 import com.mecon.desktop.ui.views.nearestDisplayedSystemByStaffCore
+import com.mecon.desktop.ui.views.nearestDisplayedSystemByFullRange
 import com.mecon.desktop.ui.views.rawToAbsolutePoint
 import com.mecon.desktop.ui.views.selectByPriority
 import com.mecon.renderer.geometry.AbsolutePoint
@@ -83,6 +84,14 @@ internal class ScoreDragContext(
         result, raw, offset, scale, density,
         frame.paginated, frame.pages, frame.pageSlots,
     )
+
+    /** Analysis lanes belong to the full system band, not only the five-line staff core. */
+    fun nearestAnnotationSystem(raw: Offset, preferredSystemIndex: Int? = null): Int? =
+        nearestDisplayedSystemByFullRange(
+            result, raw, offset, scale, density,
+            frame.paginated, frame.pages, frame.pageSlots,
+            preferredSystemIndex,
+        )
 
     /** Select [section] alone unless it is already part of the current selection. */
     fun ensureSelected(section: EventSection) {

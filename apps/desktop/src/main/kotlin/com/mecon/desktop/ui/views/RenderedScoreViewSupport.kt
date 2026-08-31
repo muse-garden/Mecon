@@ -38,6 +38,7 @@ import com.mecon.api.render.RenderColor
 import com.mecon.api.interaction.*
 import com.mecon.renderer.geometry.*
 import com.mecon.renderer.render.*
+import com.mecon.renderer.render.spatial.SystemNode
 
 internal data class AuditionTarget(
     val event: ComputedVoiceEvent,
@@ -81,7 +82,8 @@ internal fun rawToAbsolutePoint(
  * or navigation mark snap to a barline on the wrong row. Compare in the final
  * displayed coordinate space as well: converting a paginated pointer to global
  * score Y and back through a changing page/system layout can otherwise select a
- * system one row beyond the one visually under the pointer.
+ * system one row beyond the one visually under the pointer. In horizontal pagination the owning
+ * page column also participates, because systems on adjacent pages can share the same displayed Y.
  */
 internal fun nearestDisplayedSystemByStaffCore(
     result: RenderResult,
@@ -92,29 +94,142 @@ internal fun nearestDisplayedSystemByStaffCore(
     paginated: Boolean,
     pages: List<com.mecon.renderer.render.RenderPage>,
     slots: List<Offset>,
-): Int? =
-    result.spatialIndex.allSystems().minByOrNull { system ->
-        val coreTop = system.staffRegions.minOfOrNull { it.centerY.value - 2f }
-            ?: system.topY.value
-        val coreBottom = system.staffRegions.maxOfOrNull { it.centerY.value + 2f }
-            ?: system.bottomY.value
-        fun displayedRawY(relativeY: Float): Float? {
+): Int? = nearestDisplayedSystem(
+    result, raw, offset, scale, density, paginated, pages, slots,
+)
+
+/**
+ * Resolve an analysis-range drag row by containment in the whole laid-out system range.
+ *
+ * Tonal-region lanes live above the five-line core. A row changes only after the pointer actually
+ * enters another system's complete occupied band; while it is in the gap, [preferredSystemIndex]
+ * remains selected. Overlapping bands also prefer the current row. Other score handles continue to
+ * use nearest-core semantics through [nearestDisplayedSystemByStaffCore].
+ */
+internal fun nearestDisplayedSystemByFullRange(
+    result: RenderResult,
+    raw: Offset,
+    offset: Offset,
+    scale: Float,
+    density: Float,
+    paginated: Boolean,
+    pages: List<com.mecon.renderer.render.RenderPage>,
+    slots: List<Offset>,
+    preferredSystemIndex: Int? = null,
+): Int? {
+    val candidates = result.spatialIndex.allSystems().mapNotNull { system ->
+        fun displayedDesignY(relativeY: Float): Float? {
             val globalY = result.transformerSnapshot.toAbsolute(
                 RelativePoint(StaffSpace.ZERO, StaffSpace(relativeY))
             ).y.value
             val designY = if (paginated) {
                 globalToDesign(0f, globalY, pages, slots)?.y
-            } else globalY
+            } else {
+                globalY
+            }
             return designY?.let { it * density * scale + offset.y }
         }
-        val rawTop = displayedRawY(coreTop) ?: return@minByOrNull Float.POSITIVE_INFINITY
-        val rawBottom = displayedRawY(coreBottom) ?: return@minByOrNull Float.POSITIVE_INFINITY
-        when {
+
+        val rawTop = displayedDesignY(system.topY.value) ?: return@mapNotNull null
+        val rawBottom = displayedDesignY(system.bottomY.value) ?: return@mapNotNull null
+        if (raw.y !in rawTop..rawBottom) return@mapNotNull null
+
+        if (paginated) {
+            val centerGlobalY = result.transformerSnapshot.toAbsolute(
+                RelativePoint(
+                    StaffSpace.ZERO,
+                    StaffSpace((system.topY.value + system.bottomY.value) / 2f),
+                )
+            ).y.value
+            val pageIndex = pages.indices.firstOrNull { index ->
+                centerGlobalY in pages[index].contentOffsetY.value..(
+                    pages[index].contentOffsetY.value + pages[index].height.value
+                )
+            } ?: return@mapNotNull null
+            val rawLeft = slots[pageIndex].x * density * scale + offset.x
+            val rawRight = (slots[pageIndex].x + pages[pageIndex].width.value) *
+                density * scale + offset.x
+            if (raw.x !in rawLeft..rawRight) return@mapNotNull null
+        }
+
+        val rawCenter = (rawTop + rawBottom) / 2f
+        system to kotlin.math.abs(raw.y - rawCenter)
+    }
+
+    return candidates.firstOrNull { it.first.systemIndex == preferredSystemIndex }
+        ?.first
+        ?.systemIndex
+        ?: candidates.minByOrNull { it.second }?.first?.systemIndex
+        ?: preferredSystemIndex?.takeIf { preferred ->
+            result.spatialIndex.allSystems().any { it.systemIndex == preferred }
+        }
+        ?: nearestDisplayedSystemByStaffCore(
+            result, raw, offset, scale, density, paginated, pages, slots,
+        )
+}
+
+private fun nearestDisplayedSystem(
+    result: RenderResult,
+    raw: Offset,
+    offset: Offset,
+    scale: Float,
+    density: Float,
+    paginated: Boolean,
+    pages: List<com.mecon.renderer.render.RenderPage>,
+    slots: List<Offset>,
+): Int? {
+    fun distance(system: SystemNode): Float {
+        val rangeTop = system.staffRegions.minOfOrNull { it.centerY.value - 2f }
+            ?: system.topY.value
+        val rangeBottom = system.staffRegions.maxOfOrNull { it.centerY.value + 2f }
+            ?: system.bottomY.value
+        fun displayedDesign(relativeY: Float): Offset? {
+            val absoluteY = result.transformerSnapshot.toAbsolute(
+                RelativePoint(StaffSpace.ZERO, StaffSpace(relativeY))
+            ).y.value
+            return if (paginated) {
+                globalToDesign(0f, absoluteY, pages, slots)
+            } else {
+                Offset(0f, absoluteY)
+            }
+        }
+        val designTop = displayedDesign(rangeTop)
+            ?: return Float.POSITIVE_INFINITY
+        val designBottom = displayedDesign(rangeBottom)
+            ?: return Float.POSITIVE_INFINITY
+        val rawTop = designTop.y * density * scale + offset.y
+        val rawBottom = designBottom.y * density * scale + offset.y
+        val dy = when {
             raw.y < rawTop -> rawTop - raw.y
             raw.y > rawBottom -> raw.y - rawBottom
             else -> 0f
         }
-    }?.systemIndex
+        if (!paginated) return dy
+
+        // Two pages may be arranged side by side, so their systems can have the same displayed Y.
+        // Include the owning page's horizontal band to keep a pointer on page 2 from resolving to
+        // the same-height system on page 1.
+        val rangeGlobalY = result.transformerSnapshot.toAbsolute(
+            RelativePoint(StaffSpace.ZERO, StaffSpace(rangeTop))
+        ).y.value
+        val pageIndex = pages.indices.firstOrNull { index ->
+            rangeGlobalY in pages[index].contentOffsetY.value..(
+                pages[index].contentOffsetY.value + pages[index].height.value
+            )
+        } ?: return Float.POSITIVE_INFINITY
+        val rawLeft = slots[pageIndex].x * density * scale + offset.x
+        val rawRight = (slots[pageIndex].x + pages[pageIndex].width.value) *
+            density * scale + offset.x
+        val dx = when {
+            raw.x < rawLeft -> rawLeft - raw.x
+            raw.x > rawRight -> raw.x - rawRight
+            else -> 0f
+        }
+        return dx * dx + dy * dy
+    }
+
+    return result.spatialIndex.allSystems().minByOrNull(::distance)?.systemIndex
+}
 
 /**
  * Navigation marks use the top staff's upper line minus 0.85 spaces as their

@@ -3,7 +3,14 @@ package com.mecon.desktop.ui.views
 import androidx.compose.ui.geometry.Offset
 import com.mecon.api.storage.PageArrangement
 import com.mecon.renderer.geometry.Pixels
+import com.mecon.renderer.geometry.ScaleFactor
+import com.mecon.renderer.geometry.StaffSpace
+import com.mecon.renderer.render.CoordinateTransformer
 import com.mecon.renderer.render.RenderPage
+import com.mecon.renderer.render.RenderResult
+import com.mecon.renderer.render.spatial.HierarchicalSpatialIndex
+import com.mecon.renderer.render.spatial.StaffRegion
+import com.mecon.renderer.render.spatial.SystemNode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -66,6 +73,134 @@ class PageMappingTest {
         assertNull(globalToDesign(globalX = 10f, globalY = 310f, pages = pages, slots = slots))
     }
 
+    @Test
+    fun nearestSystemUsesPageColumnWhenHorizontalPagesShareDisplayedRow() {
+        val index = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, centerY = 10f))
+            addSystem(system(index = 1, centerY = 330f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            spatialIndex = index,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+        val slots = pageSlotOffsets(pages, PageArrangement.HORIZONTAL)
+
+        assertEquals(
+            1,
+            nearestDisplayedSystemByStaffCore(
+                result = result,
+                raw = Offset(300f, 10f),
+                offset = Offset.Zero,
+                scale = 1f,
+                density = 1f,
+                paginated = true,
+                pages = pages,
+                slots = slots,
+            ),
+        )
+    }
+
+    @Test
+    fun annotationSystemUsesWholeRowBeforeRetargetingUpward() {
+        val index = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, centerY = 10f, topY = -10f, bottomY = 40f))
+            addSystem(system(index = 1, centerY = 100f, topY = 45f, bottomY = 130f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            spatialIndex = index,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+        val pointerInsideSecondSystemTop = Offset(50f, 50f)
+
+        assertEquals(
+            0,
+            nearestDisplayedSystemByStaffCore(
+                result, pointerInsideSecondSystemTop, Offset.Zero, 1f, 1f,
+                false, emptyList(), emptyList(),
+            ),
+            "the old core-distance rule would already jump to the row above",
+        )
+        assertEquals(
+            1,
+            nearestDisplayedSystemByFullRange(
+                result, pointerInsideSecondSystemTop, Offset.Zero, 1f, 1f,
+                false, emptyList(), emptyList(),
+            ),
+            "an annotation endpoint stays with the row whose full range contains the pointer",
+        )
+    }
+
+    @Test
+    fun annotationSystemKeepsCurrentRowWhenFullRangesOverlap() {
+        val index = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, centerY = 10f, topY = -10f, bottomY = 60f))
+            addSystem(system(index = 1, centerY = 100f, topY = 45f, bottomY = 130f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            spatialIndex = index,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+
+        assertEquals(
+            1,
+            nearestDisplayedSystemByFullRange(
+                result = result,
+                raw = Offset(50f, 50f),
+                offset = Offset.Zero,
+                scale = 1f,
+                density = 1f,
+                paginated = false,
+                pages = emptyList(),
+                slots = emptyList(),
+                preferredSystemIndex = 1,
+            ),
+            "overlapping full ranges must keep the current target row stable",
+        )
+    }
+
+    @Test
+    fun annotationSystemDoesNotJumpAgainWhilePointerIsBetweenRows() {
+        val index = HierarchicalSpatialIndex().apply {
+            addSystem(system(index = 0, centerY = 15f, topY = 0f, bottomY = 40f))
+            addSystem(system(index = 1, centerY = 80f, topY = 60f, bottomY = 110f))
+        }
+        val result = RenderResult.EMPTY.copy(
+            spatialIndex = index,
+            transformerSnapshot = CoordinateTransformer(scale = ScaleFactor(1f)),
+        )
+
+        assertEquals(
+            1,
+            nearestDisplayedSystemByFullRange(
+                result = result,
+                raw = Offset(50f, 41f),
+                offset = Offset.Zero,
+                scale = 1f,
+                density = 1f,
+                paginated = false,
+                pages = emptyList(),
+                slots = emptyList(),
+                preferredSystemIndex = 1,
+            ),
+            "the gap above the current row must not choose the nearer upper row",
+        )
+        assertEquals(
+            0,
+            nearestDisplayedSystemByFullRange(
+                result = result,
+                raw = Offset(50f, 35f),
+                offset = Offset.Zero,
+                scale = 1f,
+                density = 1f,
+                paginated = false,
+                pages = emptyList(),
+                slots = emptyList(),
+                preferredSystemIndex = 1,
+            ),
+            "the target changes only after entering the upper row's full range",
+        )
+    }
+
     private fun assertRoundTrip(arrangement: PageArrangement, globalX: Float, globalY: Float) {
         val slots = pageSlotOffsets(pages, arrangement)
         val design = globalToDesign(globalX, globalY, pages, slots)
@@ -75,4 +210,25 @@ class PageMappingTest {
         assertEquals(globalX, back.x.value, 1e-3f)
         assertEquals(globalY, back.y.value, 1e-3f)
     }
+
+    private fun system(
+        index: Int,
+        centerY: Float,
+        topY: Float = centerY - 6f,
+        bottomY: Float = centerY + 6f,
+    ) = SystemNode(
+        systemIndex = index,
+        measureCount = 1,
+        staffRegions = listOf(
+            StaffRegion(
+                staffIndex = 0,
+                centerY = StaffSpace(centerY),
+                topY = StaffSpace(centerY - 4f),
+                bottomY = StaffSpace(centerY + 4f),
+            )
+        ),
+        topY = StaffSpace(topY),
+        bottomY = StaffSpace(bottomY),
+        startX = StaffSpace.ZERO,
+    )
 }
