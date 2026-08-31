@@ -33,6 +33,15 @@ import com.mecon.exploration.KeyModeSpec
 import com.mecon.exploration.KeySpec
 import com.mecon.exploration.ModulationExerciseCellRequest
 import com.mecon.exploration.ModulationSolverSpec
+import com.mecon.exploration.ChoraleContourDirectionSpec
+import com.mecon.exploration.ChoraleContourSpec
+import com.mecon.exploration.ChoraleFigurationSpec
+import com.mecon.exploration.ChoraleFigurationTypeSpec
+import com.mecon.exploration.ChoraleHarmonizationRequest
+import com.mecon.exploration.ChoraleRhythmSpec
+import com.mecon.exploration.ChoraleSlotSpec
+import com.mecon.exploration.ChoraleVoiceRoleSpec
+import com.mecon.exploration.ChoraleVoiceSpec
 import com.mecon.exploration.ProgressionRequest
 import com.mecon.exploration.ProgressionSlot
 import com.mecon.exploration.RuleExampleRequest
@@ -72,6 +81,11 @@ fun ExplorationView(
 ) {
     val scope = rememberCoroutineScope()
     var mode by remember { mutableStateOf(ExplorationMode.RULE_EXAMPLE) }
+    var choraleProgression by remember { mutableStateOf("1 4 5 1") }
+    var choraleOpenVoices by remember { mutableStateOf(setOf(ChoraleVoiceRoleSpec.SOPRANO)) }
+    var choraleConflicts by remember { mutableStateOf(emptySet<ChoraleConflictMark>()) }
+    var choraleContour by remember { mutableStateOf<ChoraleContourDirectionSpec?>(null) }
+    var choraleAllowFirstInversion by remember { mutableStateOf(true) }
     var keyFifths by remember { mutableIntStateOf(0) }
     var keyMode by remember { mutableStateOf(KeyModeSpec.MAJOR) }
     var fromDegree by remember { mutableIntStateOf(5) }
@@ -207,6 +221,11 @@ fun ExplorationView(
         modulationSolver,
         modulationSourceChordCount,
         modulationTargetChordCount,
+        choraleProgression,
+        choraleOpenVoices,
+        choraleConflicts,
+        choraleContour,
+        choraleAllowFirstInversion,
     ) {
         fun searchSpec(beamWidth: Int) = SearchSpec(
             maxResults = candidateCount,
@@ -268,6 +287,52 @@ fun ExplorationView(
                     targetChordCount = modulationTargetChordCount,
                     solverPreset = modulationSolver,
                     search = searchSpec(beamWidth = 192),
+                )
+            }
+            ExplorationMode.CHORALE -> {
+                val degrees = parseDegrees(choraleProgression)
+                ChoraleHarmonizationRequest(
+                    key = keySpec,
+                    slots = degrees.map { degree ->
+                        ChoraleSlotSpec(
+                            degree = degree,
+                            inversion = if (choraleAllowFirstInversion) null else 0,
+                        )
+                    },
+                    voices = ChoraleVoiceRoleSpec.entries.map { role ->
+                        ChoraleVoiceSpec(
+                            role = role,
+                            patterns = if (role in choraleOpenVoices) {
+                                listOf(
+                                    ChoraleRhythmSpec.SUSTAINED,
+                                    ChoraleRhythmSpec.HALVES,
+                                    ChoraleRhythmSpec.QUARTERS,
+                                )
+                            } else listOf(ChoraleRhythmSpec.SUSTAINED),
+                        )
+                    },
+                    figuration = choraleConflicts
+                        .filter { it.slot in degrees.indices }
+                        .sortedWith(compareBy({ it.slot }, { it.role.ordinal }))
+                        .map { mark ->
+                            ChoraleFigurationSpec(
+                                slot = mark.slot,
+                                type = ChoraleFigurationTypeSpec.SUSPENSION,
+                                role = mark.role,
+                            )
+                        },
+                    contour = choraleContour?.let { direction ->
+                        listOf(
+                            ChoraleContourSpec(
+                                role = ChoraleVoiceRoleSpec.SOPRANO,
+                                startSlot = 0,
+                                endSlot = degrees.lastIndex,
+                                direction = direction,
+                                weight = 2.0,
+                            )
+                        )
+                    }.orEmpty(),
+                    search = searchSpec(beamWidth = 48),
                 )
             }
         }
@@ -346,6 +411,13 @@ fun ExplorationView(
                     solverPreset = modulationSolver,
                     sourceChordCount = modulationSourceChordCount,
                     targetChordCount = modulationTargetChordCount,
+                ),
+                chorale = ChoraleEditorState(
+                    progression = choraleProgression,
+                    openVoices = choraleOpenVoices,
+                    conflicts = choraleConflicts,
+                    sopranoContour = choraleContour,
+                    allowFirstInversion = choraleAllowFirstInversion,
                 ),
                 run = ExplorationRunState(
                     stale = isStale,
@@ -453,6 +525,27 @@ fun ExplorationView(
                     changeSolverPreset = { modulationSolver = it },
                     changeSourceChordCount = { modulationSourceChordCount = it.coerceIn(1, 6) },
                     changeTargetChordCount = { modulationTargetChordCount = it.coerceIn(2, 8) },
+                ),
+                chorale = ChoraleEditorActions(
+                    changeProgression = { choraleProgression = it },
+                    toggleOpenVoice = { role ->
+                        choraleOpenVoices = if (role in choraleOpenVoices) {
+                            choraleOpenVoices - role
+                        } else {
+                            choraleOpenVoices + role
+                        }
+                    },
+                    toggleConflict = { mark ->
+                        choraleConflicts = if (mark in choraleConflicts) {
+                            choraleConflicts - mark
+                        } else {
+                            // A suspension needs a voice free to split the chord it lands on.
+                            choraleOpenVoices = choraleOpenVoices + mark.role
+                            choraleConflicts + mark
+                        }
+                    },
+                    changeSopranoContour = { choraleContour = it },
+                    changeAllowFirstInversion = { choraleAllowFirstInversion = it },
                 ),
                 run = ExplorationRunActions(
                     changeCandidateCount = { candidateCount = it.coerceIn(1, 12) },

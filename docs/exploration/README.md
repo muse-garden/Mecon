@@ -114,7 +114,10 @@ RuleExample 的规则要求、场景选择及三/七和弦槽位由 `RuleExample
 spec 编译路径与直接执行路径共同消费，避免两套语义漂移。
 
 桌面输入面板的组件边界使用 `ExplorationInputState/ExplorationInputActions`，并按规则示例、
-进行、勋伯格练习、转调工具和运行控制拆成子状态/动作。转调模式使用五度圈与公共和弦列表
+进行、勋伯格练习、转调工具、圣咏配和声和运行控制拆成子状态/动作。
+圣咏配和声（`ChoraleHarmonizationRequest`，见 [../theory/chorale-harmonization.md](../theory/chorale-harmonization.md)）
+是两阶段任务，不经 `ConstraintProgramSpec`，由 `ChoraleExplorationRequestRunner` 自行编译；
+它走普通 convenience 路径，因此输出候选直接复用探索页的渲染、试听与 finding 高亮。转调模式使用五度圈与公共和弦列表
 完成“调 → 和弦”和“和弦 → 调”双向筛选，协议与规则见
 [../theory/modulation.md](../theory/modulation.md)。`ExplorationView` 仍拥有 Compose 可变状态，
 编辑器组件只读取不可变快照并上报动作，避免模式字段和回调沿组件树逐项透传。

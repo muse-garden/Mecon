@@ -43,6 +43,7 @@ internal enum class ExplorationMode {
     PROGRESSION,
     SCHOENBERG_EXERCISE,
     MODULATION,
+    CHORALE,
 }
 
 internal val ExplorationMode.requestType: String
@@ -51,6 +52,7 @@ internal val ExplorationMode.requestType: String
         ExplorationMode.PROGRESSION -> "progression"
         ExplorationMode.SCHOENBERG_EXERCISE -> "schoenberg-exercise"
         ExplorationMode.MODULATION -> "modulation-exercise"
+        ExplorationMode.CHORALE -> "chorale-harmonization"
     }
 
 internal fun CapabilityManifest.formFor(requestType: String): FormSpec =

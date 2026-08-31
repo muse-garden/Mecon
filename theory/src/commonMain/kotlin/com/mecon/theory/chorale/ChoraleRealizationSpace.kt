@@ -4,6 +4,8 @@ import com.mecon.api.primitive.EventId
 import com.mecon.api.primitive.Pitch
 import com.mecon.api.primitive.TimeCode
 import com.mecon.theory.FixedVoiceRole
+import com.mecon.theory.RuleAnchorGroup
+import com.mecon.theory.RuleAnchorRole
 import com.mecon.theory.RuleFinding
 import com.mecon.theory.RuleFindingKind
 import com.mecon.theory.RuleId
@@ -113,14 +115,27 @@ internal class ChoraleRealizationSpace(
                     message = "${role.name} 的装饰音超过密度预算 ${this.task.density.maxPerVoice}。",
                 )
             }
+            val voiceNotes = fills.flatMap { it.notes }
             figures.filter { note -> answersARequest(role, note) }.forEach { note ->
                 total -= policy.requestedFigurationBonus
+                // The note the figure discharges onto, so the panel can show the pair.
+                val resolution = voiceNotes.firstOrNull { it.onset > note.onset }
                 findings += RuleFinding(
                     ruleId = ChoraleRules.FIGURATION,
                     kind = RuleFindingKind.INDICATION,
                     severity = RuleSeverity.HINT,
                     message = "${role.name} 在第 ${note.slot} 槽写出了要求的" +
                         "${note.nonChordTone?.abbreviation}。",
+                    anchors = listOf(ChoraleEventIds.note(role, note.onset)),
+                    relatedAnchors = listOfNotNull(
+                        resolution?.let {
+                            RuleAnchorGroup(
+                                role = RuleAnchorRole.TARGET,
+                                anchors = listOf(ChoraleEventIds.note(role, it.onset)),
+                                label = "解决",
+                            )
+                        }
+                    ),
                 )
             }
             fills.forEach { fill ->
@@ -169,12 +184,17 @@ internal class ChoraleRealizationSpace(
                     )
                 }
             }
-            surfaceParallels(state).forEach { message ->
+            surfaceParallels(state).forEach { parallel ->
                 findings += RuleFinding(
                     ruleId = ChoraleRules.SURFACE_PARALLEL,
                     kind = RuleFindingKind.VIOLATION,
                     severity = RuleSeverity.HARD,
-                    message = message,
+                    message = "${parallel.upper.name} 与 ${parallel.lower.name} 在 ${parallel.onset} " +
+                        "形成表面平行" + (if (parallel.octave) "八度" else "五度") + "。",
+                    anchors = listOf(
+                        ChoraleEventIds.note(parallel.upper, parallel.onset),
+                        ChoraleEventIds.note(parallel.lower, parallel.onset),
+                    ),
                 )
             }
         }
@@ -304,7 +324,7 @@ internal class ChoraleRealizationSpace(
      * Stage one already cleared the skeleton, but decorations create new attack points, and a
      * passing tone can carry two voices into a parallel the skeleton never had.
      */
-    private fun surfaceParallels(state: ChoraleState): List<String> {
+    private fun surfaceParallels(state: ChoraleState): List<SurfaceParallel> {
         val notesByRole = roles.associateWith { state.notes(it) }
         val onsets = notesByRole.values.flatten().map { it.onset }.distinct().sorted()
         val verticals = onsets.map { onset ->
@@ -312,7 +332,7 @@ internal class ChoraleRealizationSpace(
                 soundingAt(notesByRole.getValue(role), onset)?.let { role to it.pitch }
             }.toMap()
         }
-        val messages = mutableListOf<String>()
+        val found = mutableListOf<SurfaceParallel>()
         verticals.zipWithNext { (_, before), (onset, after) ->
             roles.forEachIndexed { index, upper ->
                 roles.drop(index + 1).forEach { lower ->
@@ -328,13 +348,19 @@ internal class ChoraleRealizationSpace(
                     val lowerMotion = b2.midiNumber - b1.midiNumber
                     if (upperMotion == 0 || lowerMotion == 0) return@forEach
                     if (upperMotion > 0 != lowerMotion > 0) return@forEach
-                    messages += "${upper.name} 与 ${lower.name} 在 $onset 形成表面平行" +
-                        (if (first == 0) "八度" else "五度") + "。"
+                    found += SurfaceParallel(onset, upper, lower, octave = first == 0)
                 }
             }
         }
-        return messages.distinct()
+        return found.distinct()
     }
+
+    private data class SurfaceParallel(
+        val onset: TimeCode,
+        val upper: FixedVoiceRole,
+        val lower: FixedVoiceRole,
+        val octave: Boolean,
+    )
 
     private companion object {
         const val MAX_SPAN_COMBINATIONS = 96

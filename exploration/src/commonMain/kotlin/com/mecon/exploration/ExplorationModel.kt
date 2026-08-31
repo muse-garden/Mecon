@@ -119,6 +119,94 @@ enum class ModulationSolverSpec {
     SCHOENBERG,
 }
 
+/**
+ * Chorale harmonization: the progression is fully specified, everything else is a steer.
+ *
+ * See `docs/theory/chorale-harmonization.md`. The enums below are protocol types, kept separate
+ * from the engine's so the serialized request stays stable if the engine's vocabulary grows.
+ */
+@Serializable
+@SerialName("chorale-harmonization")
+data class ChoraleHarmonizationRequest(
+    val key: KeySpec = KeySpec(),
+    val slots: List<ChoraleSlotSpec>,
+    val voices: List<ChoraleVoiceSpec> = ChoraleVoiceSpec.DEFAULT,
+    val figuration: List<ChoraleFigurationSpec> = emptyList(),
+    val contour: List<ChoraleContourSpec> = emptyList(),
+    val search: SearchSpec = SearchSpec(maxResults = 4, beamWidth = 48),
+) : CellRequest {
+    init {
+        require(slots.isNotEmpty()) { "A chorale needs at least one chord" }
+        require(voices.map { it.role }.distinct().size == voices.size) { "Voice roles must be unique" }
+        require(figuration.all { it.slot in slots.indices }) { "Figuration slot out of range" }
+        require(contour.all { it.startSlot in slots.indices && it.endSlot in slots.indices }) {
+            "Contour window out of range"
+        }
+    }
+}
+
+@Serializable
+data class ChoraleSlotSpec(
+    val degree: Int,
+    /** Length of this chord in quarter notes. */
+    val beats: Int = 4,
+    /** null lets the solver choose between root position and first inversion. */
+    val inversion: Int? = null,
+) {
+    init {
+        require(degree in 1..7) { "degree must be in 1..7" }
+        require(beats in 1..16) { "beats must be in 1..16" }
+        require(inversion == null || inversion in 0..1) { "v1 supports root position and first inversion" }
+    }
+}
+
+@Serializable
+enum class ChoraleVoiceRoleSpec { SOPRANO, ALTO, TENOR, BASS }
+
+@Serializable
+enum class ChoraleRhythmSpec { SUSTAINED, HALVES, QUARTERS, LONG_SHORT }
+
+@Serializable
+enum class ChoraleFigurationTypeSpec { SUSPENSION, RETARDATION, PASSING, NEIGHBOR, ANTICIPATION }
+
+@Serializable
+enum class ChoraleContourDirectionSpec { ASCENDING, DESCENDING, ARCH, VALLEY, STATIC }
+
+@Serializable
+data class ChoraleVoiceSpec(
+    val role: ChoraleVoiceRoleSpec,
+    val patterns: List<ChoraleRhythmSpec> = listOf(ChoraleRhythmSpec.SUSTAINED),
+) {
+    init { require(patterns.isNotEmpty()) { "A voice needs at least one rhythm pattern" } }
+
+    companion object {
+        /** Every voice holds its chord tone until the user opens a voice up. */
+        val DEFAULT: List<ChoraleVoiceSpec> = ChoraleVoiceRoleSpec.entries.map { ChoraleVoiceSpec(it) }
+    }
+}
+
+@Serializable
+data class ChoraleFigurationSpec(
+    val slot: Int,
+    val type: ChoraleFigurationTypeSpec,
+    /** Required for suspensions and retardations, which the skeleton has to prepare. */
+    val role: ChoraleVoiceRoleSpec? = null,
+)
+
+@Serializable
+data class ChoraleContourSpec(
+    val role: ChoraleVoiceRoleSpec,
+    val startSlot: Int,
+    val endSlot: Int,
+    val direction: ChoraleContourDirectionSpec,
+    val weight: Double = 1.0,
+) {
+    init {
+        require(endSlot >= startSlot) { "Contour window must not be empty" }
+        require(weight > 0.0) { "Contour weight must be positive" }
+    }
+}
+
 @Serializable
 data class ProgressionSlot(
     val degree: DegreeSpec,

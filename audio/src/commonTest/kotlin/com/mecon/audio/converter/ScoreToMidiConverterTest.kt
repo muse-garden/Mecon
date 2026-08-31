@@ -22,6 +22,7 @@ import com.mecon.api.storage.events.GraceTimeSource
 import com.mecon.api.storage.events.StorageTempoEvent
 import com.mecon.api.storage.events.StoragePitchEvent
 import com.mecon.api.storage.events.StorageVoiceEvent
+import com.mecon.api.storage.events.TieInfo
 import com.mecon.api.storage.events.TempoDisplayStyle
 import com.mecon.api.storage.events.TempoMarkType
 import com.mecon.api.storage.events.TempoTransition
@@ -948,6 +949,53 @@ class ScoreToMidiConverterTest {
         assertEquals(listOf(48, 60), noteOns.map { it.midiNumber }.sorted())
         assertEquals(2, noteOffs.size)
         assertTrue(noteOffs.all { it.absoluteTicks > 0L })
+    }
+
+    @Test
+    fun tiedNotesSoundOnceAndHoldForTheWholeChain() {
+        val storage = StorageScore.create(
+            StorageScore.CreationOptions(layout = StaffLayoutPreset.TREBLE, measureCount = 3),
+        )
+        val staff = storage.staffTracks.values.first()
+        val voiceTrackId = staff.voiceTrackIds.first()
+        val voice = storage.voiceTracks.getValue(voiceTrackId)
+        val pitchTrackId = voice.pitchTrackId
+        // Three whole notes on the same pitch; the first two tie into the next.
+        val pitchEvents = (1..3).map { measure ->
+            StoragePitchEvent(
+                id = EventId("tie-pitch-$measure"),
+                onset = TimeCode.ofMeasure(measure),
+                pitches = listOf(Pitch.C4),
+            )
+        }
+        val voiceEvents = pitchEvents.mapIndexed { index, pitchEvent ->
+            StorageVoiceEvent(
+                id = EventId("tie-voice-${index + 1}"),
+                onset = pitchEvent.onset,
+                pitchEventId = pitchEvent.id,
+                duration = Duration.WHOLE,
+                ties = if (index < 2) listOf(TieInfo(0)) else emptyList(),
+            )
+        }
+        val tied = storage.copy(
+            pitchTracks = storage.pitchTracks + (
+                pitchTrackId to storage.pitchTracks.getValue(pitchTrackId).copy(events = pitchEvents)
+                ),
+            voiceTracks = storage.voiceTracks + (voiceTrackId to voice.copy(events = voiceEvents)),
+        )
+
+        val midi = ScoreToMidiConverter.convert(RuntimeScore.fromStorage(tied))
+        val noteOns = midi.tracks.flatMap { it.getNoteOnEvents() }
+        val noteOffs = midi.tracks.flatMap { it.getNoteOffEvents() }
+
+        assertEquals(1, noteOns.size, "a tie chain is one attack, not three")
+        assertEquals(0L, noteOns.single().absoluteTicks)
+        assertEquals(1, noteOffs.size)
+        assertEquals(
+            midi.ticksPerQuarter * 12L,
+            noteOffs.single().absoluteTicks,
+            "the note must hold through all three tied whole notes",
+        )
     }
 
     @Test

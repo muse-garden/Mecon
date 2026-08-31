@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import com.mecon.desktop.i18n.explorationText
 import com.mecon.desktop.i18n.ruleLabel
 import com.mecon.desktop.uikit.theme.MeconColors
+import com.mecon.exploration.ChoraleContourDirectionSpec
+import com.mecon.exploration.ChoraleVoiceRoleSpec
 import com.mecon.exploration.FormField
 import com.mecon.exploration.FormFieldKind
 import com.mecon.exploration.FormSpec
@@ -151,6 +153,12 @@ internal fun ExplorationInputPanel(
                         actions = actions.schoenberg,
                     )
                     ExplorationMode.MODULATION -> Unit
+                    ExplorationMode.CHORALE -> ChoraleEditor(
+                        key = state.key,
+                        state = state.chorale,
+                        keyActions = actions.key,
+                        actions = actions.chorale,
+                    )
                 }
 
                 RunControls(
@@ -193,6 +201,9 @@ private fun ModeSelector(
         }
         ModeChip(explorationText("mode.modulation"), selected = mode == ExplorationMode.MODULATION) {
             onModeChange(ExplorationMode.MODULATION)
+        }
+        ModeChip(explorationText("mode.chorale"), selected = mode == ExplorationMode.CHORALE) {
+            onModeChange(ExplorationMode.CHORALE)
         }
         Spacer(Modifier.weight(1f))
         if (isStale) StatusPill(explorationText("status.stale"))
@@ -533,6 +544,120 @@ private fun ProgressionEditor(
         }
     }
 }
+
+/**
+ * Chorale harmonization form.
+ *
+ * The progression is picked chord by chord because it is the one thing the user specifies
+ * completely; everything below it is a steer, so it is expressed as toggles rather than fields.
+ */
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ChoraleEditor(
+    key: ExplorationKeyState,
+    state: ChoraleEditorState,
+    keyActions: ExplorationKeyActions,
+    actions: ChoraleEditorActions,
+) {
+    val degrees = parseDegrees(state.progression)
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        KeyPicker(
+            fifths = key.fifths,
+            mode = key.mode,
+            forcedMode = null,
+            onFifths = keyActions.changeFifths,
+            onMode = keyActions.changeMode,
+        )
+
+        Text(explorationText("editor.progression"), color = MeconColors.TextSecondary, fontSize = 12.sp)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            degrees.forEachIndexed { index, degree ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        explorationText("editor.chordIndex", index + 1),
+                        color = MeconColors.TextMuted,
+                        fontSize = 11.sp,
+                        modifier = Modifier.width(64.dp),
+                    )
+                    (1..7).forEach { candidate ->
+                        ModeChip(candidate.toString(), selected = candidate == degree) {
+                            actions.changeProgression(degrees.updated(index, candidate).joinToString(" "))
+                        }
+                    }
+                    if (degrees.size > 2) {
+                        ModeChip(explorationText("editor.delete"), selected = false) {
+                            actions.changeProgression(degrees.removeAtIndex(index).joinToString(" "))
+                        }
+                    }
+                }
+            }
+            ModeChip(explorationText("editor.addChord"), selected = false) {
+                actions.changeProgression((degrees + (degrees.lastOrNull() ?: 1)).joinToString(" "))
+            }
+        }
+
+        MeconLabeledSwitch(
+            label = explorationText("chorale.allowFirstInversion"),
+            checked = state.allowFirstInversion,
+            onCheckedChange = actions.changeAllowFirstInversion,
+        )
+
+        Text(explorationText("chorale.openVoices"), color = MeconColors.TextSecondary, fontSize = 12.sp)
+        Text(explorationText("chorale.openVoicesHint"), color = MeconColors.TextMuted, fontSize = 11.sp)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChoraleVoiceRoleSpec.entries.forEach { role ->
+                ModeChip(voiceLabel(role), selected = role in state.openVoices) {
+                    actions.toggleOpenVoice(role)
+                }
+            }
+        }
+
+        Text(explorationText("chorale.conflicts"), color = MeconColors.TextSecondary, fontSize = 12.sp)
+        Text(explorationText("chorale.conflictsHint"), color = MeconColors.TextMuted, fontSize = 11.sp)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            degrees.indices.drop(1).forEach { slot ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        explorationText("editor.chordIndex", slot + 1),
+                        color = MeconColors.TextMuted,
+                        fontSize = 11.sp,
+                        modifier = Modifier.width(64.dp),
+                    )
+                    ChoraleVoiceRoleSpec.entries.forEach { role ->
+                        val mark = ChoraleConflictMark(slot, role)
+                        ModeChip(voiceLabel(role), selected = mark in state.conflicts) {
+                            actions.toggleConflict(mark)
+                        }
+                    }
+                }
+            }
+        }
+
+        Text(explorationText("chorale.contour"), color = MeconColors.TextSecondary, fontSize = 12.sp)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ModeChip(explorationText("chorale.contour.free"), selected = state.sopranoContour == null) {
+                actions.changeSopranoContour(null)
+            }
+            ChoraleContourDirectionSpec.entries.forEach { direction ->
+                ModeChip(contourLabel(direction), selected = state.sopranoContour == direction) {
+                    actions.changeSopranoContour(direction)
+                }
+            }
+        }
+    }
+}
+
+private fun voiceLabel(role: ChoraleVoiceRoleSpec): String =
+    explorationText("chorale.voice." + role.name.lowercase())
+
+private fun contourLabel(direction: ChoraleContourDirectionSpec): String =
+    explorationText("chorale.contour." + direction.name.lowercase())
 
 @Composable
 private fun SchoenbergExerciseEditor(

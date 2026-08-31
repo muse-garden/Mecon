@@ -7,6 +7,7 @@ object ExplorationRequestRunner {
             is ProgressionRequest -> ProgressionRequestRunner.run(request)
             is SchoenbergExerciseRequest -> SchoenbergExplorationRequestRunner.run(request)
             is ModulationExerciseCellRequest -> ModulationExplorationRequestRunner.run(request)
+            is ChoraleHarmonizationRequest -> ChoraleExplorationRequestRunner.run(request)
         }
         return output.withDiversityExhaustion(request.searchSpec())
     }
@@ -20,6 +21,7 @@ object ExplorationRequestRunner {
             is ProgressionRequest -> search
             is SchoenbergExerciseRequest -> search
             is ModulationExerciseCellRequest -> search
+            is ChoraleHarmonizationRequest -> search
         }
 
     private fun CellOutput.withDiversityExhaustion(search: SearchSpec): CellOutput {

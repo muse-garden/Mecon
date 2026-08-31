@@ -56,6 +56,10 @@ internal object ConvenienceRequestSpecMapper {
                 error("SchoenbergExerciseRequest is compiled by theory.schoenberg, not ConstraintProgramSpec")
             is ModulationExerciseCellRequest ->
                 error("ModulationExerciseCellRequest is compiled by theory.schoenberg, not ConstraintProgramSpec")
+            // The chorale skeleton is only the first of two stages, so it has no single-program
+            // spec form; ChoraleExplorationRequestRunner owns its compilation.
+            is ChoraleHarmonizationRequest ->
+                error("ChoraleHarmonizationRequest is a two-stage task, not a ConstraintProgramSpec")
         }
 
     private fun fromRuleExample(request: RuleExampleRequest): ConstraintProgramSpec {

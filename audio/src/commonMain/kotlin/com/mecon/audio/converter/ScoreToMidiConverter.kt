@@ -119,6 +119,17 @@ object ScoreToMidiConverter {
                 }
             }
         }
+        // Ties live on voice events too. Without them every tied note is struck again, which turns
+        // a suspension into an appoggiatura and a held chord into a repeated one.
+        val tiedOutPitchesByPitchEventId: Map<EventId, Set<Int>> =
+            score.voiceTracks.values.flatMap { it.events.toList() }
+                .filter { it.ties.isNotEmpty() }
+                .associate { event ->
+                    event.pitchEvent.id to event.ties.mapTo(hashSetOf()) { tie ->
+                        event.pitchEvent.pitches.getOrNull(tie.pitchIndex)?.midiNumber ?: -1
+                    }
+                }
+
         val voiceEventById = score.voiceTracks.values
             .flatMap { it.events.toList() }
             .associateBy { it.id }
@@ -147,6 +158,7 @@ object ScoreToMidiConverter {
                 graceInfoByPitchEventId = graceInfoByPitchEventId,
                 ornamentByPitchEventId = ornamentByPitchEventId,
                 arpeggioByPitchEventId = arpeggioByPitchEventId,
+                tiedOutPitchesByPitchEventId = tiedOutPitchesByPitchEventId,
                 score = score,
                 config = config
             )
@@ -515,6 +527,50 @@ object ScoreToMidiConverter {
      */
     private data class Timing(val onsetTicks: Long, val durationTicks: Long)
 
+    private data class TieChains(
+        /** Pitches that continue a tie and must not be struck again. */
+        val continuations: Map<EventId, Set<Int>>,
+        /** Where a tie chain's first note actually stops sounding. */
+        val endTicks: Map<EventId, Map<Int, Long>>,
+    )
+
+    /**
+     * Follows tie chains within one pitch track.
+     *
+     * A tie is matched to the next event that carries the same sounding pitch, which covers
+     * ordinary ties and tied chord members. Anything the chain cannot match keeps the untied
+     * behaviour, so this only ever merges notes it is sure about.
+     */
+    private fun resolveTieChains(
+        pitchEvents: List<RuntimePitchEvent>,
+        timings: Map<EventId, Timing>,
+        tiedOutPitchesByPitchEventId: Map<EventId, Set<Int>>,
+    ): TieChains {
+        if (tiedOutPitchesByPitchEventId.isEmpty()) return TieChains(emptyMap(), emptyMap())
+        val continuations = mutableMapOf<EventId, MutableSet<Int>>()
+        val endTicks = mutableMapOf<EventId, MutableMap<Int, Long>>()
+        val sounding = pitchEvents.filterNot { it.isRest }
+        sounding.forEachIndexed { index, event ->
+            val tiedOut = tiedOutPitchesByPitchEventId[event.id] ?: return@forEachIndexed
+            tiedOut.forEach { midiNumber ->
+                // Walk the chain forward while each next event repeats the pitch.
+                var cursor = index
+                var end: Long? = null
+                while (true) {
+                    val next = sounding.getOrNull(cursor + 1) ?: break
+                    if (next.pitches.none { it.midiNumber == midiNumber }) break
+                    val nextTiming = timings[next.id] ?: break
+                    continuations.getOrPut(next.id) { hashSetOf() } += midiNumber
+                    end = nextTiming.onsetTicks + nextTiming.durationTicks
+                    cursor++
+                    if (tiedOutPitchesByPitchEventId[next.id]?.contains(midiNumber) != true) break
+                }
+                if (end != null) endTicks.getOrPut(event.id) { hashMapOf() }[midiNumber] = end
+            }
+        }
+        return TieChains(continuations, endTicks)
+    }
+
     private fun convertPitchTrack(
         track: RuntimePitchTrack,
         channel: MidiChannel,
@@ -525,6 +581,7 @@ object ScoreToMidiConverter {
         graceInfoByPitchEventId: Map<EventId, GraceNoteInfo>,
         ornamentByPitchEventId: Map<EventId, StorageOrnamentMark>,
         arpeggioByPitchEventId: Map<EventId, ArpeggioType>,
+        tiedOutPitchesByPitchEventId: Map<EventId, Set<Int>>,
         score: RuntimeScore,
         config: ConversionConfig
     ): MidiTrack {
@@ -537,6 +594,8 @@ object ScoreToMidiConverter {
             defaultTimeSignature = defaultTimeSignature,
             ticksPerQuarter = config.ticksPerQuarter
         )
+
+        val tieChains = resolveTieChains(pitchEvents, timings, tiedOutPitchesByPitchEventId)
 
         val events = mutableListOf<MidiEvent>()
         midiProgram?.let { program ->
@@ -572,7 +631,12 @@ object ScoreToMidiConverter {
             } else 0L
             for ((pitchIndex, pitch) in orderedPitches.withIndex()) {
                 if (!MidiNoteRange.contains(pitch.midiNumber)) continue
+                // A tied continuation is the same sounding note, so it is neither struck again
+                // nor released here; the note it continues already holds until the chain ends.
+                if (tieChains.continuations[pe.id]?.contains(pitch.midiNumber) == true) continue
                 val stagger = arpeggioStep * pitchIndex
+                val end = tieChains.endTicks[pe.id]?.get(pitch.midiNumber)
+                    ?: (timing.onsetTicks + timing.durationTicks)
                 events.add(
                     MidiNoteOnEvent(
                         absoluteTicks = timing.onsetTicks + stagger,
@@ -584,7 +648,7 @@ object ScoreToMidiConverter {
                 )
                 events.add(
                     MidiNoteOffEvent(
-                        absoluteTicks = timing.onsetTicks + timing.durationTicks,
+                        absoluteTicks = end,
                         midiNumber = pitch.midiNumber,
                         channel = channel,
                         sourceEventId = pe.id

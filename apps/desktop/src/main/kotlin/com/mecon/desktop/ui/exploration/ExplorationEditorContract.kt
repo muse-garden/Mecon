@@ -1,6 +1,8 @@
 package com.mecon.desktop.ui.exploration
 
 import com.mecon.exploration.FormSpec
+import com.mecon.exploration.ChoraleContourDirectionSpec
+import com.mecon.exploration.ChoraleVoiceRoleSpec
 import com.mecon.exploration.KeyModeSpec
 import com.mecon.exploration.SchoenbergChordFilterSpec
 import com.mecon.exploration.SymbolicProgression
@@ -35,6 +37,31 @@ internal data class SchoenbergExerciseEditorState(
     val includeCadentialSixFour: Boolean,
 )
 
+internal data class ChoraleEditorState(
+    /** Scale degrees, one per chord, e.g. "1 4 5 1". */
+    val progression: String,
+    /** Voices allowed to subdivide a chord; the rest simply hold. */
+    val openVoices: Set<ChoraleVoiceRoleSpec>,
+    /** Chord index plus the voice asked to suspend into it. */
+    val conflicts: Set<ChoraleConflictMark>,
+    val sopranoContour: ChoraleContourDirectionSpec?,
+    val allowFirstInversion: Boolean,
+)
+
+/** One user-placed conflict: "this voice suspends into this chord". */
+internal data class ChoraleConflictMark(
+    val slot: Int,
+    val role: ChoraleVoiceRoleSpec,
+)
+
+internal data class ChoraleEditorActions(
+    val changeProgression: (String) -> Unit,
+    val toggleOpenVoice: (ChoraleVoiceRoleSpec) -> Unit,
+    val toggleConflict: (ChoraleConflictMark) -> Unit,
+    val changeSopranoContour: (ChoraleContourDirectionSpec?) -> Unit,
+    val changeAllowFirstInversion: (Boolean) -> Unit,
+)
+
 internal data class ExplorationRunState(
     val stale: Boolean,
     val running: Boolean,
@@ -52,6 +79,7 @@ internal data class ExplorationInputState(
     val progression: ProgressionEditorState,
     val schoenberg: SchoenbergExerciseEditorState,
     val modulation: ModulationEditorState,
+    val chorale: ChoraleEditorState,
     val run: ExplorationRunState,
 )
 
@@ -97,5 +125,6 @@ internal data class ExplorationInputActions(
     val progression: ProgressionEditorActions,
     val schoenberg: SchoenbergExerciseEditorActions,
     val modulation: ModulationEditorActions,
+    val chorale: ChoraleEditorActions,
     val run: ExplorationRunActions,
 )

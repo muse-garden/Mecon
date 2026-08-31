@@ -62,6 +62,16 @@ currentPositionTicks 每 50ms 由轮询协程更新
 
 UI 层（`App.kt`）用 `collectAsState()` 订阅 `playbackState` 与 `currentPositionTicks` 驱动进度条。
 
+### 3.1 连音线
+
+`ScoreToMidiConverter` 以 pitch event 驱动，而连音线记在 voice event 上。转换器按声部内
+「下一个含同一音高的 pitch event」跟踪连音链：**续接音不发 note-on，链首的 note-off 顺延到链尾**，
+因此一条连音链只击发一次。匹配不上的链（跨谱表等复杂情形）保持未连音行为，只在确定时才合并。
+
+这条在 2026-08-31 前是缺失的：任何带连音线的乐谱都会重复击发。它在圣咏配和声上尤其致命——
+延留音被重新击发就成了倚音，模块要表达的音响差别正好听不出来。门禁见
+`ScoreToMidiConverterTest.tiedNotesSoundOnceAndHoldForTheWholeChain`。
+
 ## 4. 扩展计划 🚧
 
 ### 4.1 SoundFont 与乐器映射

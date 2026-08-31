@@ -1,7 +1,7 @@
 # 圣咏配和声写作引擎
 
-> 状态：**CH-1（任务模型 + 两阶段求解 + 律动实现 + 张力评分 + 多候选）已实现于
-> `theory/.../chorale/`；乐谱装配为 CH-2，UI 接入为 CH-3，🚧**。
+> 状态：**CH-1（两阶段求解引擎）与 CH-2（乐谱装配 + 探索页入口，可看可听）已实现；
+> 复调化 CH-4 为 🚧**。
 > 前置：[writing-engine.md](writing-engine.md)（`CandidateSpace` / `BeamSearchSolver` / `WritingTaskPlan`）·
 > [constraint-program.md](constraint-program.md)（第一阶段骨架求解）·
 > [figuration.md](figuration.md)（外音特征模型与两阶段边界）·
@@ -133,21 +133,52 @@ ChoraleRealization(skeleton, lines, tensionCurve, breakdown)
 ChoraleLine(role, notes)   ChoraleNote(onset, duration, pitch, slot, nonChordTone?)
 ```
 
-`ChoraleNote.nonChordTone` 为空即和弦音。`onset` 是真实 `TimeCode`，`duration` 是全音符分数，
-可以直接装配成 `StorageScore`（CH-2）。`tensionCurve` 与发音点一一对应，供 UI 画曲线。
+`ChoraleNote.nonChordTone` 为空即和弦音。`onset` 是真实 `TimeCode`，`duration` 是全音符分数。
+`tensionCurve` 与发音点一一对应，供 UI 画曲线。
+
+### 7.1 乐谱装配（CH-2）
+
+`ChoraleScoreAssembler`（`:exploration`）把实现装成 SATB 大谱表 `StorageScore`。它**不能**走
+`ExplorationScoreAssembler` 的 `FourPartVoicingFrame` 路线——各声部节奏独立正是本模块的要点，
+音符按自己的 onset 与时值写出。三条要点：
+
+- **音符身份由音乐决定**：finding 在搜索期产生、乐谱在其后装配，两边用同一个
+  `ChoraleEventIds.note(role, onset)` 推导 id（一个声部同一时刻只有一个音，故 (声部, onset) 唯一）。
+  外音 finding 因此能锚到真实音符，并用 `RuleAnchorGroup(TARGET)` 关联它的解决音。
+- **延留音写成连音线**：延留是把前一和弦的音**保持**过来，不是重新发音，所以预备音 tie 到它。
+- **跨小节与不可记谱时值切成连音**：`writable()` 先在小节线切，再按可用符头切，宁可多几个
+  连音音符也不四舍五入时值。
+
+### 7.2 ⚠️ 连音线此前不影响播放（本轮修复）
+
+`ScoreToMidiConverter` 原本完全不读 `ties`：每个 pitch event 都发一次 note-on。这样延留音会被
+**重新击发**，听起来是倚音而不是延留——本模块最核心的音响差别恰好听不出来。现已按声部内
+「下一个含同一音高的事件」跟踪连音链：续接音不再发 note-on，链首的 note-off 顺延到链尾。
+这是全应用共享的播放修复（任何带连音线的乐谱此前都会重复击发），门禁见
+`ScoreToMidiConverterTest.tiedNotesSoundOnceAndHoldForTheWholeChain`。
+
+### 7.3 探索页入口（CH-2）
+
+`ChoraleHarmonizationRequest` 是普通 `CellRequest`，走既有 convenience 路径，因此输出候选直接
+复用探索页的渲染、试听与 finding 高亮，无需新 UI 管线。表单把「完整指定」与「部分指定」的
+区分做成两种控件：进行逐和弦点选，其余（可装饰声部、冲突位、旋律走向）都是开关。
+勾选冲突位会自动打开该声部的装饰，否则要求必然写不出来。
 
 ## 8. 落地增量
 
 | 增量 | 内容 | 门禁 |
 |---|---|---|
 | **CH-1 ✅** | 任务模型、Stage 1 编译（含延留反向投影）、Stage 2 候选空间与填充枚举、分类器校验、表面平行复查、张力曲线评分、多候选 | `ChoraleHarmonizerTest`：骨架不变性、被要求的延留真的出现且分类正确、未分类外音不出现、平行五八被剪、张力拱形区分两种装饰方案、多候选装饰类型确实不同 |
-| **CH-2** 🚧 | `StorageScore` 装配（SATB 大谱表 + 和弦标注轨 + 外音 finding 锚点）与探索页入口 | 渲染回读后逐音归类与引擎输出一致 |
-| **CH-3** 🚧 | 桌面 / Web 接入：进行编辑器、节奏型选择、冲突位标注、候选切换与张力曲线可视化 | 共享 session + typed view；双端 + trace |
+| **CH-2 ✅** | `StorageScore` 装配（SATB 大谱表 + 和弦标注轨 + 外音 finding 锚点 + 连音线）、探索页「圣咏配和声」模式、连音线播放修复 | `ChoraleExplorationTest`：四声部大谱表、和弦轨、延留连音与下行解决、finding 锚点落在真实事件；`ChoralePlaybackTest`：转成 MIDI 后每小节四个同时击发，延留位只有三次击发 + 半小节后的解决 |
+| **CH-3** 🚧 | Web 接入与张力曲线可视化；桌面表单目前只暴露延留一种冲突类型、旋律走向只管女高音 | 共享 session + typed view；双端 + trace |
 | **CH-4** 🚧 | 复调化：放开「全声部同和声跨度推进」，各声部 frontier 独立推进（writing-engine §3 的统一状态模型），承接种类对位 | 一至四种对位金标准 |
 
 ## 9. 已知边界与开放问题
 
 - **CH-1 只用最优骨架**：Stage 1 的 top-K 轮询未接，若某骨架的装饰全部无解，当前返回空而不回退。
+- **桌面表单只覆盖一部分协议**：`ChoraleHarmonizationRequest` 支持逐和弦时值、显式转位、
+  上行延留与插入型外音请求、任意声部的走向；表单目前只给出等长和弦、全局「允许第一转位」、
+  延留冲突位与女高音走向。缺的部分先由协议承担，不必改引擎。
 - **表面平行复查是新写的**，只覆盖发音点上的纯五 / 纯八同向进行，不处理经过音「掩盖」平行的
   教材细则（figuration.md §11 的开放问题原样保留）。
 - **节奏型是逐跨度独立选择的**，没有跨跨度的节奏动机连续性；动机（`MotiveAt`）挂 CH-4。
